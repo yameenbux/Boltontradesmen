@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<!--
+  Bolton Trades — pilot prototype
+
+  Self-contained single file. Persistence comes from the artifact runtime
+  (claude.use). Opened directly from disk it renders read-only, which is expected.
+
+  IMPORTANT: this copy is the EMPTY TEMPLATE. Never commit a snapshot taken from
+  the live pilot — the register data is embedded in the page, so a snapshot would
+  put real names and phone numbers into version control.
+-->
+<title>Bolton Trades</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap">
+
+<style id="appstyle">
+:root{
+--bg:#FAFAF7;--surface:#fff;--surface-2:#F1F0EA;--ink:#191B1E;--ink-2:#63666C;--ink-3:#8A8D93;
+--rule:#E3E1DA;--bar:#1C2836;--bar-ink:#F4F5F6;--admin-bar:#2E2119;--primary:#E39B0C;--primary-ink:#1A1400;
+--good:#2E7D5B;--good-soft:#E6F1EC;--bad:#B04435;--bad-soft:#F8EAE8;--warn:#8A6200;--warn-soft:#FBF1DC;
+--shadow:0 1px 2px rgba(25,27,30,.06),0 4px 12px rgba(25,27,30,.05);
+--f-ui:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,sans-serif;
+--f-body:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--bg:#101214;--surface:#181A1E;--surface-2:#212429;--ink:#ECEDEA;--ink-2:#9BA0A7;--ink-3:#7A7F86;
+--rule:#2B2F35;--bar:#181A1E;--bar-ink:#ECEDEA;--admin-bar:#2A1F16;--primary:#F0AC24;--primary-ink:#1A1400;
+--good:#6FC59B;--good-soft:#16261F;--bad:#E08376;--bad-soft:#291816;--warn:#E8B44A;--warn-soft:#2A2213;
+--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.25);}}
+:root[data-theme="dark"]{
+--bg:#101214;--surface:#181A1E;--surface-2:#212429;--ink:#ECEDEA;--ink-2:#9BA0A7;--ink-3:#7A7F86;
+--rule:#2B2F35;--bar:#181A1E;--bar-ink:#ECEDEA;--admin-bar:#2A1F16;--primary:#F0AC24;--primary-ink:#1A1400;
+--good:#6FC59B;--good-soft:#16261F;--bad:#E08376;--bad-soft:#291816;--warn:#E8B44A;--warn-soft:#2A2213;
+--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.25);}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:3rem}
+button{font:inherit;cursor:pointer}
+.app{max-width:31rem;margin:0 auto}
+.bar{background:var(--bar);color:var(--bar-ink);padding:.85rem 1rem .95rem;display:flex;align-items:center;gap:.7rem}
+.bar.admin{background:var(--admin-bar)}
+.bar h1{font-family:var(--f-ui);font-weight:700;font-size:1.15rem;margin:0;flex:1}
+.bar .tag{font-size:.66rem;letter-spacing:.09em;text-transform:uppercase;opacity:.62;font-family:var(--f-ui);font-weight:500}
+.bar .adminchip{background:var(--primary);color:var(--primary-ink);font-family:var(--f-ui);font-weight:700;font-size:.62rem;letter-spacing:.1em;padding:.15rem .4rem;border-radius:4px}
+.backbtn{background:none;border:none;color:var(--bar-ink);padding:.2rem .4rem .2rem 0;font-family:var(--f-ui);font-weight:600;font-size:.9rem}
+.banner{font-size:.74rem;line-height:1.4;padding:.5rem 1rem;text-align:center;background:var(--warn-soft);color:var(--warn);border-bottom:1px solid var(--rule)}
+.banner strong{font-family:var(--f-ui);letter-spacing:.03em}
+input[type=search],input[type=text],input[type=tel],input[type=password],select{width:100%;font:inherit;padding:.6rem .8rem;border:1px solid var(--rule);border-radius:8px;background:var(--surface);color:var(--ink);-webkit-appearance:none}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.searchwrap{padding:.85rem 1rem 0}
+.chips{display:flex;gap:.4rem;overflow-x:auto;padding:.75rem 1rem;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;background:var(--surface);border:1px solid var(--rule);color:var(--ink-2);border-radius:999px;padding:.35rem .8rem;font-size:.82rem;font-family:var(--f-ui);font-weight:500;white-space:nowrap}
+.chip[aria-pressed=true]{background:var(--bar);border-color:var(--bar);color:var(--bar-ink)}
+.chip.sm{font-size:.72rem;padding:.18rem .5rem}
+.sorthead{display:flex;justify-content:space-between;padding:.2rem 1rem .6rem;font-size:.75rem;color:var(--ink-3);font-family:var(--f-ui);letter-spacing:.03em;text-transform:uppercase}
+.list{display:flex;flex-direction:column;gap:.6rem;padding:0 1rem}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:.85rem .9rem;box-shadow:var(--shadow);display:grid;grid-template-columns:1fr auto;gap:.15rem .8rem;text-align:left;width:100%;color:inherit}
+.card .name{font-family:var(--f-ui);font-weight:600;font-size:1.02rem;grid-column:1}
+.card .meta{grid-column:1;font-size:.83rem;color:var(--ink-2)}
+.card .hero{grid-column:1;margin-top:.4rem;font-size:.85rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.again{font-family:var(--f-ui);font-weight:700;color:var(--good);font-variant-numeric:tabular-nums}
+.again.low{color:var(--bad)}
+.scorechip{grid-column:2;grid-row:1/span 2;align-self:start;background:var(--primary);color:var(--primary-ink);font-family:var(--f-ui);font-weight:700;font-size:1.05rem;border-radius:8px;padding:.3rem .55rem;text-align:center;min-width:3.1rem;font-variant-numeric:tabular-nums}
+.scorechip small{display:block;font-size:.58rem;font-weight:600;letter-spacing:.06em;opacity:.72;text-transform:uppercase}
+.scorechip.unrated{background:var(--surface-2);color:var(--ink-2);font-size:.68rem;font-weight:600;line-height:1.25;padding:.35rem .5rem;text-transform:uppercase}
+.verif{display:inline-flex;align-items:center;gap:.25rem;font-size:.7rem;font-family:var(--f-ui);font-weight:600;color:var(--good);background:var(--good-soft);border-radius:4px;padding:.1rem .35rem}
+.empty{padding:2.5rem 1rem;text-align:center;color:var(--ink-2);font-size:.9rem}
+.empty b{display:block;font-family:var(--f-ui);color:var(--ink);font-size:1rem;margin-bottom:.3rem}
+.prof{padding:1.15rem 1rem 0}
+.prof h2{font-family:var(--f-ui);font-weight:700;font-size:1.55rem;margin:0 0 .15rem;line-height:1.15;text-wrap:balance}
+.prof .sub{color:var(--ink-2);font-size:.9rem;margin:0 0 .8rem}
+.headline{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:.9rem;display:flex;align-items:center;gap:.9rem;margin-bottom:.7rem}
+.headline .big{font-family:var(--f-ui);font-weight:700;font-size:2.1rem;line-height:1;color:var(--good);font-variant-numeric:tabular-nums}
+.headline .big.low{color:var(--bad)}
+.headline .lbl{font-size:.82rem;color:var(--ink-2)}
+.headline .lbl b{display:block;font-family:var(--f-ui);font-size:.9rem;color:var(--ink);font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:.9rem}
+.stats div{background:var(--surface);padding:.65rem .5rem;text-align:center}
+.stats .v{font-family:var(--f-ui);font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.stats .k{font-size:.68rem;color:var(--ink-2);line-height:1.25;margin-top:.1rem}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.2rem}
+.btn{background:var(--primary);color:var(--primary-ink);border:none;border-radius:9px;padding:.7rem .9rem;font-family:var(--f-ui);font-weight:700;font-size:.92rem;text-align:center;display:block;text-decoration:none}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--rule)}
+.btn.danger{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.btn.wide{grid-column:1/-1;width:100%}
+.btn.sm{padding:.45rem .7rem;font-size:.82rem}
+.rev-h{font-family:var(--f-ui);font-weight:600;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 .6rem;display:flex;justify-content:space-between}
+.review{border-top:1px solid var(--rule);padding:.9rem 0}
+.review:last-child{border-bottom:1px solid var(--rule)}
+.review .top{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;margin-bottom:.3rem}
+.review .who{font-family:var(--f-ui);font-weight:600;font-size:.92rem}
+.review .when{font-size:.75rem;color:var(--ink-3);white-space:nowrap}
+.review .stars{color:var(--primary);font-size:.9rem;letter-spacing:.06em}
+.review .job{font-size:.75rem;color:var(--ink-3);margin-bottom:.35rem}
+.review p{margin:.3rem 0 0;font-size:.92rem}
+.review.gone{opacity:.55}
+.flags{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.45rem}
+.flag{font-size:.7rem;padding:.12rem .4rem;border-radius:4px;background:var(--good-soft);color:var(--good);font-weight:600}
+.flag.n{background:var(--bad-soft);color:var(--bad)}
+.reply{margin-top:.55rem;padding:.55rem .65rem;background:var(--surface-2);border-radius:7px;font-size:.87rem}
+.reply b{font-family:var(--f-ui);font-size:.78rem;display:block;color:var(--ink-2);margin-bottom:.1rem}
+details.expl{margin:1.2rem 1rem;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:.7rem .9rem;font-size:.87rem}
+details.expl summary{font-family:var(--f-ui);font-weight:600;cursor:pointer;font-size:.88rem}
+details.expl p{margin:.6rem 0 0;color:var(--ink-2)}
+.form{padding:1.15rem 1rem 0}
+.form h2{font-family:var(--f-ui);font-size:1.3rem;margin:0 0 .2rem}
+.form .sub{color:var(--ink-2);font-size:.87rem;margin:0 0 1.2rem}
+fieldset{border:none;border-top:1px solid var(--rule);padding:.9rem 0 0;margin:0 0 1rem}
+legend{font-family:var(--f-ui);font-weight:600;font-size:.95rem;padding:0;margin-bottom:.55rem}
+.opts{display:flex;flex-direction:column;gap:.4rem}
+.opt{display:flex;align-items:center;gap:.55rem;border:1px solid var(--rule);background:var(--surface);border-radius:8px;padding:.55rem .7rem;font-size:.9rem}
+.opt input{accent-color:var(--bar);flex:0 0 auto}
+.opt:has(input:checked){border-color:var(--bar);background:var(--surface-2)}
+.qstars{display:flex;gap:.35rem}
+.qstar{flex:1;background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:.55rem 0;font-family:var(--f-ui);font-weight:700;font-size:1rem;color:var(--ink)}
+.qstar[aria-pressed=true]{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+textarea{width:100%;font:inherit;font-size:.92rem;padding:.6rem .7rem;border:1px solid var(--rule);border-radius:8px;background:var(--surface);color:var(--ink);resize:vertical;min-height:4.5rem}
+textarea.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.72rem;min-height:9rem}
+.count{font-size:.72rem;color:var(--ink-3);text-align:right;margin-top:.2rem}
+.formnote{font-size:.78rem;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:.6rem .7rem;margin:0 0 1rem}
+.fieldrow{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.7rem}
+.fieldrow label{font-size:.8rem;font-family:var(--f-ui);font-weight:600;color:var(--ink-2)}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin:0 0 1rem}
+.kpi{background:var(--surface);padding:.7rem .8rem}
+.kpi .v{font-family:var(--f-ui);font-weight:700;font-size:1.5rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .k{font-size:.72rem;color:var(--ink-2);margin-top:.1rem}
+.kpi.alert .v{color:var(--warn)}
+.trow{display:grid;grid-template-columns:1fr auto;gap:.3rem .7rem;padding:.7rem 0;border-bottom:1px solid var(--rule);align-items:start}
+.trow .nm{font-family:var(--f-ui);font-weight:600;font-size:.95rem}
+.trow .mt{font-size:.75rem;color:var(--ink-3)}
+.trow .nums{font-size:.75rem;color:var(--ink-2);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.trow .acts{grid-column:1/-1;display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.15rem}
+.pill{font-size:.66rem;padding:.1rem .38rem;border-radius:4px;font-weight:600;white-space:nowrap;font-family:var(--f-ui)}
+.pill.free{background:var(--surface-2);color:var(--ink-2)}
+.pill.due{background:var(--warn-soft);color:var(--warn)}
+.pill.paid{background:var(--good-soft);color:var(--good)}
+.pill.paused{background:var(--bad-soft);color:var(--bad)}
+.navrow{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;padding:.8rem 1rem 0}
+.navrow button{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:.5rem .3rem;font-family:var(--f-ui);font-weight:600;font-size:.78rem;color:var(--ink-2)}
+.navrow button[aria-pressed=true]{background:var(--bar);border-color:var(--bar);color:var(--bar-ink)}
+.toast{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%) translateY(1.5rem);background:var(--bar);color:var(--bar-ink);padding:.6rem 1rem;border-radius:999px;font-size:.85rem;font-family:var(--f-ui);font-weight:500;opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease;z-index:50;max-width:23rem;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+</style>
+
+<div class="app"><div id="root"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="application/json" id="data">{"traders":[],"reviews":[],"enquiries":[],"pin":"","seq":1}</script>
+
+<script id="appscript">
+(function () {
+  "use strict";
+
+  var CATS = ["Electrician","Plumber","Gas engineer","Plasterer","Joiner","Roofer","Painter & decorator","Bricklayer","Tiler","Landscaper","Damp & timber","Locksmith","Driveways","Fencing","Handyman","Cleaner","Removals","Window fitter","Kitchen fitter","Groundworks"];
+
+  var M = 3, HALF_LIFE = 24, TRIAL = 5, PRICE = 10;
+
+  var SHELL = '<div class="app"><div id="root"><\/div><\/div>\n<div class="toast" id="toast" role="status" aria-live="polite"><\/div>';
+  var FONTS = '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap">';
+
+  // ---------- data ----------
+  var data;
+  try { data = JSON.parse(document.getElementById("data").textContent); } catch (e) { data = {}; }
+  if (!data.traders) data.traders = [];
+  if (!data.reviews) data.reviews = [];
+  if (!data.enquiries) data.enquiries = [];
+  if (typeof data.pin !== "string") data.pin = "";
+  if (!data.seq) data.seq = 1;
+
+  var api = null, canWrite = true, publishing = false;
+
+  var state = {
+    side: location.hash.indexOf("admin") > -1 ? "admin" : "shop",
+    unlocked: false,
+    view: "list", tab: "traders", traderId: null, editId: null,
+    q: "", cat: null, draft: { quality: 0 }
+  };
+
+  // ---------- self-publish ----------
+  function pageSource(d) {
+    var style = document.getElementById("appstyle").textContent;
+    var script = document.getElementById("appscript").textContent;
+    var json = JSON.stringify(d).replace(/</g, "\\u003c");
+    return '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
+      '<title>Bolton Trades<\/title>\n' + FONTS +
+      '\n<style id="appstyle">' + style + '<\/style>\n<\/head>\n<body>\n' + SHELL +
+      '\n<script type="application/json" id="data">' + json + '<\/script>\n' +
+      '<script id="appscript">' + script + '<\/script>\n<\/body>\n<\/html>';
+  }
+
+  function persist(stash) {
+    if (!api) { toast("Saving isn't available in this view."); return; }
+    if (publishing) return;
+    publishing = true;
+    api.publish(pageSource(data))["catch"](function (err) {
+      publishing = false;
+      var c = err && err.code;
+      if (c === "not_writer" || c === "not_granted" || c === "consent_required" || c === "not_declared") {
+        canWrite = false; render(); toast("You can read this register but not change it.");
+      } else if (c === "conflict") {
+        if (stash) { try { sessionStorage.setItem("bt.stash", JSON.stringify(stash)); } catch (e) {} }
+        toast("Someone else saved at the same moment. Reloading — try again.");
+      } else if (c === "rate_limited") {
+        toast("Too many saves at once. Wait a few seconds.");
+      } else {
+        toast("Couldn't save that. Try again in a moment.");
+      }
+    });
+  }
+
+  // ---------- scoring ----------
+  function monthsAgo(iso) {
+    var t = new Date(iso + "T00:00:00Z").getTime();
+    if (isNaN(t)) return 0;
+    return Math.max(0, (Date.now() - t) / (1000 * 60 * 60 * 24 * 30.44));
+  }
+  function wt(m) { return Math.pow(0.5, m / HALF_LIFE); }
+  function live(t) { return t.status !== "paused"; }
+  function shown(r) { return !r.removed; }
+  function reviewsFor(id, all) {
+    return data.reviews.filter(function (r) { return r.traderId === id && (all || shown(r)); });
+  }
+  function enqFor(id) { return data.enquiries.filter(function (e) { return e.traderId === id; }); }
+  function platformMean() {
+    var n = 0, d = 0;
+    data.reviews.filter(shown).forEach(function (r) { var w = wt(monthsAgo(r.when)); n += w * r.quality; d += w; });
+    return d ? n / d : 4.3;
+  }
+  function pct(l, f) { return l.length ? Math.round(100 * l.filter(f).length / l.length) : 0; }
+  function stats(t, C) {
+    var rs = reviewsFor(t.id), v = rs.length;
+    if (!v) return { n: 0 };
+    var n = 0, d = 0;
+    rs.forEach(function (r) { var w = wt(monthsAgo(r.when)); n += w * r.quality; d += w; });
+    var R = n / d;
+    return { n: v, raw: R, score: (v / (v + M)) * R + (M / (v + M)) * C,
+      onTime: pct(rs, function (x) { return x.onTime === "yes"; }),
+      quote: pct(rs, function (x) { return x.quote === "yes"; }),
+      tidy: pct(rs, function (x) { return x.tidy; }),
+      again: pct(rs, function (x) { return x.again === "yes"; }) };
+  }
+
+  // ---------- helpers ----------
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function today() { return new Date().toISOString().slice(0, 10); }
+  function thisMonth() { return today().slice(0, 7); }
+  function ago(iso) {
+    var m = Math.round(monthsAgo(iso));
+    if (m < 1) return "this month";
+    if (m === 1) return "1 month ago";
+    if (m < 12) return m + " months ago";
+    var y = Math.floor(m / 12);
+    return y === 1 ? "about a year ago" : "about " + y + " years ago";
+  }
+  function starstr(q) { var s = ""; for (var i = 1; i <= 5; i++) s += i <= q ? "★" : "☆"; return s; }
+  function trader(id) { return data.traders.filter(function (t) { return t.id === id; })[0]; }
+  function nextId(p) { return p + (data.seq++); }
+  function telHref(n) { return "tel:" + String(n).replace(/[^0-9+]/g, ""); }
+  function waHref(n) {
+    var d = String(n).replace(/[^0-9]/g, "");
+    if (d.indexOf("0") === 0) d = "44" + d.slice(1);
+    return "https://wa.me/" + d;
+  }
+  var tt;
+  function toast(m) {
+    var el = document.getElementById("toast");
+    if (!el) return;
+    el.textContent = m; el.classList.add("on");
+    clearTimeout(tt); tt = setTimeout(function () { el.classList.remove("on"); }, 3400);
+  }
+  function each(sel, fn) { Array.prototype.forEach.call(document.querySelectorAll(sel), fn); }
+  function on(id, ev, fn) { var el = document.getElementById(id); if (el) el.addEventListener(ev, fn); }
+
+  // ==========================================================
+  //  CUSTOMER SIDE
+  // ==========================================================
+
+  function shopList() {
+    var C = platformMean();
+    var rows = data.traders.filter(live).map(function (t) { return { t: t, s: stats(t, C) }; });
+    if (state.cat) rows = rows.filter(function (x) { return x.t.cat === state.cat; });
+    if (state.q) {
+      var q = state.q.toLowerCase();
+      rows = rows.filter(function (x) { return (x.t.name + " " + x.t.cat + " " + x.t.area).toLowerCase().indexOf(q) > -1; });
+    }
+    rows.sort(function (a, b) {
+      var ar = a.s.n >= 3, br = b.s.n >= 3;
+      if (ar !== br) return ar ? -1 : 1;
+      if (ar) return b.s.score - a.s.score || b.s.n - a.s.n;
+      return b.s.n - a.s.n || a.t.name.localeCompare(b.t.name);
+    });
+
+    var used = {};
+    data.traders.filter(live).forEach(function (t) { used[t.cat] = true; });
+    var chips = '<button class="chip" aria-pressed="' + (!state.cat) + '" data-cat="">All trades</button>' +
+      CATS.filter(function (c) { return used[c]; }).map(function (c) {
+        return '<button class="chip" aria-pressed="' + (state.cat === c) + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
+      }).join("");
+
+    var body;
+    if (!data.traders.filter(live).length) {
+      body = '<div class="empty"><b>No traders listed yet</b>Nothing to show until the first few are added.</div>';
+    } else if (!rows.length) {
+      body = '<div class="empty">Nobody listed for that yet.</div>';
+    } else {
+      body = '<div class="list">' + rows.map(function (x) {
+        var s = x.s, rated = s.n >= 3;
+        var chip = rated
+          ? '<div class="scorechip">' + s.score.toFixed(1) + '<small>' + s.n + ' rev' + (s.n === 1 ? '' : 's') + '</small></div>'
+          : '<div class="scorechip unrated">Not rated<br>' + s.n + ' rev' + (s.n === 1 ? '' : 's') + '</div>';
+        var hero = rated
+          ? '<div class="hero"><span class="again' + (s.again < 70 ? ' low' : '') + '">' + s.again + '% would use again</span>' +
+            (x.t.verified ? '<span class="verif">✓ Verified</span>' : '') + '</div>'
+          : '<div class="hero"><span style="color:var(--ink-3);font-size:.83rem">Needs ' + (3 - s.n) +
+            ' more review' + (3 - s.n === 1 ? '' : 's') + '</span>' +
+            (x.t.verified ? '<span class="verif">✓ Verified</span>' : '') + '</div>';
+        return '<button class="card" data-id="' + esc(x.t.id) + '"><span class="name">' + esc(x.t.name) +
+          '</span><span class="meta">' + esc(x.t.cat) + ' · ' + esc(x.t.area) + '</span>' + hero + chip + '</button>';
+      }).join("") + '</div>';
+    }
+
+    return '<div class="bar"><h1>Bolton Trades</h1><span class="tag">' + data.traders.filter(live).length + ' listed</span></div>' +
+      (canWrite ? '' : '<div class="banner"><strong>READ ONLY<\/strong> — you can browse but not post.</div>') +
+      '<div class="searchwrap"><input type="search" id="q" placeholder="Search a trade, name or area" value="' + esc(state.q) + '"></div>' +
+      '<div class="chips">' + chips + '</div>' +
+      '<div class="sorthead"><span>' + rows.length + ' shown</span><span>Sorted by rating</span></div>' + body +
+      '<details class="expl"><summary>How is the rating worked out?</summary>' +
+      '<p>A score only appears once a trader has three reviews. Below that you see the reviews and nothing else — one five-star from a mate is not a rating.</p>' +
+      '<p>Scores are pulled towards the register average until there is enough evidence, so forty reviews at 4.6 beat three at 5.0. Reviews lose half their weight every two years.</p>' +
+      '<p><b>Nothing a trader pays for moves them up this list.</b> Ever.</p></details>';
+  }
+
+  function shopProfile() {
+    var t = trader(state.traderId);
+    if (!t) { state.view = "list"; return shopList(); }
+    var s = stats(t, platformMean()), rated = s.n >= 3;
+
+    var headline = rated
+      ? '<div class="headline"><span class="big' + (s.again < 70 ? ' low' : '') + '">' + s.again +
+        '%</span><span class="lbl"><b>would use again</b>From ' + s.n + ' reviews · ' + s.score.toFixed(1) + '/5 overall</span></div>'
+      : '<div class="headline"><span class="lbl"><b>Not rated yet</b>' + s.n + ' review' + (s.n === 1 ? '' : 's') +
+        '. A score appears at three — until then, read what people wrote.</span></div>';
+
+    var grid = rated ? '<div class="stats">' +
+      '<div><div class="v">' + s.onTime + '%</div><div class="k">turned up<br>on time</div></div>' +
+      '<div><div class="v">' + s.quote + '%</div><div class="k">stuck to<br>the quote</div></div>' +
+      '<div><div class="v">' + s.tidy + '%</div><div class="k">left it<br>clean</div></div></div>' : '';
+
+    var revs = reviewsFor(t.id).slice().sort(function (a, b) { return (b.when || "").localeCompare(a.when || ""); })
+      .map(function (r) { return reviewHTML(r, t, false); }).join("");
+
+    return '<div class="bar"><button class="backbtn" id="back">‹ All trades</button></div>' +
+      '<div class="prof"><h2>' + esc(t.name) + '</h2>' +
+      '<p class="sub">' + esc(t.cat) + ' · covers ' + esc(t.area) + (t.verified ? ' · <span class="verif">✓ Verified</span>' : '') + '</p>' +
+      headline + grid +
+      '<div class="actions">' +
+      (t.phone ? '<a class="btn" href="' + esc(telHref(t.phone)) + '" data-contact="' + esc(t.id) + '" data-type="call">Call</a>'
+               : '<span class="btn ghost" style="opacity:.5">No number</span>') +
+      ((t.whatsapp || t.phone) ? '<a class="btn ghost" target="_blank" rel="noopener" href="' + esc(waHref(t.whatsapp || t.phone)) + '" data-contact="' + esc(t.id) + '" data-type="whatsapp">WhatsApp</a>'
+               : '<span class="btn ghost" style="opacity:.5">—</span>') +
+      (canWrite ? '<button class="btn ghost wide" id="leave">Leave a review</button>'
+                : '<span class="btn ghost wide" style="opacity:.6">Read-only view</span>') +
+      '</div>' +
+      '<div class="rev-h"><span>' + s.n + ' review' + (s.n === 1 ? '' : 's') + '</span><span>Newest first</span></div>' +
+      (revs || '<div class="empty">No reviews yet. If you have used them, be the first.</div>') + '</div>';
+  }
+
+  function reviewHTML(r, t, adminView) {
+    var f = [];
+    f.push(r.onTime === "yes" ? '<span class="flag">On time</span>' : r.onTime === "late" ? '<span class="flag n">Late</span>' : '<span class="flag n">No-showed</span>');
+    f.push(r.quote === "yes" ? '<span class="flag">Kept to quote</span>' : r.quote === "slight" ? '<span class="flag">Slightly over, explained</span>' : '<span class="flag n">Well over quote</span>');
+    if (!r.tidy) f.push('<span class="flag n">Mess left</span>');
+    if (r.again === "no") f.push('<span class="flag n">Would not use again</span>');
+    return '<div class="review' + (r.removed ? ' gone' : '') + '">' +
+      '<div class="top"><span class="who">' + esc(r.who) + (adminView ? ' <span class="mt" style="font-weight:400;color:var(--ink-3)">· ' + esc(t ? t.name : "?") + '</span>' : '') +
+      '</span><span class="when">' + ago(r.when) + '</span></div>' +
+      '<div class="stars" aria-label="' + r.quality + ' out of 5">' + starstr(r.quality) + '</div>' +
+      '<div class="job">' + esc(r.job) + '</div>' +
+      (r.comment ? '<p>' + esc(r.comment) + '</p>' : '') +
+      '<div class="flags">' + f.join("") + '</div>' +
+      (r.reply ? '<div class="reply"><b>' + esc(t ? t.name : "Trader") + ' replied</b>' + esc(r.reply) + '</div>' : '') +
+      (r.removed ? '<div class="reply"><b>Removed</b>' + esc(r.removedReason || "no reason logged") + '</div>' : '') +
+      (adminView ? '<div class="acts" style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.5rem">' +
+        '<button class="chip sm" data-reply="' + esc(r.id) + '">' + (r.reply ? 'Edit reply' : 'Add reply') + '</button>' +
+        (r.removed ? '<button class="chip sm" data-restore="' + esc(r.id) + '">Restore</button>'
+                   : '<button class="chip sm" data-remove="' + esc(r.id) + '">Remove</button>') + '</div>' : '') +
+      '</div>';
+  }
+
+  function radios(name, opts, cur) {
+    return opts.map(function (o) {
+      return '<label class="opt"><input type="radio" name="' + name + '" value="' + o[0] + '"' +
+        (cur === o[0] ? ' checked' : '') + '><span>' + o[1] + '</span></label>';
+    }).join("");
+  }
+
+  function shopForm() {
+    var t = trader(state.traderId), d = state.draft;
+    return '<div class="bar"><button class="backbtn" id="back">‹ Cancel</button></div>' +
+      '<form class="form" id="revform"><h2>Review ' + esc(t.name) + '</h2>' +
+      '<p class="sub">Six quick questions. Under a minute.</p>' +
+      '<div class="formnote">Your name is published with the review. Reviews are not removed for being unflattering — only if they are fake, abusive, or not about a real job.</div>' +
+      '<fieldset><legend>Your name</legend><input type="text" name="who" placeholder="e.g. Yameen B." value="' + esc(d.who || "") + '" required maxlength="40"></fieldset>' +
+      '<fieldset><legend>What was the job?</legend><input type="text" name="job" placeholder="e.g. new consumer unit" value="' + esc(d.job || "") + '" required maxlength="70"></fieldset>' +
+      '<fieldset><legend>Did they turn up when they said they would?</legend><div class="opts">' +
+      radios("onTime", [["yes","Yes"],["late","Late, but let me know"],["noshow","No-showed at least once"]], d.onTime) + '</div></fieldset>' +
+      '<fieldset><legend>Was the final price within the quote?</legend><div class="opts">' +
+      radios("quote", [["yes","Yes"],["slight","Slightly over, and explained"],["over","Significantly over"]], d.quote) + '</div></fieldset>' +
+      '<fieldset><legend>Quality of the finished work</legend><div class="qstars">' +
+      [1,2,3,4,5].map(function (n) {
+        return '<button type="button" class="qstar" data-q="' + n + '" aria-pressed="' + (d.quality >= n) + '">' + n + '</button>';
+      }).join("") + '</div></fieldset>' +
+      '<fieldset><legend>Did they leave the place clean?</legend><div class="opts">' +
+      radios("tidy", [["yes","Yes"],["no","No"]], d.tidy) + '</div></fieldset>' +
+      '<fieldset><legend>Would you use them again?</legend><div class="opts">' +
+      radios("again", [["yes","Yes"],["maybe","Maybe"],["no","No"]], d.again) + '</div></fieldset>' +
+      '<fieldset><legend>Anything else? (optional)</legend>' +
+      '<textarea name="comment" maxlength="400" placeholder="Keep it factual — what happened, not what you think of them.">' + esc(d.comment || "") + '</textarea>' +
+      '<div class="count"><span id="cc">0</span>/400</div></fieldset>' +
+      '<button class="btn wide" type="submit" style="margin-bottom:2rem">Post review</button></form>';
+  }
+
+  // ==========================================================
+  //  ADMIN SIDE
+  // ==========================================================
+
+  function adminBar(title, back) {
+    return '<div class="bar admin">' + (back ? '<button class="backbtn" id="back">‹ Back</button>' : '') +
+      '<h1>' + esc(title) + '</h1><span class="adminchip">ADMIN</span></div>';
+  }
+
+  function adminGate() {
+    var first = !data.pin;
+    return adminBar("Admin", false) +
+      '<div class="banner">This gate is a curtain, not a lock. Anyone who can edit this page can get past it.</div>' +
+      '<form class="form" id="pinform"><h2>' + (first ? 'Set an admin PIN' : 'Enter admin PIN') + '</h2>' +
+      '<p class="sub">' + (first ? 'Pick four or more digits. It is stored in this page.' : 'Four or more digits.') + '</p>' +
+      '<div class="fieldrow"><input type="password" inputmode="numeric" name="pin" autocomplete="off" required minlength="4" maxlength="12" placeholder="••••"></div>' +
+      '<button class="btn wide" type="submit">' + (first ? 'Set PIN and continue' : 'Unlock') + '</button>' +
+      '<p style="margin-top:1.2rem"><a href="#" id="toshop" style="color:var(--ink-2);font-size:.85rem">← Back to the public register</a></p></form>';
+  }
+
+  function adminHome() {
+    var C = platformMean();
+    var livet = data.traders.filter(live);
+    var mo = thisMonth();
+    var thisMo = data.enquiries.filter(function (e) { return (e.when || "").slice(0, 7) === mo; }).length;
+    var due = livet.filter(function (t) { return !t.paying && enqFor(t.id).length >= TRIAL; });
+    var paying = livet.filter(function (t) { return t.paying; });
+
+    var tabs = '<div class="navrow">' +
+      ['traders','reviews','data'].map(function (k) {
+        var lbl = k === 'traders' ? 'Traders' : k === 'reviews' ? 'Reviews' : 'Backup';
+        return '<button data-tab="' + k + '" aria-pressed="' + (state.tab === k) + '">' + lbl + '</button>';
+      }).join("") + '</div>';
+
+    var kpis = '<div style="padding:1rem 1rem 0"><div class="kpis">' +
+      '<div class="kpi"><div class="v">' + livet.length + '</div><div class="k">traders listed</div></div>' +
+      '<div class="kpi"><div class="v">' + data.reviews.filter(shown).length + '</div><div class="k">published reviews</div></div>' +
+      '<div class="kpi"><div class="v">' + thisMo + '</div><div class="k">enquiries this month</div></div>' +
+      '<div class="kpi' + (due.length ? ' alert' : '') + '"><div class="v">' + due.length + '</div><div class="k">past free period</div></div>' +
+      '</div>' +
+      '<div class="formnote">' + paying.length + ' paying at £' + PRICE + '/month = <b>£' + (paying.length * PRICE) +
+      '/month</b>. A trader pays nothing until they have had ' + TRIAL + ' enquiries through the app.</div></div>';
+
+    var body;
+    if (state.tab === "traders") {
+      var rows = data.traders.slice().sort(function (a, b) { return enqFor(b.id).length - enqFor(a.id).length || a.name.localeCompare(b.name); });
+      body = '<div style="padding:0 1rem">' +
+        '<button class="btn wide" id="addbtn" style="margin-bottom:1rem">Add a trader</button>' +
+        (rows.length ? rows.map(function (t) {
+          var s = stats(t, C), e = enqFor(t.id).length;
+          var pill = t.status === "paused" ? '<span class="pill paused">Paused</span>'
+            : t.paying ? '<span class="pill paid">Paying</span>'
+            : e >= TRIAL ? '<span class="pill due">Due</span>'
+            : '<span class="pill free">' + e + '/' + TRIAL + ' free</span>';
+          return '<div class="trow"><div><div class="nm">' + esc(t.name) + '</div>' +
+            '<div class="mt">' + esc(t.cat) + ' · ' + esc(t.area || "no area set") + '</div></div>' +
+            '<div class="nums">' + pill + '<div style="margin-top:.2rem">' + s.n + ' rev · ' + e + ' enq</div></div>' +
+            '<div class="acts">' +
+            '<button class="chip sm" data-edit="' + esc(t.id) + '">Edit</button>' +
+            '<button class="chip sm" data-pay="' + esc(t.id) + '">' + (t.paying ? 'Mark unpaid' : 'Mark paid') + '</button>' +
+            '<button class="chip sm" data-pause="' + esc(t.id) + '">' + (t.status === "paused" ? 'Relist' : 'Pause') + '</button>' +
+            '<button class="chip sm" data-view="' + esc(t.id) + '">View public</button>' +
+            '</div></div>';
+        }).join("") : '<div class="empty"><b>No traders yet</b>Add one above, or paste a list.</div>') +
+        '</div>';
+    } else if (state.tab === "reviews") {
+      var all = data.reviews.slice().sort(function (a, b) { return (b.when || "").localeCompare(a.when || "") || Number(b.id.slice(1)) - Number(a.id.slice(1)); });
+      body = '<div style="padding:0 1rem">' +
+        '<div class="formnote">Remove a review only if it is fake, abusive, or not about a real job — never because a trader asked. Every removal is logged with its reason and can be restored.</div>' +
+        (all.length ? all.map(function (r) { return reviewHTML(r, trader(r.traderId), true); }).join("")
+                    : '<div class="empty">No reviews yet.</div>') + '</div>';
+    } else {
+      body = '<div class="form"><h2 style="font-size:1.1rem">Backup and restore</h2>' +
+        '<p class="sub">Copy this somewhere safe. It is also what you will import into the real app later.</p>' +
+        '<textarea class="mono" id="exp" readonly>' + esc(JSON.stringify(data)) + '</textarea>' +
+        '<button class="btn ghost wide" id="copyexp" style="margin:.5rem 0 1.5rem">Copy to clipboard</button>' +
+        '<fieldset><legend>Restore from a backup</legend>' +
+        '<p style="font-size:.8rem;color:var(--ink-2);margin:0 0 .5rem">This replaces everything currently in the register.</p>' +
+        '<textarea class="mono" id="imp" placeholder="Paste a backup here"></textarea>' +
+        '<button class="btn danger wide" type="button" id="impbtn" style="margin:.6rem 0 2rem">Replace all data</button></fieldset></div>';
+    }
+
+    return adminBar("Admin", false) + kpis + tabs +
+      '<div style="height:.9rem"></div>' + body +
+      '<div style="padding:1.5rem 1rem 0;border-top:1px solid var(--rule);margin-top:1.5rem">' +
+      '<a href="#" id="toshop" style="color:var(--ink-2);font-size:.85rem">← View the public register</a></div>';
+  }
+
+  function adminEdit() {
+    var t = state.editId ? trader(state.editId) : null;
+    var isNew = !t;
+    t = t || { name: "", cat: CATS[0], area: "", phone: "", whatsapp: "", verified: false, status: "live" };
+    return adminBar(isNew ? "Add a trader" : "Edit trader", true) +
+      '<form class="form" id="tform">' +
+      '<div class="fieldrow"><label for="f-name">Name</label><input id="f-name" name="name" type="text" required maxlength="50" value="' + esc(t.name) + '"></div>' +
+      '<div class="fieldrow"><label for="f-cat">Trade</label><select id="f-cat" name="cat">' +
+      CATS.map(function (c) { return '<option' + (c === t.cat ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join("") + '</select></div>' +
+      '<div class="fieldrow"><label for="f-area">Areas covered</label><input id="f-area" name="area" type="text" placeholder="BL1, BL2, BL6" maxlength="40" value="' + esc(t.area) + '"></div>' +
+      '<div class="fieldrow"><label for="f-phone">Mobile</label><input id="f-phone" name="phone" type="tel" placeholder="07700 900000" maxlength="20" value="' + esc(t.phone) + '"></div>' +
+      '<div class="fieldrow"><label for="f-wa">WhatsApp (if different)</label><input id="f-wa" name="whatsapp" type="tel" maxlength="20" value="' + esc(t.whatsapp) + '"></div>' +
+      '<div class="fieldrow"><label class="opt" style="font-family:var(--f-body);font-weight:400"><input type="checkbox" name="verified"' + (t.verified ? ' checked' : '') + '><span>Insurance and ID checked</span></label></div>' +
+      (isNew ? '<div class="fieldrow"><label class="opt" style="font-family:var(--f-body);font-weight:400"><input type="checkbox" name="consent" required><span><b>They have agreed to be listed.</b> Required — see the consent message in the outreach pack.</span></label></div>' : '') +
+      '<button class="btn wide" type="submit" style="margin:.4rem 0 1rem">' + (isNew ? 'Add trader' : 'Save changes') + '</button>' +
+      (isNew ? '' : '<button class="btn danger wide" type="button" id="delt" style="margin-bottom:1.5rem">Delete this trader and their reviews</button>') +
+      (isNew ? '<fieldset><legend>Or paste a list</legend>' +
+        '<p style="font-size:.8rem;color:var(--ink-2);margin:0 0 .5rem">One per line: <code>Name, Trade, Areas, Mobile</code>. Only paste people who have already agreed.</p>' +
+        '<textarea id="bulk" placeholder="Danny Whitworth, Electrician, BL1 BL2, 07700900001"></textarea>' +
+        '<button class="btn ghost wide" type="button" id="bulkbtn" style="margin:.6rem 0 2rem">Add them all</button></fieldset>' : '') +
+      '</form>';
+  }
+
+  // ==========================================================
+  //  RENDER
+  // ==========================================================
+
+  function render() {
+    var root = document.getElementById("root");
+    var html;
+    if (state.side === "admin") {
+      html = !state.unlocked ? adminGate()
+        : state.view === "edit" ? adminEdit()
+        : adminHome();
+    } else {
+      html = state.view === "profile" ? shopProfile()
+        : state.view === "form" ? shopForm()
+        : shopList();
+    }
+    root.innerHTML = html;
+    wire();
+    window.scrollTo(0, 0);
+  }
+
+  function goShop(v) { state.side = "shop"; state.view = v || "list"; location.hash = ""; render(); }
+  function goAdmin(v) { state.side = "admin"; state.view = v || "home"; render(); }
+
+  function wire() {
+    on("q", "input", function (e) {
+      var pos = e.target.selectionStart; state.q = e.target.value; render();
+      var n = document.getElementById("q"); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} }
+    });
+    each(".chip[data-cat]", function (c) {
+      c.addEventListener("click", function () { state.cat = c.dataset.cat || null; render(); });
+    });
+    each(".card", function (c) {
+      c.addEventListener("click", function () { state.traderId = c.dataset.id; state.view = "profile"; render(); });
+    });
+    on("back", "click", function () {
+      if (state.side === "admin") { state.view = "home"; state.editId = null; render(); }
+      else if (state.view === "form") { state.view = "profile"; render(); }
+      else { state.view = "list"; render(); }
+    });
+    on("leave", "click", function () { state.draft = { quality: 0 }; state.view = "form"; render(); });
+    on("toshop", "click", function (e) { e.preventDefault(); goShop("list"); });
+
+    // contact taps
+    each("[data-contact]", function (a) {
+      a.addEventListener("click", function () {
+        if (!canWrite) return;
+        data.enquiries.push({ traderId: a.dataset.contact, when: today(), type: a.dataset.type });
+        persist();
+      });
+    });
+
+    each(".qstar", function (b) {
+      b.addEventListener("click", function () {
+        state.draft.quality = Number(b.dataset.q);
+        each(".qstar", function (x) { x.setAttribute("aria-pressed", Number(x.dataset.q) <= state.draft.quality ? "true" : "false"); });
+      });
+    });
+    var ta = document.querySelector("#revform textarea");
+    if (ta) { var cc = document.getElementById("cc"); cc.textContent = ta.value.length;
+      ta.addEventListener("input", function () { cc.textContent = ta.value.length; }); }
+
+    on("revform", "submit", onReview);
+    on("pinform", "submit", onPin);
+    on("tform", "submit", onTrader);
+    on("bulkbtn", "click", onBulk);
+    on("addbtn", "click", function () { state.editId = null; goAdmin("edit"); });
+
+    each("[data-tab]", function (b) {
+      b.addEventListener("click", function () { state.tab = b.dataset.tab; render(); });
+    });
+    each("[data-edit]", function (b) {
+      b.addEventListener("click", function () { state.editId = b.dataset.edit; goAdmin("edit"); });
+    });
+    each("[data-view]", function (b) {
+      b.addEventListener("click", function () { state.traderId = b.dataset.view; goShop("profile"); });
+    });
+    each("[data-pay]", function (b) {
+      b.addEventListener("click", function () { var t = trader(b.dataset.pay); t.paying = !t.paying; persist(); });
+    });
+    each("[data-pause]", function (b) {
+      b.addEventListener("click", function () {
+        var t = trader(b.dataset.pause);
+        t.status = t.status === "paused" ? "live" : "paused";
+        persist();
+      });
+    });
+    on("delt", "click", function () {
+      if (!confirm("Delete this trader and every review about them? This cannot be undone.")) return;
+      data.reviews = data.reviews.filter(function (r) { return r.traderId !== state.editId; });
+      data.enquiries = data.enquiries.filter(function (e) { return e.traderId !== state.editId; });
+      data.traders = data.traders.filter(function (t) { return t.id !== state.editId; });
+      state.editId = null; state.view = "home";
+      persist();
+    });
+
+    each("[data-remove]", function (b) {
+      b.addEventListener("click", function () {
+        var why = prompt("Why is this being removed? Logged permanently.\n\nFake / abusive / not a real job / other:");
+        if (!why) return;
+        var r = data.reviews.filter(function (x) { return x.id === b.dataset.remove; })[0];
+        r.removed = true; r.removedReason = why.slice(0, 200); r.removedAt = today();
+        persist();
+      });
+    });
+    each("[data-restore]", function (b) {
+      b.addEventListener("click", function () {
+        var r = data.reviews.filter(function (x) { return x.id === b.dataset.restore; })[0];
+        r.removed = false; r.removedReason = ""; persist();
+      });
+    });
+    each("[data-reply]", function (b) {
+      b.addEventListener("click", function () {
+        var r = data.reviews.filter(function (x) { return x.id === b.dataset.reply; })[0];
+        var txt = prompt("Reply on behalf of the trader (max 400 chars):", r.reply || "");
+        if (txt === null) return;
+        r.reply = txt.slice(0, 400); persist();
+      });
+    });
+
+    on("copyexp", "click", function () {
+      var el = document.getElementById("exp");
+      el.select();
+      try { document.execCommand("copy"); toast("Backup copied."); }
+      catch (e) { toast("Select the text and copy it manually."); }
+    });
+    on("impbtn", "click", function () {
+      var raw = document.getElementById("imp").value.trim();
+      if (!raw) { toast("Nothing pasted."); return; }
+      var d;
+      try { d = JSON.parse(raw); } catch (e) { toast("That isn't valid backup data."); return; }
+      if (!d || !d.traders || !d.reviews) { toast("That doesn't look like a Bolton Trades backup."); return; }
+      if (!confirm("Replace everything currently in the register with this backup?")) return;
+      data = d;
+      if (!data.enquiries) data.enquiries = [];
+      if (!data.seq) data.seq = 1;
+      persist();
+    });
+  }
+
+  // ---------- actions ----------
+  function onPin(e) {
+    e.preventDefault();
+    var v = (new FormData(e.target).get("pin") || "").trim();
+    if (!data.pin) {
+      if (v.length < 4) { toast("At least four digits."); return; }
+      data.pin = v; state.unlocked = true;
+      persist();
+      toast("PIN set. Remember it — it is stored in this page.");
+      render();
+      return;
+    }
+    if (v === data.pin) { state.unlocked = true; state.view = "home"; render(); }
+    else toast("Wrong PIN.");
+  }
+
+  function onReview(e) {
+    e.preventDefault();
+    var f = new FormData(e.target);
+    var who = (f.get("who") || "").trim(), job = (f.get("job") || "").trim();
+    if (!who || !job) { toast("Your name and the job are both needed."); return; }
+    if (!state.draft.quality) { toast("Pick a quality score from 1 to 5."); return; }
+    if (!f.get("onTime") || !f.get("quote") || !f.get("tidy") || !f.get("again")) { toast("Please answer all the questions."); return; }
+    var review = {
+      id: nextId("r"), traderId: state.traderId, who: who, when: today(),
+      quality: state.draft.quality, onTime: f.get("onTime"), quote: f.get("quote"),
+      tidy: f.get("tidy") === "yes", again: f.get("again"), job: job,
+      comment: (f.get("comment") || "").trim(), reply: "", removed: false
+    };
+    data.reviews.push(review);
+    persist({ traderId: state.traderId, who: who, job: job, comment: review.comment,
+      quality: review.quality, onTime: review.onTime, quote: review.quote,
+      tidy: f.get("tidy"), again: review.again });
+  }
+
+  function onTrader(e) {
+    e.preventDefault();
+    var f = new FormData(e.target);
+    var name = (f.get("name") || "").trim();
+    if (!name) return;
+    if (state.editId) {
+      var t = trader(state.editId);
+      t.name = name; t.cat = f.get("cat"); t.area = (f.get("area") || "").trim();
+      t.phone = (f.get("phone") || "").trim(); t.whatsapp = (f.get("whatsapp") || "").trim();
+      t.verified = !!f.get("verified");
+    } else {
+      data.traders.push({
+        id: nextId("t"), name: name, cat: f.get("cat"), area: (f.get("area") || "").trim(),
+        phone: (f.get("phone") || "").trim(), whatsapp: (f.get("whatsapp") || "").trim(),
+        verified: !!f.get("verified"), status: "live", consentAt: today(),
+        paying: false, added: today()
+      });
+    }
+    state.editId = null; state.view = "home";
+    persist();
+  }
+
+  function onBulk() {
+    var raw = document.getElementById("bulk").value.trim();
+    if (!raw) { toast("Nothing pasted."); return; }
+    var n = 0;
+    raw.split("\n").forEach(function (line) {
+      var p = line.split(",").map(function (x) { return x.trim(); });
+      if (!p[0]) return;
+      var cat = CATS.filter(function (c) { return c.toLowerCase() === (p[1] || "").toLowerCase(); })[0] || CATS[0];
+      data.traders.push({
+        id: nextId("t"), name: p[0], cat: cat, area: p[2] || "", phone: p[3] || "", whatsapp: "",
+        verified: false, status: "live", consentAt: today(), paying: false, added: today()
+      });
+      n++;
+    });
+    if (!n) { toast("Couldn't read any lines."); return; }
+    state.view = "home";
+    persist();
+  }
+
+  // ---------- boot ----------
+  try {
+    var s = sessionStorage.getItem("bt.stash");
+    if (s) {
+      sessionStorage.removeItem("bt.stash");
+      var d = JSON.parse(s);
+      state.draft = d; state.traderId = d.traderId; state.side = "shop"; state.view = "form";
+      setTimeout(function () { toast("Your draft is back — post it again."); }, 400);
+    }
+  } catch (e) {}
+
+  window.addEventListener("hashchange", function () {
+    var wantAdmin = location.hash.indexOf("admin") > -1;
+    if (wantAdmin !== (state.side === "admin")) {
+      state.side = wantAdmin ? "admin" : "shop";
+      state.view = wantAdmin ? "home" : "list";
+      render();
+    }
+  });
+
+  render();
+
+  if (window.claude && window.claude.use) {
+    window.claude.use("artifact").then(function (ns) {
+      api = ns;
+      if (!ns) { canWrite = false; render(); }
+    })["catch"](function () { canWrite = false; render(); });
+  } else { canWrite = false; render(); }
+})();
+</script>
+
+</body>
+</html>
