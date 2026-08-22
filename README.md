@@ -68,26 +68,29 @@ Honest state of things. Most of this repo does not exist yet.
 | Build specification | Written |
 | Rating algorithm | Specified and validated against sample data |
 | Clickable prototype | Built (demo data, no backend) |
-| Live pilot | Running as a hosted page, ~40KB, self-persisting |
-| Production app | **Not started** |
+| Live pilot | Running on GitHub Pages + Supabase — public, no login needed |
+| Admin console | Working — real auth, trader CRUD, moderation, billing view |
 | Payments | Not started — deliberately deferred to Phase 2 |
 | Trader consent round | Not started — this is the actual next step |
 
-The pilot exists to answer one question: will people in the group leave reviews at all? Until roughly 25 traders have consented and 60 reviews are in, writing production code is premature.
+The pilot exists to answer one question: will people in the group leave reviews at all? Until roughly 25 traders have consented and 60 reviews are in, further building is premature.
 
-## Planned stack
+**Live at [yameenbux.github.io/Boltontradesmen](https://yameenbux.github.io/Boltontradesmen/)** — anyone can open it, no account required. Admin is the same URL with `#admin`. See [SETUP.md](SETUP.md).
+
+## Stack
 
 | Layer | Choice | Why |
 |---|---|---|
-| Frontend | Next.js (App Router) | Server-rendered profiles are findable in Google — a free acquisition channel |
-| Hosting | Vercel | Free tier is sufficient for a long time |
-| Database & auth | Supabase | Postgres with RLS, phone OTP, and storage in one. RLS is what makes the three rules structural |
-| SMS | Twilio via Supabase | ~3–5p per UK message |
-| Payments | Stripe | Phase 2 only |
+| Frontend | One static HTML file | No build step, no framework, no deploy pipeline. Loads in one request |
+| Hosting | GitHub Pages | Free, public, zero config |
+| Database & auth | Supabase (Postgres) | Row-level security is what makes the three rules structural rather than aspirational |
+| Payments | Stripe | Phase 2 only — not built |
 
-Installable as a PWA. iOS install is the biggest drop-off point — it needs an explicit Safari → Share → Add to Home Screen prompt.
+Anonymous visitors can read the register and post reviews, gated by a group code checked server-side inside a `SECURITY DEFINER` function. They cannot write to any table directly. Admin write access requires both a Supabase account *and* an email listed in the `admins` table.
 
-Estimated running cost before any revenue: **under £100/year** (domain, ICO fee, SMS).
+Running cost today: **£0**. Add ~£12/year for a domain and £52/year for the ICO fee once real data is in there.
+
+A future Next.js version would add server-rendered profiles (findable in Google) and phone-OTP identity, which the current build does not have — see the caveat below.
 
 ## Legal obligations
 
@@ -102,14 +105,20 @@ This is a summary, not legal advice.
 ## Repo layout
 
 ```
+index.html          # the app — public register + admin, single file
+SETUP.md            # Supabase and GitHub Pages walkthrough
+supabase/
+  schema.sql        # tables, row-level security, server-side functions
 docs/
-  spec.md          # full build specification
-  outreach.md      # consent-round and launch messages
+  spec.md           # full build specification
+  outreach.md       # consent-round and launch messages
 prototype/
-  index.html       # self-contained clickable prototype
+  index.html        # earlier self-contained prototype, kept for reference
 ```
 
-Production application to follow.
+### Known gap
+
+Reviewers are not identity-verified — they type their own name and a shared group code. That's proportionate for a pilot inside one WhatsApp group, but it does **not** satisfy the s.5 Defamation Act defence described above, which requires being able to contact the poster. Phone-OTP sign-in closes this, and should land before the register is promoted anywhere beyond the group.
 
 ## Licence
 

@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolton Trades</title>
+<meta name="description" content="A community trader register for Bolton. Honest reviews from people you know.">
+<meta name="theme-color" content="#1C2836">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap">
+
+<!--
+  Bolton Trades — pilot
+
+  Single self-contained page. Data lives in Supabase; this file talks to it
+  over the REST API. Hosted free on GitHub Pages — no build step, no server.
+
+  SETUP: see SETUP.md. You need to fill in the two values in CONFIG below.
+  The anon key is meant to be public: row-level security in supabase/schema.sql
+  is what actually protects the data, not the secrecy of that key.
+-->
+
+<style>
+:root{
+--bg:#FAFAF7;--surface:#fff;--surface-2:#F1F0EA;--ink:#191B1E;--ink-2:#63666C;--ink-3:#8A8D93;
+--rule:#E3E1DA;--bar:#1C2836;--bar-ink:#F4F5F6;--admin-bar:#2E2119;--primary:#E39B0C;--primary-ink:#1A1400;
+--good:#2E7D5B;--good-soft:#E6F1EC;--bad:#B04435;--bad-soft:#F8EAE8;--warn:#8A6200;--warn-soft:#FBF1DC;
+--shadow:0 1px 2px rgba(25,27,30,.06),0 4px 12px rgba(25,27,30,.05);
+--f-ui:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,sans-serif;
+--f-body:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--bg:#101214;--surface:#181A1E;--surface-2:#212429;--ink:#ECEDEA;--ink-2:#9BA0A7;--ink-3:#7A7F86;
+--rule:#2B2F35;--bar:#181A1E;--bar-ink:#ECEDEA;--admin-bar:#2A1F16;--primary:#F0AC24;--primary-ink:#1A1400;
+--good:#6FC59B;--good-soft:#16261F;--bad:#E08376;--bad-soft:#291816;--warn:#E8B44A;--warn-soft:#2A2213;
+--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.25);}}
+:root[data-theme="dark"]{
+--bg:#101214;--surface:#181A1E;--surface-2:#212429;--ink:#ECEDEA;--ink-2:#9BA0A7;--ink-3:#7A7F86;
+--rule:#2B2F35;--bar:#181A1E;--bar-ink:#ECEDEA;--admin-bar:#2A1F16;--primary:#F0AC24;--primary-ink:#1A1400;
+--good:#6FC59B;--good-soft:#16261F;--bad:#E08376;--bad-soft:#291816;--warn:#E8B44A;--warn-soft:#2A2213;
+--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.25);}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:3rem}
+button{font:inherit;cursor:pointer}
+.app{max-width:31rem;margin:0 auto}
+.bar{background:var(--bar);color:var(--bar-ink);padding:.85rem 1rem .95rem;display:flex;align-items:center;gap:.7rem}
+.bar.admin{background:var(--admin-bar)}
+.bar h1{font-family:var(--f-ui);font-weight:700;font-size:1.15rem;margin:0;flex:1}
+.bar .tag{font-size:.66rem;letter-spacing:.09em;text-transform:uppercase;opacity:.62;font-family:var(--f-ui);font-weight:500}
+.bar .adminchip{background:var(--primary);color:var(--primary-ink);font-family:var(--f-ui);font-weight:700;font-size:.62rem;letter-spacing:.1em;padding:.15rem .4rem;border-radius:4px}
+.backbtn{background:none;border:none;color:var(--bar-ink);padding:.2rem .4rem .2rem 0;font-family:var(--f-ui);font-weight:600;font-size:.9rem}
+.banner{font-size:.74rem;line-height:1.4;padding:.5rem 1rem;text-align:center;background:var(--warn-soft);color:var(--warn);border-bottom:1px solid var(--rule)}
+.banner strong{font-family:var(--f-ui);letter-spacing:.03em}
+input[type=search],input[type=text],input[type=tel],input[type=password],input[type=email],select{width:100%;font:inherit;padding:.6rem .8rem;border:1px solid var(--rule);border-radius:8px;background:var(--surface);color:var(--ink);-webkit-appearance:none}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.searchwrap{padding:.85rem 1rem 0}
+.chips{display:flex;gap:.4rem;overflow-x:auto;padding:.75rem 1rem;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;background:var(--surface);border:1px solid var(--rule);color:var(--ink-2);border-radius:999px;padding:.35rem .8rem;font-size:.82rem;font-family:var(--f-ui);font-weight:500;white-space:nowrap}
+.chip[aria-pressed=true]{background:var(--bar);border-color:var(--bar);color:var(--bar-ink)}
+.chip.sm{font-size:.72rem;padding:.18rem .5rem}
+.sorthead{display:flex;justify-content:space-between;padding:.2rem 1rem .6rem;font-size:.75rem;color:var(--ink-3);font-family:var(--f-ui);letter-spacing:.03em;text-transform:uppercase}
+.list{display:flex;flex-direction:column;gap:.6rem;padding:0 1rem}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:.85rem .9rem;box-shadow:var(--shadow);display:grid;grid-template-columns:1fr auto;gap:.15rem .8rem;text-align:left;width:100%;color:inherit}
+.card .name{font-family:var(--f-ui);font-weight:600;font-size:1.02rem;grid-column:1}
+.card .meta{grid-column:1;font-size:.83rem;color:var(--ink-2)}
+.card .hero{grid-column:1;margin-top:.4rem;font-size:.85rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.again{font-family:var(--f-ui);font-weight:700;color:var(--good);font-variant-numeric:tabular-nums}
+.again.low{color:var(--bad)}
+.scorechip{grid-column:2;grid-row:1/span 2;align-self:start;background:var(--primary);color:var(--primary-ink);font-family:var(--f-ui);font-weight:700;font-size:1.05rem;border-radius:8px;padding:.3rem .55rem;text-align:center;min-width:3.1rem;font-variant-numeric:tabular-nums}
+.scorechip small{display:block;font-size:.58rem;font-weight:600;letter-spacing:.06em;opacity:.72;text-transform:uppercase}
+.scorechip.unrated{background:var(--surface-2);color:var(--ink-2);font-size:.68rem;font-weight:600;line-height:1.25;padding:.35rem .5rem;text-transform:uppercase}
+.verif{display:inline-flex;align-items:center;gap:.25rem;font-size:.7rem;font-family:var(--f-ui);font-weight:600;color:var(--good);background:var(--good-soft);border-radius:4px;padding:.1rem .35rem}
+.empty{padding:2.5rem 1rem;text-align:center;color:var(--ink-2);font-size:.9rem}
+.empty b{display:block;font-family:var(--f-ui);color:var(--ink);font-size:1rem;margin-bottom:.3rem}
+.prof{padding:1.15rem 1rem 0}
+.prof h2{font-family:var(--f-ui);font-weight:700;font-size:1.55rem;margin:0 0 .15rem;line-height:1.15;text-wrap:balance}
+.prof .sub{color:var(--ink-2);font-size:.9rem;margin:0 0 .8rem}
+.headline{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:.9rem;display:flex;align-items:center;gap:.9rem;margin-bottom:.7rem}
+.headline .big{font-family:var(--f-ui);font-weight:700;font-size:2.1rem;line-height:1;color:var(--good);font-variant-numeric:tabular-nums}
+.headline .big.low{color:var(--bad)}
+.headline .lbl{font-size:.82rem;color:var(--ink-2)}
+.headline .lbl b{display:block;font-family:var(--f-ui);font-size:.9rem;color:var(--ink);font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:.9rem}
+.stats div{background:var(--surface);padding:.65rem .5rem;text-align:center}
+.stats .v{font-family:var(--f-ui);font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.stats .k{font-size:.68rem;color:var(--ink-2);line-height:1.25;margin-top:.1rem}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.2rem}
+.btn{background:var(--primary);color:var(--primary-ink);border:none;border-radius:9px;padding:.7rem .9rem;font-family:var(--f-ui);font-weight:700;font-size:.92rem;text-align:center;display:block;text-decoration:none}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--rule)}
+.btn.danger{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.btn.wide{grid-column:1/-1;width:100%}
+.btn[disabled]{opacity:.55;cursor:progress}
+.rev-h{font-family:var(--f-ui);font-weight:600;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 .6rem;display:flex;justify-content:space-between}
+.review{border-top:1px solid var(--rule);padding:.9rem 0}
+.review:last-child{border-bottom:1px solid var(--rule)}
+.review .top{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;margin-bottom:.3rem}
+.review .who{font-family:var(--f-ui);font-weight:600;font-size:.92rem}
+.review .when{font-size:.75rem;color:var(--ink-3);white-space:nowrap}
+.review .stars{color:var(--primary);font-size:.9rem;letter-spacing:.06em}
+.review .job{font-size:.75rem;color:var(--ink-3);margin-bottom:.35rem}
+.review p{margin:.3rem 0 0;font-size:.92rem}
+.review.gone{opacity:.55}
+.flags{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.45rem}
+.flag{font-size:.7rem;padding:.12rem .4rem;border-radius:4px;background:var(--good-soft);color:var(--good);font-weight:600}
+.flag.n{background:var(--bad-soft);color:var(--bad)}
+.reply{margin-top:.55rem;padding:.55rem .65rem;background:var(--surface-2);border-radius:7px;font-size:.87rem}
+.reply b{font-family:var(--f-ui);font-size:.78rem;display:block;color:var(--ink-2);margin-bottom:.1rem}
+details.expl{margin:1.2rem 1rem;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:.7rem .9rem;font-size:.87rem}
+details.expl summary{font-family:var(--f-ui);font-weight:600;cursor:pointer;font-size:.88rem}
+details.expl p{margin:.6rem 0 0;color:var(--ink-2)}
+.form{padding:1.15rem 1rem 0}
+.form h2{font-family:var(--f-ui);font-size:1.3rem;margin:0 0 .2rem}
+.form .sub{color:var(--ink-2);font-size:.87rem;margin:0 0 1.2rem}
+fieldset{border:none;border-top:1px solid var(--rule);padding:.9rem 0 0;margin:0 0 1rem}
+legend{font-family:var(--f-ui);font-weight:600;font-size:.95rem;padding:0;margin-bottom:.55rem}
+.opts{display:flex;flex-direction:column;gap:.4rem}
+.opt{display:flex;align-items:center;gap:.55rem;border:1px solid var(--rule);background:var(--surface);border-radius:8px;padding:.55rem .7rem;font-size:.9rem}
+.opt input{accent-color:var(--bar);flex:0 0 auto}
+.opt:has(input:checked){border-color:var(--bar);background:var(--surface-2)}
+.qstars{display:flex;gap:.35rem}
+.qstar{flex:1;background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:.55rem 0;font-family:var(--f-ui);font-weight:700;font-size:1rem;color:var(--ink)}
+.qstar[aria-pressed=true]{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+textarea{width:100%;font:inherit;font-size:.92rem;padding:.6rem .7rem;border:1px solid var(--rule);border-radius:8px;background:var(--surface);color:var(--ink);resize:vertical;min-height:4.5rem}
+.count{font-size:.72rem;color:var(--ink-3);text-align:right;margin-top:.2rem}
+.formnote{font-size:.78rem;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:.6rem .7rem;margin:0 0 1rem}
+.fieldrow{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.7rem}
+.fieldrow label{font-size:.8rem;font-family:var(--f-ui);font-weight:600;color:var(--ink-2)}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin:0 0 1rem}
+.kpi{background:var(--surface);padding:.7rem .8rem}
+.kpi .v{font-family:var(--f-ui);font-weight:700;font-size:1.5rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .k{font-size:.72rem;color:var(--ink-2);margin-top:.1rem}
+.kpi.alert .v{color:var(--warn)}
+.trow{display:grid;grid-template-columns:1fr auto;gap:.3rem .7rem;padding:.7rem 0;border-bottom:1px solid var(--rule);align-items:start}
+.trow .nm{font-family:var(--f-ui);font-weight:600;font-size:.95rem}
+.trow .mt{font-size:.75rem;color:var(--ink-3)}
+.trow .nums{font-size:.75rem;color:var(--ink-2);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.trow .acts{grid-column:1/-1;display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.15rem}
+.pill{font-size:.66rem;padding:.1rem .38rem;border-radius:4px;font-weight:600;white-space:nowrap;font-family:var(--f-ui)}
+.pill.free{background:var(--surface-2);color:var(--ink-2)}
+.pill.due{background:var(--warn-soft);color:var(--warn)}
+.pill.paid{background:var(--good-soft);color:var(--good)}
+.pill.paused{background:var(--bad-soft);color:var(--bad)}
+.navrow{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;padding:.8rem 1rem 0}
+.navrow button{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:.5rem .3rem;font-family:var(--f-ui);font-weight:600;font-size:.78rem;color:var(--ink-2)}
+.navrow button[aria-pressed=true]{background:var(--bar);border-color:var(--bar);color:var(--bar-ink)}
+.spinner{padding:3.5rem 1rem;text-align:center;color:var(--ink-3);font-size:.9rem}
+.spinner::before{content:"";display:block;width:1.5rem;height:1.5rem;margin:0 auto .8rem;border:2px solid var(--rule);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner::before{animation-duration:2s}}
+.setup{padding:1.5rem 1rem;font-size:.92rem}
+.setup h2{font-family:var(--f-ui);font-size:1.25rem;margin:0 0 .5rem}
+.setup code{background:var(--surface-2);padding:.1em .35em;border-radius:3px;font-size:.85em;word-break:break-all}
+.setup ol{padding-left:1.2rem;display:flex;flex-direction:column;gap:.5rem}
+.toast{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%) translateY(1.5rem);background:var(--bar);color:var(--bar-ink);padding:.6rem 1rem;border-radius:999px;font-size:.85rem;font-family:var(--f-ui);font-weight:500;opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease;z-index:50;max-width:23rem;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<div class="app"><div id="root"><div class="spinner">Loading the register…</div></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // =========================================================
+  //  CONFIG — replace these two values. See SETUP.md.
+  // =========================================================
+  var CONFIG = {
+    url: "https://YOUR-PROJECT-REF.supabase.co",
+    anonKey: "YOUR-ANON-KEY"
+  };
+  // =========================================================
+
+  var CATS = ["Electrician","Plumber","Gas engineer","Plasterer","Joiner","Roofer","Painter & decorator","Bricklayer","Tiler","Landscaper","Damp & timber","Locksmith","Driveways","Fencing","Handyman","Cleaner","Removals","Window fitter","Kitchen fitter","Groundworks"];
+
+  var M = 3, HALF_LIFE = 24, TRIAL = 5, PRICE = 10;
+
+  var configured = CONFIG.url.indexOf("YOUR-PROJECT-REF") === -1 &&
+                   CONFIG.anonKey.indexOf("YOUR-ANON-KEY") === -1;
+
+  var db = { traders: [], reviews: [], enquiries: [] };
+  var auth = { token: null, email: null };
+  var state = {
+    side: location.hash.indexOf("admin") > -1 ? "admin" : "shop",
+    view: "list", tab: "traders", traderId: null, editId: null,
+    q: "", cat: null, draft: { quality: 0 },
+    loading: true, error: null, busy: false
+  };
+
+  try {
+    var t = sessionStorage.getItem("bt.token"), e = sessionStorage.getItem("bt.email");
+    if (t) { auth.token = t; auth.email = e; }
+  } catch (x) {}
+
+  // ---------- API ----------
+  function rest(path, opts) {
+    opts = opts || {};
+    var h = {
+      "apikey": CONFIG.anonKey,
+      "Authorization": "Bearer " + (auth.token || CONFIG.anonKey),
+      "Content-Type": "application/json"
+    };
+    if (opts.prefer) h["Prefer"] = opts.prefer;
+    return fetch(CONFIG.url + "/rest/v1/" + path, {
+      method: opts.method || "GET",
+      headers: h,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    }).then(function (r) {
+      if (r.status === 401 || r.status === 403) {
+        if (auth.token) { signOut(); throw new Error("Your admin session expired — sign in again."); }
+      }
+      if (!r.ok) return r.text().then(function (txt) { throw new Error(readErr(txt, r.status)); });
+      if (r.status === 204) return null;
+      return r.text().then(function (txt) { return txt ? JSON.parse(txt) : null; });
+    });
+  }
+
+  function rpc(fn, args) { return rest("rpc/" + fn, { method: "POST", body: args }); }
+
+  function readErr(txt, status) {
+    try {
+      var j = JSON.parse(txt);
+      var m = j.hint || j.message || j.error_description || j.msg || "";
+      if (/bad_code/.test(m) || /bad_code/.test(txt)) return "That group code isn't right.";
+      if (/no_trader/.test(txt)) return "That trader isn't listed any more.";
+      if (/too_many/.test(txt)) return "Too many reviews for this trader just now. Try later.";
+      if (m) return m;
+    } catch (e) {}
+    return "Something went wrong (" + status + ").";
+  }
+
+  function signIn(email, password) {
+    return fetch(CONFIG.url + "/auth/v1/token?grant_type=password", {
+      method: "POST",
+      headers: { "apikey": CONFIG.anonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email, password: password })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j.access_token) throw new Error(j.error_description || j.msg || "Wrong email or password.");
+      auth.token = j.access_token; auth.email = email;
+      try { sessionStorage.setItem("bt.token", j.access_token); sessionStorage.setItem("bt.email", email); } catch (x) {}
+    });
+  }
+
+  function signOut() {
+    auth.token = null; auth.email = null;
+    try { sessionStorage.removeItem("bt.token"); sessionStorage.removeItem("bt.email"); } catch (x) {}
+  }
+
+  function load() {
+    state.loading = true; state.error = null; render();
+    var jobs = [
+      rest("traders?select=*&order=name.asc"),
+      rest("reviews?select=*&order=created_at.desc")
+    ];
+    if (auth.token) jobs.push(rest("enquiries?select=trader_id,kind,created_at"));
+    return Promise.all(jobs).then(function (res) {
+      db.traders = res[0] || [];
+      db.reviews = res[1] || [];
+      db.enquiries = res[2] || [];
+      state.loading = false; render();
+    })["catch"](function (err) {
+      state.loading = false; state.error = err.message || String(err); render();
+    });
+  }
+
+  // ---------- scoring (spec section 4) ----------
+  function monthsAgo(iso) {
+    var t = new Date(iso).getTime();
+    if (isNaN(t)) return 0;
+    return Math.max(0, (Date.now() - t) / (1000 * 60 * 60 * 24 * 30.44));
+  }
+  function wt(m) { return Math.pow(0.5, m / HALF_LIFE); }
+  function isLive(t) { return t.status === "live"; }
+  function reviewsFor(id, all) {
+    return db.reviews.filter(function (r) { return r.trader_id === id && (all || !r.removed); });
+  }
+  function enqFor(id) { return db.enquiries.filter(function (e) { return e.trader_id === id; }); }
+  function platformMean() {
+    var n = 0, d = 0;
+    db.reviews.filter(function (r) { return !r.removed; }).forEach(function (r) {
+      var w = wt(monthsAgo(r.created_at)); n += w * r.quality; d += w;
+    });
+    return d ? n / d : 4.3;
+  }
+  function pct(l, f) { return l.length ? Math.round(100 * l.filter(f).length / l.length) : 0; }
+  function stats(t, C) {
+    var rs = reviewsFor(t.id), v = rs.length;
+    if (!v) return { n: 0 };
+    var n = 0, d = 0;
+    rs.forEach(function (r) { var w = wt(monthsAgo(r.created_at)); n += w * r.quality; d += w; });
+    var R = n / d;
+    return { n: v, raw: R, score: (v / (v + M)) * R + (M / (v + M)) * C,
+      onTime: pct(rs, function (x) { return x.on_time === "yes"; }),
+      quote: pct(rs, function (x) { return x.quote === "yes"; }),
+      tidy: pct(rs, function (x) { return x.tidy; }),
+      again: pct(rs, function (x) { return x.again === "yes"; }) };
+  }
+
+  // ---------- helpers ----------
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function ago(iso) {
+    var m = Math.round(monthsAgo(iso));
+    if (m < 1) return "this month";
+    if (m === 1) return "1 month ago";
+    if (m < 12) return m + " months ago";
+    var y = Math.floor(m / 12);
+    return y === 1 ? "about a year ago" : "about " + y + " years ago";
+  }
+  function starstr(q) { var s = ""; for (var i = 1; i <= 5; i++) s += i <= q ? "★" : "☆"; return s; }
+  function trader(id) { return db.traders.filter(function (t) { return t.id === id; })[0]; }
+  function telHref(n) { return "tel:" + String(n).replace(/[^0-9+]/g, ""); }
+  function waHref(n) {
+    var d = String(n).replace(/[^0-9]/g, "");
+    if (d.indexOf("0") === 0) d = "44" + d.slice(1);
+    return "https://wa.me/" + d;
+  }
+  var tt;
+  function toast(m) {
+    var el = document.getElementById("toast");
+    el.textContent = m; el.classList.add("on");
+    clearTimeout(tt); tt = setTimeout(function () { el.classList.remove("on"); }, 3600);
+  }
+  function each(sel, fn) { Array.prototype.forEach.call(document.querySelectorAll(sel), fn); }
+  function on(id, ev, fn) { var el = document.getElementById(id); if (el) el.addEventListener(ev, fn); }
+
+  // ---------- setup / error screens ----------
+  function setupScreen() {
+    return '<div class="bar"><h1>Bolton Trades</h1><span class="tag">Not set up</span></div>' +
+      '<div class="setup"><h2>Almost there</h2>' +
+      '<p>This page has no database attached yet. Open <code>index.html</code>, find the <code>CONFIG</code> block near the top of the script, and fill in:</p>' +
+      '<ol><li><code>url</code> — your Supabase project URL</li>' +
+      '<li><code>anonKey</code> — the project’s anon public key</li></ol>' +
+      '<p style="margin-top:1rem">Both are in Supabase under <b>Project Settings → API</b>. Full walkthrough is in <code>SETUP.md</code> in the repo.</p></div>';
+  }
+
+  function errorScreen() {
+    return '<div class="bar"><h1>Bolton Trades</h1></div>' +
+      '<div class="empty"><b>Couldn’t load the register</b>' + esc(state.error) +
+      '<div style="margin-top:1.2rem"><button class="btn" id="retry" style="display:inline-block">Try again</button></div></div>';
+  }
+
+  // =========================================================
+  //  CUSTOMER SIDE
+  // =========================================================
+
+  function shopList() {
+    var C = platformMean();
+    var rows = db.traders.filter(isLive).map(function (t) { return { t: t, s: stats(t, C) }; });
+    if (state.cat) rows = rows.filter(function (x) { return x.t.cat === state.cat; });
+    if (state.q) {
+      var q = state.q.toLowerCase();
+      rows = rows.filter(function (x) { return (x.t.name + " " + x.t.cat + " " + x.t.area).toLowerCase().indexOf(q) > -1; });
+    }
+    rows.sort(function (a, b) {
+      var ar = a.s.n >= 3, br = b.s.n >= 3;
+      if (ar !== br) return ar ? -1 : 1;
+      if (ar) return b.s.score - a.s.score || b.s.n - a.s.n;
+      return b.s.n - a.s.n || a.t.name.localeCompare(b.t.name);
+    });
+
+    var used = {};
+    db.traders.filter(isLive).forEach(function (t) { used[t.cat] = true; });
+    var chips = '<button class="chip" aria-pressed="' + (!state.cat) + '" data-cat="">All trades</button>' +
+      CATS.filter(function (c) { return used[c]; }).map(function (c) {
+        return '<button class="chip" aria-pressed="' + (state.cat === c) + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
+      }).join("");
+
+    var body;
+    if (!db.traders.filter(isLive).length) {
+      body = '<div class="empty"><b>No traders listed yet</b>Nothing to show until the first few are added.</div>';
+    } else if (!rows.length) {
+      body = '<div class="empty">Nobody listed for that yet.</div>';
+    } else {
+      body = '<div class="list">' + rows.map(function (x) {
+        var s = x.s, rated = s.n >= 3;
+        var chip = rated
+          ? '<div class="scorechip">' + s.score.toFixed(1) + '<small>' + s.n + ' rev' + (s.n === 1 ? '' : 's') + '</small></div>'
+          : '<div class="scorechip unrated">Not rated<br>' + s.n + ' rev' + (s.n === 1 ? '' : 's') + '</div>';
+        var hero = rated
+          ? '<div class="hero"><span class="again' + (s.again < 70 ? ' low' : '') + '">' + s.again + '% would use again</span>' +
+            (x.t.verified ? '<span class="verif">✓ Verified</span>' : '') + '</div>'
+          : '<div class="hero"><span style="color:var(--ink-3);font-size:.83rem">Needs ' + (3 - s.n) +
+            ' more review' + (3 - s.n === 1 ? '' : 's') + '</span>' +
+            (x.t.verified ? '<span class="verif">✓ Verified</span>' : '') + '</div>';
+        return '<button class="card" data-id="' + esc(x.t.id) + '"><span class="name">' + esc(x.t.name) +
+          '</span><span class="meta">' + esc(x.t.cat) + ' · ' + esc(x.t.area) + '</span>' + hero + chip + '</button>';
+      }).join("") + '</div>';
+    }
+
+    return '<div class="bar"><h1>Bolton Trades</h1><span class="tag">' + db.traders.filter(isLive).length + ' listed</span></div>' +
+      '<div class="searchwrap"><input type="search" id="q" placeholder="Search a trade, name or area" value="' + esc(state.q) + '"></div>' +
+      '<div class="chips">' + chips + '</div>' +
+      '<div class="sorthead"><span>' + rows.length + ' shown</span><span>Sorted by rating</span></div>' + body +
+      '<details class="expl"><summary>How is the rating worked out?</summary>' +
+      '<p>A score only appears once a trader has three reviews. Below that you see the reviews and nothing else — one five-star from a mate is not a rating.</p>' +
+      '<p>Scores are pulled towards the register average until there is enough evidence, so forty reviews at 4.6 beat three at 5.0. Reviews lose half their weight every two years.</p>' +
+      '<p><b>Nothing a trader pays for moves them up this list.</b> Ever.</p></details>';
+  }
+
+  function shopProfile() {
+    var t = trader(state.traderId);
+    if (!t) { state.view = "list"; return shopList(); }
+    var s = stats(t, platformMean()), rated = s.n >= 3;
+
+    var headline = rated
+      ? '<div class="headline"><span class="big' + (s.again < 70 ? ' low' : '') + '">' + s.again +
+        '%</span><span class="lbl"><b>would use again</b>From ' + s.n + ' reviews · ' + s.score.toFixed(1) + '/5 overall</span></div>'
+      : '<div class="headline"><span class="lbl"><b>Not rated yet</b>' + s.n + ' review' + (s.n === 1 ? '' : 's') +
+        '. A score appears at three — until then, read what people wrote.</span></div>';
+
+    var grid = rated ? '<div class="stats">' +
+      '<div><div class="v">' + s.onTime + '%</div><div class="k">turned up<br>on time</div></div>' +
+      '<div><div class="v">' + s.quote + '%</div><div class="k">stuck to<br>the quote</div></div>' +
+      '<div><div class="v">' + s.tidy + '%</div><div class="k">left it<br>clean</div></div></div>' : '';
+
+    var revs = reviewsFor(t.id).slice().sort(function (a, b) {
+      return (b.created_at || "").localeCompare(a.created_at || "");
+    }).map(function (r) { return reviewHTML(r, t, false); }).join("");
+
+    return '<div class="bar"><button class="backbtn" id="back">‹ All trades</button></div>' +
+      '<div class="prof"><h2>' + esc(t.name) + '</h2>' +
+      '<p class="sub">' + esc(t.cat) + ' · covers ' + esc(t.area) + (t.verified ? ' · <span class="verif">✓ Verified</span>' : '') + '</p>' +
+      headline + grid +
+      '<div class="actions">' +
+      (t.phone ? '<a class="btn" href="' + esc(telHref(t.phone)) + '" data-contact="' + esc(t.id) + '" data-kind="call">Call</a>'
+               : '<span class="btn ghost" style="opacity:.5">No number</span>') +
+      ((t.whatsapp || t.phone) ? '<a class="btn ghost" target="_blank" rel="noopener" href="' + esc(waHref(t.whatsapp || t.phone)) + '" data-contact="' + esc(t.id) + '" data-kind="whatsapp">WhatsApp</a>'
+               : '<span class="btn ghost" style="opacity:.5">—</span>') +
+      '<button class="btn ghost wide" id="leave">Leave a review</button></div>' +
+      '<div class="rev-h"><span>' + s.n + ' review' + (s.n === 1 ? '' : 's') + '</span><span>Newest first</span></div>' +
+      (revs || '<div class="empty">No reviews yet. If you have used them, be the first.</div>') + '</div>';
+  }
+
+  function reviewHTML(r, t, adminView) {
+    var f = [];
+    f.push(r.on_time === "yes" ? '<span class="flag">On time</span>' : r.on_time === "late" ? '<span class="flag n">Late</span>' : '<span class="flag n">No-showed</span>');
+    f.push(r.quote === "yes" ? '<span class="flag">Kept to quote</span>' : r.quote === "slight" ? '<span class="flag">Slightly over, explained</span>' : '<span class="flag n">Well over quote</span>');
+    if (!r.tidy) f.push('<span class="flag n">Mess left</span>');
+    if (r.again === "no") f.push('<span class="flag n">Would not use again</span>');
+    return '<div class="review' + (r.removed ? ' gone' : '') + '">' +
+      '<div class="top"><span class="who">' + esc(r.who) +
+      (adminView ? ' <span style="font-weight:400;color:var(--ink-3);font-size:.8rem">· ' + esc(t ? t.name : "?") + '</span>' : '') +
+      '</span><span class="when">' + ago(r.created_at) + '</span></div>' +
+      '<div class="stars" aria-label="' + r.quality + ' out of 5">' + starstr(r.quality) + '</div>' +
+      '<div class="job">' + esc(r.job) + '</div>' +
+      (r.comment ? '<p>' + esc(r.comment) + '</p>' : '') +
+      '<div class="flags">' + f.join("") + '</div>' +
+      (r.reply ? '<div class="reply"><b>' + esc(t ? t.name : "Trader") + ' replied</b>' + esc(r.reply) + '</div>' : '') +
+      (r.removed ? '<div class="reply"><b>Removed</b>' + esc(r.removed_reason || "no reason logged") + '</div>' : '') +
+      (adminView ? '<div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.5rem">' +
+        '<button class="chip sm" data-reply="' + esc(r.id) + '">' + (r.reply ? 'Edit reply' : 'Add reply') + '</button>' +
+        (r.removed ? '<button class="chip sm" data-restore="' + esc(r.id) + '">Restore</button>'
+                   : '<button class="chip sm" data-remove="' + esc(r.id) + '">Remove</button>') + '</div>' : '') +
+      '</div>';
+  }
+
+  function radios(name, opts, cur) {
+    return opts.map(function (o) {
+      return '<label class="opt"><input type="radio" name="' + name + '" value="' + o[0] + '"' +
+        (cur === o[0] ? ' checked' : '') + '><span>' + o[1] + '</span></label>';
+    }).join("");
+  }
+
+  function shopForm() {
+    var t = trader(state.traderId), d = state.draft;
+    return '<div class="bar"><button class="backbtn" id="back">‹ Cancel</button></div>' +
+      '<form class="form" id="revform"><h2>Review ' + esc(t.name) + '</h2>' +
+      '<p class="sub">Six quick questions. Under a minute.</p>' +
+      '<div class="formnote">Your name is published with the review. Reviews are not removed for being unflattering — only if they are fake, abusive, or not about a real job.</div>' +
+      '<fieldset><legend>Group code</legend>' +
+      '<input type="text" name="code" placeholder="The code from the group" required maxlength="20" autocapitalize="characters" value="' + esc(d.code || "") + '">' +
+      '<p style="font-size:.75rem;color:var(--ink-3);margin:.4rem 0 0">Keeps reviews to people in the Bolton Tradesmen group.</p></fieldset>' +
+      '<fieldset><legend>Your name</legend><input type="text" name="who" placeholder="e.g. Yameen B." value="' + esc(d.who || "") + '" required maxlength="40"></fieldset>' +
+      '<fieldset><legend>What was the job?</legend><input type="text" name="job" placeholder="e.g. new consumer unit" value="' + esc(d.job || "") + '" required maxlength="70"></fieldset>' +
+      '<fieldset><legend>Did they turn up when they said they would?</legend><div class="opts">' +
+      radios("on_time", [["yes","Yes"],["late","Late, but let me know"],["noshow","No-showed at least once"]], d.on_time) + '</div></fieldset>' +
+      '<fieldset><legend>Was the final price within the quote?</legend><div class="opts">' +
+      radios("quote", [["yes","Yes"],["slight","Slightly over, and explained"],["over","Significantly over"]], d.quote) + '</div></fieldset>' +
+      '<fieldset><legend>Quality of the finished work</legend><div class="qstars">' +
+      [1,2,3,4,5].map(function (n) {
+        return '<button type="button" class="qstar" data-q="' + n + '" aria-pressed="' + (d.quality >= n) + '">' + n + '</button>';
+      }).join("") + '</div></fieldset>' +
+      '<fieldset><legend>Did they leave the place clean?</legend><div class="opts">' +
+      radios("tidy", [["yes","Yes"],["no","No"]], d.tidy) + '</div></fieldset>' +
+      '<fieldset><legend>Would you use them again?</legend><div class="opts">' +
+      radios("again", [["yes","Yes"],["maybe","Maybe"],["no","No"]], d.again) + '</div></fieldset>' +
+      '<fieldset><legend>Anything else? (optional)</legend>' +
+      '<textarea name="comment" maxlength="400" placeholder="Keep it factual — what happened, not what you think of them.">' + esc(d.comment || "") + '</textarea>' +
+      '<div class="count"><span id="cc">0</span>/400</div></fieldset>' +
+      '<button class="btn wide" type="submit" id="postbtn" style="margin-bottom:2rem">Post review</button></form>';
+  }
+
+  // =========================================================
+  //  ADMIN SIDE
+  // =========================================================
+
+  function adminBar(title, back) {
+    return '<div class="bar admin">' + (back ? '<button class="backbtn" id="back">‹ Back</button>' : '') +
+      '<h1>' + esc(title) + '</h1><span class="adminchip">ADMIN</span></div>';
+  }
+
+  function adminLogin() {
+    return adminBar("Admin", false) +
+      '<form class="form" id="loginform"><h2>Sign in</h2>' +
+      '<p class="sub">The admin account you created in Supabase.</p>' +
+      '<div class="fieldrow"><label for="l-email">Email</label><input id="l-email" name="email" type="email" autocomplete="username" required></div>' +
+      '<div class="fieldrow"><label for="l-pw">Password</label><input id="l-pw" name="password" type="password" autocomplete="current-password" required></div>' +
+      '<button class="btn wide" type="submit" id="loginbtn" style="margin-top:.4rem">Sign in</button>' +
+      '<p style="margin-top:1.4rem"><a href="#" id="toshop" style="color:var(--ink-2);font-size:.85rem">← Back to the public register</a></p></form>';
+  }
+
+  function adminHome() {
+    var C = platformMean();
+    var livet = db.traders.filter(isLive);
+    var mo = new Date().toISOString().slice(0, 7);
+    var thisMo = db.enquiries.filter(function (e) { return (e.created_at || "").slice(0, 7) === mo; }).length;
+    var due = livet.filter(function (t) { return !t.paying && enqFor(t.id).length >= TRIAL; });
+    var paying = livet.filter(function (t) { return t.paying; });
+
+    var tabs = '<div class="navrow">' + ["traders","reviews","account"].map(function (k) {
+      var lbl = k === "traders" ? "Traders" : k === "reviews" ? "Reviews" : "Account";
+      return '<button data-tab="' + k + '" aria-pressed="' + (state.tab === k) + '">' + lbl + '</button>';
+    }).join("") + '</div>';
+
+    var kpis = '<div style="padding:1rem 1rem 0"><div class="kpis">' +
+      '<div class="kpi"><div class="v">' + livet.length + '</div><div class="k">traders listed</div></div>' +
+      '<div class="kpi"><div class="v">' + db.reviews.filter(function (r) { return !r.removed; }).length + '</div><div class="k">published reviews</div></div>' +
+      '<div class="kpi"><div class="v">' + thisMo + '</div><div class="k">enquiries this month</div></div>' +
+      '<div class="kpi' + (due.length ? ' alert' : '') + '"><div class="v">' + due.length + '</div><div class="k">past free period</div></div></div>' +
+      '<div class="formnote">' + paying.length + ' paying at £' + PRICE + '/month = <b>£' + (paying.length * PRICE) +
+      '/month</b>. Nobody pays until they have had ' + TRIAL + ' enquiries through the app.</div></div>';
+
+    var body;
+    if (state.tab === "traders") {
+      var rows = db.traders.slice().sort(function (a, b) {
+        return enqFor(b.id).length - enqFor(a.id).length || a.name.localeCompare(b.name);
+      });
+      body = '<div style="padding:0 1rem">' +
+        '<button class="btn wide" id="addbtn" style="margin-bottom:1rem">Add a trader</button>' +
+        (rows.length ? rows.map(function (t) {
+          var s = stats(t, C), e = enqFor(t.id).length;
+          var pill = t.status === "paused" ? '<span class="pill paused">Paused</span>'
+            : t.paying ? '<span class="pill paid">Paying</span>'
+            : e >= TRIAL ? '<span class="pill due">Due</span>'
+            : '<span class="pill free">' + e + '/' + TRIAL + ' free</span>';
+          return '<div class="trow"><div><div class="nm">' + esc(t.name) + '</div>' +
+            '<div class="mt">' + esc(t.cat) + ' · ' + esc(t.area || "no area set") + '</div></div>' +
+            '<div class="nums">' + pill + '<div style="margin-top:.2rem">' + s.n + ' rev · ' + e + ' enq</div></div>' +
+            '<div class="acts">' +
+            '<button class="chip sm" data-edit="' + esc(t.id) + '">Edit</button>' +
+            '<button class="chip sm" data-pay="' + esc(t.id) + '">' + (t.paying ? 'Mark unpaid' : 'Mark paid') + '</button>' +
+            '<button class="chip sm" data-pause="' + esc(t.id) + '">' + (t.status === "paused" ? 'Relist' : 'Pause') + '</button>' +
+            '<button class="chip sm" data-view="' + esc(t.id) + '">View public</button></div></div>';
+        }).join("") : '<div class="empty"><b>No traders yet</b>Add one above.</div>') + '</div>';
+    } else if (state.tab === "reviews") {
+      var all = db.reviews.slice().sort(function (a, b) { return (b.created_at || "").localeCompare(a.created_at || ""); });
+      body = '<div style="padding:0 1rem">' +
+        '<div class="formnote">Remove a review only if it is fake, abusive, or not about a real job — never because a trader asked. Every removal is logged with a reason and can be undone.</div>' +
+        (all.length ? all.map(function (r) { return reviewHTML(r, trader(r.trader_id), true); }).join("")
+                    : '<div class="empty">No reviews yet.</div>') + '</div>';
+    } else {
+      body = '<div class="form"><h2 style="font-size:1.1rem">Account</h2>' +
+        '<p class="sub">Signed in as ' + esc(auth.email || "?") + '</p>' +
+        '<div class="formnote">Data lives in your Supabase project. Export it any time from the Supabase dashboard under <b>Table Editor → ⋮ → Export as CSV</b>. That export is your backup and your migration path.</div>' +
+        '<button class="btn ghost wide" id="signout" style="margin-bottom:2rem">Sign out</button></div>';
+    }
+
+    return adminBar("Admin", false) + kpis + tabs + '<div style="height:.9rem"></div>' + body +
+      '<div style="padding:1.5rem 1rem 0;border-top:1px solid var(--rule);margin-top:1.5rem">' +
+      '<a href="#" id="toshop" style="color:var(--ink-2);font-size:.85rem">← View the public register</a></div>';
+  }
+
+  function adminEdit() {
+    var t = state.editId ? trader(state.editId) : null;
+    var isNew = !t;
+    t = t || { name: "", cat: CATS[0], area: "", phone: "", whatsapp: "", verified: false };
+    return adminBar(isNew ? "Add a trader" : "Edit trader", true) +
+      '<form class="form" id="tform">' +
+      '<div class="fieldrow"><label for="f-name">Name</label><input id="f-name" name="name" type="text" required maxlength="60" value="' + esc(t.name) + '"></div>' +
+      '<div class="fieldrow"><label for="f-cat">Trade</label><select id="f-cat" name="cat">' +
+      CATS.map(function (c) { return '<option' + (c === t.cat ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join("") + '</select></div>' +
+      '<div class="fieldrow"><label for="f-area">Areas covered</label><input id="f-area" name="area" type="text" placeholder="BL1, BL2, BL6" maxlength="40" value="' + esc(t.area) + '"></div>' +
+      '<div class="fieldrow"><label for="f-phone">Mobile</label><input id="f-phone" name="phone" type="tel" placeholder="07700 900000" maxlength="20" value="' + esc(t.phone) + '"></div>' +
+      '<div class="fieldrow"><label for="f-wa">WhatsApp (if different)</label><input id="f-wa" name="whatsapp" type="tel" maxlength="20" value="' + esc(t.whatsapp) + '"></div>' +
+      '<div class="fieldrow"><label class="opt" style="font-family:var(--f-body);font-weight:400"><input type="checkbox" name="verified"' + (t.verified ? ' checked' : '') + '><span>Insurance and ID checked</span></label></div>' +
+      (isNew ? '<div class="fieldrow"><label class="opt" style="font-family:var(--f-body);font-weight:400"><input type="checkbox" name="consent" required><span><b>They have agreed to be listed.</b> Required — see the consent message in docs/outreach.md.</span></label></div>' : '') +
+      '<button class="btn wide" type="submit" id="savebtn" style="margin:.4rem 0 1rem">' + (isNew ? 'Add trader' : 'Save changes') + '</button>' +
+      (isNew ? '' : '<button class="btn danger wide" type="button" id="delt" style="margin-bottom:2rem">Delete this trader and their reviews</button>') +
+      '</form>';
+  }
+
+  // =========================================================
+  //  RENDER
+  // =========================================================
+
+  function render() {
+    var root = document.getElementById("root");
+    var html;
+    if (!configured) html = setupScreen();
+    else if (state.loading) html = '<div class="bar"><h1>Bolton Trades</h1></div><div class="spinner">Loading the register…</div>';
+    else if (state.error) html = errorScreen();
+    else if (state.side === "admin") {
+      html = !auth.token ? adminLogin() : state.view === "edit" ? adminEdit() : adminHome();
+    } else {
+      html = state.view === "profile" ? shopProfile() : state.view === "form" ? shopForm() : shopList();
+    }
+    root.innerHTML = html;
+    wire();
+    window.scrollTo(0, 0);
+  }
+
+  function goShop(v) { state.side = "shop"; state.view = v || "list"; if (location.hash) location.hash = ""; render(); }
+
+  function busy(id, on, label) {
+    var b = document.getElementById(id);
+    if (!b) return;
+    b.disabled = on;
+    if (on) { b.dataset.was = b.textContent; b.textContent = label || "Working…"; }
+    else if (b.dataset.was) b.textContent = b.dataset.was;
+  }
+
+  function wire() {
+    on("retry", "click", load);
+    on("q", "input", function (e) {
+      var pos = e.target.selectionStart; state.q = e.target.value; render();
+      var n = document.getElementById("q"); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} }
+    });
+    each(".chip[data-cat]", function (c) {
+      c.addEventListener("click", function () { state.cat = c.dataset.cat || null; render(); });
+    });
+    each(".card", function (c) {
+      c.addEventListener("click", function () { state.traderId = c.dataset.id; state.view = "profile"; render(); });
+    });
+    on("back", "click", function () {
+      if (state.side === "admin") { state.view = "home"; state.editId = null; render(); }
+      else if (state.view === "form") { state.view = "profile"; render(); }
+      else { state.view = "list"; render(); }
+    });
+    on("leave", "click", function () { state.draft = { quality: 0, code: state.draft.code || "" }; state.view = "form"; render(); });
+    on("toshop", "click", function (e) { e.preventDefault(); goShop("list"); });
+
+    each("[data-contact]", function (a) {
+      a.addEventListener("click", function () {
+        rpc("log_enquiry", { p_trader: a.dataset.contact, p_kind: a.dataset.kind })["catch"](function () {});
+      });
+    });
+
+    each(".qstar", function (b) {
+      b.addEventListener("click", function () {
+        state.draft.quality = Number(b.dataset.q);
+        each(".qstar", function (x) { x.setAttribute("aria-pressed", Number(x.dataset.q) <= state.draft.quality ? "true" : "false"); });
+      });
+    });
+    var ta = document.querySelector("#revform textarea");
+    if (ta) { var cc = document.getElementById("cc"); cc.textContent = ta.value.length;
+      ta.addEventListener("input", function () { cc.textContent = ta.value.length; }); }
+
+    on("revform", "submit", onReview);
+    on("loginform", "submit", onLogin);
+    on("tform", "submit", onTrader);
+    on("addbtn", "click", function () { state.editId = null; state.view = "edit"; render(); });
+    on("signout", "click", function () { signOut(); state.view = "home"; load(); });
+
+    each("[data-tab]", function (b) { b.addEventListener("click", function () { state.tab = b.dataset.tab; render(); }); });
+    each("[data-edit]", function (b) { b.addEventListener("click", function () { state.editId = b.dataset.edit; state.view = "edit"; render(); }); });
+    each("[data-view]", function (b) { b.addEventListener("click", function () { state.traderId = b.dataset.view; goShop("profile"); }); });
+
+    each("[data-pay]", function (b) {
+      b.addEventListener("click", function () {
+        var t = trader(b.dataset.pay);
+        patch("traders?id=eq." + t.id, { paying: !t.paying });
+      });
+    });
+    each("[data-pause]", function (b) {
+      b.addEventListener("click", function () {
+        var t = trader(b.dataset.pause);
+        patch("traders?id=eq." + t.id, { status: t.status === "paused" ? "live" : "paused" });
+      });
+    });
+    on("delt", "click", function () {
+      if (!confirm("Delete this trader and every review about them? This cannot be undone.")) return;
+      rest("traders?id=eq." + state.editId, { method: "DELETE" }).then(function () {
+        state.editId = null; state.view = "home"; toast("Trader deleted."); load();
+      })["catch"](fail);
+    });
+    each("[data-remove]", function (b) {
+      b.addEventListener("click", function () {
+        var why = prompt("Why is this being removed? Logged permanently.\n\nFake / abusive / not a real job / other:");
+        if (!why) return;
+        patch("reviews?id=eq." + b.dataset.remove, {
+          removed: true, removed_reason: why.slice(0, 200), removed_at: new Date().toISOString().slice(0, 10)
+        });
+      });
+    });
+    each("[data-restore]", function (b) {
+      b.addEventListener("click", function () {
+        patch("reviews?id=eq." + b.dataset.restore, { removed: false, removed_reason: "" });
+      });
+    });
+    each("[data-reply]", function (b) {
+      b.addEventListener("click", function () {
+        var r = db.reviews.filter(function (x) { return x.id === b.dataset.reply; })[0];
+        var txt = prompt("Reply on behalf of the trader (max 400 chars):", r.reply || "");
+        if (txt === null) return;
+        patch("reviews?id=eq." + r.id, { reply: txt.slice(0, 400) });
+      });
+    });
+  }
+
+  function patch(path, body) {
+    return rest(path, { method: "PATCH", body: body, prefer: "return=minimal" })
+      .then(function () { load(); })["catch"](fail);
+  }
+  function fail(err) { toast(err.message || "That didn't work."); }
+
+  // ---------- actions ----------
+  function onLogin(e) {
+    e.preventDefault();
+    var f = new FormData(e.target);
+    busy("loginbtn", true, "Signing in…");
+    signIn(f.get("email"), f.get("password")).then(function () {
+      // Signed in is not the same as being an admin — check before continuing,
+      // otherwise a typo in the admins table looks like an empty register.
+      return rpc("is_admin", {}).then(function (ok) {
+        if (ok !== true) {
+          signOut();
+          throw new Error("That account isn't an admin. Add its email to the admins table in Supabase.");
+        }
+      });
+    }).then(function () {
+      state.view = "home"; return load();
+    })["catch"](function (err) {
+      // Deliberately no re-render: it would wipe what they just typed.
+      busy("loginbtn", false);
+      toast(err.message || "Couldn't sign in.");
+    });
+  }
+
+  function onReview(e) {
+    e.preventDefault();
+    var f = new FormData(e.target);
+    var d = {
+      code: (f.get("code") || "").trim(),
+      who: (f.get("who") || "").trim(),
+      job: (f.get("job") || "").trim(),
+      on_time: f.get("on_time"), quote: f.get("quote"),
+      tidy: f.get("tidy"), again: f.get("again"),
+      comment: (f.get("comment") || "").trim(),
+      quality: state.draft.quality
+    };
+    state.draft = d;
+    if (!d.code) { toast("The group code is needed."); return; }
+    if (d.who.length < 2 || d.job.length < 2) { toast("Your name and the job are both needed."); return; }
+    if (!d.quality) { toast("Pick a quality score from 1 to 5."); return; }
+    if (!d.on_time || !d.quote || !d.tidy || !d.again) { toast("Please answer all the questions."); return; }
+
+    busy("postbtn", true, "Posting…");
+    rpc("submit_review", {
+      p_code: d.code, p_trader: state.traderId, p_who: d.who, p_job: d.job,
+      p_quality: d.quality, p_on_time: d.on_time, p_quote: d.quote,
+      p_tidy: d.tidy === "yes", p_again: d.again, p_comment: d.comment
+    }).then(function () {
+      state.draft = { quality: 0, code: d.code };
+      state.view = "profile";
+      toast("Review posted. Thanks.");
+      return load();
+    })["catch"](function (err) {
+      busy("postbtn", false);
+      toast(err.message || "Couldn't post that.");
+    });
+  }
+
+  function onTrader(e) {
+    e.preventDefault();
+    var f = new FormData(e.target);
+    var row = {
+      name: (f.get("name") || "").trim(),
+      cat: f.get("cat"),
+      area: (f.get("area") || "").trim(),
+      phone: (f.get("phone") || "").trim(),
+      whatsapp: (f.get("whatsapp") || "").trim(),
+      verified: !!f.get("verified")
+    };
+    if (row.name.length < 2) { toast("A name is needed."); return; }
+    busy("savebtn", true, "Saving…");
+    var p = state.editId
+      ? rest("traders?id=eq." + state.editId, { method: "PATCH", body: row, prefer: "return=minimal" })
+      : rest("traders", { method: "POST", body: row, prefer: "return=minimal" });
+    p.then(function () {
+      state.editId = null; state.view = "home";
+      toast("Saved."); return load();
+    })["catch"](function (err) {
+      busy("savebtn", false);
+      toast(err.message || "Couldn't save that.");
+    });
+  }
+
+  // ---------- boot ----------
+  window.addEventListener("hashchange", function () {
+    var wantAdmin = location.hash.indexOf("admin") > -1;
+    if (wantAdmin !== (state.side === "admin")) {
+      state.side = wantAdmin ? "admin" : "shop";
+      state.view = wantAdmin ? "home" : "list";
+      render();
+    }
+  });
+
+  if (!configured) { state.loading = false; render(); }
+  else load();
+})();
+</script>
+</body>
+</html>
