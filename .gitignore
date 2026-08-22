@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# builds
+.next/
+out/
+build/
+dist/
+
+# environment — never commit these
+.env
+.env.local
+.env*.local
+
+# register data — these contain real names and phone numbers
+prototype/*.backup.json
+*.register.json
+*.backup.html
+
+# os / editor
+.DS_Store
+*.pem
+.vercel
+.idea/
+.vscode/
