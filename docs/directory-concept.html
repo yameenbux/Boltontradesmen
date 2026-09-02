@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Bolton Trades public directory concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap">
+
+<style>
+  /* ====================================================================
+     BOLTON TRADES - public directory, design concept
+
+     A design reference, not a running page. It does not talk to
+     Supabase and it is not linked from index.html. Sample rows only.
+
+     It follows the project's model rather than a star directory:
+       - "Would use again" is the headline number, per the README
+       - the four structured percentages replace a star box
+       - quality is Bayesian-shrunk with the live constants,
+         M = 3 and a 24 month recency half-life, matching
+         index.html so the two cannot drift apart
+       - `paying` is never read when ordering, and the page has a
+         switch that proves it rather than asserting it
+       - only status 'live' with a consent date is ever shown
+
+     Visual system carried over from a separate design study:
+     Uses the live app's own tokens: Archivo / Public Sans, the amber
+     brand, the green "good" ramp, and full dark mode. Six category
+     colours checked with a colour-vision validator (worst adjacent dE 9.4).
+     ==================================================================== */
+
+  :root {
+    color-scheme: light dark;
+    /* Tokens below mirror index.html so the concept reads as the same product. */
+    --bg:#FAFAF7; --card:#FFFFFF; --sunk:#F1F0EA;
+    --ink:#191B1E; --ink-2:#63666C; --muted:#63666C; --faint:#6E7178;
+    --line:#E3E1DA; --line-firm:#8E8A7E;
+    --primary:#E39B0C; --primary-dk:#C4850A; --on-primary:#1A1400; --primary-t:#FBF1DC;
+    --good:#2E7D5B; --good-ink:#245F45; --good-t:#E6F1EC; --on-good:#FFFFFF;
+    --alert:#B04435; --alert-t:#F8EAE8; --warn:#8A6200; --warn-t:#FBF1DC;
+    --focus:#1C2836;
+
+    --c-plumb:#2a78d6; --c-elec:#c98500; --c-join:#d95926;
+    --c-roof:#4a3aa7;  --c-heat:#199e70; --c-plast:#d55181;
+    --t-plumb:#E8F1FC; --n-plumb:#1B5A9E;
+    --t-elec:#FBF2DF;  --n-elec:#8A5B00;
+    --t-join:#FBEDE7;  --n-join:#9C3C17;
+    --t-roof:#EBE9F7;  --n-roof:#3A2C84;
+    --t-heat:#E4F3EC;  --n-heat:#116C4D;
+    --t-plast:#FBEAF0; --n-plast:#9C2F55;
+
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+    --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
+    --r:10px; --r-sm:7px;
+    --head:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,sans-serif;
+    --body:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,sans-serif;
+    --ease:cubic-bezier(0.23,1,0.32,1);
+    --shell:1180px;
+  }
+  /* Dark values only. Every colour above has a light definition on bare :root. */
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101214; --card:#181A1E; --sunk:#212429;
+    --ink:#ECEDEA; --ink-2:#9BA0A7; --muted:#9BA0A7; --faint:#8A9099;
+    --line:#2B2F35; --line-firm:#666D77;
+    --primary:#F0AC24; --primary-dk:#FFC24A; --on-primary:#1A1400; --primary-t:#2A2213;
+    --good:#6FC59B; --good-ink:#6FC59B; --good-t:#16261F; --on-good:#0E1A14;
+    --alert:#E08376; --alert-t:#291816; --warn:#E8B44A; --warn-t:#2A2213;
+    --focus:#F0AC24;
+    --c-plumb:#8FC0EE; --c-elec:#E3B45C; --c-join:#F0977A;
+    --c-roof:#A99DE8;  --c-heat:#5CCBA0; --c-plast:#EE93B4;
+    --t-plumb:#16283A; --n-plumb:#8FC0EE;
+    --t-elec:#2C2411;  --n-elec:#E3B45C;
+    --t-join:#301C13;  --n-join:#F0977A;
+    --t-roof:#262038;  --n-roof:#A99DE8;
+    --t-heat:#12281F;  --n-heat:#5CCBA0;
+    --t-plast:#381C27; --n-plast:#EE93B4;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101214; --card:#181A1E; --sunk:#212429;
+    --ink:#ECEDEA; --ink-2:#9BA0A7; --muted:#9BA0A7; --faint:#8A9099;
+    --line:#2B2F35; --line-firm:#666D77;
+    --primary:#F0AC24; --primary-dk:#FFC24A; --on-primary:#1A1400; --primary-t:#2A2213;
+    --good:#6FC59B; --good-ink:#6FC59B; --good-t:#16261F; --on-good:#0E1A14;
+    --alert:#E08376; --alert-t:#291816; --warn:#E8B44A; --warn-t:#2A2213;
+    --focus:#F0AC24;
+    --c-plumb:#8FC0EE; --c-elec:#E3B45C; --c-join:#F0977A;
+    --c-roof:#A99DE8;  --c-heat:#5CCBA0; --c-plast:#EE93B4;
+    --t-plumb:#16283A; --n-plumb:#8FC0EE;
+    --t-elec:#2C2411;  --n-elec:#E3B45C;
+    --t-join:#301C13;  --n-join:#F0977A;
+    --t-roof:#262038;  --n-roof:#A99DE8;
+    --t-heat:#12281F;  --n-heat:#5CCBA0;
+    --t-plast:#381C27; --n-plast:#EE93B4;
+  }
+  *{box-sizing:border-box}
+  img{max-width:100%;display:block}
+  body{margin:0;background:var(--bg);color:var(--ink-2);font-family:var(--body);
+       font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{margin:0;font-family:var(--head);color:var(--ink);text-wrap:balance}
+  h1{font-size:clamp(1.9rem,4vw,2.7rem);font-weight:600;line-height:1.1;letter-spacing:-0.025em}
+  h2{font-size:1.25rem;font-weight:600;letter-spacing:-0.015em}
+  h3{font-size:1.0625rem;font-weight:600;letter-spacing:-0.01em}
+  p{margin:0}
+  .num{font-variant-numeric:tabular-nums}
+  .shell{max-width:var(--shell);margin:0 auto;padding:0 var(--sp-5)}
+  @media(max-width:620px){.shell{padding:0 var(--sp-4)}}
+  button,select,input{font-family:inherit}
+  button{cursor:pointer}
+  a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{
+    outline:2px solid var(--focus);outline-offset:2px;border-radius:5px}
+
+  /* This is a concept file. Say so, loudly, at the top. */
+  .notice{background:var(--warn-t);border-bottom:1px solid var(--primary);color:var(--warn);
+          font-size:0.875rem;padding:var(--sp-3) var(--sp-5);text-align:center}
+  .notice b{font-weight:600}
+
+  header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .head-in{max-width:var(--shell);margin:0 auto;padding:var(--sp-3) var(--sp-5);
+           display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4)}
+  .logo{display:flex;align-items:center;gap:var(--sp-3);text-decoration:none}
+  .logo .m{width:34px;height:34px;border-radius:9px;background:var(--primary);
+           display:grid;place-items:center;flex:none}
+  .logo b{font-family:var(--head);font-size:1.125rem;font-weight:600;color:var(--ink);letter-spacing:-0.02em}
+  .logo span{display:block;font-size:0.6875rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);
+       padding:10px 16px;border-radius:var(--r-sm);border:1px solid transparent;
+       font-size:0.9375rem;font-weight:600;white-space:nowrap;text-decoration:none;
+       transition:background-color 200ms var(--ease),border-color 200ms var(--ease),transform 140ms var(--ease)}
+  .btn:active{transform:scale(.975)}
+  .btn-primary{background:var(--primary);color:var(--on-primary)}
+  .btn-quiet{background:var(--card);color:var(--ink);border-color:var(--line-firm)}
+  .btn-sm{padding:7px 12px;font-size:0.875rem}
+  @media(hover:hover) and (pointer:fine){
+    .btn-primary:hover{background:var(--primary-dk)}
+    .btn-quiet:hover{border-color:var(--ink-2)}
+  }
+
+  .hero{padding:var(--sp-8) 0 var(--sp-5)}
+  .hero p.lede{font-size:1.0625rem;color:var(--muted);max-width:56ch;margin-top:var(--sp-3)}
+
+  .toolbar{display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap;padding:var(--sp-5) 0 var(--sp-3)}
+  .chips{display:flex;flex-wrap:wrap;gap:var(--sp-2)}
+  .chip{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;
+        font-size:0.875rem;font-weight:500;background:var(--card);color:var(--ink-2);
+        border:1px solid var(--line);
+        transition:border-color 180ms var(--ease),background-color 180ms var(--ease)}
+  .chip i{width:9px;height:9px;border-radius:3px;flex:none;background:var(--dot)}
+  .chip[aria-pressed="true"]{background:var(--tint);border-color:var(--dot);color:var(--ink);font-weight:600}
+  @media(hover:hover) and (pointer:fine){.chip:hover{border-color:var(--line-firm)}}
+  .tools-right{margin-left:auto;display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap}
+  .tools-right label{font-size:0.8125rem;color:var(--muted)}
+  .tools-right select{font-size:0.875rem;padding:7px 10px;border-radius:var(--r-sm);
+                      border:1px solid var(--line);background:var(--card);color:var(--ink)}
+
+  /* The switch that demonstrates the rule instead of claiming it */
+  .proof{display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap;
+         background:var(--good-t);border:1px solid var(--good);border-radius:var(--r);
+         padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-4)}
+  .proof p{font-size:0.9375rem;color:var(--ink);flex:1;min-width:16rem}
+  .switch{display:inline-flex;align-items:center;gap:var(--sp-2);font-size:0.875rem;
+          font-weight:600;color:var(--ink);background:var(--card);border:1px solid var(--good);
+          border-radius:999px;padding:6px 12px 6px 8px}
+  .switch i{width:30px;height:17px;border-radius:999px;background:var(--line-firm);position:relative;flex:none;
+            transition:background-color 200ms var(--ease)}
+  .switch i::after{content:"";position:absolute;top:2.5px;left:2.5px;width:12px;height:12px;
+                   border-radius:999px;background:var(--card);transition:transform 200ms var(--ease)}
+  .switch[aria-pressed="true"] i{background:var(--good)}
+  .switch[aria-pressed="true"] i::after{transform:translateX(13px)}
+
+  /* The tier gate is a rule, so it gets a rule on the page. */
+  .tier{display:flex;align-items:center;gap:var(--sp-3);margin:var(--sp-5) 0 var(--sp-4)}
+  .tier::before,.tier::after{content:"";height:1px;background:var(--line);flex:1}
+  .tier span{font-size:0.8125rem;color:var(--muted);white-space:normal;text-align:center}
+  @media(max-width:520px){.tier::before,.tier::after{display:none}}
+
+  .count{font-size:0.9375rem;color:var(--muted);margin-bottom:var(--sp-3)}
+  .count b{color:var(--ink);font-weight:600}
+
+  .split{display:grid;grid-template-columns:1fr 330px;gap:var(--sp-5);align-items:start;padding-bottom:var(--sp-10)}
+  @media(max-width:1000px){.split{grid-template-columns:1fr}.aside{order:-1}}
+
+  .results{display:flex;flex-direction:column;gap:var(--sp-3)}
+  .trader{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+          padding:var(--sp-4) var(--sp-5);
+          transition:border-color 180ms var(--ease),box-shadow 180ms var(--ease)}
+  .trader.lit{border-color:var(--good);box-shadow:0 0 0 1px var(--good)}
+  .trader.pays{background:linear-gradient(0deg,var(--primary-t),var(--primary-t)),var(--card)}
+  .t-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-4);flex-wrap:wrap}
+  .t-id{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .t-tags{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
+  .t-cat{font-size:0.75rem;font-weight:600;padding:3px 9px;border-radius:5px;background:var(--tint);color:var(--tone)}
+  .badge{display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;font-weight:600;
+         padding:3px 8px;border-radius:5px;background:var(--good-t);color:var(--good-ink)}
+  .badge.pay{background:var(--primary-t);color:var(--warn);border:1px solid var(--primary)}
+  .t-area{font-size:0.875rem;color:var(--muted)}
+
+  /* "Would use again" is the hero number, per the README */
+  .again{text-align:right;flex:none}
+  .again .v{font-family:var(--head);font-size:2rem;font-weight:700;line-height:1;
+            color:var(--good);font-variant-numeric:tabular-nums}
+  .again .v.low{color:var(--warn)}
+  .again .k{font-size:0.75rem;color:var(--muted);display:block;margin-top:2px}
+
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-3);
+           margin-top:var(--sp-4);padding-top:var(--sp-3);border-top:1px solid var(--line)}
+  @media(max-width:560px){.metrics{grid-template-columns:1fr 1fr}}
+  .metric .v{font-family:var(--head);font-weight:600;font-size:1.0625rem;color:var(--ink);font-variant-numeric:tabular-nums}
+  .metric .k{font-size:0.75rem;color:var(--muted);line-height:1.3}
+  .metric .v small{font-weight:400;color:var(--muted);font-size:0.8125rem}
+
+  .t-foot{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);
+          margin-top:var(--sp-3);flex-wrap:wrap}
+  .t-foot .n{font-size:0.8125rem;color:var(--faint)}
+
+  .empty{background:var(--card);border:1px dashed var(--line-firm);border-radius:var(--r);
+         padding:var(--sp-8) var(--sp-5);text-align:center;
+         display:flex;flex-direction:column;align-items:center;gap:var(--sp-3)}
+  .empty p{color:var(--muted);max-width:34ch;font-size:0.9375rem}
+
+  .aside{position:sticky;top:80px;display:flex;flex-direction:column;gap:var(--sp-3)}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-4)}
+  .panel h3{font-size:0.9375rem;margin-bottom:2px}
+  .panel p.sub{font-size:0.8125rem;color:var(--muted);margin-bottom:var(--sp-3)}
+  svg.plot{display:block;width:100%;height:auto;overflow:visible}
+  .plot text.axis{font-size:9px;fill:var(--faint);font-family:var(--body)}
+  .plot .gridline{stroke:var(--line);stroke-width:1}
+  .plot .link{stroke:var(--line-firm);stroke-width:1.5}
+  .plot .raw{fill:var(--card);stroke:var(--line-firm);stroke-width:1.5}
+  .plot .shrunk{fill:var(--good)}
+  .plot .lbl{font-size:9.5px;fill:var(--ink-2);font-family:var(--body)}
+  .legend{display:flex;gap:var(--sp-4);margin-top:var(--sp-3);font-size:0.8125rem;color:var(--ink-2)}
+  .legend div{display:flex;align-items:center;gap:6px}
+
+  footer{border-top:1px solid var(--line);background:var(--card);padding:var(--sp-6) 0}
+  .foot{display:flex;flex-wrap:wrap;gap:var(--sp-3) var(--sp-6);justify-content:space-between;align-items:center}
+  .foot p{font-size:0.8125rem;color:var(--faint)}
+
+  .rise{opacity:0;transform:translateY(12px)}
+  .rise.in{opacity:1;transform:none;transition:opacity 300ms var(--ease),transform 300ms var(--ease)}
+  @media(prefers-reduced-motion:reduce){
+    .rise,.rise.in{opacity:1;transform:none;transition:none}
+    *{transition-duration:1ms !important}
+  }
+</style>
+</head>
+<body>
+
+<div class="notice">
+  <b>Design concept.</b> Not wired to Supabase, not linked from the live app. Every trader and review below is invented.
+</div>
+
+<header>
+  <div class="head-in">
+    <a class="logo" href="#top">
+      <span class="m" aria-hidden="true">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12 12 4l9 8"/><path d="M6 11v8h12v-8"/>
+        </svg>
+      </span>
+      <span><b>Bolton Trades</b><span>Community register</span></span>
+    </a>
+    <a class="btn btn-quiet btn-sm" href="../index.html">Back to the app</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="shell">
+      <h1 class="rise">Who the group actually recommends.</h1>
+      <p class="lede rise">
+        Every trader here was put forward by someone in the Bolton Tradesmen group and agreed to be
+        listed. Reviews are six specific questions about one real job, not a star box.
+      </p>
+    </div>
+  </section>
+
+  <div class="shell">
+    <div class="toolbar">
+      <div class="chips" id="chips" role="group" aria-label="Filter by trade"></div>
+      <div class="tools-right">
+        <label for="f-min">Minimum reviews</label>
+        <select id="f-min">
+          <option value="0" selected>Any</option>
+          <option value="3">3 or more</option>
+          <option value="8">8 or more</option>
+        </select>
+        <label for="f-sort">Order by</label>
+        <select id="f-sort">
+          <option value="again" selected>Would use again</option>
+          <option value="score">Quality score</option>
+          <option value="reviews">Most reviewed</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="proof">
+      <p>
+        Ordering never reads the billing column. Switch this on and the traders who pay are marked
+        where they already are, so you can see the list does not move.
+      </p>
+      <button class="switch" id="showPay" aria-pressed="false" type="button">
+        <i aria-hidden="true"></i> Show who pays
+      </button>
+    </div>
+
+    <p class="count" id="count" aria-live="polite"></p>
+
+    <div class="split">
+      <div class="results" id="list"></div>
+
+      <aside class="aside">
+        <div class="panel rise">
+          <h3>Why a 5.0 can sit below a 4.6</h3>
+          <p class="sub">
+            Two rules, both taken straight from the app. Anyone under three reviews is held
+            below everyone at or over it, however well they score. Above that line the quality
+            score is pulled toward the register average by a prior worth three reviews, so the
+            dots below move furthest for the traders with least evidence.
+          </p>
+          <svg class="plot" id="plot" viewBox="0 0 300 250" role="img"
+               aria-label="For each trader, the raw average and the shrunk score, joined by a line. Traders with few reviews move furthest."></svg>
+          <div class="legend">
+            <div><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="var(--card)" stroke="var(--line-firm)" stroke-width="1.5"/></svg> Raw average</div>
+            <div><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="var(--good)"/></svg> Shrunk score</div>
+          </div>
+        </div>
+
+        <div class="panel rise">
+          <h3>What a review asks</h3>
+          <p class="sub" style="margin-bottom:0">
+            Turned up when they said. Price within the quote. Quality one to five. Left it clean.
+            Would use again. Plus the job and a comment.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="shell foot">
+    <p>Bolton Trades, community register. Design concept only, with invented sample data.</p>
+    <p>Money buys tools and verification. It never buys a position.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Constants copied from index.html so the two cannot drift */
+  var M = 3, HALF_LIFE = 24;
+
+  var CATS = [
+    { k:'Plumbing',   v:'--c-plumb', tint:'var(--t-plumb)', tone:'var(--n-plumb)' },
+    { k:'Electrical', v:'--c-elec',  tint:'var(--t-elec)',  tone:'var(--n-elec)'  },
+    { k:'Joinery',    v:'--c-join',  tint:'var(--t-join)',  tone:'var(--n-join)'  },
+    { k:'Roofing',    v:'--c-roof',  tint:'var(--t-roof)',  tone:'var(--n-roof)'  },
+    { k:'Heating',    v:'--c-heat',  tint:'var(--t-heat)',  tone:'var(--n-heat)'  },
+    { k:'Plastering', v:'--c-plast', tint:'var(--t-plast)', tone:'var(--n-plast)' }
+  ];
+  function C(k){ for (var i=0;i<CATS.length;i++) if (CATS[i].k===k) return CATS[i]; return CATS[0]; }
+
+  /* Sample rows shaped like the real tables.
+     review tuple: [quality, on_time, quote, tidy, again, monthsAgo]
+       on_time y|l|n   quote y|s|o   tidy 1|0   again y|m|n           */
+  var TRADERS = [
+    { name:'Halliwell Plumbing', cat:'Plumbing', area:'Halliwell', verified:true, paying:true, status:'live',
+      rev:[[5,'y','y',1,'y',1],[5,'y','y',1,'y',3],[4,'y','s',1,'y',5],[5,'y','y',1,'y',8],
+           [4,'l','y',1,'y',11],[5,'y','y',1,'y',14],[5,'y','y',0,'y',18],[4,'y','s',1,'m',22],
+           [5,'y','y',1,'y',26],[4,'y','y',1,'y',31]] },
+    { name:'Ainsworth Electrical', cat:'Electrical', area:'Astley Bridge', verified:true, paying:false, status:'live',
+      rev:[[5,'y','y',1,'y',2],[4,'y','y',1,'y',4],[5,'y','y',1,'y',7],[5,'l','y',1,'y',10],
+           [4,'y','s',1,'y',13],[5,'y','y',1,'y',17],[4,'y','y',0,'m',21],[5,'y','y',1,'y',25]] },
+    { name:'Deane Joinery Works', cat:'Joinery', area:'Deane', verified:true, paying:false, status:'live',
+      rev:[[5,'y','y',1,'y',2],[5,'y','y',1,'y',6]] },
+    { name:'Bromley Cross Heating', cat:'Heating', area:'Bromley Cross', verified:true, paying:true, status:'live',
+      rev:[[5,'y','y',1,'y',1],[4,'y','y',1,'y',2],[5,'y','y',1,'y',4],[5,'y','s',1,'y',6],
+           [4,'l','y',1,'y',9],[5,'y','y',1,'y',12],[5,'y','y',1,'y',15],[4,'y','y',1,'m',19],
+           [5,'y','y',1,'y',23],[4,'y','s',0,'y',28],[5,'y','y',1,'y',33],[4,'y','y',1,'y',38]] },
+    { name:'Sharples Plastering', cat:'Plastering', area:'Sharples', verified:false, paying:false, status:'live',
+      rev:[[4,'y','y',1,'y',3],[5,'y','y',1,'y',7],[4,'l','s',1,'m',12],[4,'y','y',1,'y',16],
+           [3,'l','o',0,'m',20],[4,'y','y',1,'y',27]] },
+    { name:'Horwich Roof & Leadwork', cat:'Roofing', area:'Horwich', verified:true, paying:true, status:'live',
+      rev:[[5,'y','y',1,'y',2],[4,'y','s',1,'y',5],[5,'y','y',1,'y',9],[4,'y','y',1,'y',13],
+           [5,'l','y',1,'y',18],[4,'y','s',1,'m',24],[5,'y','y',1,'y',30]] },
+    { name:'Farnworth Drains', cat:'Plumbing', area:'Farnworth', verified:false, paying:false, status:'live',
+      rev:[[4,'y','y',1,'y',4],[3,'l','s',0,'m',9],[4,'y','y',1,'y',15],[4,'y','s',1,'y',21]] },
+    { name:'Egerton Electrical', cat:'Electrical', area:'Egerton', verified:false, paying:false, status:'live',
+      rev:[[5,'y','y',1,'y',3],[5,'y','y',1,'y',11]] },
+    /* Consent withdrawn: never rendered, exactly like status 'paused' */
+    { name:'Withheld Example', cat:'Joinery', area:'Bolton', verified:false, paying:false, status:'paused',
+      rev:[[5,'y','y',1,'y',2]] }
+  ];
+
+  /* --- scoring, identical to index.html --- */
+  function wt(m){ return Math.pow(0.5, m / HALF_LIFE); }
+  function pct(l, f){ return l.length ? Math.round(100 * l.filter(f).length / l.length) : 0; }
+
+  function platformMean() {
+    var n = 0, d = 0;
+    TRADERS.filter(function(t){return t.status==='live';}).forEach(function (t) {
+      t.rev.forEach(function (r) { var w = wt(r[5]); n += w * r[0]; d += w; });
+    });
+    return d ? n / d : 4.3;
+  }
+  var MEAN = platformMean();
+
+  function stats(t) {
+    var rs = t.rev, v = rs.length;
+    if (!v) return { n:0 };
+    var n = 0, d = 0;
+    rs.forEach(function (r) { var w = wt(r[5]); n += w * r[0]; d += w; });
+    var R = n / d;
+    return {
+      n: v, raw: R,
+      score: (v / (v + M)) * R + (M / (v + M)) * MEAN,
+      onTime: pct(rs, function (x) { return x[1] === 'y'; }),
+      quote:  pct(rs, function (x) { return x[2] === 'y'; }),
+      tidy:   pct(rs, function (x) { return x[3] === 1;  }),
+      again: pct(rs, function (x) { return x[4] === 'y'; })
+    };
+  }
+
+  TRADERS.forEach(function (t) { t.s = stats(t); });
+
+  var state = { cats: [], minRev: 0, sort: 'again', showPay: false };
+
+  /* --- chips --- */
+  var chipHost = document.getElementById('chips');
+  CATS.forEach(function (c) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.setAttribute('aria-pressed', 'false');
+    b.style.setProperty('--dot', 'var(' + c.v + ')');
+    b.style.setProperty('--tint', c.tint);
+    b.innerHTML = '<i aria-hidden="true"></i>' + c.k;
+    b.addEventListener('click', function () {
+      var on = b.getAttribute('aria-pressed') === 'true';
+      b.setAttribute('aria-pressed', on ? 'false' : 'true');
+      if (on) state.cats = state.cats.filter(function (x) { return x !== c.k; });
+      else state.cats.push(c.k);
+      render();
+    });
+    chipHost.appendChild(b);
+  });
+
+  /* --- selection ---
+     status and consent gate first, then the user's filters. The sort
+     comparators never look at `paying`. */
+  function visible() {
+    return TRADERS
+      .filter(function (t) { return t.status === 'live'; })
+      .filter(function (t) {
+        if (state.cats.length && state.cats.indexOf(t.cat) === -1) return false;
+        if (t.s.n < state.minRev) return false;
+        return true;
+      })
+      .sort(function (a, b) {
+        /* Lifted from index.html line 364. Traders with fewer than M reviews
+           always sit below those with M or more, whatever they score, so two
+           glowing reviews cannot reach the top of the page at all. Within the
+           established tier it is the shrunk score; within the new tier it is
+           review count, then name. */
+        var ar = a.s.n >= M, br = b.s.n >= M;
+        if (ar !== br) return ar ? -1 : 1;
+        if (state.sort === 'reviews') return b.s.n - a.s.n || a.name.localeCompare(b.name);
+        if (state.sort === 'again' && ar) return b.s.again - a.s.again || b.s.score - a.s.score;
+        if (ar) return b.s.score - a.s.score || b.s.n - a.s.n;
+        return b.s.n - a.s.n || a.name.localeCompare(b.name);
+      });
+  }
+
+  var TICK = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  var list = document.getElementById('list');
+  var count = document.getElementById('count');
+
+  function render() {
+    var rows = visible();
+    count.innerHTML = rows.length
+      ? '<b>' + rows.length + '</b> traders listed, all with consent on file'
+      : 'No traders match those filters';
+
+    if (!rows.length) {
+      list.innerHTML = '<div class="empty"><h3>Nothing matches yet</h3>' +
+        '<p>Try lowering the minimum review count, or clearing a trade.</p>' +
+        '<button class="btn btn-quiet btn-sm" id="clear" type="button">Clear filters</button></div>';
+      document.getElementById('clear').addEventListener('click', function () {
+        state.cats = []; state.minRev = 0;
+        document.getElementById('f-min').value = '0';
+        Array.prototype.forEach.call(chipHost.children, function (c) { c.setAttribute('aria-pressed', 'false'); });
+        render();
+      });
+      plot([]);
+      return;
+    }
+
+    var firstNew = -1;
+    for (var q = 0; q < rows.length; q++) { if (rows[q].s.n < M) { firstNew = q; break; } }
+
+    list.innerHTML = rows.map(function (t, i) {
+      var div = (i === firstNew)
+        ? '<div class="tier"><span>Fewer than ' + M + ' reviews, so held below the list above</span></div>'
+        : '';
+      return div + card(t, i);
+    }).join('');
+
+    bindCards(rows);
+  }
+
+  function card(t, i) {
+    var c = C(t.cat), s = t.s;
+    return '<article class="trader' + (state.showPay && t.paying ? ' pays' : '') + '" data-i="' + i + '" tabindex="0">' +
+      '<div class="t-head">' +
+        '<div class="t-id">' +
+          '<h3>' + t.name + '</h3>' +
+          '<div class="t-tags">' +
+            '<span class="t-cat" style="--tint:' + c.tint + ';--tone:' + c.tone + '">' + t.cat + '</span>' +
+            (t.verified ? '<span class="badge">' + TICK + 'ID checked</span>' : '') +
+            (state.showPay && t.paying ? '<span class="badge pay">Pays for tools</span>' : '') +
+          '</div>' +
+          '<span class="t-area">' + t.area + '</span>' +
+        '</div>' +
+        '<div class="again">' +
+          '<span class="v' + (s.again < 70 ? ' low' : '') + '">' + s.again + '%</span>' +
+          '<span class="k">would use again</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="metrics">' +
+        '<div class="metric"><div class="v">' + s.onTime + '%</div><div class="k">turned up on time</div></div>' +
+        '<div class="metric"><div class="v">' + s.quote + '%</div><div class="k">kept to quote</div></div>' +
+        '<div class="metric"><div class="v">' + s.tidy + '%</div><div class="k">left it clean</div></div>' +
+        '<div class="metric"><div class="v">' + s.score.toFixed(1) + ' <small>/ 5</small></div><div class="k">quality, shrunk</div></div>' +
+      '</div>' +
+      '<div class="t-foot">' +
+        '<span class="n num">' + s.n + ' review' + (s.n === 1 ? '' : 's') +
+          ' &middot; raw average ' + s.raw.toFixed(1) + '/5 before the prior</span>' +
+        '<button class="btn btn-primary btn-sm" type="button">Ask for a quote</button>' +
+      '</div>' +
+    '</article>';
+  }
+
+  function bindCards(rows) {
+    Array.prototype.forEach.call(list.querySelectorAll('.trader'), function (node) {
+      var i = +node.dataset.i;
+      ['pointerenter','focus'].forEach(function (e) { node.addEventListener(e, function () { lift(i, true); }); });
+      ['pointerleave','blur'].forEach(function (e) { node.addEventListener(e, function () { lift(i, false); }); });
+    });
+    plot(rows);
+  }
+
+  /* --- shrinkage plot: raw average against shrunk score --- */
+  var NS = 'http://www.w3.org/2000/svg';
+  var plotEl = document.getElementById('plot');
+  function el(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
+
+  var PL = { l: 96, r: 16, t: 14, b: 26 }, PW = 300, PH = 250;
+
+  function plot(rows) {
+    plotEl.textContent = '';
+    if (!rows.length) return;
+    var h = PH - PL.t - PL.b, w = PW - PL.l - PL.r;
+    var lo = 3.4, hi = 5.02;
+    var X = function (q) { return PL.l + (q - lo) / (hi - lo) * w; };
+    var step = rows.length > 1 ? h / (rows.length - 1) : 0;
+    var Y = function (i) { return rows.length > 1 ? PL.t + i * step : PL.t + h / 2; };
+
+    [3.5, 4, 4.5, 5].forEach(function (q) {
+      plotEl.appendChild(el('line', { class:'gridline', x1:X(q), x2:X(q), y1:PL.t - 6, y2:PL.t + h + 6 }));
+      var tx = el('text', { class:'axis', x:X(q), y:PH - 10, 'text-anchor':'middle' });
+      tx.textContent = q.toFixed(1);
+      plotEl.appendChild(tx);
+    });
+
+    rows.forEach(function (t, i) {
+      var y = Y(i), s = t.s;
+      plotEl.appendChild(el('line', { class:'link', x1:X(s.raw), x2:X(s.score), y1:y, y2:y }));
+      plotEl.appendChild(el('circle', { class:'raw', cx:X(s.raw), cy:y, r:4 }));
+      var dot = el('circle', { class:'shrunk', cx:X(s.score), cy:y, r:4.5, 'data-dot':i });
+      var ttl = el('title');
+      ttl.textContent = t.name + ': raw ' + s.raw.toFixed(2) + ', shrunk ' + s.score.toFixed(2) + ' from ' + s.n + ' reviews';
+      dot.appendChild(ttl);
+      plotEl.appendChild(dot);
+
+      var lab = el('text', { class:'lbl', x:PL.l - 8, y:y + 3, 'text-anchor':'end' });
+      lab.textContent = t.name.length > 15 ? t.name.slice(0, 14) + '\u2026' : t.name;
+      plotEl.appendChild(lab);
+    });
+  }
+
+  function lift(i, on) {
+    var card = list.querySelector('.trader[data-i="' + i + '"]');
+    if (card) card.classList.toggle('lit', on);
+    var dot = plotEl.querySelector('[data-dot="' + i + '"]');
+    if (dot) dot.setAttribute('r', on ? 7 : 4.5);
+  }
+
+  /* --- controls --- */
+  document.getElementById('f-min').addEventListener('change', function (e) {
+    state.minRev = parseInt(e.target.value, 10); render();
+  });
+  document.getElementById('f-sort').addEventListener('change', function (e) {
+    state.sort = e.target.value; render();
+  });
+  var payBtn = document.getElementById('showPay');
+  payBtn.addEventListener('click', function () {
+    state.showPay = payBtn.getAttribute('aria-pressed') !== 'true';
+    payBtn.setAttribute('aria-pressed', state.showPay ? 'true' : 'false');
+    render();
+  });
+
+  var rise = document.querySelectorAll('.rise');
+  if (reduce) Array.prototype.forEach.call(rise, function (e) { e.classList.add('in'); });
+  else Array.prototype.forEach.call(rise, function (e, i) {
+    setTimeout(function () { e.classList.add('in'); }, 80 + i * 60);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
