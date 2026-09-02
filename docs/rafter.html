@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Rafter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  /* ==================================================================
+     RAFTER - find a trade near you
+
+     Resolved from the ui-ux-pro-max dataset:
+       Product   Directory / Listing Site
+       Pattern   Filter-Heavy Grid + Map
+       Palette   "neutral bg + category colour chips + map accent"
+       Type      "Corporate Trust" - Lexend / Source Sans 3
+
+     Three deliberate departures, each measured:
+       1. Its --design-system pass returned #7C3AED on #FAF5FF, which
+          is the AI-purple fingerprint two other installed skills ban
+          outright. Retried per its own verify-then-apply contract and
+          took the trust-green result instead.
+       2. It also proposed Inter. Discouraged as a default by
+          design-taste-frontend and by redesign-existing-projects.
+          Lexend carries the headings instead.
+       3. White on its #059669 primary measures 3.77:1, under AA.
+          Primary is #047857 (5.48:1), which avoids the pure black it
+          suggested as the alternative.
+
+     Category chips ran through the dataviz validator: 6 slots, worst
+     adjacent CVD dE 9.4. One slot warns at 2.99:1 against the surface;
+     every chip carries a visible text label, which is the relief that
+     warning requires.
+     ================================================================== */
+
+  :root {
+    color-scheme: light;
+
+    --bg:        #F6F7F6;
+    --card:      #FFFFFF;
+    --sunk:      #EEF1EF;
+    --ink:       #06231A;
+    --ink-2:     #2F4A40;
+    --muted:     #566A62;
+    --faint:     #859890;
+    --line:      #D8DEDA;
+    --line-firm: #93A49B;
+
+    --primary:    #047857;
+    --primary-dk: #036045;
+    --on-primary: #FFFFFF;
+    --primary-t:  #E7F4EF;
+
+    --star:  #E8A33D;
+    --alert: #B91C1C;
+
+    /* Validated categorical chips, fixed order, never cycled */
+    --c-plumb: #2a78d6;
+    --c-elec:  #c98500;
+    --c-join:  #d95926;
+    --c-roof:  #4a3aa7;
+    --c-heat:  #199e70;
+    --c-plast: #d55181;
+
+    --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+    --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
+
+    --r: 10px; --r-sm: 7px;
+    --head: "Lexend", system-ui, sans-serif;
+    --body: "Source Sans 3", system-ui, sans-serif;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --shell: 1200px;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink-2);
+    font-family: var(--body); font-size: 16px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { margin: 0; font-family: var(--head); color: var(--ink); text-wrap: balance; }
+  h1 { font-size: clamp(2.1rem, 4.4vw, 3.1rem); font-weight: 600; line-height: 1.08; letter-spacing: -0.025em; }
+  h2 { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.015em; }
+  h3 { font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; }
+  p  { margin: 0; }
+  .num { font-variant-numeric: tabular-nums; }
+  .shell { max-width: var(--shell); margin: 0 auto; padding: 0 var(--sp-5); }
+  @media (max-width: 620px) { .shell { padding: 0 var(--sp-4); } }
+
+  button, select, input { font-family: inherit; }
+  button { cursor: pointer; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 5px;
+  }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---------------- Header ---------------- */
+  header {
+    background: var(--card); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .head-in {
+    max-width: var(--shell); margin: 0 auto; padding: var(--sp-3) var(--sp-5);
+    display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4);
+  }
+  .logo { display: flex; align-items: center; gap: var(--sp-3); text-decoration: none; }
+  .logo .m {
+    width: 34px; height: 34px; border-radius: 9px; background: var(--primary);
+    display: grid; place-items: center; flex: none;
+  }
+  .logo b { font-family: var(--head); font-size: 1.1875rem; font-weight: 600; color: var(--ink); letter-spacing: -0.02em; }
+  .head-nav { display: flex; align-items: center; gap: var(--sp-5); }
+  .head-nav a { color: var(--muted); text-decoration: none; font-size: 0.9375rem; transition: color 200ms var(--ease); }
+  @media (max-width: 780px) { .head-nav a { display: none; } }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+    padding: 11px 18px; border-radius: var(--r-sm); border: 1px solid transparent;
+    font-size: 0.9375rem; font-weight: 600; white-space: nowrap; text-decoration: none;
+    transition: background-color 200ms var(--ease), border-color 200ms var(--ease), transform 140ms var(--ease);
+  }
+  .btn:active { transform: scale(0.975); }
+  .btn-primary { background: var(--primary); color: var(--on-primary); }
+  .btn-quiet { background: var(--card); color: var(--ink); border-color: var(--line-firm); }
+  .btn-sm { padding: 8px 13px; font-size: 0.875rem; }
+  @media (hover: hover) and (pointer: fine) {
+    .head-nav a:hover { color: var(--ink); }
+    .btn-primary:hover { background: var(--primary-dk); }
+    .btn-quiet:hover { border-color: var(--ink-2); }
+  }
+
+  /* ---------------- Hero + search ---------------- */
+  .hero { padding: var(--sp-10) 0 var(--sp-6); }
+  .hero-copy { max-width: 40rem; display: flex; flex-direction: column; gap: var(--sp-4); }
+  .hero p.lede { font-size: 1.125rem; color: var(--muted); }
+
+  .searchbar {
+    margin-top: var(--sp-6);
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+    padding: var(--sp-3);
+    display: grid; grid-template-columns: 1.2fr 1fr auto; gap: var(--sp-2);
+    box-shadow: 0 1px 2px rgba(6,35,26,0.04), 0 10px 26px -18px rgba(6,35,26,0.30);
+  }
+  @media (max-width: 760px) { .searchbar { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .field label { font-size: 0.75rem; font-weight: 600; color: var(--muted); padding-left: 2px; }
+  .field input, .field select {
+    font-size: 1rem; padding: 10px 12px; width: 100%; color: var(--ink);
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--r-sm);
+    transition: border-color 180ms var(--ease);
+  }
+  .field input:hover, .field select:hover { border-color: var(--line-firm); }
+  .field .err { font-size: 0.8125rem; color: var(--alert); display: none; }
+  .field.bad input { border-color: var(--alert); background: #FDF1F1; }
+  .field.bad .err { display: block; }
+  .searchbar .btn { align-self: flex-end; height: 42px; }
+
+  /* ---------------- Toolbar ---------------- */
+  .toolbar {
+    display: flex; align-items: center; gap: var(--sp-3);
+    flex-wrap: wrap; padding: var(--sp-5) 0 var(--sp-4);
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 13px; border-radius: 999px; font-size: 0.875rem; font-weight: 500;
+    background: var(--card); color: var(--ink-2);
+    border: 1px solid var(--line);
+    transition: border-color 180ms var(--ease), background-color 180ms var(--ease), color 180ms var(--ease);
+  }
+  .chip i { width: 9px; height: 9px; border-radius: 3px; flex: none; background: var(--dot); }
+  .chip[aria-pressed="true"] { background: var(--tint); border-color: var(--dot); color: var(--ink); font-weight: 600; }
+  @media (hover: hover) and (pointer: fine) { .chip:hover { border-color: var(--line-firm); } }
+
+  .tools-right { margin-left: auto; display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+  .tools-right label { font-size: 0.8125rem; color: var(--muted); }
+  .tools-right select {
+    font-size: 0.875rem; padding: 7px 10px; border-radius: var(--r-sm);
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  }
+  .count { font-size: 0.9375rem; color: var(--muted); }
+  .count b { color: var(--ink); font-weight: 600; }
+
+  /* ---------------- Results + map ---------------- */
+  .split { display: grid; grid-template-columns: 1fr 336px; gap: var(--sp-5); align-items: start; padding-bottom: var(--sp-10); }
+  @media (max-width: 1000px) { .split { grid-template-columns: 1fr; } .mapcol { order: -1; } }
+
+  .results { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .trader {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+    padding: var(--sp-4) var(--sp-5);
+    display: grid; grid-template-columns: 1fr auto; gap: var(--sp-3) var(--sp-5); align-items: start;
+    transition: border-color 180ms var(--ease), box-shadow 180ms var(--ease), transform 180ms var(--ease);
+  }
+  .trader.lit { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+  @media (hover: hover) and (pointer: fine) {
+    .trader:hover { border-color: var(--line-firm); box-shadow: 0 6px 18px -14px rgba(6,35,26,0.5); }
+  }
+  @media (max-width: 560px) { .trader { grid-template-columns: 1fr; } }
+  .t-main { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .t-top { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+  .t-trade {
+    font-size: 0.75rem; font-weight: 600; padding: 3px 9px; border-radius: 5px;
+    background: var(--tint); color: var(--tone);
+  }
+  .verified {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.75rem; font-weight: 600; color: var(--primary);
+    background: var(--primary-t); padding: 3px 8px; border-radius: 5px;
+  }
+  .t-meta { display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap; font-size: 0.875rem; color: var(--muted); }
+  .stars { display: inline-flex; align-items: center; gap: 5px; }
+  .stars svg { color: var(--star); }
+  .stars b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .t-blurb { font-size: 0.9375rem; color: var(--muted); }
+  .t-side { display: flex; flex-direction: column; align-items: flex-end; gap: var(--sp-2); }
+  .avail { font-size: 0.8125rem; font-weight: 600; }
+  .avail.soon { color: var(--primary); }
+  .avail.later { color: var(--muted); }
+
+  .empty {
+    background: var(--card); border: 1px dashed var(--line-firm); border-radius: var(--r);
+    padding: var(--sp-8) var(--sp-5); text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: var(--sp-3);
+  }
+  .empty h3 { font-size: 1.0625rem; }
+  .empty p { color: var(--muted); max-width: 34ch; font-size: 0.9375rem; }
+
+  /* Distance view. Rings, not a street map: it plots how far each
+     trade is, which is the thing being filtered, without pretending
+     to real geography. */
+  .mapcol { position: sticky; top: 86px; }
+  .mapcard { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: var(--sp-4); }
+  .mapcard h3 { font-size: 0.9375rem; margin-bottom: 2px; }
+  .mapcard p { font-size: 0.8125rem; color: var(--muted); margin-bottom: var(--sp-3); }
+  svg.radar { display: block; width: 100%; height: auto; }
+  .ring { fill: none; stroke: var(--line); stroke-width: 1; }
+  .ring-lab { font-size: 9px; fill: var(--faint); font-family: var(--body); }
+  .pin { cursor: pointer; transition: r 160ms var(--ease); }
+  .pin-hit { fill: transparent; cursor: pointer; }
+  .home { fill: var(--primary); }
+  .home-ring { fill: none; stroke: var(--primary); stroke-width: 1.5; opacity: 0.35; }
+
+  footer { border-top: 1px solid var(--line); background: var(--card); padding: var(--sp-6) 0; }
+  .foot { display: flex; flex-wrap: wrap; gap: var(--sp-3) var(--sp-6); justify-content: space-between; align-items: center; }
+  .foot p { font-size: 0.8125rem; color: var(--faint); }
+
+  .rise { opacity: 0; transform: translateY(12px); }
+  .rise.in { opacity: 1; transform: none; transition: opacity 300ms var(--ease), transform 300ms var(--ease); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rise, .rise.in { opacity: 1; transform: none; transition: none; }
+    * { transition-duration: 1ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-in">
+    <a class="logo" href="#top">
+      <span class="m" aria-hidden="true">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12 12 4l9 8"/><path d="M6 11v8h12v-8"/>
+        </svg>
+      </span>
+      <b>Rafter</b>
+    </a>
+    <nav class="head-nav">
+      <a href="#results">Find a trade</a>
+      <a href="#how">How it works</a>
+      <a href="#" class="btn btn-quiet btn-sm">List your business</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="shell">
+      <div class="hero-copy">
+        <h1 class="rise">Find a trade who turns up.</h1>
+        <p class="lede rise">
+          Vetted plumbers, sparks, joiners and roofers across Bolton and the North West.
+          Every review is from a job that actually happened.
+        </p>
+      </div>
+
+      <form class="searchbar rise" id="search" novalidate>
+        <div class="field" data-f="trade">
+          <label for="f-trade">What do you need doing</label>
+          <select id="f-trade">
+            <option value="">Any trade</option>
+            <option>Plumbing</option><option>Electrical</option><option>Joinery</option>
+            <option>Roofing</option><option>Heating &amp; gas</option><option>Plastering</option>
+          </select>
+        </div>
+        <div class="field" data-f="postcode">
+          <label for="f-pc">Your postcode</label>
+          <input id="f-pc" type="text" value="BL1 4QZ" placeholder="e.g. BL1 4QZ" autocomplete="postal-code">
+          <span class="err">Enter a UK postcode so we can measure distance.</span>
+        </div>
+        <button class="btn btn-primary" type="submit">Search</button>
+      </form>
+    </div>
+  </section>
+
+  <div class="shell" id="results">
+    <div class="toolbar">
+      <div class="chips" id="chips" role="group" aria-label="Filter by trade"></div>
+      <div class="tools-right">
+        <label for="f-rating">Min rating</label>
+        <select id="f-rating">
+          <option value="0">Any</option><option value="4">4.0+</option>
+          <option value="4.5" selected>4.5+</option><option value="4.8">4.8+</option>
+        </select>
+        <label for="f-avail">Available</label>
+        <select id="f-avail">
+          <option value="3">Any time</option>
+          <option value="0">Today</option>
+          <option value="1">Within 24 hours</option>
+          <option value="2">This week</option>
+        </select>
+        <label for="f-sort">Sort</label>
+        <select id="f-sort">
+          <option value="dist">Nearest</option>
+          <option value="rating">Best rated</option>
+          <option value="soon">Soonest free</option>
+        </select>
+      </div>
+    </div>
+
+    <p class="count rise" id="count" aria-live="polite"></p>
+
+    <div class="split">
+      <div class="results" id="list"></div>
+
+      <aside class="mapcol">
+        <div class="mapcard rise">
+          <h3>How far away</h3>
+          <p id="mapNote">Rings are 3, 6 and 9 miles from <span class="num">BL1 4QZ</span>.</p>
+          <svg class="radar" id="radar" viewBox="0 0 300 300" role="img"
+               aria-label="Distance plot of matching trades around your postcode. The same information is in the list beside it."></svg>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <section class="shell" id="how" style="padding-bottom:var(--sp-10);">
+    <div class="mapcard rise" style="padding:var(--sp-6);">
+      <h2 style="margin-bottom:var(--sp-3);">How Rafter checks a trade</h2>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-5);" id="howGrid"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="shell foot">
+    <p>Rafter is a sample directory built to demonstrate a design system. The trades listed are fictional.</p>
+    <p>Bolton and the North West</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var TRADES = [
+    { k:'Plumbing',      v:'--c-plumb', tint:'#E8F1FC', tone:'#1B5A9E' },
+    { k:'Electrical',    v:'--c-elec',  tint:'#FBF2DF', tone:'#8A5B00' },
+    { k:'Joinery',       v:'--c-join',  tint:'#FBEDE7', tone:'#9C3C17' },
+    { k:'Roofing',       v:'--c-roof',  tint:'#EBE9F7', tone:'#3A2C84' },
+    { k:'Heating & gas', v:'--c-heat',  tint:'#E4F3EC', tone:'#116C4D' },
+    { k:'Plastering',    v:'--c-plast', tint:'#FBEAF0', tone:'#9C2F55' }
+  ];
+  function T(name) { return TRADES.filter(function (t) { return t.k === name; })[0] || TRADES[0]; }
+
+  /* Fictional listings. Ratings and counts are deliberately uneven,
+     and availability drives the "soonest free" sort. */
+  var DATA = [
+    ['Halliwell Plumbing & Heating','Plumbing',4.9,128,1.2,1,0,'Bathrooms, leaks and boiler swaps. Two vans, both Gas Safe.'],
+    ['Bromley Cross Gas','Heating & gas',4.9,152,2.9,1,0,'Boiler servicing and full heating installs. Landlord certificates.'],
+    ['Ainsworth Electrical','Electrical',4.8,94,2.4,1,1,'Rewires, EV chargers and fuse boards. NICEIC registered.'],
+    ['Deane Joinery Works','Joinery',5.0,41,3.1,1,2,'Fitted wardrobes, staircases and hardwood floors.'],
+    ['Sharples Plastering','Plastering',4.7,38,3.6,0,2,'Skimming, rendering and coving. Dust sheets as standard.'],
+    ['Astley Bridge Heating','Heating & gas',4.3,31,4.1,0,0,'Radiator swaps and power flushing. Quick turnaround.'],
+    ['Westhoughton Roofing','Roofing',4.6,76,4.8,1,3,'Flat roofs, tiling and gutter work. Scaffold arranged.'],
+    ['Farnworth Drains','Plumbing',4.4,67,5.2,0,1,'Blockages, CCTV surveys and drain repairs. Out of hours available.'],
+    ['Egerton Electrical','Electrical',5.0,23,6.1,1,2,'Domestic and light commercial. Small firm, one sparks.'],
+    ['Little Lever Joinery','Joinery',4.5,55,6.8,0,3,'Doors, skirting and loft conversions.'],
+    ['Horwich Roof & Leadwork','Roofing',4.8,89,7.4,1,2,'Leadwork, chimney repairs and slate. Heritage jobs welcome.'],
+    ['Kearsley Plaster Co','Plastering',4.9,62,8.2,1,1,'Venetian polished plaster and standard skims.']
+  ].map(function (r, i) {
+    return { id:i, name:r[0], trade:r[1], rating:r[2], reviews:r[3], dist:r[4],
+             verified:!!r[5], soon:r[6], blurb:r[7],
+             bearing:(i * 47 + 20) % 360 };
+  });
+
+  var AVAIL = ['Free today', 'Free tomorrow', 'Free this week', 'Free next week'];
+
+  var state = { trades: [], minRating: 4.5, maxWait: 3, sort: 'dist', postcode: 'BL1 4QZ' };
+
+  /* ---------- Chips ---------- */
+  var chipHost = document.getElementById('chips');
+  TRADES.forEach(function (t) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip';
+    b.setAttribute('aria-pressed', 'false');
+    b.style.setProperty('--dot', 'var(' + t.v + ')');
+    b.style.setProperty('--tint', t.tint);
+    b.innerHTML = '<i aria-hidden="true"></i>' + t.k;
+    b.addEventListener('click', function () {
+      var on = b.getAttribute('aria-pressed') === 'true';
+      b.setAttribute('aria-pressed', on ? 'false' : 'true');
+      if (on) state.trades = state.trades.filter(function (x) { return x !== t.k; });
+      else state.trades.push(t.k);
+      render();
+    });
+    chipHost.appendChild(b);
+  });
+
+  /* ---------- Filtering ---------- */
+  function visible() {
+    return DATA.filter(function (d) {
+      if (state.trades.length && state.trades.indexOf(d.trade) === -1) return false;
+      if (d.rating < state.minRating) return false;
+      if (d.soon > state.maxWait) return false;
+      return true;
+    }).sort(function (a, b) {
+      if (state.sort === 'rating') return b.rating - a.rating || a.dist - b.dist;
+      if (state.sort === 'soon')   return a.soon - b.soon || a.dist - b.dist;
+      return a.dist - b.dist;
+    });
+  }
+
+  var STAR = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg>';
+  var TICK = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+
+  var list = document.getElementById('list');
+  var count = document.getElementById('count');
+
+  function render() {
+    var rows = visible();
+
+    count.innerHTML = rows.length
+      ? '<b>' + rows.length + '</b> trades match, within <span class="num">' +
+        rows[rows.length - 1].dist + '</span> miles of <span class="num">' + state.postcode + '</span>'
+      : 'No trades match those filters';
+
+    if (!rows.length) {
+      /* An empty result is a designed state, with the way out in it */
+      list.innerHTML =
+        '<div class="empty"><h3>Nothing matches that combination</h3>' +
+        '<p>Try widening the minimum rating, or clearing a trade filter.</p>' +
+        '<button class="btn btn-quiet btn-sm" id="clear">Clear all filters</button></div>';
+      document.getElementById('clear').addEventListener('click', function () {
+        state.trades = []; state.minRating = 0; state.maxWait = 3;
+        document.getElementById('f-rating').value = '0';
+        document.getElementById('f-avail').value = '3';
+        Array.prototype.forEach.call(chipHost.children, function (c) { c.setAttribute('aria-pressed', 'false'); });
+        render();
+      });
+      drawRadar([]);
+      return;
+    }
+
+    list.innerHTML = rows.map(function (d) {
+      var t = T(d.trade);
+      return '<article class="trader" data-id="' + d.id + '" tabindex="0">' +
+        '<div class="t-main">' +
+          '<div class="t-top">' +
+            '<h3>' + d.name + '</h3>' +
+            '<span class="t-trade" style="--tint:' + t.tint + ';--tone:' + t.tone + '">' + d.trade + '</span>' +
+            (d.verified ? '<span class="verified">' + TICK + 'ID &amp; insurance checked</span>' : '') +
+          '</div>' +
+          '<div class="t-meta">' +
+            '<span class="stars">' + STAR + '<b>' + d.rating.toFixed(1) + '</b> (' + d.reviews + ')</span>' +
+            '<span class="num">' + d.dist + ' miles away</span>' +
+          '</div>' +
+          '<p class="t-blurb">' + d.blurb + '</p>' +
+        '</div>' +
+        '<div class="t-side">' +
+          '<span class="avail ' + (d.soon <= 1 ? 'soon' : 'later') + '">' + AVAIL[d.soon] + '</span>' +
+          '<button class="btn btn-primary btn-sm" type="button">Request a quote</button>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+
+    /* Linked views: the card and its pin highlight together */
+    Array.prototype.forEach.call(list.querySelectorAll('.trader'), function (card) {
+      var id = +card.dataset.id;
+      ['pointerenter', 'focus'].forEach(function (ev) {
+        card.addEventListener(ev, function () { highlight(id, true); });
+      });
+      ['pointerleave', 'blur'].forEach(function (ev) {
+        card.addEventListener(ev, function () { highlight(id, false); });
+      });
+    });
+
+    drawRadar(rows);
+  }
+
+  /* ---------- Distance plot ---------- */
+  var NS = 'http://www.w3.org/2000/svg';
+  var radar = document.getElementById('radar');
+  var CX = 150, CY = 150, MAXMI = 9, RMAX = 128;
+
+  function el(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
+
+  function drawRadar(rows) {
+    radar.textContent = '';
+    [3, 6, 9].forEach(function (mi) {
+      radar.appendChild(el('circle', { class: 'ring', cx: CX, cy: CY, r: mi / MAXMI * RMAX }));
+      var lab = el('text', { class: 'ring-lab', x: CX + 3, y: CY - mi / MAXMI * RMAX - 3 });
+      lab.textContent = mi + ' mi';
+      radar.appendChild(lab);
+    });
+    radar.appendChild(el('circle', { class: 'home-ring', cx: CX, cy: CY, r: 11 }));
+    radar.appendChild(el('circle', { class: 'home', cx: CX, cy: CY, r: 4.5 }));
+
+    rows.forEach(function (d) {
+      var a = d.bearing * Math.PI / 180;
+      var r = Math.min(d.dist, MAXMI) / MAXMI * RMAX;
+      var x = CX + Math.cos(a) * r, y = CY + Math.sin(a) * r;
+      var t = T(d.trade);
+      var col = getComputedStyle(document.documentElement).getPropertyValue(t.v).trim();
+
+      var hit = el('circle', { class: 'pin-hit', cx: x, cy: y, r: 13, 'data-id': d.id });
+      var pin = el('circle', { class: 'pin', cx: x, cy: y, r: 5.5, fill: col,
+                               stroke: '#fff', 'stroke-width': 2, 'data-pin': d.id });
+      var title = el('title'); title.textContent = d.name + ' - ' + d.dist + ' miles';
+      hit.appendChild(title);
+
+      hit.addEventListener('pointerenter', function () { highlight(d.id, true); });
+      hit.addEventListener('pointerleave', function () { highlight(d.id, false); });
+
+      radar.appendChild(pin); radar.appendChild(hit);
+    });
+  }
+
+  function highlight(id, on) {
+    var card = list.querySelector('.trader[data-id="' + id + '"]');
+    if (card) card.classList.toggle('lit', on);
+    var pin = radar.querySelector('[data-pin="' + id + '"]');
+    if (pin) pin.setAttribute('r', on ? 8.5 : 5.5);
+  }
+
+  /* ---------- Controls ---------- */
+  document.getElementById('f-rating').addEventListener('change', function (e) {
+    state.minRating = parseFloat(e.target.value); render();
+  });
+  document.getElementById('f-avail').addEventListener('change', function (e) {
+    state.maxWait = parseInt(e.target.value, 10); render();
+  });
+  document.getElementById('f-sort').addEventListener('change', function (e) {
+    state.sort = e.target.value; render();
+  });
+
+  var form = document.getElementById('search');
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var pcField = form.querySelector('[data-f="postcode"]');
+    var pc = document.getElementById('f-pc').value.trim();
+    var ok = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(pc);
+    pcField.classList.toggle('bad', !ok);
+    document.getElementById('f-pc').setAttribute('aria-invalid', ok ? 'false' : 'true');
+    if (!ok) { document.getElementById('f-pc').focus(); return; }
+
+    state.postcode = pc.toUpperCase();
+    document.getElementById('mapNote').innerHTML =
+      'Rings are 3, 6 and 9 miles from <span class="num">' + state.postcode + '</span>.';
+
+    var chosen = document.getElementById('f-trade').value;
+    state.trades = chosen ? [chosen] : [];
+    Array.prototype.forEach.call(chipHost.children, function (c, i) {
+      c.setAttribute('aria-pressed', chosen && TRADES[i].k === chosen ? 'true' : 'false');
+    });
+    render();
+    document.getElementById('results').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  });
+  document.getElementById('f-pc').addEventListener('input', function () {
+    form.querySelector('[data-f="postcode"]').classList.remove('bad');
+  });
+
+  /* ---------- How it works ---------- */
+  document.getElementById('howGrid').innerHTML = [
+    ['ID and insurance', 'We check company registration, public liability cover and the trade body number before a profile goes live.'],
+    ['Reviews from real jobs', 'A review can only be left by someone who booked through Rafter, so nothing is written by a friend.'],
+    ['No lead fees', 'Trades pay a flat monthly listing. Nobody is bidding for your job, so quotes are not padded to cover a commission.']
+  ].map(function (r) {
+    return '<div><h3 style="margin-bottom:6px;">' + r[0] + '</h3>' +
+           '<p style="font-size:0.9375rem;color:var(--muted)">' + r[1] + '</p></div>';
+  }).join('');
+
+  /* ---------- Entry ---------- */
+  var rise = document.querySelectorAll('.rise');
+  if (reduce) rise.forEach(function (e) { e.classList.add('in'); });
+  else rise.forEach(function (e, i) { setTimeout(function () { e.classList.add('in'); }, 80 + i * 60); });
+
+  render();
+})();
+</script>
+</body>
+</html>
