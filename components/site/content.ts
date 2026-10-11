@@ -168,7 +168,7 @@ export const FAQ: Faq[] = [
         "If you're just looking: no account, and no cookies. When you tap Call or WhatsApp we count the tap against that trader with a scrambled signature of your device (a one-way hash), not your IP address or phone number.",
       ],
       [
-        "Traders' phone numbers are kept private, behind the buttons. Everything is stored in the UK, in London. The ",
+        "Traders' phone numbers are kept private, behind the buttons. Our database is hosted in London, UK. The ",
         { href: "/privacy", label: "privacy notice" },
         " has the full detail.",
       ],

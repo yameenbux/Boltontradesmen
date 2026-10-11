@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("category page ranks scored providers and lists newcomers separately", async ({ page }) => {
   await page.goto("/platform/c/plumber");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Plumber");
-  await expect(page.getByText(/^\d+ local pros · ranked by people who'd use them again$/)).toBeVisible();
+  await expect(page.getByText(/^\d+ local pros? · reviews coming soon$/)).toBeVisible();
   await expect(page.getByRole("link", { name: "All trades" })).toHaveAttribute("href", "/platform");
 
   const ranked = page.getByTestId("ranked-list");

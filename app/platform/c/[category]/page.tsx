@@ -56,7 +56,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         All trades
       </Link>
       <h1 className="page-title">{name}</h1>
-      {total > 0 && <p className="page-sub">{localPros(total)} · ranked by people who&apos;d use them again</p>}
+      {total > 0 && <p className="page-sub">{localPros(total)} · reviews coming soon</p>}
 
       {guidanceNote && (
         <p className="note">

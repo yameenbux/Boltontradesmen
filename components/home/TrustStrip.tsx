@@ -18,14 +18,14 @@ export function TrustStrip() {
           <circle cx="9.5" cy="7" r="4" />
           <path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" />
         </svg>
-        <strong>Real locals</strong>Reviews from Bolton residents
+        <strong>Real locals</strong>Recommended by the Bolton group
       </li>
       <li>
         <svg {...icon}>
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
           <path d="m9 12 2 2 4-4" />
         </svg>
-        <strong>Checked</strong>ID and insurance shown
+        <strong>Checked</strong>ID and insurance shown when checked
       </li>
       <li>
         <svg {...icon}>
