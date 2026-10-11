@@ -33,7 +33,7 @@ jobs:
       - run: npx supabase start
       - run: npm run test:db
       - run: npx playwright install --with-deps chromium
-      - run: cat .env.example >> "$GITHUB_ENV"
+      - run: grep -E '^[A-Z0-9_]+=' .env.example >> "$GITHUB_ENV"
       - run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
