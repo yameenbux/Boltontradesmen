@@ -1,5 +1,5 @@
 begin;
-select plan(15);
+select plan(19);
 
 -- fixtures
 insert into public.providers (id, slug, business_name, phone_e164)
@@ -52,6 +52,32 @@ select is((select guidance_note from public.categories where slug = 'electrician
 select is((select array_agg(slug order by slug) from public.category_groups where asks_tidy),
   array['home-trades', 'moving-waste'], 'asks_tidy only home-trades and moving-waste');
 select is((select value from public.settings where key = 'enquiry_threshold'), '5'::jsonb, 'enquiry_threshold = 5');
+
+-- UPDATE paths must not bypass the triggers
+insert into public.providers (id, slug, business_name, phone_e164) values
+  ('00000000-0000-0000-0000-0000000000a2', 'test-pro-2', 'Test Pro 2', '+447700900002'),
+  ('00000000-0000-0000-0000-0000000000a3', 'test-pro-3', 'Test Pro 3', '+447700900003');
+insert into public.provider_categories (provider_id, category_id)
+select '00000000-0000-0000-0000-0000000000a2', id from public.categories where slug = 'plumber';
+insert into public.provider_categories (provider_id, category_id)
+select '00000000-0000-0000-0000-0000000000a3', id from public.categories where slug in ('plumber', 'electrician', 'handyman');
+select throws_ok(
+  $$update public.provider_categories set category_id = (select id from public.categories where slug = 'driving-instructors')
+    where provider_id = '00000000-0000-0000-0000-0000000000a2'$$,
+  null, 'category requires dvsa_adi check', 'UPDATE category_id cannot attach a required-check category');
+select throws_ok(
+  $$update public.provider_categories set provider_id = '00000000-0000-0000-0000-0000000000a3'
+    where provider_id = '00000000-0000-0000-0000-0000000000a2'$$,
+  null, 'max 3 categories', 'UPDATE provider_id cannot create a 4th category');
+select lives_ok(
+  $$update public.provider_categories set category_id = (select id from public.categories where slug = 'joiner')
+    where provider_id = '00000000-0000-0000-0000-0000000000a3'
+      and category_id = (select id from public.categories where slug = 'plumber')$$,
+  'swapping a category at the limit is allowed');
+select lives_ok(
+  $$update public.provider_categories set category_id = (select id from public.categories where slug = 'tiler')
+    where provider_id = '00000000-0000-0000-0000-0000000000a2'$$,
+  'swapping to an unrestricted category is allowed');
 
 -- is_admin
 select is(public.is_admin(), false, 'is_admin false with no auth user');

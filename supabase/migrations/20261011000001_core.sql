@@ -110,10 +110,15 @@ create trigger providers_set_updated_at
 -- A provider may list in at most 3 categories.
 create function public.enforce_max_categories() returns trigger
 language plpgsql
+security definer
 set search_path = ''
 as $$
 begin
-  if (select count(*) from public.provider_categories where provider_id = new.provider_id) >= 3 then
+  if (
+    select count(*) from public.provider_categories
+    where provider_id = new.provider_id
+      and not (tg_op = 'UPDATE' and provider_id = old.provider_id and category_id = old.category_id)
+  ) >= 3 then
     raise exception 'max 3 categories' using errcode = 'check_violation';
   end if;
   return new;
@@ -121,12 +126,13 @@ end;
 $$;
 
 create trigger enforce_max_categories
-  before insert on public.provider_categories
+  before insert or update of provider_id, category_id on public.provider_categories
   for each row execute function public.enforce_max_categories();
 
 -- Legally required checks (Gas Safe, DVSA ADI) must be in date before listing.
 create function public.enforce_category_requirement() returns trigger
 language plpgsql
+security definer
 set search_path = ''
 as $$
 declare
@@ -148,7 +154,7 @@ end;
 $$;
 
 create trigger enforce_category_requirement
-  before insert on public.provider_categories
+  before insert or update of provider_id, category_id on public.provider_categories
   for each row execute function public.enforce_category_requirement();
 
 create function public.is_admin() returns boolean
