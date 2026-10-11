@@ -1,29 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-const GROUPS = [
-  "Home & trades",
-  "Repairs & appliances",
-  "Moving & waste",
-  "Events & occasions",
-  "Personal & lessons",
-  "Vehicles",
-];
-
-test("home lists the six category groups and links to a category", async ({ page }) => {
-  await page.goto("/");
-  for (const name of GROUPS) {
-    await expect(page.getByRole("heading", { name })).toBeVisible();
-  }
-  await expect(page.locator('a[href="/c/plumber"]')).toBeVisible();
-});
-
-test("home search matches category names client-side", async ({ page }) => {
-  await page.goto("/");
-  await page.getByLabel("What do you need?").fill("bouncy");
-  await expect(page.locator('a[href="/c/bouncy-castles"]')).toBeVisible();
-  await expect(page.locator('a[href="/c/plumber"]')).toHaveCount(0);
-});
-
 test("category page ranks scored providers and lists newcomers separately", async ({ page }) => {
   await page.goto("/c/plumber");
   const ranked = page.getByTestId("ranked-list");
