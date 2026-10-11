@@ -1,4 +1,4 @@
--- E2E fixture: loaded by Playwright globalSetup after `npm run db:reset`, as superuser.
+-- E2E fixture: loaded by scripts/e2e-prepare.sh (the Playwright webServer command) after `npm run db:reset`, as postgres.
 -- Not named *.test.sql so pg_prove ignores it.
 
 insert into public.providers (id, slug, business_name, contact_name, phone_e164, whatsapp_e164, areas, bio, status, consent_at, consent_evidence, verified_at) values
@@ -20,7 +20,7 @@ insert into public.provider_checks (provider_id, kind, reference, expires_on, ch
 
 insert into auth.users (id)
 select ('00000000-0000-0000-0000-00000000e3' || lpad(n::text, 2, '0'))::uuid from generate_series(1, 4) n
-on conflict (id) do nothing; -- db:reset does not clear auth.users
+on conflict (id) do nothing; -- the local-stack db:reset does not clear auth.users
 
 -- Ace Plumbing: 4 reviews. Half Way: 2 reviews. Fresh Pipes: none.
 insert into public.reviews (provider_id, reviewer_id, category_id, job_month, value_band, on_time, on_price, quality, use_again)
