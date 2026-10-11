@@ -7,6 +7,14 @@ import { requireAdmin } from "@/lib/admin";
 import { CHECK_KINDS, SETTABLE_STATUSES, type FormState } from "@/lib/admin-shared";
 import { InvalidPhoneError, toE164 } from "@/lib/phone";
 
+// Public pages read providers from the database (home is prerendered), so status changes and
+// edits must invalidate them for paused/removed providers to disappear immediately.
+function revalidatePublicPages() {
+  revalidatePath("/p/[slug]", "page");
+  revalidatePath("/c/[category]", "page");
+  revalidatePath("/");
+}
+
 const text = (v: FormDataEntryValue | null) => (typeof v === "string" ? v.trim() : "");
 
 function fieldErrors(error: z.ZodError): Record<string, string> {
@@ -85,6 +93,7 @@ export async function saveProvider(_prev: FormState, formData: FormData): Promis
     return { message: "Could not save the provider. Try again.", values };
   }
   revalidatePath("/admin");
+  revalidatePublicPages();
   redirect(`/admin/providers/${data as string}`);
 }
 
@@ -140,13 +149,15 @@ export async function setStatus(_prev: FormState, formData: FormData): Promise<F
     p_reason: v.reason,
   });
   if (error) {
-    if (error.message.includes("providers_live_requires_consent")) {
-      return { errors: { status: "A provider can't go live until they have given consent" } };
+    if (error.message.includes("providers_live_requires_consent") || error.message.includes("can only go live")) {
+      return { errors: { status: "A provider can only go live after giving consent (and not once removed)" } };
     }
+    if (error.message.includes("reason is required")) return { errors: { reason: "Enter a reason for removing this provider" } };
     return { message: "Could not change the status. Try again." };
   }
   revalidatePath(`/admin/providers/${v.provider_id}`);
   revalidatePath("/admin");
+  revalidatePublicPages();
   return { ok: true, message: "Status updated" };
 }
 

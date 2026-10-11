@@ -1,0 +1,56 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Public pages must drop paused/removed providers (and show edits) as soon as the admin acts.
+const revalidatePath = vi.fn();
+vi.mock("next/cache", () => ({ revalidatePath: (...args: unknown[]) => revalidatePath(...args) }));
+vi.mock("next/navigation", () => ({
+  redirect: (url: string) => {
+    throw new Error(`REDIRECT ${url}`);
+  },
+}));
+
+const rpc = vi.fn();
+vi.mock("@/lib/admin", () => ({ requireAdmin: async () => ({ supabase: { rpc }, user: { id: "u" } }) }));
+
+import { saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
+
+const PID = "11111111-1111-4111-8111-111111111111";
+const PUBLIC_PATHS = [
+  ["/p/[slug]", "page"],
+  ["/c/[category]", "page"],
+  ["/"],
+];
+
+function form(entries: Record<string, string>) {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(entries)) fd.append(k, v);
+  return fd;
+}
+
+beforeEach(() => {
+  revalidatePath.mockClear();
+  rpc.mockReset();
+});
+
+describe("admin provider actions revalidate public pages", () => {
+  it.each(["paused", "removed", "live"])("setStatus(%s) revalidates provider, category and home pages", async (status) => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    const res = await setStatus({}, form({ provider_id: PID, status, reason: "because" }));
+    expect(res.ok).toBe(true);
+    for (const args of PUBLIC_PATHS) expect(revalidatePath).toHaveBeenCalledWith(...args);
+  });
+
+  it("setStatus does not revalidate when the database refuses", async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: "boom" } });
+    await setStatus({}, form({ provider_id: PID, status: "paused", reason: "" }));
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("saveProvider revalidates provider, category and home pages", async () => {
+    rpc.mockResolvedValue({ data: PID, error: null });
+    await expect(
+      saveProvider({}, form({ id: PID, business_name: "Ace", contact_name: "", phone: "07700900123", whatsapp: "", areas: "BL1", bio: "" })),
+    ).rejects.toThrow(`REDIRECT /admin/providers/${PID}`);
+    for (const args of PUBLIC_PATHS) expect(revalidatePath).toHaveBeenCalledWith(...args);
+  });
+});
