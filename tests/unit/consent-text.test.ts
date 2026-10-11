@@ -5,8 +5,8 @@ import { CONSENT_TEXT_VERSION, consentStatement, PRIVACY_LINK_TEXT } from "@/lib
 const env = { OWNER_LEGAL_NAME: "Jane Doe Ltd", CONTACT_EMAIL: "jane@example.org" };
 
 describe("consentStatement", () => {
-  it("is the 2026-10-11b wording", () => {
-    expect(CONSENT_TEXT_VERSION).toBe("2026-10-11b");
+  it("is the 2026-10-11c wording", () => {
+    expect(CONSENT_TEXT_VERSION).toBe("2026-10-11c");
   });
 
   it("covers every required point in plain English", () => {
@@ -14,7 +14,7 @@ describe("consentStatement", () => {
     for (const phrase of [
       "without your approval",
       "simply because you disagree",
-      "you can reply to every review",
+      "you'll be able to reply to reviews",
       "within one working day",
       "come back if you list again",
       "comes from reviews only",
