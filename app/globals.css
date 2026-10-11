@@ -181,7 +181,9 @@ h1,h2,h3{text-wrap:balance}
   .page-title{font-family:var(--display); font-weight:400; font-size:42px; line-height:1; margin:8px 0 6px; overflow-wrap:anywhere}
   .page-sub{color:var(--ink-2); margin:0 0 16px}
   /* Chips scroll sideways inside the column; the negative margin lets them run to the screen edge. */
-  .areas{display:flex; gap:8px; overflow-x:auto; padding:2px 16px 8px; margin-inline:-16px; scrollbar-width:none}
+  /* overflow-x:auto also clips vertically, so 8px block padding (offset by -6px margin) leaves room for the
+     6px focus ring (3px outline + 3px offset) above and below each chip. */
+  .areas{display:flex; gap:8px; overflow-x:auto; padding:8px 16px; margin:-6px -16px 0; scrollbar-width:none}
   .areas::-webkit-scrollbar{display:none}
   .areas .chip{flex:none}
   .note{display:flex; gap:10px; align-items:flex-start; font-size:16px; color:var(--ink-2); background:var(--surface-2); border-radius:14px; padding:12px 14px; margin:8px 0 12px}

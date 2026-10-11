@@ -29,6 +29,23 @@ test("area chips filter providers and show an empty state when none cover the ar
   await expect(areas.getByRole("button", { name: "All of Bolton" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText("Fresh Pipes")).toBeVisible();
 
+  // The keyboard focus ring (outline + offset) must fit inside the scrolling chip row, which clips it otherwise.
+  await page.getByRole("link", { name: "All trades" }).focus();
+  await page.keyboard.press("Tab");
+  await expect(areas.getByRole("button", { name: "All of Bolton" })).toBeFocused();
+  const ring = await areas.evaluate((row) => {
+    const chip = document.activeElement as HTMLElement;
+    const cs = getComputedStyle(chip);
+    const reach = parseFloat(cs.outlineWidth) + parseFloat(cs.outlineOffset);
+    const r = row.getBoundingClientRect();
+    const c = chip.getBoundingClientRect();
+    return { style: cs.outlineStyle, reach, above: c.top - r.top, below: r.bottom - c.bottom };
+  });
+  expect(ring.style).not.toBe("none");
+  expect(ring.reach).toBeGreaterThan(0);
+  expect(ring.above).toBeGreaterThanOrEqual(ring.reach);
+  expect(ring.below).toBeGreaterThanOrEqual(ring.reach);
+
   await areas.getByRole("button", { name: "BL3" }).click();
   await expect(areas.getByRole("button", { name: "BL3" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText("Fresh Pipes")).toHaveCount(0);
