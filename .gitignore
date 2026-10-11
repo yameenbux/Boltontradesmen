@@ -48,3 +48,8 @@ next-env.d.ts
 # playwright
 /test-results/
 /playwright-report/
+
+# local Supabase-compatible stack (scripts/local-stack)
+/scripts/local-stack/bin/
+/scripts/local-stack/logs/
+/scripts/local-stack/run/

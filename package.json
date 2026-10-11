@@ -10,7 +10,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:db": "bash scripts/db-test.sh",
-    "test:e2e": "playwright test"
+    "test:stack": "bash scripts/local-stack/smoke.test.sh",
+    "test:e2e": "playwright test",
+    "stack:start": "bash scripts/local-stack/start.sh",
+    "stack:stop": "bash scripts/local-stack/stop.sh",
+    "db:reset": "bash scripts/db-reset.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
