@@ -42,7 +42,7 @@ export default function PrivacyPage() {
       <H2>Why we use it, and our lawful basis</H2>
       <List
         items={[
-          "Publishing a provider's listing: consent. You can withdraw it at any time.",
+          "Publishing a provider&apos;s listing: consent. You can withdraw it at any time.",
           "Counting enquiries and keeping the site secure and free of abuse: legitimate interests. We keep this to what is needed and it does not identify visitors by name.",
         ]}
       />
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
 
       <H2>Complaints</H2>
       <p>
-        If you are unhappy with how we handle your information you can complain to the Information Commissioner's Office
+        If you are unhappy with how we handle your information you can complain to the Information Commissioner&apos;s Office
         (ICO) at ico.org.uk. We would appreciate the chance to put things right first.
       </p>
     </PolicyPage>
