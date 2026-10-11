@@ -78,31 +78,111 @@ test("unknown category and provider are 404", async ({ page }) => {
   expect((await page.goto("/p/no-such-person"))?.status()).toBe(404);
 });
 
-test("profile shows headline figure, checks, call button and no phone digits", async ({ page }) => {
+test("profile shows the header, stat card, checks list and about card", async ({ page }) => {
   const res = await page.goto("/p/e2e-ace-plumbing");
   expect(res?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Ace Plumbing");
-  await expect(page.getByText("Would use again")).toBeVisible();
-  await expect(page.getByText("100%").first()).toBeVisible();
-  await expect(page.getByText("✓ ID checked Oct 2026")).toBeVisible();
-  const call = page.getByRole("link", { name: "Call", exact: true });
-  await expect(call).toHaveAttribute("href", "/api/contact/e2e-ace-plumbing?via=call");
-  await expect(call).toHaveAttribute("rel", /nofollow/);
-  await expect(page.getByRole("link", { name: "WhatsApp" })).toHaveAttribute(
-    "href",
-    "/api/contact/e2e-ace-plumbing?via=whatsapp",
-  );
-  const html = await page.content();
-  expect(html).not.toMatch(/\+44|\b07\d{9}\b|44770090/);
+  await expect(page.getByText("Alan Ace · Plumber")).toBeVisible();
+  await expect(page.getByText("Covers BL1, BL3, BL4")).toBeVisible();
+  await expect(page.locator(".prof-head").getByText("Verified")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Plumber", exact: true })).toHaveAttribute("href", "/c/plumber");
+
+  const stat = page.getByRole("region", { name: "What people say" });
+  await expect(stat.getByText("Would use again")).toBeVisible();
+  await expect(stat.getByTestId("headline")).toHaveText("100%");
+  await expect(stat.getByText("From 4 reviews by Bolton residents")).toBeVisible();
+  // Fixture reviews answer on time and on price but not tidiness, so only those two bars show.
+  await expect(stat.getByTestId("bar-row")).toHaveText([/Turned up when they said\s*100%/, /Stuck to the quote\s*100%/]);
+  await expect(stat.getByText("Quality of work")).toBeVisible();
+  await expect(stat.getByLabel(/^\d\.\d out of 5$/)).toBeVisible();
+
+  const checks = page.getByRole("region", { name: "What we've checked" });
+  await expect(checks.getByRole("listitem")).toHaveText([
+    /ID checked\s*October 2026/,
+    /Public liability insurance\s*Valid until March 2099/,
+    /Trade accreditations\s*None provided/,
+  ]);
+
+  await expect(page.getByRole("region", { name: "About" })).toContainText("Boilers, leaks and bathrooms across Bolton.");
+  await expect(page.getByRole("heading", { name: /Reviews/ })).toHaveCount(0);
 });
 
-test("profile without WhatsApp has no WhatsApp button; under 3 reviews shows what's needed", async ({ page }) => {
+test("profile action bar calls by first name, sits at the viewport bottom and hides nothing", async ({ page, request }) => {
+  await page.setViewportSize({ width: 390, height: 700 });
+  // Arrive by client-side navigation so the route enter animation is running when the bar mounts.
+  await page.goto("/c/plumber");
+  await page.getByTestId("ranked-list").getByRole("link", { name: /Ace Plumbing/ }).click();
+  await expect(page).toHaveURL(/\/p\/e2e-ace-plumbing$/);
+
+  const bar = page.getByRole("region", { name: "Contact Ace Plumbing" });
+  const call = bar.getByRole("link", { name: "Call Alan" });
+  await expect(call).toHaveAttribute("href", "/api/contact/e2e-ace-plumbing?via=call");
+  await expect(call).toHaveAttribute("rel", /nofollow/);
+  const whatsapp = bar.getByRole("link", { name: "WhatsApp" });
+  await expect(whatsapp).toHaveAttribute("href", "/api/contact/e2e-ace-plumbing?via=whatsapp");
+  await expect(whatsapp).toHaveAttribute("rel", /nofollow/);
+
+  // Fixed to the viewport, never inside the animated (transformed) route wrapper.
+  const placement = await bar.evaluate((el) => ({
+    inWrapper: el.closest(".page-enter") !== null,
+    position: getComputedStyle(el).position,
+  }));
+  expect(placement).toEqual({ inWrapper: false, position: "fixed" });
+
+  const settle = () =>
+    page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))));
+  await settle();
+  const box = await bar.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    return { top: r.top, bottom: r.bottom, vh: window.innerHeight };
+  });
+  expect(Math.abs(box.bottom - box.vh)).toBeLessThanOrEqual(1);
+
+  // Scrolled to the very end, the footer clears the bar.
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const footBottom = await page.locator(".foot").evaluate((el) => el.getBoundingClientRect().bottom);
+  expect(footBottom).toBeLessThanOrEqual(box.top + 1);
+
+  // Hard load too: the bar ends up at the viewport bottom.
+  await page.reload();
+  await settle();
+  const after = await bar.evaluate((el) => ({
+    inWrapper: el.closest(".page-enter") !== null,
+    bottom: el.getBoundingClientRect().bottom,
+    vh: window.innerHeight,
+  }));
+  expect(after.inWrapper).toBe(false);
+  expect(Math.abs(after.bottom - after.vh)).toBeLessThanOrEqual(1);
+
+  // Raw server HTML: contact links present, no phone digits anywhere.
+  const html = await (await request.get("/p/e2e-ace-plumbing")).text();
+  expect(html).toContain('href="/api/contact/e2e-ace-plumbing?via=call"');
+  expect(html).not.toMatch(/\+44|\b07\d{9}\b|44770090|7700900/);
+});
+
+test("profile without WhatsApp or reviews: one call button, and what's needed for a score", async ({ page }) => {
   await page.goto("/p/e2e-fresh-pipes");
   await expect(page.getByRole("link", { name: "WhatsApp" })).toHaveCount(0);
-  await expect(page.getByText("3 reviews needed for a score")).toBeVisible();
-  await expect(page.getByText("No checks yet")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Call Fran" })).toHaveAttribute(
+    "href",
+    "/api/contact/e2e-fresh-pipes?via=call",
+  );
+  const stat = page.getByRole("region", { name: "What people say" });
+  await expect(stat.getByText("3 reviews needed for a score")).toBeVisible();
+  await expect(stat.getByText("No reviews yet")).toBeVisible();
+  await expect(page.getByRole("region", { name: "What we've checked" }).getByRole("listitem")).toHaveText([
+    /Trade accreditations\s*None provided/,
+  ]);
+  await expect(page.getByRole("region", { name: "About" })).toHaveCount(0);
+
   await page.goto("/p/e2e-half-way");
   await expect(page.getByText("3 reviews needed for a score")).toBeVisible();
+  await expect(page.getByText("2 reviews so far")).toBeVisible();
+  // No contact name: the button just says Call.
+  await expect(page.getByRole("link", { name: "Call", exact: true })).toHaveAttribute(
+    "href",
+    "/api/contact/e2e-half-way?via=call",
+  );
 });
 
 test("no horizontal scroll at 360px", async ({ page }) => {

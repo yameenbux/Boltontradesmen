@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { initials } from "@/lib/initials";
+import { firstName, initials } from "@/lib/initials";
 
 describe("initials", () => {
   it("takes the first letters of the first two words", () => {
@@ -10,5 +10,17 @@ describe("initials", () => {
     expect(initials("& sons (Bolton)")).toBe("SB");
     expect(initials("halliwell")).toBe("H");
     expect(initials("  ")).toBe("?");
+  });
+});
+
+describe("firstName", () => {
+  it("takes the first word of a contact name", () => {
+    expect(firstName("Alan Ace")).toBe("Alan");
+    expect(firstName("  Fran   Fresh ")).toBe("Fran");
+    expect(firstName("Cher")).toBe("Cher");
+  });
+  it("is null when there is no name", () => {
+    expect(firstName(null)).toBeNull();
+    expect(firstName("   ")).toBeNull();
   });
 });

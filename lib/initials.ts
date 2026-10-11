@@ -6,3 +6,8 @@ export function initials(name: string): string {
     .filter(Boolean);
   return letters.slice(0, 2).join("").toUpperCase() || "?";
 }
+
+/** First word of a contact name ("Alan Ace" → "Alan"), or null when there is none. */
+export function firstName(name: string | null | undefined): string | null {
+  return name?.trim().split(/\s+/)[0] || null;
+}

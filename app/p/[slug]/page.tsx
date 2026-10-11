@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChecksRow } from "@/components/ChecksRow";
-import { ContactButtons } from "@/components/ContactButtons";
-import { StatsBlock } from "@/components/StatsBlock";
-import { getProvider } from "@/lib/directory";
+import { ActionBar } from "@/components/profile/ActionBar";
+import { ChecksList } from "@/components/profile/ChecksList";
+import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { StatCard } from "@/components/profile/StatCard";
+import { getProvider, listCategoryGroups } from "@/lib/directory";
+import { firstName } from "@/lib/initials";
 
 export const revalidate = 300;
 
@@ -18,30 +20,53 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return p ? { title: `${p.businessName} | Bolton Vouched` } : {};
 }
 
+const Chevron = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="m15 18-6-6 6-6" />
+  </svg>
+);
+
 export default async function ProviderPage({ params }: { params: Promise<{ slug: string }> }) {
   const p = await getProvider((await params).slug);
   if (!p) notFound();
 
+  // Trade names for the header and the back link, in the provider's category order.
+  const names = new Map(
+    (await listCategoryGroups()).flatMap(({ categories }) => categories.map((c) => [c.slug, c.name] as const)),
+  );
+  const trades = p.categorySlugs.flatMap((s) => {
+    const name = names.get(s);
+    return name ? [{ slug: s, name }] : [];
+  });
+  const back = trades[0] ? { href: `/c/${trades[0].slug}`, label: trades[0].name } : { href: "/", label: "All trades" };
+
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 py-8">
-      <Link href="/" className="inline-flex min-h-12 items-center font-semibold underline">
-        ← Back to search
+    <main className="profile">
+      <Link href={back.href} className="back press">
+        <Chevron />
+        {back.label}
       </Link>
-      <header>
-        <h1 className="break-words text-3xl font-extrabold tracking-tight">{p.businessName}</h1>
-        {p.contactName && <p className="text-lg text-neutral-800">{p.contactName}</p>}
-        {p.isVerified && <p className="font-semibold text-emerald-900">✓ Verified</p>}
-        {p.areas.length > 0 && <p className="mt-1 text-neutral-700">Covers {p.areas.join(", ")}</p>}
-      </header>
-      <ContactButtons slug={p.slug} hasWhatsapp={p.hasWhatsapp} />
-      <StatsBlock stats={p} />
-      <ChecksRow checks={p.checks} />
+      <ProfileHeader
+        businessName={p.businessName}
+        contactName={p.contactName}
+        trades={trades.map((t) => t.name)}
+        isVerified={p.isVerified}
+        areas={p.areas}
+      />
+      <StatCard stats={p} />
+      <ChecksList checks={p.checks} />
       {p.bio && (
-        <section aria-label="About">
-          <h2 className="text-lg font-bold">About</h2>
-          <p className="mt-1 whitespace-pre-line text-base text-neutral-900">{p.bio}</p>
+        <section className="card" aria-labelledby="about-title">
+          <h2 id="about-title">About</h2>
+          <p className="bio">{p.bio}</p>
         </section>
       )}
+      <ActionBar
+        slug={p.slug}
+        businessName={p.businessName}
+        contactFirstName={firstName(p.contactName)}
+        hasWhatsapp={p.hasWhatsapp}
+      />
     </main>
   );
 }
