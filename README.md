@@ -74,6 +74,9 @@ The E2E suite creates `admin@example.test` / `e2e-admin-password` itself (`scrip
 
 ## Before launch
 
-- [ ] Set `OWNER_LEGAL_NAME` and `CONTACT_EMAIL`, deploy, and verify `/privacy` shows them.
+- [ ] Set `OWNER_LEGAL_NAME` and `CONTACT_EMAIL`, deploy, and verify `/privacy` shows them. Production values:
+  - `OWNER_LEGAL_NAME=YSB Ventures Ltd` (check the exact registered name on Companies House and match it character for character)
+  - `CONTACT_EMAIL=yameen@ysbdesigns.uk`
+- [ ] Register YSB Ventures Ltd with the ICO (data protection fee) as the controller for Bolton Vouched.
 - [ ] The 12-month contact-event purge job is not yet built (planned). The privacy notice states the 12-month retention policy, so build the job before relying on it.
 - [ ] Legal review of all draft pages (`/privacy`, `/terms`, `/how-ratings-work`), then remove the draft banner.
