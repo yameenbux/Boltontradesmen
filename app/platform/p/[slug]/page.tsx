@@ -7,6 +7,7 @@ import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { StatCard } from "@/components/profile/StatCard";
 import { getProvider, listCategoryGroups } from "@/lib/directory";
 import { firstName } from "@/lib/initials";
+import { platformPath } from "@/lib/paths";
 
 export const revalidate = 300;
 
@@ -38,7 +39,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
     const name = names.get(s);
     return name ? [{ slug: s, name }] : [];
   });
-  const back = trades[0] ? { href: `/c/${trades[0].slug}`, label: trades[0].name } : { href: "/", label: "All trades" };
+  const back = trades[0] ? { href: platformPath("c", trades[0].slug), label: trades[0].name } : { href: platformPath(), label: "All trades" };
 
   return (
     <main className="profile">

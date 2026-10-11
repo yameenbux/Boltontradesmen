@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { platformPath } from "@/lib/paths";
 
 type Cat = { slug: string; name: string; liveCount: number };
 type Group = { group: { slug: string; name: string }; categories: Cat[] };
@@ -24,7 +25,7 @@ export function CategoryGroups({ groups }: { groups: Group[] }) {
               {categories.map((c) => (
                 <li key={c.slug}>
                   {c.liveCount > 0 ? (
-                    <Link href={`/c/${c.slug}`} className="chip press">
+                    <Link href={platformPath("c", c.slug)} className="chip press">
                       {c.name} <em>{c.liveCount}</em>
                     </Link>
                   ) : (

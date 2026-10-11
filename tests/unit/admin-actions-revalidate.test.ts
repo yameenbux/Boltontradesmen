@@ -12,13 +12,13 @@ vi.mock("next/navigation", () => ({
 const rpc = vi.fn();
 vi.mock("@/lib/admin", () => ({ requireAdmin: async () => ({ supabase: { rpc }, user: { id: "u" } }) }));
 
-import { saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
+import { newConsentLink, saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
 
 const PID = "11111111-1111-4111-8111-111111111111";
 const PUBLIC_PATHS = [
-  ["/p/[slug]", "page"],
-  ["/c/[category]", "page"],
-  ["/"],
+  ["/platform/p/[slug]", "page"],
+  ["/platform/c/[category]", "page"],
+  ["/platform"],
 ];
 
 function form(entries: Record<string, string>) {
@@ -52,5 +52,14 @@ describe("admin provider actions revalidate public pages", () => {
       saveProvider({}, form({ id: PID, business_name: "Ace", contact_name: "", phone: "07700900123", whatsapp: "", areas: "BL1", bio: "" })),
     ).rejects.toThrow(`REDIRECT /admin/providers/${PID}`);
     for (const args of PUBLIC_PATHS) expect(revalidatePath).toHaveBeenCalledWith(...args);
+  });
+});
+
+describe("newConsentLink", () => {
+  it("builds the link under /platform/consent/ on the site URL", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://boltonvouched.example/";
+    rpc.mockResolvedValue({ data: "22222222-2222-4222-8222-222222222222", error: null });
+    const res = await newConsentLink(PID);
+    expect(res.url).toBe("https://boltonvouched.example/platform/consent/22222222-2222-4222-8222-222222222222");
   });
 });

@@ -1,14 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 test("category page ranks scored providers and lists newcomers separately", async ({ page }) => {
-  await page.goto("/c/plumber");
+  await page.goto("/platform/c/plumber");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Plumber");
   await expect(page.getByText(/^\d+ local pros · ranked by people who'd use them again$/)).toBeVisible();
-  await expect(page.getByRole("link", { name: "All trades" })).toHaveAttribute("href", "/");
+  await expect(page.getByRole("link", { name: "All trades" })).toHaveAttribute("href", "/platform");
 
   const ranked = page.getByTestId("ranked-list");
   const ace = ranked.getByRole("link", { name: /Ace Plumbing/ });
-  await expect(ace).toHaveAttribute("href", "/p/e2e-ace-plumbing");
+  await expect(ace).toHaveAttribute("href", "/platform/p/e2e-ace-plumbing");
   await expect(ace.getByTestId("score")).toHaveText(/^100%\s*would use again\s*4 reviews$/);
   await expect(ace.getByText("Verified")).toBeVisible();
   await expect(ace.getByText("BL1 · BL3 · BL4")).toBeVisible();
@@ -24,7 +24,7 @@ test("category page ranks scored providers and lists newcomers separately", asyn
 });
 
 test("area chips filter providers and show an empty state when none cover the area", async ({ page }) => {
-  await page.goto("/c/plumber");
+  await page.goto("/platform/c/plumber");
   const areas = page.getByRole("group", { name: "Your area" });
   await expect(areas.getByRole("button", { name: "All of Bolton" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText("Fresh Pipes")).toBeVisible();
@@ -62,30 +62,30 @@ test("area chips filter providers and show an empty state when none cover the ar
 });
 
 test("category with no live providers shows a friendly empty state and its guidance note", async ({ page }) => {
-  const res = await page.goto("/c/electrician");
+  const res = await page.goto("/platform/c/electrician");
   expect(res?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Electrician");
   await expect(page.getByText(/NICEIC\/NAPIT/)).toBeVisible();
   await expect(page.getByText("Nobody's listed for Electrician yet.")).toBeVisible();
   await expect(page.getByText("Know a good one? Message the group admin to get them added.")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Browse other trades" })).toHaveAttribute("href", "/");
+  await expect(page.getByRole("link", { name: "Browse other trades" })).toHaveAttribute("href", "/platform");
   await expect(page.getByRole("group", { name: "Your area" })).toHaveCount(0);
   await expect(page.getByTestId("ranked-list")).toHaveCount(0);
 });
 
 test("unknown category and provider are 404", async ({ page }) => {
-  expect((await page.goto("/c/no-such-thing"))?.status()).toBe(404);
-  expect((await page.goto("/p/no-such-person"))?.status()).toBe(404);
+  expect((await page.goto("/platform/c/no-such-thing"))?.status()).toBe(404);
+  expect((await page.goto("/platform/p/no-such-person"))?.status()).toBe(404);
 });
 
 test("profile shows the header, stat card, checks list and about card", async ({ page }) => {
-  const res = await page.goto("/p/e2e-ace-plumbing");
+  const res = await page.goto("/platform/p/e2e-ace-plumbing");
   expect(res?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Ace Plumbing");
   await expect(page.getByText("Alan Ace · Plumber")).toBeVisible();
   await expect(page.getByText("Covers BL1, BL3, BL4")).toBeVisible();
   await expect(page.locator(".prof-head").getByText("Verified")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Plumber", exact: true })).toHaveAttribute("href", "/c/plumber");
+  await expect(page.getByRole("link", { name: "Plumber", exact: true })).toHaveAttribute("href", "/platform/c/plumber");
 
   const stat = page.getByRole("region", { name: "What people say" });
   await expect(stat.getByText("Would use again")).toBeVisible();
@@ -110,7 +110,7 @@ test("profile shows the header, stat card, checks list and about card", async ({
 test("profile action bar calls by first name, sits at the viewport bottom and hides nothing", async ({ page, request }) => {
   await page.setViewportSize({ width: 390, height: 700 });
   // Arrive by client-side navigation so the route enter animation is running when the bar mounts.
-  await page.goto("/c/plumber");
+  await page.goto("/platform/c/plumber");
   await page.getByTestId("ranked-list").getByRole("link", { name: /Ace Plumbing/ }).click();
   await expect(page).toHaveURL(/\/p\/e2e-ace-plumbing$/);
 
@@ -155,13 +155,13 @@ test("profile action bar calls by first name, sits at the viewport bottom and hi
   expect(Math.abs(after.bottom - after.vh)).toBeLessThanOrEqual(1);
 
   // Raw server HTML: contact links present, no phone digits anywhere.
-  const html = await (await request.get("/p/e2e-ace-plumbing")).text();
+  const html = await (await request.get("/platform/p/e2e-ace-plumbing")).text();
   expect(html).toContain('href="/api/contact/e2e-ace-plumbing?via=call"');
   expect(html).not.toMatch(/\+44|\b07\d{9}\b|44770090|7700900/);
 });
 
 test("profile without WhatsApp or reviews: one call button, and what's needed for a score", async ({ page }) => {
-  await page.goto("/p/e2e-fresh-pipes");
+  await page.goto("/platform/p/e2e-fresh-pipes");
   await expect(page.getByRole("link", { name: "WhatsApp" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Call Fran" })).toHaveAttribute(
     "href",
@@ -175,7 +175,7 @@ test("profile without WhatsApp or reviews: one call button, and what's needed fo
   ]);
   await expect(page.getByRole("region", { name: "About" })).toHaveCount(0);
 
-  await page.goto("/p/e2e-half-way");
+  await page.goto("/platform/p/e2e-half-way");
   await expect(page.getByText("3 reviews needed for a score")).toBeVisible();
   await expect(page.getByText("2 reviews so far")).toBeVisible();
   // No contact name: the button just says Call.
@@ -187,7 +187,7 @@ test("profile without WhatsApp or reviews: one call button, and what's needed fo
 
 test("no horizontal scroll at 360px", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
-  for (const path of ["/", "/c/plumber", "/c/electrician", "/p/e2e-ace-plumbing"]) {
+  for (const path of ["/platform", "/platform/c/plumber", "/platform/c/electrician", "/platform/p/e2e-ace-plumbing"]) {
     await page.goto(path);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     expect(overflow, path).toBe(false);

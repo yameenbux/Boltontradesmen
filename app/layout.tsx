@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree, Gloock } from "next/font/google";
 import "./globals.css";
-import { BrandBar } from "@/components/BrandBar";
-import { SiteFooter } from "@/components/SiteFooter";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 const display = Gloock({
@@ -24,10 +22,15 @@ export const metadata: Metadata = {
   description: "Local people, vouched for by Bolton.",
 };
 
+// viewport-fit=cover lets the installed app draw edge to edge; the CSS pads with env(safe-area-inset-*).
+// Theme colour is brick, matching the manifest, so the installed app's status bar wears the brand.
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F5EEE3" },
-    { media: "(prefers-color-scheme: dark)", color: "#161009" },
+    { media: "(prefers-color-scheme: light)", color: "#9C3A25" },
+    { media: "(prefers-color-scheme: dark)", color: "#6E2818" },
   ],
 };
 
@@ -43,13 +46,8 @@ export default function RootLayout({
         {/* Static string, no user input: applies a stored light/dark choice before first paint. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className="min-h-dvh">
-        <div className="app min-h-dvh">
-          <BrandBar />
-          {children}
-          <SiteFooter />
-        </div>
-      </body>
+      {/* Bare on purpose: each section (platform, admin, policies, showcase) brings its own chrome. */}
+      <body className="min-h-dvh">{children}</body>
     </html>
   );
 }

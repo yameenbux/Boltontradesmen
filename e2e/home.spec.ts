@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 // Fixture (supabase/tests/fixtures/e2e.sql): three live providers, all plumbers. Every other category is empty.
 
 test("hero shows the headline and the search", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/platform");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Who's good round here?");
   await expect(page.getByRole("searchbox", { name: "What do you need?" })).toBeVisible();
   await expect(page.getByText("Real locals")).toBeVisible();
@@ -11,17 +11,17 @@ test("hero shows the headline and the search", async ({ page }) => {
 });
 
 test("most asked for shows tiles only for categories with live providers", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/platform");
   const tiles = page.getByTestId("popular-tiles");
   await expect(tiles.getByRole("link")).toHaveCount(1);
   const plumber = tiles.getByRole("link", { name: /Plumber/ });
-  await expect(plumber).toHaveAttribute("href", "/c/plumber");
-  // 3 fixture plumbers; consent.spec may set a 4th plumber live (and revalidate /) while this runs.
+  await expect(plumber).toHaveAttribute("href", "/platform/c/plumber");
+  // 3 fixture plumbers; consent.spec may set a 4th plumber live (and revalidate /platform) while this runs.
   await expect(plumber).toHaveText(/^Plumber\s*[34] local pros$/);
 });
 
 test("everything else groups show counts, links for live categories and 'soon' chips for empty ones", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/platform");
   for (const name of [
     "Home & trades",
     "Repairs & appliances",
@@ -35,10 +35,10 @@ test("everything else groups show counts, links for live categories and 'soon' c
   const home = page.locator("details", { hasText: "Home & trades" });
   await expect(home.locator("summary")).toContainText("· 1 with pros");
   await home.locator("summary").click();
-  await expect(home.getByRole("link", { name: /Plumber/ })).toHaveAttribute("href", "/c/plumber");
+  await expect(home.getByRole("link", { name: /Plumber/ })).toHaveAttribute("href", "/platform/c/plumber");
   // Empty categories are plain text, not links.
   await expect(home.getByText("Tiler")).toBeVisible();
-  await expect(home.locator('a[href="/c/tiler"]')).toHaveCount(0);
+  await expect(home.locator('a[href="/platform/c/tiler"]')).toHaveCount(0);
   await expect(home.locator(".chip.soon", { hasText: "Tiler" })).toContainText("soon");
 
   const events = page.locator("details", { hasText: "Events & occasions" });
@@ -46,7 +46,7 @@ test("everything else groups show counts, links for live categories and 'soon' c
 });
 
 test("searching a partial trade goes to its category page", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/platform");
   const box = page.getByRole("searchbox", { name: "What do you need?" });
   await box.fill("  Plumb ");
   await box.press("Enter");
@@ -55,25 +55,25 @@ test("searching a partial trade goes to its category page", async ({ page }) => 
 });
 
 test("the Find button submits too, and empty categories still navigate", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/platform");
   await page.getByRole("searchbox", { name: "What do you need?" }).fill("bouncy");
   await page.getByRole("button", { name: "Find" }).click();
   await expect(page).toHaveURL(/\/c\/bouncy-castles$/);
 });
 
 test("searching with no match shows a message and a way to browse", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/platform");
   const box = page.getByRole("searchbox", { name: "What do you need?" });
   await box.fill("zzz");
   await box.press("Enter");
   await expect(page.getByText("No trade called “zzz” yet.")).toBeVisible();
   const browse = page.getByRole("link", { name: "Browse all trades" });
   await expect(browse).toHaveAttribute("href", "#all-trades");
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/platform$/);
 });
 
 test("how it works says reviews are coming soon", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/platform");
   await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
   await expect(page.getByText("Reviews are coming soon")).toBeVisible();
 });

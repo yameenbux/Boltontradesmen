@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { platformPath } from "@/lib/paths";
 
 // Sticky header on every page: "BV" brick monogram, wordmark and tagline, theme toggle.
 export function BrandBar() {
   return (
     <header className="bar">
-      <Link href="/" className="brand press" aria-label="Bolton Vouched home">
+      <Link href={platformPath()} className="brand press" aria-label="Bolton Vouched home">
         <span className="mono" aria-hidden="true">
           <b>BV</b>
         </span>

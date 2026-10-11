@@ -3,6 +3,7 @@ import type { PublicProvider } from "@/lib/directory";
 import { initials } from "@/lib/initials";
 import { CountUp } from "@/components/CountUp";
 import { Pill } from "@/components/ui/Pill";
+import { platformPath } from "@/lib/paths";
 
 const Tick = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -16,7 +17,7 @@ const reviews = (n: number) => `${n} review${n === 1 ? "" : "s"}`;
 export function ProviderCard({ provider: p }: { provider: PublicProvider }) {
   const scored = p.score !== null && p.useAgainPct !== null;
   return (
-    <Link href={`/p/${p.slug}`} className="pcard press lift">
+    <Link href={platformPath("p", p.slug)} className="pcard press lift">
       <span className="avatar" aria-hidden="true">
         {initials(p.businessName)}
       </span>

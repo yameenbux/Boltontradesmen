@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { matchCategory } from "@/lib/category-search";
+import { platformPath } from "@/lib/paths";
 
 type Cat = { slug: string; name: string };
 
@@ -34,7 +35,7 @@ export function HomeSearch({ categories }: { categories: Cat[] }) {
   // Warm the likely destination while the person is still typing.
   const match = matchCategory(value, categories);
   useEffect(() => {
-    if (match) router.prefetch(`/c/${match.slug}`);
+    if (match) router.prefetch(platformPath("c", match.slug));
   }, [match, router]);
 
   function submit(e: FormEvent<HTMLFormElement>) {
@@ -46,7 +47,7 @@ export function HomeSearch({ categories }: { categories: Cat[] }) {
     }
     if (match) {
       setNoMatch(null);
-      router.push(`/c/${match.slug}`);
+      router.push(platformPath("c", match.slug));
     } else {
       setNoMatch(q);
     }

@@ -36,7 +36,7 @@ test("provider consents via their link, then the admin sets them live", async ({
   // The provider has no account: a fresh browser context.
   const ctx = await browser.newContext();
   const consent = await ctx.newPage();
-  await consent.goto(`/consent/${token}`);
+  await consent.goto(`/platform/consent/${token}`);
   // Summary card: greeting by first name, then business, trade and areas.
   await expect(consent.getByRole("heading", { name: "Sam, here's how you'll appear on Bolton Vouched" })).toBeVisible();
   const summary = consent.getByRole("region", { name: /how you'll appear/ });
@@ -67,7 +67,7 @@ test("provider consents via their link, then the admin sets them live", async ({
   await expect(consent.getByText("once Yameen has checked it", { exact: false })).toBeVisible();
   await expect(consent.getByRole("button", { name: "I agree, list me" })).toHaveCount(0);
 
-  await consent.goto(`/consent/${token}`);
+  await consent.goto(`/platform/consent/${token}`);
   await expect(consent.getByText("This link is no longer valid").first()).toBeVisible();
   await ctx.close();
 
@@ -96,9 +96,9 @@ test("provider consents via their link, then the admin sets them live", async ({
 });
 
 test("garbage and unknown tokens show the invalid message", async ({ page }) => {
-  await page.goto("/consent/not-a-token");
+  await page.goto("/platform/consent/not-a-token");
   await expect(page.getByText("This link is no longer valid").first()).toBeVisible();
-  await page.goto("/consent/00000000-0000-0000-0000-000000000000");
+  await page.goto("/platform/consent/00000000-0000-0000-0000-000000000000");
   await expect(page.getByText("This link is no longer valid").first()).toBeVisible();
 });
 
@@ -107,7 +107,7 @@ test("a provider with no contact name or WhatsApp gets the plain greeting", asyn
   const token = sql(
     `insert into public.providers (slug, business_name, phone_e164, areas) values ('e2e-nameless-${Date.now()}', '${name}', '+447700900126', '{BL3}') returning consent_token`,
   );
-  await page.goto(`/consent/${token}`);
+  await page.goto(`/platform/consent/${token}`);
   await expect(page.getByRole("heading", { name: "Here's how you'll appear on Bolton Vouched" })).toBeVisible();
   await expect(page.getByText("None yet")).toBeVisible();
   await expect(page.getByText("A call button (your number isn't shown)")).toBeVisible();

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AreaFilter } from "@/components/category/AreaFilter";
 import { localPros } from "@/components/home/CategoryTile";
 import { listCategoryGroups, listProvidersInCategory } from "@/lib/directory";
+import { platformPath } from "@/lib/paths";
 
 // Static and cookie-free: the area filter runs client-side, so no searchParams.
 export const revalidate = 300;
@@ -50,7 +51,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
 
   return (
     <main>
-      <Link href="/" className="back press">
+      <Link href={platformPath()} className="back press">
         <Chevron />
         All trades
       </Link>
@@ -72,7 +73,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
             <b>Nobody&apos;s listed for {name} yet.</b>
           </p>
           <p>Know a good one? Message the group admin to get them added.</p>
-          <Link href="/" className="link">
+          <Link href={platformPath()} className="link">
             Browse other trades
           </Link>
         </div>

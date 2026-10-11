@@ -6,6 +6,9 @@ Everything runs on brand-new, separate accounts/projects:
 - **Hosting:** Railway project **"Bolton Vouched"** (service `web`), deploying automatically from the `main` branch on GitHub.
 - **Temporary address (works now):** https://web-production-0ec9b.up.railway.app
 - **Your address:** https://boltonvouched.ysbdesigns.uk (works once step 2 below is done)
+  - **The directory (the app people add to their Home Screen):** https://boltonvouched.ysbdesigns.uk/platform
+  - **Admin:** https://boltonvouched.ysbdesigns.uk/admin
+  - Old-style links (`/c/…`, `/p/…`, `/consent/…`) still work: they forward to the `/platform/…` address.
 
 ---
 
@@ -66,7 +69,7 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 
 > You're live on Bolton Vouched, [Name] 👍
 >
-> Your page: [PROFILE LINK — e.g. https://boltonvouched.ysbdesigns.uk/p/ace-plumbing]
+> Your page: [PROFILE LINK — e.g. https://boltonvouched.ysbdesigns.uk/platform/p/ace-plumbing]
 >
 > People can now find you and ring or WhatsApp you straight from it. Your place in the list comes from reviews only; nobody can pay to jump ahead. Reviews are coming soon, so it's worth sharing your link with happy customers.
 >
@@ -78,12 +81,13 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 >
 > Every week someone in here asks "anyone know a good…?" and the answers get lost in the scroll. So I've built **Bolton Vouched**, a home for the people this group recommends:
 >
-> 👉 https://boltonvouched.ysbdesigns.uk
+> 👉 https://boltonvouched.ysbdesigns.uk/platform
 >
 > • Find plumbers, electricians, caterers, bouncy castles, man & van and more
 > • Tap Call or WhatsApp straight from their page, no sign-up
 > • Every pro on there has agreed to be listed, and nobody can pay to rank higher
 > • Reviews from people in Bolton are coming soon
+> • Tip: open the link, then "Add to Home Screen" and it works like an app
 >
 > **Traders in the group:** if you'd like to be added (it's free), just drop me a message with your name, trade and the areas you cover and I'll get you on.
 >
