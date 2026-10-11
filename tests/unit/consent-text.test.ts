@@ -1,29 +1,74 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { consentStatement } from "@/lib/consent-text";
+import { CONSENT_TEXT_VERSION, consentStatement, PRIVACY_LINK_TEXT } from "@/lib/consent-text";
 
 const env = { OWNER_LEGAL_NAME: "Jane Doe Ltd", CONTACT_EMAIL: "jane@example.org" };
 
 describe("consentStatement", () => {
-  it("includes the acknowledgement and controller line, and no review-policy promise", () => {
-    const s = consentStatement(env, "development")!;
-    const text = s.paragraphs.join("\n");
-    expect(text).toContain("I have read the privacy notice.");
-    expect(text).toContain("Bolton Vouched is run by Jane Doe Ltd. We're the data controller for the information above. Contact: jane@example.org.");
+  it("is the 2026-10-11c wording", () => {
+    expect(CONSENT_TEXT_VERSION).toBe("2026-10-11c");
+  });
+
+  it("covers every required point in plain English", () => {
+    const text = consentStatement(env, "development")!.paragraphs.join("\n");
+    for (const phrase of [
+      "without your approval",
+      "simply because you disagree",
+      "you'll be able to reply to reviews",
+      "within one working day",
+      "come back if you list again",
+      "comes from reviews only",
+      "I have read the privacy notice",
+      "operated by",
+      "data controller",
+    ]) {
+      expect(text).toContain(phrase);
+    }
+    expect(text).not.toMatch(/tradespeople/i);
     expect(text).not.toMatch(/review policy/i);
   });
+
+  it("has one paragraph per card: listing, reviews, leaving, fairness, privacy, controller", () => {
+    const s = consentStatement(env, "development")!;
+    expect(s.cards.map((c) => c.key)).toEqual(["listing", "reviews", "leaving", "fairness", "privacy", "controller"]);
+    expect(s.paragraphs).toHaveLength(6);
+  });
+
+  it("names the operator and contact in the controller line", () => {
+    const s = consentStatement(env, "development")!;
+    expect(s.paragraphs.at(-1)).toBe(
+      "Bolton Vouched is operated by Jane Doe Ltd, the data controller for this information. Contact: jane@example.org.",
+    );
+  });
+
+  it("builds each paragraph from exactly the card's title and body, as rendered", () => {
+    const s = consentStatement(env, "development")!;
+    expect(s.cards.map((c) => (c.title ? `${c.title}. ${c.body}` : c.body))).toEqual(s.paragraphs);
+    expect(s.cards.find((c) => c.key === "privacy")!.title).toContain(PRIVACY_LINK_TEXT);
+  });
+
   it("hashes exactly the paragraphs shown", () => {
     const s = consentStatement(env, "development")!;
     expect(s.sha256).toBe(createHash("sha256").update(s.paragraphs.join("\n\n")).digest("hex"));
     expect(s.owner).toBe("Jane Doe Ltd");
     expect(s.contact).toBe("jane@example.org");
   });
+
+  it("changes the hash when the operator changes", () => {
+    const a = consentStatement(env, "development")!;
+    const b = consentStatement({ ...env, OWNER_LEGAL_NAME: "Someone Else Ltd" }, "development")!;
+    expect(a.sha256).not.toBe(b.sha256);
+  });
+
   it("falls back to placeholders outside production", () => {
     expect(consentStatement({}, "development")!.owner).toContain("pending");
   });
+
   it("fails closed in production when env is missing", () => {
     expect(consentStatement({}, "production")).toBeNull();
     expect(consentStatement({ OWNER_LEGAL_NAME: "x" }, "production")).toBeNull();
+    expect(consentStatement({ CONTACT_EMAIL: "x@example.org" }, "production")).toBeNull();
+    expect(consentStatement({ OWNER_LEGAL_NAME: "  ", CONTACT_EMAIL: "x@example.org" }, "production")).toBeNull();
     expect(consentStatement(env, "production")).not.toBeNull();
   });
 });

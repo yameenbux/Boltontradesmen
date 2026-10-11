@@ -27,7 +27,15 @@ export type PublicProvider = {
 };
 
 export type Group = { id: string; name: string; slug: string; sort: number };
-export type Category = { id: string; groupId: string; slug: string; name: string; guidanceNote: string | null };
+export type Category = {
+  id: string;
+  groupId: string;
+  slug: string;
+  name: string;
+  guidanceNote: string | null;
+  /** Number of live providers listed in this category (from provider_public). */
+  liveCount: number;
+};
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function toProvider(r: any): PublicProvider {
@@ -58,12 +66,19 @@ const time = (s: string | null) => (s ? new Date(s).getTime() : 0);
 export const listCategoryGroups = cache(
   async (): Promise<{ group: Group; categories: Category[] }[]> => {
     const db = createPublicClient();
-    const [groups, cats] = await Promise.all([
+    const [groups, cats, live] = await Promise.all([
       db.from("category_groups").select("id, name, slug, sort").order("sort"),
       db.from("categories").select("id, group_id, slug, name, guidance_note").order("name"),
+      // The public view only holds live providers; only their category slugs are read.
+      db.from("provider_public").select("category_slugs"),
     ]);
     if (groups.error) throw new Error(`listCategoryGroups: ${groups.error.message}`);
     if (cats.error) throw new Error(`listCategoryGroups: ${cats.error.message}`);
+    if (live.error) throw new Error(`listCategoryGroups: ${live.error.message}`);
+    const liveCounts = new Map<string, number>();
+    for (const p of live.data ?? []) {
+      for (const slug of (p as any).category_slugs ?? []) liveCounts.set(slug, (liveCounts.get(slug) ?? 0) + 1);
+    }
     return (groups.data ?? []).map((g: any) => ({
       group: { id: g.id, name: g.name, slug: g.slug, sort: g.sort },
       categories: (cats.data ?? [])
@@ -74,6 +89,7 @@ export const listCategoryGroups = cache(
           slug: c.slug,
           name: c.name,
           guidanceNote: c.guidance_note,
+          liveCount: liveCounts.get(c.slug) ?? 0,
         })),
     }));
   },

@@ -1,22 +1,35 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const state: { rows: unknown[]; error: unknown; contains: unknown[][] } = { rows: [], error: null, contains: [] };
+const state: {
+  rows: unknown[];
+  error: unknown;
+  contains: unknown[][];
+  tables: Record<string, unknown[]>;
+  selects: [string, string][];
+} = { rows: [], error: null, contains: [], tables: {}, selects: [] };
 
 vi.mock("@/lib/supabase/server", () => ({
-  createPublicClient: () => {
-    const builder: Record<string, unknown> = {
-      select: () => builder,
-      contains: (col: string, val: unknown) => {
-        state.contains.push([col, val]);
-        return builder;
-      },
-      then: (resolve: (v: unknown) => unknown) => resolve({ data: state.rows, error: state.error }),
-    };
-    return { from: () => builder };
-  },
+  createPublicClient: () => ({
+    from: (table: string) => {
+      const builder: Record<string, unknown> = {
+        select: (cols: string) => {
+          state.selects.push([table, cols]);
+          return builder;
+        },
+        order: () => builder,
+        contains: (col: string, val: unknown) => {
+          state.contains.push([col, val]);
+          return builder;
+        },
+        then: (resolve: (v: unknown) => unknown) =>
+          resolve({ data: state.tables[table] ?? state.rows, error: state.error }),
+      };
+      return builder;
+    },
+  }),
 }));
 
-import { listProvidersInCategory, BL_DISTRICTS } from "@/lib/directory";
+import { listProvidersInCategory, listCategoryGroups, BL_DISTRICTS } from "@/lib/directory";
 
 const row = (slug: string, o: Record<string, unknown> = {}) => ({
   id: slug,
@@ -44,6 +57,8 @@ beforeEach(() => {
   state.rows = [];
   state.error = null;
   state.contains = [];
+  state.tables = {};
+  state.selects = [];
 });
 
 describe("listProvidersInCategory", () => {
@@ -94,5 +109,41 @@ describe("listProvidersInCategory", () => {
 describe("BL_DISTRICTS", () => {
   it("covers BL1-BL7 plus nearby districts", () => {
     expect(BL_DISTRICTS).toEqual(["BL1", "BL2", "BL3", "BL4", "BL5", "BL6", "BL7", "M26", "M28", "M46", "WN2"]);
+  });
+});
+
+describe("listCategoryGroups", () => {
+  it("adds liveCount per category from provider_public.category_slugs", async () => {
+    state.tables = {
+      category_groups: [
+        { id: "g1", name: "Home & trades", slug: "home-trades", sort: 1 },
+        { id: "g2", name: "Events & occasions", slug: "events-occasions", sort: 4 },
+      ],
+      categories: [
+        { id: "c1", group_id: "g1", slug: "plumber", name: "Plumber", guidance_note: null },
+        { id: "c2", group_id: "g1", slug: "tiler", name: "Tiler", guidance_note: null },
+        { id: "c3", group_id: "g2", slug: "cakes", name: "Cakes", guidance_note: null },
+      ],
+      provider_public: [
+        { category_slugs: ["plumber"] },
+        { category_slugs: ["plumber", "cakes"] },
+        { category_slugs: [] },
+        { category_slugs: null },
+      ],
+    };
+    const groups = await listCategoryGroups();
+    expect(groups.map((g) => g.group.slug)).toEqual(["home-trades", "events-occasions"]);
+    expect(groups[0].categories.map((c) => [c.slug, c.liveCount])).toEqual([
+      ["plumber", 2],
+      ["tiler", 0],
+    ]);
+    expect(groups[1].categories.map((c) => [c.slug, c.liveCount])).toEqual([["cakes", 1]]);
+    // Only the slugs column is read from the public view.
+    expect(state.selects).toContainEqual(["provider_public", "category_slugs"]);
+  });
+
+  it("throws on a database error", async () => {
+    state.error = { message: "nope" };
+    await expect(listCategoryGroups()).rejects.toThrow(/nope/);
   });
 });

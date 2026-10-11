@@ -1,17 +1,17 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Button } from "@/components/ui/Button";
 import { newConsentLink, recordCheck, saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
 import { CHECK_KINDS, type FormState } from "@/lib/admin-shared";
 
 const initial: FormState = {};
-const input = "min-h-12 rounded border border-neutral-500 px-3 font-normal";
-const button = "min-h-12 rounded bg-neutral-900 px-4 font-bold text-white disabled:opacity-60";
+const input = "a-input";
 
 function FieldError({ id, state }: { id: string; state: FormState }) {
   const msg = state.errors?.[id];
   return msg ? (
-    <span role="alert" className="text-sm font-semibold text-red-800">
+    <span role="alert" className="a-err">
       {msg}
     </span>
   ) : null;
@@ -20,7 +20,7 @@ function FieldError({ id, state }: { id: string; state: FormState }) {
 function Status({ state }: { state: FormState }) {
   if (!state.message) return null;
   return (
-    <p role={state.ok ? "status" : "alert"} className={state.ok ? "font-semibold text-emerald-900" : "font-semibold text-red-800"}>
+    <p role={state.ok ? "status" : "alert"} className={state.ok ? "a-ok" : "a-err"}>
       {state.message}
     </p>
   );
@@ -44,44 +44,44 @@ export function ProviderForm({ categories, values = {} }: { categories: Category
   const str = (k: string, fallback: string | null | undefined) => (state.values?.[k] as string | undefined) ?? fallback ?? "";
   const chosen = (state.values?.category_ids as string[] | undefined) ?? values.category_ids ?? [];
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form action={action} className="a-form">
       {values.id && <input type="hidden" name="id" value={values.id} />}
-      <label className="flex flex-col gap-1 font-semibold">
+      <label className="a-field">
         Business name
         <input name="business_name" required defaultValue={str("business_name", values.business_name)} className={input} />
         <FieldError id="business_name" state={state} />
       </label>
-      <label className="flex flex-col gap-1 font-semibold">
+      <label className="a-field">
         Contact name
         <input name="contact_name" defaultValue={str("contact_name", values.contact_name)} className={input} />
         <FieldError id="contact_name" state={state} />
       </label>
-      <label className="flex flex-col gap-1 font-semibold">
+      <label className="a-field">
         Phone
         <input name="phone" type="tel" required defaultValue={str("phone", values.phone_e164)} className={input} />
         <FieldError id="phone" state={state} />
       </label>
-      <label className="flex flex-col gap-1 font-semibold">
+      <label className="a-field">
         WhatsApp number (optional)
         <input name="whatsapp" type="tel" defaultValue={str("whatsapp", values.whatsapp_e164)} className={input} />
         <FieldError id="whatsapp" state={state} />
       </label>
-      <label className="flex flex-col gap-1 font-semibold">
+      <label className="a-field">
         Areas covered (postcode districts, e.g. BL1, BL3)
         <input name="areas" defaultValue={str("areas", (values.areas ?? []).join(", "))} className={input} />
         <FieldError id="areas" state={state} />
       </label>
-      <label className="flex flex-col gap-1 font-semibold">
+      <label className="a-field">
         Bio
-        <textarea name="bio" rows={4} defaultValue={str("bio", values.bio)} className="rounded border border-neutral-500 p-3 font-normal" />
+        <textarea name="bio" rows={4} defaultValue={str("bio", values.bio)} className="a-input" />
         <FieldError id="bio" state={state} />
       </label>
-      <fieldset className="flex flex-col gap-1">
-        <legend className="font-semibold">Categories (up to 3)</legend>
-        <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+      <fieldset className="a-field">
+        <legend className="mb-1 font-bold">Categories (up to 3)</legend>
+        <div className="a-checks">
           {categories.map((c) => (
-            <label key={c.id} className="flex min-h-12 items-center gap-2">
-              <input type="checkbox" name="category_ids" value={c.id} defaultChecked={chosen.includes(c.id)} className="size-5" />
+            <label key={c.id} className="a-check">
+              <input type="checkbox" name="category_ids" value={c.id} defaultChecked={chosen.includes(c.id)} />
               {c.name}
             </label>
           ))}
@@ -89,9 +89,9 @@ export function ProviderForm({ categories, values = {} }: { categories: Category
         <FieldError id="category_ids" state={state} />
       </fieldset>
       <Status state={state} />
-      <button type="submit" disabled={pending} className={button}>
+      <Button type="submit" disabled={pending}>
         {pending ? "Saving…" : values.id ? "Save changes" : "Add provider"}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -99,9 +99,9 @@ export function ProviderForm({ categories, values = {} }: { categories: Category
 export function CheckForm({ providerId }: { providerId: string }) {
   const [state, action, pending] = useActionState(recordCheck, initial);
   return (
-    <form action={action} className="flex flex-col gap-3">
+    <form action={action} className="a-form">
       <input type="hidden" name="provider_id" value={providerId} />
-      <label className="flex flex-col gap-1 font-semibold">
+      <label className="a-field">
         Kind
         <select name="kind" className={input}>
           {CHECK_KINDS.map(([k, label]) => (
@@ -111,19 +111,19 @@ export function CheckForm({ providerId }: { providerId: string }) {
           ))}
         </select>
       </label>
-      <label className="flex flex-col gap-1 font-semibold">
+      <label className="a-field">
         Reference
         <input name="reference" className={input} />
       </label>
-      <label className="flex flex-col gap-1 font-semibold">
+      <label className="a-field">
         Expires on (required for Gas Safe, DVSA ADI and insurance)
         <input name="expires_on" type="date" className={input} />
         <FieldError id="expires_on" state={state} />
       </label>
       <Status state={state} />
-      <button type="submit" disabled={pending} className={button}>
+      <Button type="submit" disabled={pending}>
         Record check
-      </button>
+      </Button>
     </form>
   );
 }
@@ -131,27 +131,27 @@ export function CheckForm({ providerId }: { providerId: string }) {
 export function StatusForm({ providerId, current, hasConsent }: { providerId: string; current: string; hasConsent: boolean }) {
   const [state, action, pending] = useActionState(setStatus, initial);
   return (
-    <form action={action} className="flex flex-col gap-3">
+    <form action={action} className="a-form">
       <input type="hidden" name="provider_id" value={providerId} />
-      <label className="flex flex-col gap-1 font-semibold">
+      <label className="a-field">
         Reason (required to remove)
         <input name="reason" className={input} />
         <FieldError id="reason" state={state} />
       </label>
       <FieldError id="status" state={state} />
       <Status state={state} />
-      <div className="flex flex-wrap gap-3">
-        <button type="submit" name="status" value="live" disabled={pending || !(current === "consented" || (current === "paused" && hasConsent))} className={button}>
+      <div className="a-actions">
+        <Button type="submit" name="status" value="live" variant="primary" disabled={pending || !(current === "consented" || (current === "paused" && hasConsent))}>
           Set live
-        </button>
-        <button type="submit" name="status" value="paused" disabled={pending || current === "paused" || current === "removed"} className={button}>
+        </Button>
+        <Button type="submit" name="status" value="paused" variant="secondary" disabled={pending || current === "paused" || current === "removed"}>
           Pause
-        </button>
-        <button type="submit" name="status" value="removed" disabled={pending || current === "removed"} className={button}>
+        </Button>
+        <Button type="submit" name="status" value="removed" variant="secondary" disabled={pending || current === "removed"}>
           Remove
-        </button>
+        </Button>
       </div>
-      {current === "invited" && <p>Set live becomes available once the provider has agreed through their consent link.</p>}
+      {current === "invited" && <p className="a-hint">Set live becomes available once the provider has agreed through their consent link.</p>}
     </form>
   );
 }
@@ -180,14 +180,15 @@ export function ConsentLinkButton({ providerId, status }: { providerId: string; 
   }
 
   if (status !== "invited") {
-    return <p>{status === "consented" ? "Consent given." : "Consent links are only available while a provider is invited."}</p>;
+    return <p className="text-ink-2">{status === "consented" ? "Consent given." : "Consent links are only available while a provider is invited."}</p>;
   }
   return (
-    <div className="flex flex-col gap-2">
-      <button type="button" onClick={onClick} disabled={busy} className={button}>
+    <div className="grid gap-3">
+      <Button type="button" onClick={onClick} disabled={busy}>
         New consent link
-      </button>
-      {message && <p role="status">{message}</p>}
+      </Button>
+      <p className="a-hint">Creates a fresh link and copies it, ready to paste into WhatsApp.</p>
+      {message && <p role="status" className="a-ok">{message}</p>}
       {link && <input readOnly aria-label="Consent link" value={link} onFocus={(e) => e.currentTarget.select()} className={`${input} w-full`} />}
     </div>
   );

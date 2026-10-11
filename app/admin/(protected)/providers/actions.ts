@@ -6,13 +6,14 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
 import { CHECK_KINDS, SETTABLE_STATUSES, type FormState } from "@/lib/admin-shared";
 import { InvalidPhoneError, toE164 } from "@/lib/phone";
+import { PLATFORM_BASE, platformPath } from "@/lib/paths";
 
 // Public pages read providers from the database (home is prerendered), so status changes and
 // edits must invalidate them for paused/removed providers to disappear immediately.
 function revalidatePublicPages() {
-  revalidatePath("/p/[slug]", "page");
-  revalidatePath("/c/[category]", "page");
-  revalidatePath("/");
+  revalidatePath(`${PLATFORM_BASE}/p/[slug]`, "page");
+  revalidatePath(`${PLATFORM_BASE}/c/[category]`, "page");
+  revalidatePath(platformPath());
 }
 
 const text = (v: FormDataEntryValue | null) => (typeof v === "string" ? v.trim() : "");
@@ -125,6 +126,7 @@ export async function recordCheck(_prev: FormState, formData: FormData): Promise
     return { message: "Could not record the check. Try again." };
   }
   revalidatePath(`/admin/providers/${v.provider_id}`);
+  revalidatePublicPages();
   return { ok: true, message: "Check recorded" };
 }
 
@@ -168,5 +170,5 @@ export async function newConsentLink(providerId: string): Promise<{ url?: string
   const { data, error } = await supabase.rpc("admin_new_consent_token", { p_provider: providerId });
   if (error) return { error: "Could not create a consent link" };
   const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
-  return { url: `${base}/consent/${data as string}` };
+  return { url: `${base}${platformPath("consent", data as string)}` };
 }

@@ -1,10 +1,16 @@
 import { execFileSync } from "node:child_process";
-import { expect, test } from "@playwright/test";
+import { createHash } from "node:crypto";
+import { expect, test, type Page } from "@playwright/test";
 
 const DB_URL = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
 function sql(query: string): string {
   return execFileSync("psql", [DB_URL, "-X", "-A", "-t", "-q", "-v", "ON_ERROR_STOP=1", "-c", query]).toString().trim();
+}
+
+// The text of every statement paragraph exactly as rendered, in order (one per card, plus the controller line).
+async function renderedParagraphs(page: Page): Promise<string[]> {
+  return page.locator("[data-consent-paragraph]").evaluateAll((els) => els.map((el) => el.textContent ?? ""));
 }
 
 test("provider consents via their link, then the admin sets them live", async ({ page, browser }) => {
@@ -15,6 +21,8 @@ test("provider consents via their link, then the admin sets them live", async ({
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.getByRole("link", { name: "Add provider" }).click();
   await page.getByLabel("Business name").fill(name);
+  await page.getByLabel("Contact name").fill("Sam Tester");
+  await page.getByLabel("WhatsApp number (optional)").fill("07700 900127");
   await page.getByRole("textbox", { name: /^Phone/ }).fill("07700 900125");
   await page.getByRole("textbox", { name: /^Areas/ }).fill("BL1, BL2");
   await page.getByLabel("Plumber", { exact: true }).check();
@@ -28,23 +36,45 @@ test("provider consents via their link, then the admin sets them live", async ({
   // The provider has no account: a fresh browser context.
   const ctx = await browser.newContext();
   const consent = await ctx.newPage();
-  await consent.goto(`/consent/${token}`);
-  await expect(consent.getByRole("heading", { name: new RegExp(name) })).toBeVisible();
-  await expect(consent.getByText("Plumber", { exact: true })).toBeVisible();
-  await expect(consent.getByText("BL1, BL2")).toBeVisible();
-  await expect(consent.getByText("Reviews are published without your approval", { exact: false })).toBeVisible();
+  await consent.goto(`/platform/consent/${token}`);
+  // Summary card: greeting by first name, then business, trade and areas.
+  await expect(consent.getByRole("heading", { name: "Sam, here's how you'll appear on Bolton Vouched" })).toBeVisible();
+  const summary = consent.getByRole("region", { name: /how you'll appear/ });
+  await expect(summary.getByText(name, { exact: true })).toBeVisible();
+  await expect(summary.getByText("Sam Tester", { exact: true })).toBeVisible();
+  await expect(summary.getByText("Plumber", { exact: true })).toBeVisible();
+  await expect(summary.getByText("BL1, BL2")).toBeVisible();
+  await expect(summary.getByText("Call and WhatsApp buttons (your number isn't shown)")).toBeVisible();
+  // The statement: every paragraph is rendered as its own card (the controller line last).
+  const paragraphs = await renderedParagraphs(consent);
+  expect(paragraphs).toHaveLength(6);
+  await expect(consent.getByText("Reviews go live without your approval", { exact: false })).toBeVisible();
+  await expect(consent.getByText("simply because you disagree", { exact: false })).toBeVisible();
   await expect(consent.getByText("within one working day", { exact: false })).toBeVisible();
-  await expect(consent.getByText("We're the data controller", { exact: false })).toBeVisible();
-  await expect(consent.getByText("I have read the privacy notice.", { exact: false })).toBeVisible();
-  await expect(consent.getByRole("link", { name: "Read the privacy notice" })).toHaveAttribute("href", "/privacy");
-  await consent.getByRole("button", { name: "I agree" }).click();
-  await expect(consent.getByText("Thanks — you're all set")).toBeVisible();
+  await expect(consent.getByText("come back if you list again", { exact: false })).toBeVisible();
+  await expect(consent.getByText("comes from reviews only", { exact: false })).toBeVisible();
+  await expect(consent.getByText("the data controller for this information", { exact: false })).toBeVisible();
+  expect(paragraphs[4]).toBe("I have read the privacy notice. It explains what we keep and why.");
+  await expect(consent.getByRole("link", { name: "privacy notice" })).toHaveAttribute("href", "/privacy");
+  expect(paragraphs.join("\n")).not.toMatch(/tradespeople/i);
 
-  await consent.goto(`/consent/${token}`);
+  // No horizontal scroll at phone width.
+  await consent.setViewportSize({ width: 360, height: 740 });
+  expect(await consent.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+
+  await consent.getByRole("button", { name: "I agree, list me" }).click();
+  await expect(consent.getByRole("heading", { name: "You're all set, Sam" })).toBeVisible();
+  await expect(consent.getByText("once Yameen has checked it", { exact: false })).toBeVisible();
+  await expect(consent.getByRole("button", { name: "I agree, list me" })).toHaveCount(0);
+
+  await consent.goto(`/platform/consent/${token}`);
   await expect(consent.getByText("This link is no longer valid").first()).toBeVisible();
   await ctx.close();
 
-  expect(sql(`select consent_evidence->>'text_version' from public.providers where business_name = '${name}'`)).toBe("2026-10-11");
+  expect(sql(`select consent_evidence->>'text_version' from public.providers where business_name = '${name}'`)).toBe("2026-10-11c");
+  // Review Focus 5: the stored hash is the hash of exactly the paragraphs the provider saw.
+  const shown = createHash("sha256").update(paragraphs.join("\n\n")).digest("hex");
+  expect(sql(`select consent_evidence->>'text_sha256' from public.providers where business_name = '${name}'`)).toBe(shown);
 
   await page.reload();
   await expect(page.getByTestId("provider-status")).toHaveText("consented");
@@ -66,8 +96,22 @@ test("provider consents via their link, then the admin sets them live", async ({
 });
 
 test("garbage and unknown tokens show the invalid message", async ({ page }) => {
-  await page.goto("/consent/not-a-token");
+  await page.goto("/platform/consent/not-a-token");
   await expect(page.getByText("This link is no longer valid").first()).toBeVisible();
-  await page.goto("/consent/00000000-0000-0000-0000-000000000000");
+  await page.goto("/platform/consent/00000000-0000-0000-0000-000000000000");
   await expect(page.getByText("This link is no longer valid").first()).toBeVisible();
+});
+
+test("a provider with no contact name or WhatsApp gets the plain greeting", async ({ page }) => {
+  const name = `E2E Nameless ${Date.now()}`;
+  const token = sql(
+    `insert into public.providers (slug, business_name, phone_e164, areas) values ('e2e-nameless-${Date.now()}', '${name}', '+447700900126', '{BL3}') returning consent_token`,
+  );
+  await page.goto(`/platform/consent/${token}`);
+  await expect(page.getByRole("heading", { name: "Here's how you'll appear on Bolton Vouched" })).toBeVisible();
+  await expect(page.getByText("None yet")).toBeVisible();
+  await expect(page.getByText("A call button (your number isn't shown)")).toBeVisible();
+  await page.getByRole("button", { name: "I agree, list me" }).click();
+  await expect(page.getByRole("heading", { name: "You're all set", exact: true })).toBeVisible();
+  expect(sql(`select status from public.providers where business_name = '${name}'`)).toBe("consented");
 });

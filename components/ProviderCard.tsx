@@ -1,33 +1,49 @@
 import Link from "next/link";
 import type { PublicProvider } from "@/lib/directory";
-import { NeedsReviews } from "@/components/StatsBlock";
+import { initials } from "@/lib/initials";
+import { CountUp } from "@/components/CountUp";
+import { Pill } from "@/components/ui/Pill";
+import { platformPath } from "@/lib/paths";
 
+const Tick = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+);
+
+const reviews = (n: number) => `${n} review${n === 1 ? "" : "s"}`;
+
+/** Category-page card: initials avatar, name, Verified pill, areas, and the score (or how many reviews so far). */
 export function ProviderCard({ provider: p }: { provider: PublicProvider }) {
+  const scored = p.score !== null && p.useAgainPct !== null;
   return (
-    <li>
-      <Link
-        href={`/p/${p.slug}`}
-        className="block min-h-12 rounded-lg border border-neutral-300 p-4 hover:border-neutral-900"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="break-words text-lg font-bold">{p.businessName}</p>
-            {p.isVerified && <p className="text-sm font-semibold text-emerald-900">✓ Verified</p>}
-            {p.areas.length > 0 && <p className="text-sm text-neutral-700">{p.areas.join(", ")}</p>}
-          </div>
-          {p.score !== null && p.useAgainPct !== null ? (
-            <div className="shrink-0 text-right">
-              <p className="text-3xl font-extrabold leading-none text-emerald-900">{p.useAgainPct}%</p>
-              <p className="text-sm font-semibold">Would use again</p>
-              <p className="text-xs text-neutral-700">{p.reviewCount} reviews</p>
-            </div>
-          ) : (
-            <div className="shrink-0 text-right text-sm">
-              <NeedsReviews reviewCount={p.reviewCount} />
-            </div>
-          )}
-        </div>
-      </Link>
-    </li>
+    <Link href={platformPath("p", p.slug)} className="pcard press lift">
+      <span className="avatar" aria-hidden="true">
+        {initials(p.businessName)}
+      </span>
+      <span className="info">
+        <span className="name">{p.businessName}</span>
+        {p.isVerified && (
+          <Pill tone="sage">
+            <Tick />
+            Verified
+          </Pill>
+        )}
+        {p.areas.length > 0 && <span className="meta">{p.areas.join(" · ")}</span>}
+      </span>
+      <span className="score" data-testid="score">
+        {scored ? (
+          <>
+            <span className="pct">
+              <CountUp to={p.useAgainPct as number} />%
+            </span>
+            <span className="lab">would use again</span>
+            <span className="rev">{reviews(p.reviewCount)}</span>
+          </>
+        ) : (
+          <span className="pending">{p.reviewCount === 0 ? "No reviews yet" : `${reviews(p.reviewCount)} so far`}</span>
+        )}
+      </span>
+    </Link>
   );
 }

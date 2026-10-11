@@ -1,0 +1,45 @@
+import { Pill } from "@/components/ui/Pill";
+import { initials } from "@/lib/initials";
+
+const Tick = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+);
+
+/** Centred profile header: initials avatar, Gloock name, "contact · trade", Verified pill and areas covered. */
+export function ProfileHeader({
+  businessName,
+  contactName,
+  trades,
+  isVerified,
+  areas,
+}: {
+  businessName: string;
+  contactName: string | null;
+  trades: string[];
+  isVerified: boolean;
+  areas: string[];
+}) {
+  const who = [contactName, trades.join(", ")].filter(Boolean).join(" · ");
+  return (
+    <div className="prof-head stagger">
+      <div className="avatar" aria-hidden="true">
+        {initials(businessName)}
+      </div>
+      <h1>{businessName}</h1>
+      {who && <div className="who">{who}</div>}
+      {(isVerified || areas.length > 0) && (
+        <div className="row">
+          {isVerified && (
+            <Pill tone="sage">
+              <Tick />
+              Verified
+            </Pill>
+          )}
+          {areas.length > 0 && <span>Covers {areas.join(", ")}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
