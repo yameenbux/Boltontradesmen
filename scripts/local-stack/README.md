@@ -58,6 +58,8 @@ set local request.jwt.claims = '{"sub":"<uuid>","role":"authenticated"}';
 - `proxy.mjs` — the gateway. `jwt.mjs` — key signing.
 - `smoke.test.sh` — the stack's acceptance test.
 - `../db-reset.sh` — schema reset + migrations + seed (`ON_ERROR_STOP=1`), then `NOTIFY pgrst, 'reload schema'`.
+  Refuses any non-local host (only 127.0.0.1, localhost, ::1) unless `ALLOW_NONLOCAL_DB_RESET=1`.
+- `db-reset-guard.test.sh` — hermetic test of that guard (fake `psql`, no database touched); part of `npm run test:stack`.
 
 ## Differences from `supabase start`
 
