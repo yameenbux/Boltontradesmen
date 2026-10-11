@@ -1,23 +1,22 @@
 import type { Metadata } from "next";
 import { H2, List, PolicyPage } from "@/components/PolicyPage";
-import { consentStatement } from "@/lib/consent-text";
+import { policyIdentity } from "@/lib/policy-config";
 
 export const metadata: Metadata = { title: "Terms | Bolton Vouched" };
 
 export default function TermsPage() {
-  const c = consentStatement();
-  const contact = c?.contact ?? "the contact details on this site (not yet configured)";
+  const { contact } = policyIdentity();
   return (
     <PolicyPage title="Terms of use">
       <H2>What this site is</H2>
       <p>
-        Bolton Vouched is a local directory of recommended local pros in Bolton, with reviews from residents who have used
-        them. It is an information service, not a trade body or a marketplace.
+        Bolton Vouched is a local directory of recommended local pros in Bolton, where residents will be able to leave
+        reviews about the people they have used. It is an information service, not a trade body or a marketplace.
       </p>
 
       <H2>Reviews are opinions</H2>
       <p>
-        Reviews are the opinions of the residents who wrote them. They are not statements by Bolton Vouched, and we do not
+        Reviews, when they are published, are the opinions of the residents who wrote them. They are not statements by Bolton Vouched, and we do not
         guarantee that any review is complete or accurate.
       </p>
 
@@ -39,7 +38,7 @@ export default function TermsPage() {
 
       <H2>Reporting content</H2>
       <p>If you think something on the site is wrong, unfair or unlawful, tell us at {contact} and say which page it is on.</p>
-      <List items={["We look at every report.", "We may hide content while we check it."]} />
+      <List items={["We will review the reports we receive."]} />
     </PolicyPage>
   );
 }

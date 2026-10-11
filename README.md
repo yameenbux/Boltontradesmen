@@ -67,4 +67,10 @@ The E2E suite creates `admin@example.test` / `e2e-admin-password` itself (`scrip
    - `DEVICE_HASH_SECRET`: a strong random secret (for example `openssl rand -hex 32`). Do not reuse `change-me`.
    - `NEXT_PUBLIC_SITE_URL`: the public URL of the site.
    - `OWNER_LEGAL_NAME` and `CONTACT_EMAIL`: required. In production the provider consent page fails closed (it will not render) without them, and the privacy notice and terms use them.
-6. **Policy pages.** `/privacy`, `/terms` and `/how-ratings-work` carry a "Draft — pending legal review" banner. Have them reviewed, then remove the banner (`DRAFT_BANNER` in `components/PolicyPage.tsx`) before launch. They are prerendered at build time, so redeploy after changing `OWNER_LEGAL_NAME` or `CONTACT_EMAIL`.
+6. **Policy pages.** `/privacy`, `/terms` and `/how-ratings-work` carry a "Draft — pending legal review" banner. Have them reviewed, then remove the banner (`DRAFT_BANNER` in `components/PolicyPage.tsx`) before launch. They are prerendered at build time, so redeploy after changing `OWNER_LEGAL_NAME` or `CONTACT_EMAIL`; in production the build fails if either is unset.
+
+## Before launch
+
+- [ ] Set `OWNER_LEGAL_NAME` and `CONTACT_EMAIL`, deploy, and verify `/privacy` shows them.
+- [ ] The 12-month contact-event purge job is not yet built (planned). The privacy notice states the 12-month retention policy, so build the job before relying on it.
+- [ ] Legal review of all draft pages (`/privacy`, `/terms`, `/how-ratings-work`), then remove the draft banner.

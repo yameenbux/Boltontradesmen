@@ -39,3 +39,12 @@ test("how ratings work states the minimum and that payment never affects ranking
   await expect(page.getByText("Payment never affects ranking").first()).toBeVisible();
   await expect(page.getByText(/3 reviews/).first()).toBeVisible();
 });
+
+for (const { path } of policies) {
+  test(`${path} shows no literal HTML entities`, async ({ page }) => {
+    await page.goto(path);
+    const text = await page.locator("main").innerText();
+    expect(text).not.toContain("&apos;");
+    expect(text).not.toContain("&amp;");
+  });
+}

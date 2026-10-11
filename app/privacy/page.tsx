@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import { H2, List, PolicyPage } from "@/components/PolicyPage";
-import { consentStatement } from "@/lib/consent-text";
+import { policyIdentity } from "@/lib/policy-config";
 
 export const metadata: Metadata = { title: "Privacy notice | Bolton Vouched" };
 
 export default function PrivacyPage() {
-  // Same owner/contact configuration as the provider consent page. Unset in production: say so rather than guess.
-  const c = consentStatement();
-  const owner = c?.owner ?? "the site owner (details not yet configured)";
-  const contact = c?.contact ?? "the contact details on this site (not yet configured)";
+  // Same owner/contact configuration as the consent page; throws (failing the build) if unset in production.
+  const { owner, contact } = policyIdentity();
   return (
     <PolicyPage title="Privacy notice">
       <p>
@@ -42,7 +40,7 @@ export default function PrivacyPage() {
       <H2>Why we use it, and our lawful basis</H2>
       <List
         items={[
-          "Publishing a provider&apos;s listing: consent. You can withdraw it at any time.",
+          "Publishing a provider's listing: consent. You can withdraw it at any time.",
           "Counting enquiries and keeping the site secure and free of abuse: legitimate interests. We keep this to what is needed and it does not identify visitors by name.",
         ]}
       />
@@ -52,7 +50,7 @@ export default function PrivacyPage() {
 
       <H2>How long we keep it</H2>
       <p>
-        Draft position, subject to legal review: listing data is kept until the provider withdraws, after which the
+        Retention policy (draft, subject to legal review): listing data is kept until the provider withdraws, after which the
         listing is hidden. Contact-event records (the hashed device signature and provider tapped) are kept for up to 12
         months.
       </p>
