@@ -40,7 +40,7 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 ## Step 3 — Two clicks in Supabase
 
 1. **Authentication → Sign In / Providers → "Allow new users to sign up" → OFF.** Only you should have an account.
-2. **SQL Editor → New query →** paste the whole of `docs/launch/finish-admin-function.sql` → **Run**. This lets admin *remove* a category from a provider (adding already works). It shows a "destructive operation" warning because the function contains a `delete` — that's expected; confirm.
+2. **SQL Editor → New query →** paste the whole of `docs/launch/finish-admin-function.sql` → **Run**. Do this **before you send the first consent link**. It does two things: it lets admin *remove* a category from a provider (adding already works), and it makes the consent page greet the trader by name and show the WhatsApp button note. It shows a "destructive operation" warning because the function contains a `delete` — that's expected; confirm.
 
 ## Step 4 — Sign in and add traders
 
@@ -49,7 +49,7 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 - **Add provider** → name, business, trade(s), areas, mobile, WhatsApp → Save. They start as **invited**.
 - Gas & boilers needs a Gas Safe check recorded first (number + expiry); driving instructors need a DVSA ADI check.
 - **Copy consent link** → send it with message A below.
-- When they tap **"I agree, list me"**, their status becomes **consented** → open them in admin → **Set live**. They appear on the site within 5 minutes.
+- When they tap **"I agree, list me"**, their status becomes **consented** → open them in admin → **Set live**. They appear on the site straight away.
 
 ## Step 5 — Messages
 
@@ -62,7 +62,7 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 > This link shows exactly how you'll appear (name, trade, areas and Call/WhatsApp buttons; your number isn't shown on the page). If you're happy, tap "I agree":
 > [CONSENT LINK]
 >
-> Fair warning: people who've used you will be able to leave reviews, and I won't remove one just because it's unflattering, only if it's fake or abusive. You can reply to any review, and you can come off any time.
+> Fair warning: people who've used you will be able to leave reviews, and I won't remove one just because it's unflattering, only if it's fake or abusive. you'll be able to reply to any review, and you can come off any time.
 >
 > Free, no catch. Any questions just message me.
 
