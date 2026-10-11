@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Reset the public schema and re-apply supabase/migrations/*.sql (filename order)
-# and supabase/seed.sql. Intended for the local stack (scripts/local-stack);
-# with the real Supabase CLI use `npx supabase db reset` instead.
+# and supabase/seed.sql. The psql path is for the local stack (scripts/local-stack),
+# where postgres is a superuser. With SUPABASE_CLI_STACK=1 (the real Supabase CLI
+# stack, as in CI) it runs `supabase db reset` instead, which applies the same
+# migrations and seed.sql under Supabase's own ownership model (ruling R16).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 SUPABASE_DB_URL="${SUPABASE_DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}"
@@ -9,6 +11,12 @@ SUPABASE_DB_URL="${SUPABASE_DB_URL:-postgresql://postgres:postgres@127.0.0.1:543
 # shellcheck source=local-db-guard.sh
 source "$(dirname "$0")/local-db-guard.sh"
 assert_local_db
+
+if [ "${SUPABASE_CLI_STACK:-}" = 1 ]; then
+  echo "[db-reset] SUPABASE_CLI_STACK=1: running supabase db reset --local"
+  npx supabase db reset --local --yes
+  exit 0
+fi
 
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 

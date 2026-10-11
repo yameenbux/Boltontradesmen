@@ -12,6 +12,13 @@ cat >/dev/null 2>&1 || true
 exit 0
 FAKE
 chmod +x "$tmp/bin/psql"
+# Fake npx records its arguments (the SUPABASE_CLI_STACK=1 path runs `npx supabase db reset`).
+cat >"$tmp/bin/npx" <<FAKE
+#!/usr/bin/env bash
+echo "\$*" >>"$tmp/npx.calls"
+exit 0
+FAKE
+chmod +x "$tmp/bin/npx"
 
 pass=0; fail=0
 ok()  { echo "ok   - $1"; pass=$((pass + 1)); }
@@ -42,6 +49,23 @@ done
 
 run SUPABASE_DB_URL="postgresql://postgres:postgres@db.example.com:5432/postgres" ALLOW_NONLOCAL_DB_RESET=1
 [ "$code" -eq 0 ] && [ "$calls" -gt 0 ] && ok "ALLOW_NONLOCAL_DB_RESET=1 overrides the guard" || nok "ALLOW_NONLOCAL_DB_RESET=1 overrides the guard" "exit=$code psql_calls=$calls out=$out"
+
+# SUPABASE_CLI_STACK=1 (CI, real Supabase CLI stack): use `supabase db reset`, never the drop-schema psql path.
+rm -f "$tmp/npx.calls"
+run SUPABASE_DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres" SUPABASE_CLI_STACK=1
+npx_args=$( [ -f "$tmp/npx.calls" ] && cat "$tmp/npx.calls" || echo "")
+if [ "$code" -eq 0 ] && [ "$calls" -eq 0 ] && [ "$npx_args" = "supabase db reset --local --yes" ]; then
+  ok "SUPABASE_CLI_STACK=1 runs 'supabase db reset --local --yes' and no psql"
+else
+  nok "SUPABASE_CLI_STACK=1 runs 'supabase db reset --local --yes' and no psql" "exit=$code psql_calls=$calls npx='$npx_args' out=$out"
+fi
+rm -f "$tmp/npx.calls"
+run SUPABASE_DB_URL="postgresql://postgres:postgres@db.example.com:5432/postgres" SUPABASE_CLI_STACK=1
+if [ "$code" -ne 0 ] && [ "$calls" -eq 0 ] && [ ! -f "$tmp/npx.calls" ] && grep -q "refusing" <<<"$out"; then
+  ok "SUPABASE_CLI_STACK=1 still refuses a non-local database"
+else
+  nok "SUPABASE_CLI_STACK=1 still refuses a non-local database" "exit=$code out=$out"
+fi
 
 echo "# pass $pass, fail $fail"
 [ "$fail" -eq 0 ]

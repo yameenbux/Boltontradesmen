@@ -22,6 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SUPABASE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # Real Supabase CLI stack: db:reset (and the Playwright webServer's e2e-prepare) use
+      # `supabase db reset` instead of the local-stack drop-schema reset (ruling R16).
+      SUPABASE_CLI_STACK: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,8 +32,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: sudo apt-get update && sudo apt-get install -y libtap-parser-sourcehandler-pgtap
+      - run: sudo apt-get update && sudo apt-get install -y libtap-parser-sourcehandler-pgtap-perl
       - run: npx supabase start
+      # Database tests need an empty register (no e2e fixtures), so reset and run them
+      # before the e2e step, whose webServer resets again and loads the fixtures.
+      - run: npm run db:reset
       - run: npm run test:db
       - run: npx playwright install --with-deps chromium
       - run: grep -E '^[A-Z0-9_]+=' .env.example >> "$GITHUB_ENV"
