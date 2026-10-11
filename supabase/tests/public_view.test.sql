@@ -1,5 +1,5 @@
 begin;
-select plan(16);
+select plan(17);
 
 select columns_are('public', 'provider_public', array[
   'id', 'slug', 'business_name', 'contact_name', 'areas', 'bio', 'is_verified', 'has_whatsapp',
@@ -53,5 +53,10 @@ select throws_ok($$insert into public.providers (slug, business_name, phone_e164
 select throws_ok($$select * from public.provider_stats('00000000-0000-0000-0000-0000000000c1')$$, '42501', null, 'anon cannot execute provider_stats');
 
 reset role;
+
+set local role service_role;
+select lives_ok($$select slug from public.provider_public$$, 'service_role can select from provider_public');
+reset role;
+
 select * from finish();
 rollback;

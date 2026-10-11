@@ -28,20 +28,20 @@ grant select on public.categories, public.category_groups to anon, authenticated
 -- view owner. To let provider_public work for anon without exposing the public.* functions
 -- directly, the view calls thin wrappers in a schema anon has no USAGE on (function EXECUTE is
 -- checked by OID at run time; schema USAGE is only checked on name lookup).
-create schema private;
+create schema if not exists private;
 revoke all on schema private from public, anon, authenticated;
 
-create function private.provider_stats(p_provider uuid)
+create or replace function private.provider_stats(p_provider uuid)
 returns table (review_count int, use_again_pct int, on_time_pct int, on_price_pct int, tidy_pct int, score numeric)
 language sql stable security definer set search_path = ''
 as $$ select * from public.provider_stats(p_provider); $$;
 
-create function private.category_visible(p_provider uuid, p_category uuid) returns boolean
+create or replace function private.category_visible(p_provider uuid, p_category uuid) returns boolean
 language sql stable security definer set search_path = ''
 as $$ select public.category_visible(p_provider, p_category); $$;
 
 revoke execute on all functions in schema private from public;
-grant execute on function private.provider_stats(uuid), private.category_visible(uuid, uuid) to anon, authenticated;
+grant execute on function private.provider_stats(uuid), private.category_visible(uuid, uuid) to anon, authenticated, service_role;
 
 -- The only door to provider data. Runs with owner privileges (bypasses RLS) and exposes
 -- no phone, billing, consent or document columns.
