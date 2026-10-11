@@ -1,0 +1,41 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+  db-and-e2e:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: sudo apt-get update && sudo apt-get install -y libtap-parser-sourcehandler-pgtap
+      - run: npx supabase start
+      - run: npm run test:db
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      - run: npm run test:e2e
+      - if: always()
+        run: npx supabase stop
