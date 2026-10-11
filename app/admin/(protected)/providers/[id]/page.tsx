@@ -45,7 +45,7 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
 
       <section aria-label="Consent link" className="flex flex-col gap-2">
         <h2 className="text-lg font-bold">Consent</h2>
-        <ConsentLinkButton providerId={p.id} />
+        <ConsentLinkButton providerId={p.id} status={p.status} />
       </section>
 
       <section aria-label="Status" className="flex flex-col gap-2">

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
-import { CHECK_KINDS, STATUSES, type FormState } from "@/lib/admin-shared";
+import { CHECK_KINDS, SETTABLE_STATUSES, type FormState } from "@/lib/admin-shared";
 import { InvalidPhoneError, toE164 } from "@/lib/phone";
 
 const text = (v: FormDataEntryValue | null) => (typeof v === "string" ? v.trim() : "");
@@ -121,9 +121,9 @@ export async function recordCheck(_prev: FormState, formData: FormData): Promise
 
 const statusSchema = z.object({
   provider_id: z.string().uuid(),
-  status: z.enum(STATUSES),
+  status: z.enum(SETTABLE_STATUSES),
   reason: z.string().max(500),
-});
+}).refine((v) => v.status !== "removed" || v.reason.length > 0, { path: ["reason"], message: "Enter a reason for removing this provider" });
 
 export async function setStatus(_prev: FormState, formData: FormData): Promise<FormState> {
   const { supabase } = await requireAdmin();

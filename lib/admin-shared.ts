@@ -10,7 +10,8 @@ export const CHECK_KINDS = [
   ["other", "Other"],
 ] as const;
 
-export const STATUSES = ["invited", "consented", "live", "paused", "removed"] as const;
+// "consented" is deliberately absent: consent is only recorded through the provider's own consent link.
+export const SETTABLE_STATUSES = ["live", "paused", "removed"] as const;
 
 export type FormState = {
   errors?: Record<string, string>;

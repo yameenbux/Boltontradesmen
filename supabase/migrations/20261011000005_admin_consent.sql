@@ -108,6 +108,9 @@ begin
   if not public.is_admin() then
     raise exception 'not admin' using errcode = '42501';
   end if;
+  if p_status = 'consented' then
+    raise exception 'consent is only recorded through the provider''s consent link' using errcode = 'check_violation';
+  end if;
   update public.providers set status = p_status where id = p_id;
   if not found then
     raise exception 'provider not found' using errcode = 'P0002';
@@ -152,9 +155,12 @@ begin
   end if;
   update public.providers
   set consent_token = gen_random_uuid(), consent_token_used_at = null
-  where id = p_provider
+  where id = p_provider and status = 'invited'
   returning consent_token into v_token;
   if v_token is null then
+    if exists (select 1 from public.providers where id = p_provider) then
+      raise exception 'consent links can only be created for invited providers' using errcode = 'check_violation';
+    end if;
     raise exception 'provider not found' using errcode = 'P0002';
   end if;
   insert into public.audit_log (actor_id, action, target_type, target_id)
@@ -220,5 +226,54 @@ begin
   ] loop
     execute format('revoke execute on function %s from public, anon', f);
     execute format('grant execute on function %s to authenticated', f);
+  end loop;
+end $$;
+
+-- ---- consent flow (Task 8). Called by the consent page with the service key: the provider has no account.
+
+-- What the consent page shows for a valid, unused token on an invited provider; zero rows otherwise.
+create or replace function public.consent_preview(p_token uuid)
+returns table (business_name text, categories text[], areas text[])
+language sql stable security definer set search_path = ''
+as $$
+  select p.business_name,
+         coalesce((select array_agg(c.name order by c.name) from public.provider_categories pc
+                   join public.categories c on c.id = pc.category_id where pc.provider_id = p.id), '{}'::text[]),
+         coalesce(p.areas, '{}'::text[])
+  from public.providers p
+  where p.consent_token = p_token and p.consent_token_used_at is null and p.status = 'invited';
+$$;
+
+-- Records consent only for a matching, unused token on an invited provider. Returns 'ok' or 'invalid'.
+create or replace function public.accept_consent(p_token uuid, p_ip text, p_text_version text)
+returns text
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_id uuid;
+begin
+  update public.providers
+  set status = 'consented',
+      consent_at = now(),
+      consent_token_used_at = now(),
+      consent_evidence = jsonb_build_object('ip', p_ip, 'text_version', p_text_version, 'accepted_at', now())
+  where consent_token = p_token and consent_token_used_at is null and status = 'invited'
+  returning id into v_id;
+  if v_id is null then
+    return 'invalid';
+  end if;
+  insert into public.audit_log (actor_id, action, target_type, target_id)
+  values (null, 'accept_consent', 'provider', v_id::text);
+  return 'ok';
+end;
+$$;
+
+do $$
+declare
+  f text;
+begin
+  foreach f in array array['public.consent_preview(uuid)', 'public.accept_consent(uuid, text, text)'] loop
+    execute format('revoke execute on function %s from public, anon, authenticated', f);
+    execute format('grant execute on function %s to service_role', f);
   end loop;
 end $$;

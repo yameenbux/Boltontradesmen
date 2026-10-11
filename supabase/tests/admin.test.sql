@@ -1,5 +1,5 @@
 begin;
-select plan(30);
+select plan(58);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000c1'),
@@ -118,5 +118,93 @@ select lives_ok(
 select is(jsonb_array_length(public.admin_get_provider((select v from ids where k = 'p1')) -> 'checks'), 1, 'admin_get_provider returns checks');
 reset role;
 select is((select reason from public.audit_log where action = 'set_provider_status'), 'paused: testing', 'status audit keeps reason');
+-- ---- consent flow (Task 8)
+create temp table c (k text primary key, v uuid);
+grant all on c to authenticated, service_role;
+create temp table res (k text primary key, v text);
+grant all on res to authenticated, service_role;
+set local role authenticated;
+insert into c select 'a', public.admin_upsert_provider(jsonb_build_object('business_name', 'Consent A', 'phone_e164', '+447700900131',
+  'areas', jsonb_build_array('BL1'), 'category_ids', jsonb_build_array((select id from public.categories where slug = 'plumber'))));
+insert into c select 'b', public.admin_upsert_provider(jsonb_build_object('business_name', 'Consent B', 'phone_e164', '+447700900132'));
+insert into c select 'r', public.admin_upsert_provider(jsonb_build_object('business_name', 'Consent R', 'phone_e164', '+447700900133'));
+
+-- R11: consent only via accept_consent; tokens only for invited providers
+select throws_ok(
+  $$select public.admin_set_provider_status((select v from c where k = 'a'), 'consented', 'sneaky')$$,
+  '23514', null, 'admin cannot set status to consented');
+reset role;
+select is((select status::text from public.providers where id = (select v from c where k = 'a')), 'invited', 'status unchanged after refused consented');
+select is((select count(*)::int from public.audit_log where action = 'set_provider_status' and target_id = (select v::text from c where k = 'a')), 0, 'refused consented leaves no audit row');
+
+-- accept_consent / consent_preview are not callable by anon or authenticated
+create temp table t (k text primary key, v uuid);
+grant all on t to authenticated, anon, service_role;
+insert into t select 'a', consent_token from public.providers where id = (select v from c where k = 'a');
+insert into t select 'b', consent_token from public.providers where id = (select v from c where k = 'b');
+insert into t select 'r', consent_token from public.providers where id = (select v from c where k = 'r');
+set local role anon;
+select throws_ok($$select public.accept_consent((select v from t where k = 'a'), '1.2.3.4', 'v')$$, '42501', null, 'anon cannot call accept_consent');
+select throws_ok($$select * from public.consent_preview((select v from t where k = 'a'))$$, '42501', null, 'anon cannot call consent_preview');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}';
+select throws_ok($$select public.accept_consent((select v from t where k = 'a'), '1.2.3.4', 'v')$$, '42501', null, 'authenticated (even admin) cannot call accept_consent');
+select throws_ok($$select * from public.consent_preview((select v from t where k = 'a'))$$, '42501', null, 'authenticated cannot call consent_preview');
+reset role;
+
+set local role service_role;
+select is((select business_name from public.consent_preview((select v from t where k = 'a'))), 'Consent A', 'preview: business name');
+select is((select categories from public.consent_preview((select v from t where k = 'a'))), array['Plumber'], 'preview: category names');
+select is((select areas from public.consent_preview((select v from t where k = 'a'))), array['BL1'], 'preview: areas');
+select is((select count(*)::int from public.consent_preview(gen_random_uuid())), 0, 'preview: unknown token gives no rows');
+
+insert into res select 'ok1', public.accept_consent((select v from t where k = 'a'), '203.0.113.9', '2026-10-11');
+reset role;
+select is((select v from res where k = 'ok1'), 'ok', 'valid token accepted');
+select is((select status::text from public.providers where id = (select v from c where k = 'a')), 'consented', 'status is consented');
+select is((select consent_evidence ->> 'ip' from public.providers where id = (select v from c where k = 'a')), '203.0.113.9', 'evidence: ip');
+select is((select consent_evidence ->> 'text_version' from public.providers where id = (select v from c where k = 'a')), '2026-10-11', 'evidence: text version');
+select is((select count(*)::int from public.audit_log where action = 'accept_consent' and actor_id is null and target_id = (select v::text from c where k = 'a')), 1, 'accept_consent audited once with null actor');
+
+create temp table at (v timestamptz);
+insert into at select consent_at from public.providers where id = (select v from c where k = 'a');
+grant all on at to service_role;
+set local role service_role;
+insert into res select 'again', public.accept_consent((select v from t where k = 'a'), '198.51.100.1', 'other');
+select is((select count(*)::int from public.consent_preview((select v from t where k = 'a'))), 0, 'preview: used token gives no rows');
+reset role;
+select is((select v from res where k = 'again'), 'invalid', 'same token again is invalid');
+select is((select consent_at from public.providers where id = (select v from c where k = 'a')), (select v from at), 'consent_at unchanged on reuse');
+select is((select consent_evidence ->> 'ip' from public.providers where id = (select v from c where k = 'a')), '203.0.113.9', 'evidence unchanged on reuse');
+
+-- removed provider: token no longer works
+update public.providers set status = 'removed' where id = (select v from c where k = 'b');
+set local role service_role;
+insert into res select 'removed', public.accept_consent((select v from t where k = 'b'), '1.1.1.1', 'v');
+reset role;
+select is((select v from res where k = 'removed'), 'invalid', 'removed provider token is invalid');
+select is((select status::text from public.providers where id = (select v from c where k = 'b')), 'removed', 'removed provider unchanged');
+
+-- rotated token invalidates the old one; rotation refused for non-invited
+set local role authenticated;
+create temp table rot (v uuid);
+grant all on rot to authenticated, service_role;
+insert into rot select public.admin_new_consent_token((select v from c where k = 'r'));
+select throws_ok($$select public.admin_new_consent_token((select v from c where k = 'a'))$$, '23514', null, 'new consent token refused for a consented provider');
+select throws_ok($$select public.admin_new_consent_token((select v from c where k = 'b'))$$, '23514', null, 'new consent token refused for a removed provider');
+reset role;
+set local role service_role;
+insert into res select 'old', public.accept_consent((select v from t where k = 'r'), '1.1.1.1', 'v');
+insert into res select 'new', public.accept_consent((select v from rot), '1.1.1.1', 'v');
+reset role;
+select is((select v from res where k = 'old'), 'invalid', 'rotated-out token is invalid');
+select is((select v from res where k = 'new'), 'ok', 'new token works');
+
+-- going live after consent
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}';
+select lives_ok($$select public.admin_set_provider_status((select v from c where k = 'a'), 'live', 'checked')$$, 'consented provider can go live');
+reset role;
+select is((select count(*)::int from public.provider_public where id = (select v from c where k = 'a')), 1, 'live provider appears in provider_public');
 select * from finish();
 rollback;

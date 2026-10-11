@@ -41,7 +41,7 @@ test("admin creates a provider and sees the consent link button", async ({ page 
   await expect(page.getByRole("heading", { name })).toBeVisible();
   await expect(page.getByTestId("provider-status")).toHaveText("invited");
   await expect(page.getByText("+447700900123").first()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Copy consent link" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "New consent link" })).toBeVisible();
 });
 
 test("cannot go live without consent", async ({ page }) => {
@@ -51,7 +51,5 @@ test("cannot go live without consent", async ({ page }) => {
   await page.getByRole("textbox", { name: /^Phone/ }).fill("07700 900124");
   await page.getByRole("button", { name: "Add provider" }).click();
   await expect(page.getByTestId("provider-status")).toHaveText("invited");
-  await page.locator("select[name=status]").selectOption("live");
-  await page.getByRole("button", { name: "Change status" }).click();
-  await expect(page.getByText("can't go live until they have given consent")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Set live" })).toBeDisabled();
 });

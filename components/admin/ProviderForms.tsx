@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { newConsentLink, recordCheck, saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
-import { CHECK_KINDS, STATUSES, type FormState } from "@/lib/admin-shared";
+import { CHECK_KINDS, type FormState } from "@/lib/admin-shared";
 
 const initial: FormState = {};
 const input = "min-h-12 rounded border border-neutral-500 px-3 font-normal";
@@ -134,29 +134,29 @@ export function StatusForm({ providerId, current }: { providerId: string; curren
     <form action={action} className="flex flex-col gap-3">
       <input type="hidden" name="provider_id" value={providerId} />
       <label className="flex flex-col gap-1 font-semibold">
-        Status
-        <select name="status" defaultValue={current} className={input}>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <FieldError id="status" state={state} />
-      </label>
-      <label className="flex flex-col gap-1 font-semibold">
-        Reason
+        Reason (required to remove)
         <input name="reason" className={input} />
+        <FieldError id="reason" state={state} />
       </label>
+      <FieldError id="status" state={state} />
       <Status state={state} />
-      <button type="submit" disabled={pending} className={button}>
-        Change status
-      </button>
+      <div className="flex flex-wrap gap-3">
+        <button type="submit" name="status" value="live" disabled={pending || current !== "consented"} className={button}>
+          Set live
+        </button>
+        <button type="submit" name="status" value="paused" disabled={pending || current === "paused" || current === "removed"} className={button}>
+          Pause
+        </button>
+        <button type="submit" name="status" value="removed" disabled={pending || current === "removed"} className={button}>
+          Remove
+        </button>
+      </div>
+      {current === "invited" && <p>Set live becomes available once the provider has agreed through their consent link.</p>}
     </form>
   );
 }
 
-export function ConsentLinkButton({ providerId }: { providerId: string }) {
+export function ConsentLinkButton({ providerId, status }: { providerId: string; status: string }) {
   const [link, setLink] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -179,10 +179,13 @@ export function ConsentLinkButton({ providerId }: { providerId: string }) {
     }
   }
 
+  if (status !== "invited") {
+    return <p>{status === "consented" ? "Consent given." : "Consent links are only available while a provider is invited."}</p>;
+  }
   return (
     <div className="flex flex-col gap-2">
       <button type="button" onClick={onClick} disabled={busy} className={button}>
-        Copy consent link
+        New consent link
       </button>
       {message && <p role="status">{message}</p>}
       {link && <input readOnly aria-label="Consent link" value={link} onFocus={(e) => e.currentTarget.select()} className={`${input} w-full`} />}
