@@ -88,3 +88,29 @@
 ## Done when
 
 All pages match the prototype's look and motion, reduced-motion disables animation, the full test suite passes locally and in CI, and PR is merged to `main`.
+
+---
+
+## Added by owner request (2026-10-11, late): showcase site + platform at /platform
+
+Owner: "boltonvouched.ysbdesigns.uk will showcase the platform similar to Tidemark (tidemark.ysbdesigns.uk); boltonvouched.ysbdesigns.uk/platform shows the live platform, and is the link users add to their Home Screen as a PWA. The main website has a button to the platform. Design it the same way as the Tidemark website."
+
+### Task 7: Move the platform under /platform and make it an installable PWA
+
+**Files:** move `app/page.tsx` → `app/platform/page.tsx`, `app/c/[category]` → `app/platform/c/[category]`, `app/p/[slug]` → `app/platform/p/[slug]`, `app/consent/[token]` → `app/platform/consent/[token]`; keep `app/api/contact/[slug]`, `app/admin/**`, policy pages at the root. Create `app/platform/layout.tsx` (BrandBar + footer for platform pages only — root layout becomes minimal so the showcase site can have its own chrome). Modify `app/manifest.ts`, all internal links, admin "copy consent link" URL, `lib/*` URL helpers, e2e specs, `next.config.ts` (permanent redirects from old paths: `/c/:category` → `/platform/c/:category`, `/p/:slug` → `/platform/p/:slug`, `/consent/:token` → `/platform/consent/:token`). Create `public/icons/` (192, 512, maskable 512, apple-touch 180 PNGs of the BV monogram on brick) and add `apple-touch-icon`, `apple-mobile-web-app-capable`, `theme-color` metadata on platform pages.
+
+**Interfaces:** `platformPath(...segments)` in `lib/paths.ts` returns `/platform/...`; every link and the consent-link builder use it.
+
+- [ ] Failing E2E: `/platform` shows the home (hero "Who's good round here?"); `/c/plumber` 308-redirects to `/platform/c/plumber`; `/p/<slug>` and `/consent/<token>` redirect likewise; manifest has `start_url: "/platform"`, `scope: "/platform"`, `display: "standalone"`, name "Bolton Vouched", theme colour = brick, icons 192/512/maskable; `/platform` HTML has `<link rel="apple-touch-icon">`; admin consent link contains `/platform/consent/`.
+- [ ] Implement; full suite; commit `feat: platform under /platform, installable PWA`.
+
+### Task 8: Showcase website at / (Tidemark-style)
+
+Reference: https://tidemark.ysbdesigns.uk/ — replicate its structure and polish, in Bolton Brick colours with a dark hero (deep brick-charcoal background, subtle dotted grid, warm gradient glow), two-line headline where line two is a warm brick→gold gradient, centred intro, two pill buttons, a meta line, and three fanned phone mockups showing REAL screenshots of the platform.
+
+**Sections (in order):** nav (logo + How it works · Inside · For traders · Support · Privacy, and an "Open the platform" pill); hero ("Anyone know a good…?" / "Bolton already does." — or similar, owner-voice; primary button **Open the platform** → `/platform`, secondary **Add it to your phone**); meta line "Free · No sign-up · Made in Bolton"; "How it works" (3 steps); "Inside Bolton Vouched" swipeable card deck like Tidemark's (cards: find by trade, area filter, would-use-again score, what we've checked, call or WhatsApp in one tap, fair ranking, reviews coming soon) using real screenshots; "Add it to your Home Screen" (iPhone Safari: Share → Add to Home Screen; Android Chrome: ⋮ → Install app / Add to Home screen; button opens `/platform`); "For traders" (free listing, you approve how you appear, reviews you can reply to, nobody pays to rank, "Want to be listed? Message Yameen" → `mailto:yameen@ysbdesigns.uk` plus a line about messaging in the WhatsApp group); "Fair by design" (3 points); Support FAQ with live search filter (questions: how are people ranked, is it free, how do I get listed, how do I get removed, can a trader pay to rank higher, who runs it, how do I report a review/problem); footer with Privacy · Terms · How ratings work, "Bolton Vouched is operated by YSB Ventures Ltd, registered in England and Wales, company number 16022339." and contact email.
+
+**Files:** `app/(site)/page.tsx` (root `/`), `app/(site)/layout.tsx` (site chrome, dark theme), `components/site/*`, `public/shots/*.webp` (generate with a Playwright script `scripts/shots.mjs` against the local app + e2e fixture data at 390×844 @2x, then convert to webp; commit the script and images). Policy pages keep working under the platform chrome or site chrome (either is fine; links must work).
+
+- [ ] Failing E2E: `/` shows the hero, an "Open the platform" link to `/platform`, nav anchors scroll to sections, FAQ search filters questions and shows "No questions match" for nonsense, footer shows the company number, no horizontal scroll at 360px, reduced motion disables animations, page is static.
+- [ ] Implement; full suite; commit `feat: Tidemark-style showcase site`.
