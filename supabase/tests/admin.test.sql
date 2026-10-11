@@ -1,5 +1,5 @@
 begin;
-select plan(63);
+select plan(71);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000c1'),
@@ -212,6 +212,30 @@ select is((select count(*)::int from public.provider_public where id = (select v
 set local role authenticated;
 select lives_ok($$select public.admin_set_provider_status((select v from c where k = 'a'), 'paused', 'break')$$, 'consented provider can be paused');
 select lives_ok($$select public.admin_set_provider_status((select v from c where k = 'a'), 'live', 'back')$$, 'paused provider with consent can go live again');
+
+-- I2: removal needs a reason at the DB level
+select throws_ok($$select public.admin_set_provider_status((select v from c where k = 'a'), 'removed', null)$$,
+  '23514', 'a reason is required to remove a provider', 'remove with null reason refused');
+select throws_ok($$select public.admin_set_provider_status((select v from c where k = 'a'), 'removed', '   ')$$,
+  '23514', 'a reason is required to remove a provider', 'remove with blank reason refused');
 reset role;
+select is((select status::text from public.providers where id = (select v from c where k = 'a')), 'live', 'status unchanged after refused removal');
+set local role authenticated;
+select lives_ok($$select public.admin_set_provider_status((select v from c where k = 'a'), 'removed', 'asked to be removed')$$, 'remove with a reason works');
+
+-- I3 (R12): live only from consented, or paused with consent_at
+select throws_ok($$select public.admin_set_provider_status((select v from c where k = 'a'), 'live', 'relist')$$,
+  '23514', 'a provider can only go live from consented, or paused after consent', 'removed provider (even with consent_at) cannot go live');
+insert into c select 'i', public.admin_upsert_provider(jsonb_build_object('business_name', 'Invited I', 'phone_e164', '+447700900134'));
+select throws_ok($$select public.admin_set_provider_status((select v from c where k = 'i'), 'live', 'x')$$,
+  '23514', 'a provider can only go live from consented, or paused after consent', 'invited provider cannot go live');
+reset role;
+-- paused without consent_at (paused straight from invited) cannot go live
+update public.providers set status = 'paused' where id = (select v from c where k = 'i');
+set local role authenticated;
+select throws_ok($$select public.admin_set_provider_status((select v from c where k = 'i'), 'live', 'x')$$,
+  '23514', 'a provider can only go live from consented, or paused after consent', 'paused provider without consent cannot go live');
+reset role;
+select is((select status::text from public.providers where id = (select v from c where k = 'a')), 'removed', 'removed provider stays removed');
 select * from finish();
 rollback;

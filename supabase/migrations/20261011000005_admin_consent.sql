@@ -104,6 +104,9 @@ create or replace function public.admin_set_provider_status(p_id uuid, p_status 
 returns void
 language plpgsql security definer set search_path = ''
 as $$
+declare
+  v_status public.provider_status;
+  v_consent_at timestamptz;
 begin
   if not public.is_admin() then
     raise exception 'not admin' using errcode = '42501';
@@ -111,10 +114,18 @@ begin
   if p_status = 'consented' then
     raise exception 'consent is only recorded through the provider''s consent link' using errcode = 'check_violation';
   end if;
-  update public.providers set status = p_status where id = p_id;
+  if p_status = 'removed' and nullif(btrim(p_reason), '') is null then
+    raise exception 'a reason is required to remove a provider' using errcode = 'check_violation';
+  end if;
+  select status, consent_at into v_status, v_consent_at from public.providers where id = p_id for update;
   if not found then
     raise exception 'provider not found' using errcode = 'P0002';
   end if;
+  -- Ruling R12: live only from consented, or from paused after consent (never from invited or removed).
+  if p_status = 'live' and not (v_status = 'consented' or (v_status = 'paused' and v_consent_at is not null)) then
+    raise exception 'a provider can only go live from consented, or paused after consent' using errcode = 'check_violation';
+  end if;
+  update public.providers set status = p_status where id = p_id;
   insert into public.audit_log (actor_id, action, target_type, target_id, reason)
   values (auth.uid(), 'set_provider_status', 'provider', p_id::text, nullif(concat_ws(': ', p_status::text, p_reason), ''));
 end;
