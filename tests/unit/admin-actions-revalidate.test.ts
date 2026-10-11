@@ -12,7 +12,7 @@ vi.mock("next/navigation", () => ({
 const rpc = vi.fn();
 vi.mock("@/lib/admin", () => ({ requireAdmin: async () => ({ supabase: { rpc }, user: { id: "u" } }) }));
 
-import { newConsentLink, saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
+import { newConsentLink, recordCheck, saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
 
 const PID = "11111111-1111-4111-8111-111111111111";
 const PUBLIC_PATHS = [
@@ -52,6 +52,21 @@ describe("admin provider actions revalidate public pages", () => {
       saveProvider({}, form({ id: PID, business_name: "Ace", contact_name: "", phone: "07700900123", whatsapp: "", areas: "BL1", bio: "" })),
     ).rejects.toThrow(`REDIRECT /admin/providers/${PID}`);
     for (const args of PUBLIC_PATHS) expect(revalidatePath).toHaveBeenCalledWith(...args);
+  });
+});
+
+describe("recordCheck", () => {
+  it("revalidates public pages after a successful check", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    const res = await recordCheck({}, form({ provider_id: PID, kind: "id", reference: "ref", expires_on: "" }));
+    expect(res.ok).toBe(true);
+    for (const args of PUBLIC_PATHS) expect(revalidatePath).toHaveBeenCalledWith(...args);
+  });
+
+  it("does not revalidate public pages when the database refuses", async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: "boom" } });
+    await recordCheck({}, form({ provider_id: PID, kind: "id", reference: "ref", expires_on: "" }));
+    expect(revalidatePath).not.toHaveBeenCalledWith("/platform");
   });
 });
 

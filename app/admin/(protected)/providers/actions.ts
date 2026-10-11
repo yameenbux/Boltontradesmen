@@ -126,6 +126,7 @@ export async function recordCheck(_prev: FormState, formData: FormData): Promise
     return { message: "Could not record the check. Try again." };
   }
   revalidatePath(`/admin/providers/${v.provider_id}`);
+  revalidatePublicPages();
   return { ok: true, message: "Check recorded" };
 }
 
