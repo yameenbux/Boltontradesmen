@@ -24,9 +24,9 @@ for (const [from, to] of [
   });
 }
 
-test("the root sends visitors to the platform for now", async ({ page }) => {
-  await page.goto("/");
-  await expect(page).toHaveURL(/\/platform$/);
+test("the root is the showcase site, not a redirect", async ({ request }) => {
+  const res = await request.get("/", { maxRedirects: 0 });
+  expect(res.status()).toBe(200);
 });
 
 test("the manifest makes /platform an installable standalone app", async ({ request }) => {
