@@ -1,31 +1,79 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { Button } from "@/components/ui/Button";
+import { StickyBar } from "@/components/ui/StickyBar";
 import { acceptConsent } from "./actions";
+import { InvalidLink } from "./InvalidLink";
 
-export function ConsentForm({ token }: { token: string }) {
+/**
+ * The consent statement (server-rendered, passed as children) with the sticky "I agree, list me" bar.
+ * On success the statement is replaced by the drawn-tick confirmation; a used or stale link shows the invalid state.
+ */
+export function ConsentForm({
+  token,
+  firstName,
+  children,
+}: {
+  token: string;
+  firstName: string | null;
+  children: React.ReactNode;
+}) {
   const [result, setResult] = useState<"ok" | "invalid" | "error" | null>(null);
   const [pending, start] = useTransition();
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  // The statement is replaced in place: return to the top and move focus to the new heading.
+  useEffect(() => {
+    if (result !== "ok" && result !== "invalid") return;
+    window.scrollTo({ top: 0 });
+    heading.current?.focus({ preventScroll: true });
+  }, [result]);
 
   if (result === "ok") {
-    return <p role="status" className="text-xl font-extrabold">Thanks — you&apos;re all set</p>;
+    return (
+      <div className="done">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="46" />
+          <path d="M30 52 44 65 71 37" />
+        </svg>
+        <h1 className="display" ref={heading} tabIndex={-1}>
+          {firstName ? `You're all set, ${firstName}` : "You're all set"}
+        </h1>
+        <p>Thanks. Your listing goes live once Yameen has checked it, usually within a day.</p>
+      </div>
+    );
   }
-  if (result === "invalid") {
-    return <p role="alert" className="text-xl font-extrabold">This link is no longer valid</p>;
-  }
+  if (result === "invalid") return <InvalidLink headingRef={heading} />;
+
   return (
-    <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() => start(async () => setResult((await acceptConsent(token)).status))}
-        className="min-h-12 rounded bg-neutral-900 px-4 font-bold text-white disabled:opacity-60"
-      >
-        I agree
-      </button>
-      {result === "error" && (
-        <p role="alert" className="font-semibold text-red-800">Something went wrong. Please try again.</p>
-      )}
-    </div>
+    <>
+      {children}
+      <StickyBar label="Agree to be listed">
+        {result === "error" && (
+          <p role="alert" className="bar-error">
+            Something went wrong. Please try again.
+          </p>
+        )}
+        <div className="inner one">
+          <Button
+            variant="primary"
+            disabled={pending}
+            aria-busy={pending}
+            onClick={() =>
+              start(async () => {
+                try {
+                  setResult((await acceptConsent(token)).status);
+                } catch {
+                  setResult("error");
+                }
+              })
+            }
+          >
+            I agree, list me
+          </Button>
+        </div>
+      </StickyBar>
+    </>
   );
 }

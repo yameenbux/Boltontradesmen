@@ -1,5 +1,5 @@
 begin;
-select plan(71);
+select plan(76);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000c1'),
@@ -125,7 +125,7 @@ create temp table res (k text primary key, v text);
 grant all on res to authenticated, service_role;
 set local role authenticated;
 insert into c select 'a', public.admin_upsert_provider(jsonb_build_object('business_name', 'Consent A', 'phone_e164', '+447700900131',
-  'areas', jsonb_build_array('BL1'), 'category_ids', jsonb_build_array((select id from public.categories where slug = 'plumber'))));
+  'contact_name', 'Sam Consent', 'whatsapp_e164', '+447700900135', 'areas', jsonb_build_array('BL1'), 'category_ids', jsonb_build_array((select id from public.categories where slug = 'plumber'))));
 insert into c select 'b', public.admin_upsert_provider(jsonb_build_object('business_name', 'Consent B', 'phone_e164', '+447700900132'));
 insert into c select 'r', public.admin_upsert_provider(jsonb_build_object('business_name', 'Consent R', 'phone_e164', '+447700900133'));
 
@@ -157,6 +157,11 @@ select is((select business_name from public.consent_preview((select v from t whe
 select is((select categories from public.consent_preview((select v from t where k = 'a'))), array['Plumber'], 'preview: category names');
 select is((select areas from public.consent_preview((select v from t where k = 'a'))), array['BL1'], 'preview: areas');
 select is((select count(*)::int from public.consent_preview(gen_random_uuid())), 0, 'preview: unknown token gives no rows');
+select is((select contact_name from public.consent_preview((select v from t where k = 'a'))), 'Sam Consent', 'preview: contact name');
+select is((select has_whatsapp from public.consent_preview((select v from t where k = 'a'))), true, 'preview: has WhatsApp');
+select is((select contact_name from public.consent_preview((select v from t where k = 'r'))), null, 'preview: no contact name gives null');
+select is((select has_whatsapp from public.consent_preview((select v from t where k = 'r'))), false, 'preview: no WhatsApp number');
+select is((select count(*)::int from public.consent_preview((select v from t where k = 'r'))), 1, 'preview: one row for a valid token');
 
 insert into res select 'ok1', public.accept_consent((select v from t where k = 'a'), '203.0.113.9', '2026-10-11', 'abc123', 'Jane Doe Ltd', 'jane@example.org');
 reset role;

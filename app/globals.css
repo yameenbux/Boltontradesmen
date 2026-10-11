@@ -256,6 +256,32 @@ h1,h2,h3{text-wrap:balance}
   /* Room below the footer so the last of the page is never hidden behind the bar (bar: 12 + 56 + 12 + 1px border). */
   body:has(.actionbar) .app{padding-bottom:calc(24px + 81px + env(safe-area-inset-bottom,0px))}
 
+  /* ---------- consent ---------- */
+  .consent-top{margin-top:8px; background:var(--surface); border:1px solid var(--line); border-radius:26px; padding:22px; box-shadow:var(--shadow)}
+  .consent-top .eyebrow{margin:0; font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--brick)}
+  .consent-top h1{font-family:var(--display); font-weight:400; font-size:32px; line-height:1.1; margin:8px 0 14px; overflow-wrap:anywhere}
+  .kv{display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 14px; font-size:16px; margin:0}
+  .kv dt{color:var(--ink-3)}
+  .kv dd{margin:0; font-weight:600; overflow-wrap:anywhere}
+  .points{list-style:none; margin:18px 0 0; padding:0; display:grid; gap:12px}
+  .points li{display:grid; grid-template-columns:40px minmax(0,1fr); gap:14px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:16px}
+  .points .pi{width:40px; height:40px; border-radius:12px; background:var(--brick-tint); color:var(--brick); display:grid; place-items:center}
+  .points .pi svg{width:20px; height:20px}
+  .points p{margin:0; font-size:16px; color:var(--ink-2)}
+  .points b{display:block; margin-bottom:2px; font-size:17px; color:var(--ink)}
+  .points a{color:var(--brick); text-underline-offset:3px}
+  .controller{margin-top:16px; font-size:16px; color:var(--ink-2); overflow-wrap:anywhere}
+  .controller p{margin:0}
+  .done{display:grid; justify-items:center; text-align:center; gap:10px; padding:40px 10px}
+  .done svg{width:96px; height:96px}
+  .done circle{stroke:var(--sage); stroke-width:4; fill:var(--sage-tint); stroke-dasharray:300; stroke-dashoffset:300; animation:draw .7s var(--ease) forwards}
+  .done path{stroke:var(--sage); stroke-width:6; fill:none; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:80; stroke-dashoffset:80; animation:draw .5s .45s var(--ease) forwards}
+  .done h1{font-size:32px; line-height:1.1; overflow-wrap:anywhere}
+  /* Headings focused by script when the consent view changes; not interactive, so no focus ring. */
+  h1[tabindex="-1"]:focus{outline:none}
+  .done p{color:var(--ink-2); margin:0; max-width:32ch}
+  .actionbar .bar-error{max-width:428px; margin:0 auto 10px; font-weight:600; color:var(--brick); text-align:center}
+
   /* ---------- 404 ---------- */
   .lost{display:grid; justify-items:start; gap:14px; padding:28px 0 8px}
   .lost .eyebrow{font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--brick)}
@@ -281,5 +307,7 @@ h1,h2,h3{text-wrap:balance}
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none!important; transition:none!important}
+  /* The consent tick is drawn by animating its dash offset; without the animation, show it complete. */
+  .done circle,.done path{stroke-dashoffset:0!important}
   html{scroll-behavior:auto!important}
 }

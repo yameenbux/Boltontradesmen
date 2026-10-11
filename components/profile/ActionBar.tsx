@@ -1,8 +1,7 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/Button";
+import { StickyBar } from "@/components/ui/StickyBar";
 
 const PhoneIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -16,15 +15,10 @@ const ChatIcon = () => (
   </svg>
 );
 
-const noop = () => () => {};
-
 /**
  * Sticky contact bar at the bottom of the viewport. Links are plain `<a rel="nofollow">` to /api/contact
  * (prefetchers and crawlers must not log enquiries; no phone number ever reaches the page).
- *
- * The server renders it in place, so it works without JavaScript. Once hydrated it is portalled to <body>:
- * app/template.tsx animates a transform on the route wrapper, and a transformed ancestor would make
- * position:fixed relative to the wrapper instead of the viewport while the enter animation runs.
+ * Rendered through StickyBar, which portals it to <body> once hydrated (see there for why).
  */
 export function ActionBar({
   slug,
@@ -37,9 +31,8 @@ export function ActionBar({
   contactFirstName: string | null;
   hasWhatsapp: boolean;
 }) {
-  const hydrated = useSyncExternalStore(noop, () => true, () => false);
-  const bar = (
-    <section className={hydrated ? "actionbar" : "actionbar actionbar-ssr"} aria-label={`Contact ${businessName}`}>
+  return (
+    <StickyBar label={`Contact ${businessName}`}>
       <div className={hasWhatsapp ? "inner" : "inner one"}>
         <Button href={`/api/contact/${slug}?via=call`} rel="nofollow" variant="primary">
           <PhoneIcon />
@@ -52,7 +45,6 @@ export function ActionBar({
           </Button>
         )}
       </div>
-    </section>
+    </StickyBar>
   );
-  return hydrated ? createPortal(bar, document.body) : bar;
 }
