@@ -8,8 +8,8 @@ create type public.value_band as enum ('<250', '250-1k', '1k-5k', '5k+');
 
 create table public.reviews (
   id uuid primary key default gen_random_uuid(),
-  provider_id uuid not null references public.providers (id) on delete cascade,
-  reviewer_id uuid not null references auth.users (id) on delete cascade,
+  provider_id uuid not null references public.providers (id) on delete restrict,
+  reviewer_id uuid not null references auth.users (id) on delete restrict,
   category_id uuid not null references public.categories (id) on delete restrict,
   job_month date not null,
   value_band public.value_band not null,

@@ -1,5 +1,5 @@
 begin;
-select plan(16);
+select plan(18);
 
 -- fixtures: providers A-D, reviewers, helper to add reviews
 insert into public.providers (id, slug, business_name, phone_e164) values
@@ -85,6 +85,14 @@ select is(public.category_visible('00000000-0000-0000-0000-0000000000b4',
   (select id from public.categories where slug = 'gas-boilers')), false, 'expired Gas Safe hides gas-boilers');
 select is(public.category_visible('00000000-0000-0000-0000-0000000000b4',
   (select id from public.categories where slug = 'handyman')), true, 'handyman still visible');
+
+-- Reviews are never hard-deleted: parents are restricted
+select throws_ok(
+  $$delete from public.providers where id = '00000000-0000-0000-0000-0000000000b4'$$,
+  '23503', null, 'cannot delete a provider that has reviews');
+select throws_ok(
+  $$delete from auth.users where id = '00000000-0000-0000-0000-000000000110'$$,
+  '23503', null, 'cannot delete a reviewer that has reviews');
 
 select * from finish();
 rollback;
