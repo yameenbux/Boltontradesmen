@@ -165,15 +165,18 @@ async function renderSocial(browser) {
   .phone{position:absolute;width:236px;aspect-ratio:390/844;border-radius:38px;padding:9px;background:#0B0806;
     box-shadow:0 0 0 1.5px rgba(255,245,233,.16),0 40px 80px -20px rgba(0,0,0,.8)}
   .phone img{width:100%;height:100%;object-fit:cover;border-radius:30px;display:block}
+  .tag{position:absolute;right:28px;bottom:22px;z-index:5;padding:7px 14px;border-radius:999px;background:rgba(21,15,12,.88);
+    border:1px solid rgba(255,245,233,.22);font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#FFF5E9}
   .a{left:672px;top:128px;transform:rotate(-8deg)} .c{left:908px;top:128px;transform:rotate(8deg)} .b{left:790px;top:64px;z-index:2}
 </style></head><body>
   <div class="copy">
     <div class="brand"><div class="mono">BV</div>Bolton Vouched</div>
     <h1>Anyone know a good…?<span>Bolton already does.</span></h1>
-    <p>Local trades and services, vouched for by people in Bolton who’ve used them.</p>
+    <p>The local trades and services the group recommends, all in one place.</p>
     <div class="meta">Free · No sign-up · Made in Bolton</div>
   </div>
   ${phone("category.webp", "a")}${phone("profile.webp", "c")}${phone("home.webp", "b")}
+  <div class="tag">Sample listings shown</div>
 </body></html>`;
   const page = await browser.newPage({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 });
   await page.setContent(html, { waitUntil: "networkidle" });

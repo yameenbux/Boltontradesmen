@@ -142,6 +142,8 @@ body:has(.site){background:#150F0C}
   .s-fan .s-phone.r{transform:translateX(78%) rotate(7deg)}
 }
 
+.s-sample{position:relative; z-index:4; margin:-6px auto 22px !important; text-align:center; font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--s-ink-3)}
+.s-traders .s-sample{margin:18px auto 0 !important}
 .s-trio{display:grid; gap:26px; margin:6px auto 0; padding:0; list-style:none; max-width:980px; position:relative; z-index:4}
 .s-trio li{text-align:center}
 .s-trio h3{font-size:24px; line-height:1.15}

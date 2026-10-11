@@ -21,6 +21,14 @@ test("/ shows the hero and sends people to the platform", async ({ page }) => {
   const shot = page.locator(".phone-fan img").first();
   await expect(shot).toBeVisible();
   expect(await shot.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+  // The screenshots show made-up listings, and say so.
+  for (const alt of await page
+    .locator(".phone-fan img")
+    .evaluateAll((imgs) => imgs.map((i) => i.getAttribute("alt")))) {
+    expect(alt).toMatch(/^Sample listing/);
+  }
+  await expect(page.locator(".phone-fan + .s-sample")).toHaveText("Sample listings shown");
+  await expect(page.locator("#traders")).toContainText("Sample listing shown");
 });
 
 test("nav anchors scroll to their sections", async ({ page }) => {

@@ -41,7 +41,7 @@ export type DeckCard = {
 export const DECK: DeckCard[] = [
   {
     shot: "home",
-    alt: "The Bolton Vouched home screen with a search box and the most asked-for trades",
+    alt: "Sample listing: the Bolton Vouched home screen with a search box and the most asked-for trades",
     crop: "top",
     tone: "brick",
     title: "Find by trade",
@@ -49,7 +49,7 @@ export const DECK: DeckCard[] = [
   },
   {
     shot: "category-area",
-    alt: "A list of plumbers filtered to the BL3 area",
+    alt: "Sample listing: a list of plumbers filtered to the BL3 area",
     crop: "top",
     tone: "gold",
     title: "Just your area",
@@ -57,15 +57,15 @@ export const DECK: DeckCard[] = [
   },
   {
     shot: "profile",
-    alt: "A plumber's profile showing 89% would use again from 9 reviews",
+    alt: "Sample listing: a plumber's profile with made-up review figures",
     crop: "top",
     tone: "sage",
     title: "Would they use them again?",
-    text: "One honest number up top, with turned up on time, stuck to the quote and quality of work underneath.",
+    text: "Once reviews open, profiles lead with one honest number, with on time, on price and quality of work underneath.",
   },
   {
     shot: "profile-checks",
-    alt: "The 'What we've checked' card: ID checked and public liability insurance, with the month checked",
+    alt: "Sample listing: the 'What we've checked' card: ID checked and public liability insurance, with the month checked",
     crop: "top",
     tone: "ink",
     title: "What we've checked",
@@ -73,7 +73,7 @@ export const DECK: DeckCard[] = [
   },
   {
     shot: "profile-contact",
-    alt: "An electrician's profile with Call and WhatsApp buttons along the bottom",
+    alt: "Sample listing: an electrician's profile with Call and WhatsApp buttons along the bottom",
     crop: "bottom",
     tone: "brick",
     title: "Call or WhatsApp in one tap",
@@ -85,7 +85,7 @@ export const DECK: DeckCard[] = [
     crop: "top",
     tone: "gold",
     title: "Fair ranking",
-    text: "Nobody can pay to rank higher. No score until someone has three reviews, so a lucky one can't put anyone on top.",
+    text: "Nobody can pay to rank higher. Once reviews open, nobody gets a score until they have three, so a lucky one can't put anyone on top.",
   },
   {
     shot: "home-howto",
@@ -111,7 +111,7 @@ export const FAQ: Faq[] = [
     q: "How are people ranked?",
     a: [
       [
-        "By how many reviewers said they would use them again. Nobody gets a score until they have three reviews; until then they're shown as new. Newer reviews count for more, and a handful of reviews can't put anyone on top.",
+        "Reviews are coming soon, so for now everyone is listed as new. Once reviews open, people will be ranked by how many reviewers said they'd use them again. Nobody gets a score until they have three reviews, newer reviews will count for more, and a handful of reviews can't put anyone on top. Nobody can pay to move up.",
       ],
       ["The full detail is on ", { href: "/how-ratings-work", label: "how ratings work" }, "."],
     ],

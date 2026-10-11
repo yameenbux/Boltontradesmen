@@ -19,8 +19,8 @@ const STEPS: { icon: IconName; title: string; text: string }[] = [
   },
   {
     icon: "people",
-    title: "See who Bolton rates",
-    text: "People are ranked by how many who've used them would use them again, with what we've checked beside them.",
+    title: "See who Bolton recommends",
+    text: "Every listing shows what we've checked. Once reviews open, people are ranked by how many would use them again.",
   },
   { icon: "phone", title: "Call or WhatsApp", text: "One tap from their page. No sign-up, no forms, no middleman." },
 ];
@@ -41,7 +41,7 @@ const TRADER_POINTS: { icon: IconName; title: string; soon?: boolean; text: stri
   {
     icon: "scales",
     title: "Nobody pays to rank",
-    text: "Not you, not the firm down the road. Your place comes from what your customers say.",
+    text: "Not you, not the firm down the road. Once reviews open, your place will come from what your customers say.",
   },
 ];
 
@@ -49,7 +49,7 @@ const FAIR: { icon: IconName; title: string; text: string }[] = [
   {
     icon: "star",
     title: "Ranked by people",
-    text: "The order comes from how many would use someone again. Not adverts, not who shouts loudest in the group.",
+    text: "Once reviews open, the order will come from how many would use someone again. Not adverts, and not who shouts loudest in the group.",
   },
   {
     icon: "shield",
@@ -148,8 +148,9 @@ export default function ShowcasePage() {
             <span>Anyone know a good…?</span> <span className="s-grad">Bolton already does.</span>
           </h1>
           <p className="s-lede s-in s-in-3">
-            Every week someone in the group asks for a plumber, a cleaner or a cake. Bolton Vouched keeps the answers:
-            local people, ranked by the neighbours who&apos;d use them again.
+            Every week someone in the group asks for a plumber, a cleaner or a cake. Bolton Vouched keeps the answers in
+            one place. Once reviews open, people will be ranked by how many neighbours would use them again, and nobody
+            can pay to move up.
           </p>
           <div className="s-ctas s-in s-in-4">
             <Link href={PLATFORM} className="s-btn s-btn-primary">
@@ -164,24 +165,25 @@ export default function ShowcasePage() {
           <div className="s-fan phone-fan">
             <Phone
               shot="category"
-              alt="Plumbers in Bolton, ranked by would use again"
+              alt="Sample listing: a list of plumbers on Bolton Vouched"
               className="l"
               sizes="(min-width: 880px) 262px, 38vw"
             />
             <Phone
               shot="home"
-              alt="The Bolton Vouched home screen: Who's good round here?"
+              alt="Sample listing: the Bolton Vouched home screen, Who's good round here?"
               className="c"
               sizes="(min-width: 880px) 290px, 44vw"
               eager
             />
             <Phone
               shot="profile"
-              alt="A plumber's profile: 89% would use again"
+              alt="Sample listing: a plumber's profile with made-up review figures"
               className="r"
               sizes="(min-width: 880px) 262px, 38vw"
             />
           </div>
+          <p className="s-sample">Sample listings shown</p>
 
           <ul className="s-trio">
             <li className="reveal">
@@ -190,7 +192,9 @@ export default function ShowcasePage() {
             </li>
             <li className="reveal" style={d(0.1)}>
               <h3>Would they use them again?</h3>
-              <p>One honest number from people who&apos;ve had the work done, not a wall of stars.</p>
+              <p>
+                Once reviews open: one honest number from people who&apos;ve had the work done, not a wall of stars.
+              </p>
             </li>
             <li className="reveal" style={d(0.2)}>
               <h3>Call or WhatsApp</h3>
@@ -315,9 +319,10 @@ export default function ShowcasePage() {
             <div className="reveal">
               <Phone
                 shot="consent"
-                alt="The page a trader sees before agreeing: here's how you'll appear on Bolton Vouched"
+                alt="Sample listing: the page a trader sees before agreeing, here's how you'll appear on Bolton Vouched"
                 sizes="(min-width: 880px) 300px, 72vw"
               />
+              <p className="s-sample">Sample listing shown</p>
             </div>
             <div>
               <ul className="s-points">

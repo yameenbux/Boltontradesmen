@@ -7,7 +7,7 @@ import { SiteNav } from "@/components/site/SiteNav";
 
 const TITLE = "Bolton Vouched · Who's good round here?";
 const DESCRIPTION =
-  "Anyone know a good…? Bolton already does. Local trades and services, vouched for by people in Bolton who've used them. Free, no sign-up.";
+  "Anyone know a good…? Bolton already does. The local trades and services the group recommends, in one place. Free, no sign-up.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://boltonvouched.ysbdesigns.uk"),
