@@ -9,11 +9,13 @@ export default async function NewProviderPage() {
   const { data } = await supabase.from("categories").select("id, name").order("name");
   return (
     <main className="flex flex-col gap-4">
-      <Link href="/admin" className="inline-flex min-h-12 items-center font-semibold underline">
+      <Link href="/admin" className="a-link">
         ← Providers
       </Link>
-      <h1 className="text-2xl font-extrabold">Add provider</h1>
-      <ProviderForm categories={data ?? []} />
+      <h1 className="a-title">Add provider</h1>
+      <div className="a-card">
+        <ProviderForm categories={data ?? []} />
+      </div>
     </main>
   );
 }

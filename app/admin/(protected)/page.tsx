@@ -1,7 +1,11 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { Pill } from "@/components/ui/Pill";
 import { requireAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
+
+const STATUS_TONE = { invited: "gold", consented: "outline", live: "sage", paused: "muted", removed: "muted" } as const;
 
 type Row = { id: string; business_name: string; phone_e164: string; status: string; categories: string[] };
 
@@ -11,27 +15,25 @@ export default async function AdminHome() {
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as Row[];
   return (
-    <main className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold">Providers</h1>
-        <Link href="/admin/providers/new" className="inline-flex min-h-12 items-center rounded bg-neutral-900 px-4 font-bold text-white">
-          Add provider
-        </Link>
+    <main className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="a-title">Providers</h1>
+        <Button href="/admin/providers/new">Add provider</Button>
       </div>
       {rows.length === 0 ? (
-        <p>No providers yet.</p>
+        <p className="empty">No providers yet.</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-neutral-300 border-y border-neutral-300">
+        <ul className="a-list">
           {rows.map((r) => (
             <li key={r.id}>
-              <Link href={`/admin/providers/${r.id}`} className="flex min-h-12 flex-wrap items-center justify-between gap-2 py-3">
-                <span>
-                  <span className="block font-bold">{r.business_name}</span>
-                  <span className="block text-sm text-neutral-700">
+              <Link href={`/admin/providers/${r.id}`} className="a-row press">
+                <span className="min-w-0">
+                  <b>{r.business_name}</b>
+                  <small>
                     {r.phone_e164} · {r.categories.join(", ") || "no categories"}
-                  </span>
+                  </small>
                 </span>
-                <span className="rounded bg-neutral-200 px-2 py-1 text-sm font-semibold">{r.status}</span>
+                <Pill tone={STATUS_TONE[r.status as keyof typeof STATUS_TONE] ?? "muted"}>{r.status}</Pill>
               </Link>
             </li>
           ))}

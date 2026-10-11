@@ -97,6 +97,47 @@ h1,h2,h3{text-wrap:balance}
   .pill svg{width:13px; height:13px}
   .pill-sage{background:var(--sage-tint); color:var(--sage)}
   .pill-gold{background:color-mix(in srgb,var(--gold) 16%,var(--surface)); color:color-mix(in srgb,var(--gold) 62%,var(--ink))}
+  .pill-outline{background:transparent; color:var(--sage); box-shadow:inset 0 0 0 1.5px var(--sage)}
+  .pill-muted{background:var(--surface-2); color:var(--ink-2)}
+
+  /* ---------- policy pages ---------- */
+  .policy h1{font-family:var(--display); font-weight:400; font-size:clamp(32px,9vw,40px); line-height:1.08; margin:4px 0 16px}
+  .policy h2{font-family:var(--display); font-weight:400; font-size:23px; line-height:1.15; padding-top:10px}
+  .policy-body{display:grid; gap:14px; line-height:1.6; color:var(--ink); overflow-wrap:anywhere}
+  .policy-body a{color:var(--brick); text-underline-offset:3px}
+  .policy-body ul{margin:0; padding-left:22px; list-style:disc; display:grid; gap:6px}
+  .draft-note{margin:6px 0 14px; padding:12px 14px; border-radius:var(--r-sm); font-size:15px; font-weight:700;
+    background:color-mix(in srgb,var(--gold) 16%,var(--surface)); color:color-mix(in srgb,var(--gold) 62%,var(--ink));
+    border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line))}
+
+  /* ---------- admin (owner on a phone: big, clear, labels above inputs) ---------- */
+  .app:has(.admin-wide){max-width:720px}
+  .admin-bar{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding-bottom:12px; border-bottom:1px solid var(--line)}
+  .admin-bar .who{font-size:14px; color:var(--ink-2); overflow-wrap:anywhere}
+  .a-title{font-family:var(--display); font-weight:400; font-size:clamp(30px,8vw,38px); line-height:1.08; margin:0; overflow-wrap:anywhere}
+  .a-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); padding:18px; box-shadow:var(--shadow); display:grid; gap:14px}
+  .a-card > h2{font-family:var(--display); font-weight:400; font-size:23px; line-height:1.15; margin:0}
+  .a-form{display:grid; gap:18px}
+  .a-field{display:grid; gap:6px; font-size:16px; font-weight:700; color:var(--ink)}
+  .a-hint{font-size:14px; font-weight:500; color:var(--ink-2)}
+  .a-input{width:100%; min-height:48px; border:1.5px solid var(--ink-3); border-radius:var(--r-sm); background:var(--bg); color:var(--ink); padding:0 14px; font:inherit; font-weight:500; font-size:17px}
+  textarea.a-input{padding:12px 14px; line-height:1.45}
+  .a-input:focus-visible{outline:3px solid var(--brick); outline-offset:2px}
+  .a-input[readonly]{background:var(--surface-2); font-size:15px}
+  .a-err{font-size:15px; font-weight:700; color:var(--brick)}
+  .a-ok{font-size:15px; font-weight:700; color:var(--sage)}
+  .a-check{display:flex; align-items:center; gap:12px; min-height:48px; font-weight:600}
+  .a-check input{width:24px; height:24px; accent-color:var(--brick); flex:none}
+  .a-checks{display:grid; gap:0 16px; grid-template-columns:1fr}
+  @media (min-width:560px){.a-checks{grid-template-columns:1fr 1fr}}
+  .a-actions{display:flex; flex-wrap:wrap; gap:12px}
+  .a-actions .btn{flex:1 1 140px}
+  .a-list{display:grid; gap:10px; margin:0; padding:0; list-style:none}
+  .a-row{display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:64px; padding:12px 16px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); color:inherit; text-decoration:none; box-shadow:var(--shadow)}
+  .a-row b{display:block; font-size:18px; line-height:1.2; overflow-wrap:anywhere}
+  .a-row small{display:block; margin-top:3px; font-size:14px; color:var(--ink-2); overflow-wrap:anywhere}
+  .a-link{display:inline-flex; align-items:center; min-height:48px; font-weight:700; color:var(--brick); text-underline-offset:3px}
+  .a-consent .btn{width:100%; min-height:64px; font-size:19px}
 
   /* ---------- motion primitives ---------- */
   /* "backwards", not "both": a held end state would pin transform:none and cancel .press/.lift on the children. */

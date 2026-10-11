@@ -48,3 +48,12 @@ for (const { path } of policies) {
     expect(text).not.toContain("&amp;");
   });
 }
+
+for (const path of ["/privacy", "/admin/login"]) {
+  test(`no horizontal scroll at 360px on ${path}`, async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto(path);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+}

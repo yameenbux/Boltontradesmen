@@ -6,9 +6,11 @@ export const metadata: Metadata = { title: "Admin sign in | Bolton Vouched", rob
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-col gap-5 px-4 py-10">
-      <h1 className="text-2xl font-extrabold">Admin sign in</h1>
-      <LoginForm />
+    <main className="mx-auto flex w-full max-w-sm flex-col gap-5 py-6">
+      <h1 className="a-title">Admin sign in</h1>
+      <div className="a-card">
+        <LoginForm />
+      </div>
     </main>
   );
 }
