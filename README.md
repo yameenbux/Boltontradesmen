@@ -29,6 +29,21 @@ npx supabase start
 
 Requires Docker.
 
+### Admin sign-in
+
+The admin area (`/admin`) uses Supabase email + password. Public sign-ups are disabled. To create the real admin:
+
+1. Supabase dashboard -> Authentication -> Users -> Add user (email + password, auto-confirm).
+2. In the SQL editor, give that user the admin role:
+
+   ```sql
+   insert into public.profiles (user_id, role)
+   select id, 'admin' from auth.users where email = 'you@example.com'
+   on conflict (user_id) do update set role = 'admin';
+   ```
+
+The E2E suite creates `admin@example.test` / `e2e-admin-password` itself (`scripts/e2e-prepare.sh`); local databases only.
+
 ## Scripts
 
 - `npm run dev` / `build` / `start`
