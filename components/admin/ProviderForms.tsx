@@ -128,7 +128,7 @@ export function CheckForm({ providerId }: { providerId: string }) {
   );
 }
 
-export function StatusForm({ providerId, current }: { providerId: string; current: string }) {
+export function StatusForm({ providerId, current, hasConsent }: { providerId: string; current: string; hasConsent: boolean }) {
   const [state, action, pending] = useActionState(setStatus, initial);
   return (
     <form action={action} className="flex flex-col gap-3">
@@ -141,7 +141,7 @@ export function StatusForm({ providerId, current }: { providerId: string; curren
       <FieldError id="status" state={state} />
       <Status state={state} />
       <div className="flex flex-wrap gap-3">
-        <button type="submit" name="status" value="live" disabled={pending || current !== "consented"} className={button}>
+        <button type="submit" name="status" value="live" disabled={pending || !(current === "consented" || (current === "paused" && hasConsent))} className={button}>
           Set live
         </button>
         <button type="submit" name="status" value="paused" disabled={pending || current === "paused" || current === "removed"} className={button}>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { consentText, PRIVACY_PATH } from "@/lib/consent-text";
+import { consentStatement, PRIVACY_ACK, PRIVACY_PATH } from "@/lib/consent-text";
 import { createServiceClient } from "@/lib/supabase/service";
 import { ConsentForm } from "./ConsentForm";
 
@@ -24,6 +24,11 @@ function Invalid() {
 export default async function ConsentPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) return <Invalid />;
+  const statement = consentStatement();
+  if (!statement) {
+    console.error("consent page unavailable: OWNER_LEGAL_NAME and CONTACT_EMAIL must be set in production");
+    return <Invalid />;
+  }
   const { data } = await createServiceClient().rpc("consent_preview", { p_token: token });
   const p = (data as Preview[] | null)?.[0];
   if (!p) return <Invalid />;
@@ -46,14 +51,19 @@ export default async function ConsentPage({ params }: { params: Promise<{ token:
         </div>
       </dl>
       <section aria-label="What you are agreeing to" className="flex flex-col gap-3">
-        {consentText().map((para) => (
-          <p key={para}>{para}</p>
+        {statement.paragraphs.map((para) => (
+          <p key={para}>
+            {para}
+            {para === PRIVACY_ACK && (
+              <>
+                {" "}
+                <Link href={PRIVACY_PATH} className="font-semibold underline">
+                  Read the privacy notice
+                </Link>
+              </>
+            )}
+          </p>
         ))}
-        <p>
-          <Link href={PRIVACY_PATH} className="font-semibold underline">
-            Read the privacy notice
-          </Link>
-        </p>
       </section>
       <ConsentForm token={token} />
     </main>

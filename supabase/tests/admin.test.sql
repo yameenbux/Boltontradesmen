@@ -1,5 +1,5 @@
 begin;
-select plan(58);
+select plan(63);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000c1'),
@@ -144,11 +144,11 @@ insert into t select 'a', consent_token from public.providers where id = (select
 insert into t select 'b', consent_token from public.providers where id = (select v from c where k = 'b');
 insert into t select 'r', consent_token from public.providers where id = (select v from c where k = 'r');
 set local role anon;
-select throws_ok($$select public.accept_consent((select v from t where k = 'a'), '1.2.3.4', 'v')$$, '42501', null, 'anon cannot call accept_consent');
+select throws_ok($$select public.accept_consent((select v from t where k = 'a'), '1.2.3.4', 'v', 'h', 'o', 'c')$$, '42501', null, 'anon cannot call accept_consent');
 select throws_ok($$select * from public.consent_preview((select v from t where k = 'a'))$$, '42501', null, 'anon cannot call consent_preview');
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}';
-select throws_ok($$select public.accept_consent((select v from t where k = 'a'), '1.2.3.4', 'v')$$, '42501', null, 'authenticated (even admin) cannot call accept_consent');
+select throws_ok($$select public.accept_consent((select v from t where k = 'a'), '1.2.3.4', 'v', 'h', 'o', 'c')$$, '42501', null, 'authenticated (even admin) cannot call accept_consent');
 select throws_ok($$select * from public.consent_preview((select v from t where k = 'a'))$$, '42501', null, 'authenticated cannot call consent_preview');
 reset role;
 
@@ -158,19 +158,22 @@ select is((select categories from public.consent_preview((select v from t where 
 select is((select areas from public.consent_preview((select v from t where k = 'a'))), array['BL1'], 'preview: areas');
 select is((select count(*)::int from public.consent_preview(gen_random_uuid())), 0, 'preview: unknown token gives no rows');
 
-insert into res select 'ok1', public.accept_consent((select v from t where k = 'a'), '203.0.113.9', '2026-10-11');
+insert into res select 'ok1', public.accept_consent((select v from t where k = 'a'), '203.0.113.9', '2026-10-11', 'abc123', 'Jane Doe Ltd', 'jane@example.org');
 reset role;
 select is((select v from res where k = 'ok1'), 'ok', 'valid token accepted');
 select is((select status::text from public.providers where id = (select v from c where k = 'a')), 'consented', 'status is consented');
 select is((select consent_evidence ->> 'ip' from public.providers where id = (select v from c where k = 'a')), '203.0.113.9', 'evidence: ip');
 select is((select consent_evidence ->> 'text_version' from public.providers where id = (select v from c where k = 'a')), '2026-10-11', 'evidence: text version');
+select is((select consent_evidence ->> 'text_sha256' from public.providers where id = (select v from c where k = 'a')), 'abc123', 'evidence: text hash');
+select is((select consent_evidence ->> 'owner_legal_name' from public.providers where id = (select v from c where k = 'a')), 'Jane Doe Ltd', 'evidence: owner');
+select is((select consent_evidence ->> 'contact_email' from public.providers where id = (select v from c where k = 'a')), 'jane@example.org', 'evidence: contact email');
 select is((select count(*)::int from public.audit_log where action = 'accept_consent' and actor_id is null and target_id = (select v::text from c where k = 'a')), 1, 'accept_consent audited once with null actor');
 
 create temp table at (v timestamptz);
 insert into at select consent_at from public.providers where id = (select v from c where k = 'a');
 grant all on at to service_role;
 set local role service_role;
-insert into res select 'again', public.accept_consent((select v from t where k = 'a'), '198.51.100.1', 'other');
+insert into res select 'again', public.accept_consent((select v from t where k = 'a'), '198.51.100.1', 'other', 'zzz', 'o', 'c');
 select is((select count(*)::int from public.consent_preview((select v from t where k = 'a'))), 0, 'preview: used token gives no rows');
 reset role;
 select is((select v from res where k = 'again'), 'invalid', 'same token again is invalid');
@@ -180,7 +183,7 @@ select is((select consent_evidence ->> 'ip' from public.providers where id = (se
 -- removed provider: token no longer works
 update public.providers set status = 'removed' where id = (select v from c where k = 'b');
 set local role service_role;
-insert into res select 'removed', public.accept_consent((select v from t where k = 'b'), '1.1.1.1', 'v');
+insert into res select 'removed', public.accept_consent((select v from t where k = 'b'), '1.1.1.1', 'v', 'h', 'o', 'c');
 reset role;
 select is((select v from res where k = 'removed'), 'invalid', 'removed provider token is invalid');
 select is((select status::text from public.providers where id = (select v from c where k = 'b')), 'removed', 'removed provider unchanged');
@@ -194,8 +197,8 @@ select throws_ok($$select public.admin_new_consent_token((select v from c where 
 select throws_ok($$select public.admin_new_consent_token((select v from c where k = 'b'))$$, '23514', null, 'new consent token refused for a removed provider');
 reset role;
 set local role service_role;
-insert into res select 'old', public.accept_consent((select v from t where k = 'r'), '1.1.1.1', 'v');
-insert into res select 'new', public.accept_consent((select v from rot), '1.1.1.1', 'v');
+insert into res select 'old', public.accept_consent((select v from t where k = 'r'), '1.1.1.1', 'v', 'h', 'o', 'c');
+insert into res select 'new', public.accept_consent((select v from rot), '1.1.1.1', 'v', 'h', 'o', 'c');
 reset role;
 select is((select v from res where k = 'old'), 'invalid', 'rotated-out token is invalid');
 select is((select v from res where k = 'new'), 'ok', 'new token works');
@@ -206,5 +209,9 @@ set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","r
 select lives_ok($$select public.admin_set_provider_status((select v from c where k = 'a'), 'live', 'checked')$$, 'consented provider can go live');
 reset role;
 select is((select count(*)::int from public.provider_public where id = (select v from c where k = 'a')), 1, 'live provider appears in provider_public');
+set local role authenticated;
+select lives_ok($$select public.admin_set_provider_status((select v from c where k = 'a'), 'paused', 'break')$$, 'consented provider can be paused');
+select lives_ok($$select public.admin_set_provider_status((select v from c where k = 'a'), 'live', 'back')$$, 'paused provider with consent can go live again');
+reset role;
 select * from finish();
 rollback;

@@ -16,6 +16,7 @@ type Detail = {
   areas: string[];
   bio: string | null;
   status: string;
+  consent_at: string | null;
   category_ids: string[];
   checks: Check[];
 };
@@ -50,7 +51,7 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
 
       <section aria-label="Status" className="flex flex-col gap-2">
         <h2 className="text-lg font-bold">Change status</h2>
-        <StatusForm providerId={p.id} current={p.status} />
+        <StatusForm providerId={p.id} current={p.status} hasConsent={p.consent_at !== null} />
       </section>
 
       <section aria-label="Checks" className="flex flex-col gap-3">

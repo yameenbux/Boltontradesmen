@@ -245,7 +245,10 @@ as $$
 $$;
 
 -- Records consent only for a matching, unused token on an invited provider. Returns 'ok' or 'invalid'.
-create or replace function public.accept_consent(p_token uuid, p_ip text, p_text_version text)
+-- The evidence pins the exact statement shown (SHA-256 of the rendered text), who ran the service and the contact address.
+drop function if exists public.accept_consent(uuid, text, text);
+create or replace function public.accept_consent(
+  p_token uuid, p_ip text, p_text_version text, p_text_sha256 text, p_owner_legal_name text, p_contact_email text)
 returns text
 language plpgsql security definer set search_path = ''
 as $$
@@ -256,7 +259,8 @@ begin
   set status = 'consented',
       consent_at = now(),
       consent_token_used_at = now(),
-      consent_evidence = jsonb_build_object('ip', p_ip, 'text_version', p_text_version, 'accepted_at', now())
+      consent_evidence = jsonb_build_object('ip', p_ip, 'text_version', p_text_version, 'text_sha256', p_text_sha256,
+        'owner_legal_name', p_owner_legal_name, 'contact_email', p_contact_email, 'accepted_at', now())
   where consent_token = p_token and consent_token_used_at is null and status = 'invited'
   returning id into v_id;
   if v_id is null then
@@ -272,7 +276,7 @@ do $$
 declare
   f text;
 begin
-  foreach f in array array['public.consent_preview(uuid)', 'public.accept_consent(uuid, text, text)'] loop
+  foreach f in array array['public.consent_preview(uuid)', 'public.accept_consent(uuid, text, text, text, text, text)'] loop
     execute format('revoke execute on function %s from public, anon, authenticated', f);
     execute format('grant execute on function %s to service_role', f);
   end loop;

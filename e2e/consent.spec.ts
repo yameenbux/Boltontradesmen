@@ -34,7 +34,8 @@ test("provider consents via their link, then the admin sets them live", async ({
   await expect(consent.getByText("BL1, BL2")).toBeVisible();
   await expect(consent.getByText("Reviews are published without your approval", { exact: false })).toBeVisible();
   await expect(consent.getByText("within one working day", { exact: false })).toBeVisible();
-  await expect(consent.getByText("Bolton Vouched is run by", { exact: false })).toBeVisible();
+  await expect(consent.getByText("We're the data controller", { exact: false })).toBeVisible();
+  await expect(consent.getByText("I have read the privacy notice.", { exact: false })).toBeVisible();
   await expect(consent.getByRole("link", { name: "Read the privacy notice" })).toHaveAttribute("href", "/privacy");
   await consent.getByRole("button", { name: "I agree" }).click();
   await expect(consent.getByText("Thanks — you're all set")).toBeVisible();
@@ -48,6 +49,18 @@ test("provider consents via their link, then the admin sets them live", async ({
   await page.reload();
   await expect(page.getByTestId("provider-status")).toHaveText("consented");
   await expect(page.getByRole("button", { name: "New consent link" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Set live" }).click();
+  await expect(page.getByTestId("provider-status")).toHaveText("live");
+
+  const ev = JSON.parse(sql(`select consent_evidence::text from public.providers where business_name = '${name}'`));
+  expect(ev.text_sha256).toMatch(/^[0-9a-f]{64}$/);
+  expect(ev.owner_legal_name).toBeTruthy();
+  expect(ev.contact_email).toBeTruthy();
+
+  // Pause, then set live again (consent already on record).
+  await page.getByRole("button", { name: "Pause" }).click();
+  await expect(page.getByTestId("provider-status")).toHaveText("paused");
+  await expect(page.getByRole("button", { name: "Set live" })).toBeEnabled();
   await page.getByRole("button", { name: "Set live" }).click();
   await expect(page.getByTestId("provider-status")).toHaveText("live");
 });
