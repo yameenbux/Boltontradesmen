@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { Brand } from "@/components/site/Brand";
-import { COMPANY_LINE, CONTACT_EMAIL, MAILTO, PLATFORM } from "@/components/site/content";
+import {
+  COMPANY_LINE,
+  CONTACT_EMAIL,
+  MAILTO,
+  PLATFORM,
+  SUPPORT_WHATSAPP_DISPLAY,
+  WHATSAPP,
+} from "@/components/site/content";
 
 export function ShowcaseFooter() {
   return (
@@ -15,7 +22,10 @@ export function ShowcaseFooter() {
         </nav>
         <p>{COMPANY_LINE}</p>
         <p>
-          <a href={MAILTO}>{CONTACT_EMAIL}</a>
+          Raise a support ticket by emailing <a href={MAILTO}>{CONTACT_EMAIL}</a> or on WhatsApp at{" "}
+          <a href={WHATSAPP} target="_blank" rel="noopener noreferrer">
+            {SUPPORT_WHATSAPP_DISPLAY}
+          </a>
         </p>
       </div>
     </footer>

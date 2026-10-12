@@ -42,7 +42,11 @@ export function Faq({ items }: { items: FaqItem[] }) {
                     typeof seg === "string" ? (
                       seg
                     ) : (
-                      <a key={k} href={seg.href}>
+                      <a
+                        key={k}
+                        href={seg.href}
+                        {...(seg.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                      >
                         {seg.label}
                       </a>
                     ),
