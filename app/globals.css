@@ -558,11 +558,13 @@ h1,h2,h3{text-wrap:balance}
   .report-quote blockquote{margin:0; font-size:16.5px; white-space:pre-line; overflow-wrap:anywhere}
   .report-quote .no-comment{margin:0; font-size:15px; color:var(--ink-3)}
 
-  /* ---------- 404 ---------- */
+  /* ---------- 404 and error pages ---------- */
   .lost{display:grid; justify-items:start; gap:14px; padding:28px 0 8px}
   .lost .eyebrow{font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--brick)}
   .lost h1{font-size:42px; line-height:1.02; letter-spacing:-.015em}
   .lost p{margin:0; color:var(--ink-2); max-width:32ch}
+  .lost p a{color:var(--brick); font-weight:600; text-underline-offset:3px; overflow-wrap:anywhere}
+  .lost-actions{display:flex; flex-wrap:wrap; gap:10px}
 }
 
 :root[data-theme="dark"] .avatar{color:var(--brick)}
