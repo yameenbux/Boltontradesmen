@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ChatIcon, LockIcon } from "@/components/auth/icons";
+import { EmailCodeForm } from "@/components/auth/EmailCodeForm";
 import { SignInForm } from "@/components/auth/SignInForm";
-import { SIGN_IN_ERRORS } from "@/lib/otp-gate";
 import { safeNext } from "@/lib/safe-next";
 import { phoneSignInEnabled } from "@/lib/sign-in-methods";
 
@@ -12,7 +12,15 @@ function heading(next: string) {
   if (/^\/platform\/p\/[^/]+\/review/.test(next)) return "Sign in to leave a review";
   if (next.startsWith("/platform/report/")) return "Sign in to report a review";
   if (next.startsWith("/platform/provider")) return "Sign in to reply to reviews";
-  return "Sign in with your mobile";
+  return "Sign in to Bolton Vouched";
+}
+
+function Divider({ children }: { children: string }) {
+  return (
+    <p className="or-divider">
+      <span>{children}</span>
+    </p>
+  );
 }
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
@@ -23,14 +31,12 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
   return (
     <main className="auth">
       <section className="auth-card" aria-labelledby="signin-title">
-        {phoneOn ? (
-          <SignInForm next={next} title={heading(next)} />
-        ) : (
-          <div>
-            <p className="eyebrow">Bolton Vouched</p>
-            <h1 id="signin-title">{heading(next)}</h1>
-            <p className="lede">{SIGN_IN_ERRORS.phone_off}</p>
-          </div>
+        <EmailCodeForm next={next} title={heading(next)} before={<Divider>or use your email</Divider>} />
+        {phoneOn && (
+          <>
+            <Divider>or use your mobile</Divider>
+            <SignInForm next={next} title="Sign in with your mobile" level={2} />
+          </>
         )}
       </section>
       <ul className="reassure">
@@ -38,7 +44,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           <span className="ri">
             <LockIcon />
           </span>
-          <span>Your number is only used to send sign-in codes. It&apos;s never shown on the site.</span>
+          <span>Your email address is only used to sign you in. It&apos;s never shown on the site.</span>
         </li>
         <li>
           <span className="ri">

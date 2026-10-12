@@ -427,6 +427,9 @@ h1,h2,h3{text-wrap:balance}
   .text-btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 6px; border:0; background:none; font:inherit; font-size:16px; font-weight:700; color:var(--brick); text-decoration:underline; text-underline-offset:3px; cursor:pointer}
   .text-btn:disabled{opacity:.55; cursor:not-allowed}
   .text-row{display:flex; flex-direction:column; align-items:center; margin-top:-8px}
+  .auth-card .lede b.addr{white-space:normal; overflow-wrap:anywhere}
+  .or-divider{display:flex; align-items:center; gap:14px; margin:0; font-size:14.5px; font-weight:700; color:var(--ink-3)}
+  .or-divider::before,.or-divider::after{content:""; flex:1; height:1px; background:var(--line)}
   .preview-name{display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; background:var(--surface-2); font-size:15px; color:var(--ink-2)}
   .preview-name .avatar{width:44px; height:44px; font-size:18px; flex:none}
   .preview-name b{display:block; font-size:18px; color:var(--ink)}

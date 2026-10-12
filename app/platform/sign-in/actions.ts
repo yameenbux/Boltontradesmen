@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { welcomePath } from "@/lib/auth";
 import { clientIpFrom } from "@/lib/client-ip";
+import { normaliseEmail } from "@/lib/email";
+import { EMAIL_SIGN_IN_ERRORS, requestEmailSignInCode } from "@/lib/email-gate";
 import { ipHash } from "@/lib/ip-hash";
 import { checkLineType } from "@/lib/line-type";
 import { requestSignInCode, SIGN_IN_ERRORS } from "@/lib/otp-gate";
@@ -13,6 +15,7 @@ import { createServerAuthClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export type SignInState = { step: "phone" | "code"; phone?: string; next: string; error?: string };
+export type EmailSignInState = { step: "email" | "code"; email?: string; next: string; error?: string };
 
 function field(fd: FormData, name: string): string {
   const v = fd.get(name);
@@ -128,5 +131,98 @@ export async function verifyCode(prev: SignInState, fd: FormData): Promise<SignI
   // A provider may have been listed (or relisted) since they last signed in.
   const { error: claimError } = await supabase.rpc("claim_provider_listings");
   if (claimError) console.error("sign-in: claim_provider_listings failed:", claimError.message);
+  redirect(next);
+}
+
+// ---------------------------------------------------------------- email code
+
+/** Step 1 (and "Send a new code"): checks the address, then emails a 6-digit code. */
+export async function requestEmailCode(_prev: EmailSignInState, fd: FormData): Promise<EmailSignInState> {
+  const next = safeNext(field(fd, "next"));
+  const input = field(fd, "email");
+
+  const result = await requestEmailSignInCode(input, await clientIp(), {
+    gate: async (email, ipHash) => {
+      const { data, error } = await createServiceClient().rpc("email_gate", { p_email: email, p_ip_hash: ipHash });
+      if (error) throw new Error(`email_gate: ${error.message}`);
+      const row = (data as { request_id: number; verdict: string }[] | null)?.[0];
+      if (!row) throw new Error("email_gate returned nothing");
+      return { requestId: row.request_id, verdict: row.verdict };
+    },
+    approve: async (id, nonceHash) => {
+      const { error } = await createServiceClient().rpc("email_approve", { p_request_id: id, p_nonce_hash: nonceHash });
+      if (error) throw new Error(`email_approve: ${error.message}`);
+    },
+    record: async (id, outcome) => {
+      const { error } = await createServiceClient().rpc("email_record", { p_request_id: id, p_outcome: outcome });
+      if (error) throw new Error(`email_record: ${error.message}`);
+    },
+    send: async (email, nonce) => {
+      // bv_nonce reaches auth.users.raw_user_meta_data on a new account, where the database guard checks it
+      // against the approved request and strips it. Existing accounts ignore it.
+      const supabase = await createServerAuthClient();
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: true, data: { bv_nonce: nonce } },
+      });
+      return { error: error ? { status: error.status, message: error.message } : null };
+    },
+  });
+
+  if (!result.ok) return { step: "email", email: input, next, error: result.error };
+  return { step: "code", email: result.email, next };
+}
+
+const EMAIL_LOCKED: Record<string, string> = {
+  address_locked: EMAIL_SIGN_IN_ERRORS.code_address_locked,
+  ip_locked: EMAIL_SIGN_IN_ERRORS.code_ip_locked,
+};
+
+/**
+ * Step 2: checks the emailed code, signs the person in, then sends them on (via Welcome for a new account).
+ * Every check first passes the wrong-code limiter (email_verify_gate: per normalised address and per connection,
+ * shared with phone). Listings are linked only by an admin's trader sign-in link, never here.
+ */
+export async function verifyEmailCode(prev: EmailSignInState, fd: FormData): Promise<EmailSignInState> {
+  const next = safeNext(field(fd, "next"));
+  const email = (field(fd, "email") || prev.email || "").trim().toLowerCase();
+  const code = field(fd, "code").replace(/\s+/g, "");
+  const again: EmailSignInState = { step: "code", email, next, error: EMAIL_SIGN_IN_ERRORS.bad_code };
+  if (!normaliseEmail(email) || !/^\d{6}$/.test(code)) return again;
+
+  const service = createServiceClient();
+  let attemptId: number;
+  try {
+    const { data: gate, error: gateError } = await service.rpc("email_verify_gate", {
+      p_email: email,
+      p_ip_hash: ipHash(await clientIp()),
+    });
+    if (gateError) throw new Error(`email_verify_gate: ${gateError.message}`);
+    const row = (gate as { attempt_id: number; verdict: string }[] | null)?.[0];
+    if (!row) throw new Error("email_verify_gate returned nothing");
+    if (row.verdict !== "ok") {
+      if (!EMAIL_LOCKED[row.verdict]) throw new Error(`email_verify_gate: unexpected verdict ${row.verdict}`);
+      return { ...again, error: EMAIL_LOCKED[row.verdict] };
+    }
+    attemptId = row.attempt_id;
+  } catch (err) {
+    console.error("sign-in: email code limiter failed:", err);
+    return { ...again, error: EMAIL_SIGN_IN_ERRORS.verify_failed };
+  }
+
+  const supabase = await createServerAuthClient();
+  const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
+  const right = !error && !!data.session;
+  const { error: recordError } = await service.rpc("otp_verify_record", { p_attempt_id: attemptId, p_ok: right });
+  if (recordError) console.error("sign-in: could not record the code check:", recordError.message);
+  if (!right) return again;
+
+  const { data: account, error: accountError } = await supabase.rpc("my_account");
+  if (accountError) {
+    console.error("sign-in: my_account failed:", accountError.message);
+    return { ...again, error: EMAIL_SIGN_IN_ERRORS.verify_failed };
+  }
+  const row = account as { display_name: string | null; deleted: boolean } | null;
+  if (!row || !row.display_name || row.deleted) redirect(welcomePath(next));
   redirect(next);
 }
