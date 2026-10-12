@@ -154,6 +154,9 @@ h1,h2,h3{text-wrap:balance}
   .a-counts a{display:inline-flex; align-items:center; min-height:44px; padding:0 14px; border-radius:12px; background:var(--surface-2); color:var(--ink-2); font-size:15px; font-weight:700; text-decoration:none}
   .a-counts a[data-some]{background:var(--brick-tint); color:color-mix(in srgb,var(--brick) 72%,var(--ink))}
   .mod-list{display:grid; gap:16px}
+  .a-dl{display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 14px; margin:0; font-size:16px}
+  .a-dl dt{font-weight:700; color:var(--ink-2)}
+  .a-dl dd{margin:0; overflow-wrap:anywhere}
   .mod-card{gap:16px}
   .mod-review{display:grid; gap:8px}
   .mod-head{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px}

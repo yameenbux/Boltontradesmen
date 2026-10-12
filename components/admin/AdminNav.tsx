@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-type Counts = { pending?: number; under_check: number; open_flags: number; pending_proofs: number };
+type Counts = {
+  pending?: number;
+  under_check: number;
+  open_flags: number;
+  pending_proofs: number;
+  listing_requests?: number;
+};
 
 /** The admin's sections, with how many items wait in each queue. */
 export function AdminNav({ counts }: { counts: Counts | null }) {
@@ -14,6 +20,7 @@ export function AdminNav({ counts }: { counts: Counts | null }) {
     { href: "/admin/reviews", label: "Reviews", n: (counts?.pending ?? 0) + (counts?.under_check ?? 0) },
     { href: "/admin/flags", label: "Flags", n: counts?.open_flags ?? 0 },
     { href: "/admin/proofs", label: "Proofs", n: counts?.pending_proofs ?? 0 },
+    { href: "/admin/requests", label: "Requests", n: counts?.listing_requests ?? 0 },
   ];
   return (
     <nav aria-label="Admin" className="admin-nav">
