@@ -14,6 +14,9 @@ export const SIGN_IN_ERRORS = {
   lookup_failed: "We couldn't check your number just now. Please try again in a minute.",
   send_failed: "We couldn't send a text just now. Please try again in a minute.",
   bad_code: "That code didn't work. Check the text and try again, or send a new code.",
+  code_number_locked: "Too many wrong codes for this number. Please wait 15 minutes, then send yourself a new code.",
+  code_ip_locked: "Too many wrong codes from this connection. Please try again in an hour.",
+  verify_failed: "We couldn't check your code just now. Please try again in a minute.",
 } as const;
 
 export type GateDeps = {

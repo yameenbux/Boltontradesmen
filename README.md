@@ -355,7 +355,10 @@ In Supabase:
    own `/signup` endpoint can't be used to create or pre-claim an account.
 2. **Authentication → Rate Limits**: SMS sent per hour **30** (keep it modest: it is
    project-wide and the only Supabase-side ceiling on texts); sign-ups and sign-ins,
-   and token verifications, 150 per 5 minutes (every request comes from Railway).
+   and token verifications, 150 per 5 minutes. These are "per IP", but every request
+   comes from Railway, so they are one bucket for the whole site. The app's own
+   wrong-code limit (5 per number per 15 minutes, 20 per connection per hour,
+   `settings.otp_verify_limits`) stops one visitor from using them all up.
 3. **Authentication → Hooks → Send SMS hook → HTTPS**, URL
    `https://boltonvouched.ysbdesigns.uk/api/auth/sms-hook`. Generate the secret and
    put it in Railway as `SUPABASE_SMS_HOOK_SECRET`; set `TWILIO_MESSAGING_SERVICE_SID`
@@ -371,6 +374,7 @@ In Supabase:
 #### Texts and the SMS bill
 
 The app's limits (3 codes per number per 15 minutes, 10 per connection per hour,
+counting an IPv6 connection's whole /64 as one,
 and the monthly cap in `settings.sms_monthly_cap_gbp`, £20 by default) only see
 texts that go through the sign-in page. Supabase's own API can also text an
 existing account directly with the public key. Two things close that:

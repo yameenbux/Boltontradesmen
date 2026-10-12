@@ -52,6 +52,60 @@ beforeEach(() => {
 describe("verifyCode", () => {
   const base = { step: "code" as const, phone: "+447700900401", next: "/platform/p/ace/review" };
 
+  // The wrong-code limiter (final review 2, I4): otp_verify_gate answers before Supabase is asked.
+  function gate(verdict: string, attemptId = 7) {
+    serviceRpc.mockImplementation(async (name: string) =>
+      name === "otp_verify_gate"
+        ? { data: [{ attempt_id: attemptId, verdict }], error: null }
+        : { data: null, error: null },
+    );
+  }
+  beforeEach(() => gate("ok"));
+
+  it("asks the wrong-code limiter first and records a wrong code", async () => {
+    auth.verifyOtp.mockResolvedValue({ data: { session: null, user: null }, error: { message: "Token has expired or is invalid" } });
+    const res = await verifyCode(base, form({ phone: "+447700900401", code: "000000", next: base.next }));
+    expect(res.error).toBe(SIGN_IN_ERRORS.bad_code);
+    expect(serviceRpc).toHaveBeenCalledWith("otp_verify_gate", { p_phone: "+447700900401", p_ip_hash: ipHash("10.0.0.1") });
+    expect(serviceRpc).toHaveBeenCalledWith("otp_verify_record", { p_attempt_id: 7, p_ok: false });
+    expect(serviceRpc.mock.invocationCallOrder[0]).toBeLessThan(auth.verifyOtp.mock.invocationCallOrder[0]);
+  });
+
+  it("records a right code as ok", async () => {
+    auth.verifyOtp.mockResolvedValue({ data: { session: {}, user: { id: "u1" } }, error: null });
+    rpc.mockResolvedValue({ data: null, error: null });
+    await expect(verifyCode(base, form({ phone: "+447700900401", code: "123456", next: base.next }))).rejects.toThrow(
+      "REDIRECT /platform/welcome",
+    );
+    expect(serviceRpc).toHaveBeenCalledWith("otp_verify_record", { p_attempt_id: 7, p_ok: true });
+  });
+
+  it("stops after too many wrong codes for the number, without asking Supabase", async () => {
+    gate("number_locked", 0);
+    const res = await verifyCode(base, form({ phone: "+447700900401", code: "123456", next: base.next }));
+    expect(res).toMatchObject({ step: "code", phone: "+447700900401", error: SIGN_IN_ERRORS.code_number_locked });
+    expect(SIGN_IN_ERRORS.code_number_locked).toBe(
+      "Too many wrong codes for this number. Please wait 15 minutes, then send yourself a new code.",
+    );
+    expect(auth.verifyOtp).not.toHaveBeenCalled();
+    expect(serviceRpc).not.toHaveBeenCalledWith("otp_verify_record", expect.anything());
+  });
+
+  it("stops after too many wrong codes from one connection", async () => {
+    gate("ip_locked", 0);
+    const res = await verifyCode(base, form({ phone: "+447700900401", code: "123456", next: base.next }));
+    expect(res.error).toBe(SIGN_IN_ERRORS.code_ip_locked);
+    expect(SIGN_IN_ERRORS.code_ip_locked).toBe("Too many wrong codes from this connection. Please try again in an hour.");
+    expect(auth.verifyOtp).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when the limiter can't be reached", async () => {
+    serviceRpc.mockResolvedValue({ data: null, error: { message: "boom" } });
+    const res = await verifyCode(base, form({ phone: "+447700900401", code: "123456", next: base.next }));
+    expect(res.error).toBe(SIGN_IN_ERRORS.verify_failed);
+    expect(auth.verifyOtp).not.toHaveBeenCalled();
+  });
+
   it("shows the bad-code copy when the code is wrong", async () => {
     auth.verifyOtp.mockResolvedValue({
       data: { session: null, user: null },
@@ -65,6 +119,7 @@ describe("verifyCode", () => {
     const res = await verifyCode(base, form({ phone: "+447700900401", code: "12a", next: base.next }));
     expect(res.error).toBe(SIGN_IN_ERRORS.bad_code);
     expect(auth.verifyOtp).not.toHaveBeenCalled();
+    expect(serviceRpc).not.toHaveBeenCalled();
   });
 
   it("verifies with type sms and sends a new account to Welcome, keeping next", async () => {

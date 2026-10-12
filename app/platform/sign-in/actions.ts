@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { welcomePath } from "@/lib/auth";
 import { clientIpFrom } from "@/lib/client-ip";
+import { ipHash } from "@/lib/ip-hash";
 import { checkLineType } from "@/lib/line-type";
 import { requestSignInCode, SIGN_IN_ERRORS } from "@/lib/otp-gate";
 import { safeNext } from "@/lib/safe-next";
@@ -69,7 +70,16 @@ export async function requestCode(_prev: SignInState, fd: FormData): Promise<Sig
   return { step: "code", phone: result.phone, next };
 }
 
-/** Step 2: checks the code, signs the person in, then sends them on (via Welcome for a new account). */
+const LOCKED: Record<string, string> = {
+  number_locked: SIGN_IN_ERRORS.code_number_locked,
+  ip_locked: SIGN_IN_ERRORS.code_ip_locked,
+};
+
+/**
+ * Step 2: checks the code, signs the person in, then sends them on (via Welcome for a new account).
+ * Every check first passes the wrong-code limiter (otp_verify_gate: per number and per connection), because
+ * Supabase's own per-IP limit sees only this server's address and so is shared by everyone.
+ */
 export async function verifyCode(prev: SignInState, fd: FormData): Promise<SignInState> {
   const next = safeNext(field(fd, "next"));
   const phone = field(fd, "phone") || prev.phone || "";
@@ -77,9 +87,32 @@ export async function verifyCode(prev: SignInState, fd: FormData): Promise<SignI
   const again: SignInState = { step: "code", phone, next, error: SIGN_IN_ERRORS.bad_code };
   if (!/^\+447[1-9]\d{8}$/.test(phone) || !/^\d{6}$/.test(code)) return again;
 
+  const service = createServiceClient();
+  let attemptId: number;
+  try {
+    const { data: gate, error: gateError } = await service.rpc("otp_verify_gate", {
+      p_phone: phone,
+      p_ip_hash: ipHash(await clientIp()),
+    });
+    if (gateError) throw new Error(`otp_verify_gate: ${gateError.message}`);
+    const row = (gate as { attempt_id: number; verdict: string }[] | null)?.[0];
+    if (!row) throw new Error("otp_verify_gate returned nothing");
+    if (row.verdict !== "ok") {
+      if (!LOCKED[row.verdict]) throw new Error(`otp_verify_gate: unexpected verdict ${row.verdict}`);
+      return { ...again, error: LOCKED[row.verdict] };
+    }
+    attemptId = row.attempt_id;
+  } catch (err) {
+    console.error("sign-in: code limiter failed:", err);
+    return { ...again, error: SIGN_IN_ERRORS.verify_failed };
+  }
+
   const supabase = await createServerAuthClient();
   const { data, error } = await supabase.auth.verifyOtp({ phone, token: code, type: "sms" });
-  if (error || !data.session) return again;
+  const right = !error && !!data.session;
+  const { error: recordError } = await service.rpc("otp_verify_record", { p_attempt_id: attemptId, p_ok: right });
+  if (recordError) console.error("sign-in: could not record the code check:", recordError.message);
+  if (!right) return again;
 
   const { data: account, error: accountError } = await supabase.rpc("my_account");
   if (accountError) {

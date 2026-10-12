@@ -72,3 +72,5 @@ select 'review', id, 'auto', 'burst_48h' from public.reviews where provider_id =
 
 -- Every E2E sign-in comes from 127.0.0.1, so raise the per-IP (and per-number) OTP limits.
 update public.settings set value = '{"number_15m":50,"number_24h":200,"ip_1h":1000,"ip_24h":5000}'::jsonb where key = 'otp_limits';
+-- The same for the wrong-code limiter (final review 2, I4).
+update public.settings set value = '{"number_15m":50,"ip_1h":1000}'::jsonb where key = 'otp_verify_limits';
