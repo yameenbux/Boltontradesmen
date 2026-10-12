@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { ChatIcon, LockIcon } from "@/components/auth/icons";
 import { SignInForm } from "@/components/auth/SignInForm";
+import { SIGN_IN_ERRORS } from "@/lib/otp-gate";
 import { safeNext } from "@/lib/safe-next";
+import { phoneSignInEnabled } from "@/lib/sign-in-methods";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Sign in | Bolton Vouched", robots: { index: false } };
@@ -16,10 +18,20 @@ function heading(next: string) {
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
   const raw = (await searchParams).next;
   const next = safeNext(Array.isArray(raw) ? raw[0] : raw);
+  // Read at request time (SIGN_IN_PHONE): only enabled methods are shown.
+  const phoneOn = phoneSignInEnabled();
   return (
     <main className="auth">
       <section className="auth-card" aria-labelledby="signin-title">
-        <SignInForm next={next} title={heading(next)} />
+        {phoneOn ? (
+          <SignInForm next={next} title={heading(next)} />
+        ) : (
+          <div>
+            <p className="eyebrow">Bolton Vouched</p>
+            <h1 id="signin-title">{heading(next)}</h1>
+            <p className="lede">{SIGN_IN_ERRORS.phone_off}</p>
+          </div>
+        )}
       </section>
       <ul className="reassure">
         <li>

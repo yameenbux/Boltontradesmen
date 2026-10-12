@@ -17,6 +17,7 @@ export const SIGN_IN_ERRORS = {
   code_number_locked: "Too many wrong codes for this number. Please wait 15 minutes, then send yourself a new code.",
   code_ip_locked: "Too many wrong codes from this connection. Please try again in an hour.",
   verify_failed: "We couldn't check your code just now. Please try again in a minute.",
+  phone_off: "Sign-in by text is switched off. Please continue with Google or use an email code.",
 } as const;
 
 export type GateDeps = {

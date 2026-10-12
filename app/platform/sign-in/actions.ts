@@ -8,6 +8,7 @@ import { ipHash } from "@/lib/ip-hash";
 import { checkLineType } from "@/lib/line-type";
 import { requestSignInCode, SIGN_IN_ERRORS } from "@/lib/otp-gate";
 import { safeNext } from "@/lib/safe-next";
+import { phoneSignInEnabled } from "@/lib/sign-in-methods";
 import { createServerAuthClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -26,6 +27,7 @@ async function clientIp(): Promise<string> {
 /** Step 1 (and "Send a new code"): checks the number, then texts a code. */
 export async function requestCode(_prev: SignInState, fd: FormData): Promise<SignInState> {
   const next = safeNext(field(fd, "next"));
+  if (!phoneSignInEnabled()) return { step: "phone", next, error: SIGN_IN_ERRORS.phone_off };
   const input = field(fd, "phone");
   const service = createServiceClient();
   const supabase = await createServerAuthClient();
@@ -82,6 +84,7 @@ const LOCKED: Record<string, string> = {
  */
 export async function verifyCode(prev: SignInState, fd: FormData): Promise<SignInState> {
   const next = safeNext(field(fd, "next"));
+  if (!phoneSignInEnabled()) return { step: "phone", next, error: SIGN_IN_ERRORS.phone_off };
   const phone = field(fd, "phone") || prev.phone || "";
   const code = field(fd, "code").replace(/\s+/g, "");
   const again: SignInState = { step: "code", phone, next, error: SIGN_IN_ERRORS.bad_code };

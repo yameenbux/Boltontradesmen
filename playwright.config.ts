@@ -30,5 +30,7 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    // Phone sign-in stays on for E2E until the specs move to email and Google (Plan 2b Task 10).
+    env: { ...process.env, SIGN_IN_PHONE: "on" } as Record<string, string>,
   },
 });
