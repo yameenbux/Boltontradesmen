@@ -88,7 +88,7 @@ select lives_ok(
 
 select throws_ok(
   $$insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000007a4', 'x@example.com')$$,
-  null, 'email sign-ups are disabled', 'an email-only account is refused');
+  null, 'email sign-up not approved', 'an email-only account without the app''s nonce is refused');
 update public.settings set value = '["x@example.com"]'::jsonb where key = 'admin_emails';
 select lives_ok(
   $$insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000007a4', 'X@Example.com')$$,
