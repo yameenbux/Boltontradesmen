@@ -3,7 +3,7 @@
 -- the listing or the account is already linked. The admin can unlink with a logged reason. Listings linked by a
 -- token stay linked when their numbers change; phone-linked ones still unlink (000003 behaviour).
 begin;
-select plan(39);
+select plan(44);
 
 update public.settings set value = '["tl-admin@example.com"]'::jsonb where key = 'admin_emails';
 
@@ -162,6 +162,28 @@ select throws_ok($$select public.claim_trader_link((select token from t where k 
 select public.tl_as('00000000-0000-0000-0000-000000007104');
 select throws_ok($$select public.claim_trader_link((select token from t where k = 'cedar'))$$, 'P0001', 'not_member',
   'claiming needs a finished profile');
+
+-- Final review M2: the admin and a blocked account can't take a listing, even with a finished profile.
+reset role;
+update public.profiles set display_name = 'Yam A.' where user_id = '00000000-0000-0000-0000-0000000071a0';
+select pg_temp.google_user('00000000-0000-0000-0000-000000007105', 'blocked@example.org', 'Bob B.');
+update public.profiles set blocked_at = now() where user_id = '00000000-0000-0000-0000-000000007105';
+set local role authenticated;
+select public.tl_as('00000000-0000-0000-0000-0000000071a0');
+select is(public.trader_link_preview((select token from t where k = 'cedar')) ->> 'state', 'account_not_allowed',
+  'the admin sees that this account can''t be linked');
+select throws_ok($$select public.claim_trader_link((select token from t where k = 'cedar'))$$, 'P0001', 'account_not_allowed',
+  'the admin cannot claim a listing');
+select public.tl_as('00000000-0000-0000-0000-000000007105');
+select is(public.trader_link_preview((select token from t where k = 'cedar')) ->> 'state', 'account_not_allowed',
+  'a blocked account sees that it can''t be linked');
+select throws_ok($$select public.claim_trader_link((select token from t where k = 'cedar'))$$, 'P0001', 'account_not_allowed',
+  'a blocked account cannot claim a listing');
+reset role;
+select is((select used_at from public.trader_link_tokens
+           where token_hash = encode(sha256(convert_to((select token from t where k = 'cedar')::text, 'UTF8')), 'hex')), null,
+  'the link stays unused for the real trader');
+set local role authenticated;
 
 -- Unknown token.
 select public.tl_as('00000000-0000-0000-0000-000000007101');

@@ -71,7 +71,14 @@ describe("claimTraderLink", () => {
     expect(rpc).toHaveBeenCalledWith("claim_trader_link", { p_token: TOKEN });
   });
 
-  for (const code of ["link_invalid", "link_used", "link_expired", "listing_already_linked", "account_already_linked"] as const) {
+  for (const code of [
+    "link_invalid",
+    "link_used",
+    "link_expired",
+    "listing_already_linked",
+    "account_already_linked",
+    "account_not_allowed",
+  ] as const) {
     it(`maps ${code} to its copy`, async () => {
       asMember({ error: { message: code } });
       const res = await claimTraderLink({}, form({ token: TOKEN }));
@@ -88,6 +95,7 @@ describe("claimTraderLink", () => {
       listing_already_linked: "This listing is already linked to an account. If that's not you, contact us.",
       account_already_linked:
         "Your account is already linked to another listing. Sign in with a different account, or contact us.",
+      account_not_allowed: "This account can't be linked to a listing.",
     });
   });
 

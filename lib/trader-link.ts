@@ -10,6 +10,7 @@ export const TRADER_LINK_ERRORS = {
   listing_already_linked: "This listing is already linked to an account. If that's not you, contact us.",
   account_already_linked:
     "Your account is already linked to another listing. Sign in with a different account, or contact us.",
+  account_not_allowed: "This account can't be linked to a listing.",
 } as const;
 
 export type TraderLinkState = "ok" | keyof typeof TRADER_LINK_ERRORS;
