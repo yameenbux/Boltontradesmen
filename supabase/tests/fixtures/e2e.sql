@@ -32,3 +32,6 @@ insert into public.reviews (provider_id, reviewer_id, category_id, job_month, va
 select '00000000-0000-0000-0000-00000000e203', ('00000000-0000-0000-0000-00000000e3' || lpad(n::text, 2, '0'))::uuid,
   (select id from public.categories where slug = 'plumber'), date_trunc('month', current_date)::date, '<250', 'yes', 'yes', 4, 'yes'
 from generate_series(1, 2) n;
+
+-- Every E2E sign-in comes from 127.0.0.1, so raise the per-IP (and per-number) OTP limits.
+update public.settings set value = '{"number_15m":50,"number_24h":200,"ip_1h":1000,"ip_24h":5000}'::jsonb where key = 'otp_limits';

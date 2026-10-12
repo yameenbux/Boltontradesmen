@@ -1,0 +1,43 @@
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
+// The test phone numbers (code 123456, no SMS sent) must be identical in the Supabase CLI config (CI)
+// and the local stack (sandboxes), and must all sit in Ofcom's 07700 900xxx drama range.
+const EXPECTED = ["447700900301", ...Array.from({ length: 9 }, (_, i) => `44770090040${i + 1}`)];
+const root = path.resolve(__dirname, "../..");
+
+function configTestOtps(): Record<string, string> {
+  const toml = readFileSync(path.join(root, "supabase/config.toml"), "utf8");
+  const section = /^\[auth\.sms\.test_otp\]\s*$([\s\S]*?)(?=^\[|(?![\s\S]))/m.exec(toml);
+  if (!section) throw new Error("[auth.sms.test_otp] not found in supabase/config.toml");
+  const out: Record<string, string> = {};
+  for (const line of section[1].split("\n")) {
+    const m = /^\s*"?(\d+)"?\s*=\s*"(\d+)"\s*(#.*)?$/.exec(line);
+    if (m) out[m[1]] = m[2];
+  }
+  return out;
+}
+
+function startShTestOtps(): Record<string, string> {
+  const sh = readFileSync(path.join(root, "scripts/local-stack/start.sh"), "utf8");
+  const m = /GOTRUE_SMS_TEST_OTP="?([^"\s\\]+)"?/.exec(sh);
+  if (!m) throw new Error("GOTRUE_SMS_TEST_OTP= not found in scripts/local-stack/start.sh");
+  return Object.fromEntries(m[1].split(",").map((pair) => pair.split(":") as [string, string]));
+}
+
+describe("test OTP numbers", () => {
+  it("config.toml lists exactly the shared numbers, each with 123456", () => {
+    expect(configTestOtps()).toEqual(Object.fromEntries(EXPECTED.map((n) => [n, "123456"])));
+  });
+
+  it("the local stack lists exactly the same numbers", () => {
+    expect(startShTestOtps()).toEqual(Object.fromEntries(EXPECTED.map((n) => [n, "123456"])));
+  });
+
+  it("every number is in the 07700 900xxx drama range", () => {
+    for (const n of [...Object.keys(configTestOtps()), ...Object.keys(startShTestOtps())]) {
+      expect(n).toMatch(/^447700900\d{3}$/);
+    }
+  });
+});

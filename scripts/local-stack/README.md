@@ -32,7 +32,7 @@ npm run stack:stop    # stops proxy, PostgREST and Auth; leaves Postgres running
 | Postgres 16 (cluster `16/supa`) | `postgresql://postgres:postgres@127.0.0.1:54322/postgres` | Created with `pg_createcluster` on first start; needs root or sudo. Stop with `pg_ctlcluster 16 supa stop`. |
 | Gateway (`proxy.mjs`) | `http://127.0.0.1:54321` | `/rest/v1/*` → PostgREST, `/auth/v1/*` → Auth, prefix stripped, headers forwarded, permissive CORS. |
 | PostgREST v12.2.3 | `127.0.0.1:54330` (internal) | Connects as `authenticator`; schema `public`; anon role `anon`. |
-| Supabase Auth v2.177.0 | `127.0.0.1:54331` (internal) | Connects as `supabase_auth_admin`; runs its own migrations into schema `auth`. Email auth with autoconfirm; **public signups disabled** — create users with the admin API and the service key. |
+| Supabase Auth v2.177.0 | `127.0.0.1:54331` (internal) | Connects as `supabase_auth_admin`; runs its own migrations into schema `auth`. Email auth with autoconfirm; **phone sign-ups on, gated by the database** (the `auth.users` guard refuses phones the app did not approve and email-only accounts not in `settings.admin_emails`); test OTPs listed in `supabase/config.toml` (`[auth.sms.test_otp]`). |
 
 JWT secret: `super-secret-jwt-token-with-at-least-32-characters-long`.
 `node scripts/local-stack/jwt.mjs` prints the anon and service_role keys; they
@@ -61,8 +61,18 @@ set local request.jwt.claims = '{"sub":"<uuid>","role":"authenticated"}';
   Refuses any non-local host (only 127.0.0.1, localhost, ::1) unless `ALLOW_NONLOCAL_DB_RESET=1`.
 - `db-reset-guard.test.sh` — hermetic test of that guard (fake `psql`, no database touched); part of `npm run test:stack`.
 
+## Phone sign-in
+
+Phone OTP runs with a dummy Twilio provider (Auth builds the SMS provider before it looks for a
+test OTP; a test OTP then skips sending). The test numbers are `447700900301` (Ace Plumbing's
+listing number in the E2E fixture) and `447700900401`–`447700900409` (residents), each with code
+`123456`. They are set by `GOTRUE_SMS_TEST_OTP` in `start.sh` and `[auth.sms.test_otp]` in
+`supabase/config.toml`; `tests/unit/test-otp-config.test.ts` keeps the two lists identical. A number
+still needs an approved `otp_requests` row (the app's sign-in gate writes one) in the last 15 minutes
+before Auth can create its account. After changing Auth settings run `npm run stack:stop && npm run stack:start`.
+
 ## Differences from `supabase start`
 
 No Storage, Realtime, Studio, Inbucket/Mailpit, edge functions or `graphql_public`.
-`db:reset` only rebuilds `public` (auth users survive a reset). Add pieces here
+`db:reset` only rebuilds `public` and `private` (auth users survive a reset). Add pieces here
 only when a task needs them.

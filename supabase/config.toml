@@ -174,7 +174,10 @@ enable_refresh_token_rotation = true
 # Requires enable_refresh_token_rotation = true.
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
-enable_signup = false
+# On: phone sign-up needs it. Who may sign up is decided by the database: the auth.users guard
+# (migration 20261012000003) refuses a phone the app's number check did not approve, and any
+# email-only account whose email is not in settings.admin_emails.
+enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
@@ -219,6 +222,8 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
+# This key maps to GOTRUE_EXTERNAL_EMAIL_ENABLED: it must stay true or the admin's email + password
+# sign-in breaks. Email sign-ups are refused by the auth.users guard instead (unless allow-listed).
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
@@ -257,7 +262,7 @@ otp_expiry = 3600
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
-enable_signup = false
+enable_signup = true
 # If enabled, users need to confirm their phone number before signing in.
 enable_confirmations = false
 # Template for sending OTP to users
@@ -266,8 +271,20 @@ template = "Your code is {{ .Code }}"
 max_frequency = "5s"
 
 # Use pre-defined map of phone number to OTP for testing.
-# [auth.sms.test_otp]
-# 4152127777 = "123456"
+# Local and CI only: these numbers get code 123456 and no SMS is sent. Keep in step with
+# GOTRUE_SMS_TEST_OTP in scripts/local-stack/start.sh (tests/unit/test-otp-config.test.ts checks).
+# 07700 900301 is Ace Plumbing's listing number in the E2E fixture; 900401-900409 are residents.
+[auth.sms.test_otp]
+447700900301 = "123456"
+447700900401 = "123456"
+447700900402 = "123456"
+447700900403 = "123456"
+447700900404 = "123456"
+447700900405 = "123456"
+447700900406 = "123456"
+447700900407 = "123456"
+447700900408 = "123456"
+447700900409 = "123456"
 
 # Configure logged in session timeouts.
 # [auth.sessions]
@@ -287,12 +304,14 @@ max_frequency = "5s"
 # uri = "pg-functions://<database>/<schema>/<hook_name>"
 
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
+# Dummy Twilio settings, for local and CI only: Auth needs an SMS provider configured before it will use
+# a test OTP (and a test OTP then skips sending). NEVER run `supabase config push`: production uses
+# Twilio Verify with real credentials set in the Supabase dashboard (README -> Deploying).
 [auth.sms.twilio]
-enabled = false
-account_sid = ""
-message_service_sid = ""
-# DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
-auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
+enabled = true
+account_sid = "AC00000000000000000000000000000000"
+message_service_sid = "MG00000000000000000000000000000000"
+auth_token = "local-dummy-not-a-secret"
 
 # Multi-factor-authentication is available to Supabase Pro plan.
 [auth.mfa]

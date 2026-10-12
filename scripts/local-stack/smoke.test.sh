@@ -23,9 +23,21 @@ code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $ANON_KEY" "$API_URL/a
 code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $ANON_KEY" -H "Authorization: Bearer $ANON_KEY" "$API_URL/rest/v1/")
 [ "$code" = 200 ] && ok "GET /rest/v1/ (anon) -> 200" || nok "GET /rest/v1/ (anon) -> 200" "got $code"
 
-# 3. Admin user creation with the service key
+# Phone sign-up is gated by the database (otp_requests approvals; admin emails allow-listed).
+APPROVED_PHONE=447700900409
+UNAPPROVED_PHONE=447700900408
+smoke_cleanup() {
+  sql "delete from auth.users where phone in ('$APPROVED_PHONE', '$UNAPPROVED_PHONE');
+       delete from public.otp_requests where ip_hash = 'smoke';
+       update public.settings set value = coalesce((select jsonb_agg(e) from jsonb_array_elements(value) e
+         where e #>> '{}' not like 'smoke-%@example.test'), '[]'::jsonb) where key = 'admin_emails';" >/dev/null
+}
+smoke_cleanup
+
+# 3. Admin user creation with the service key (the email must be on the admin allow-list)
 email="smoke-$(date +%s)-$RANDOM@example.test"
 password="smoke-password-123"
+sql "update public.settings set value = value || '[\"$email\"]'::jsonb where key = 'admin_emails'" >/dev/null
 body=$(curl -s -w '\n%{http_code}' -X POST "$API_URL/auth/v1/admin/users" \
   -H "apikey: $SERVICE_KEY" -H "Authorization: Bearer $SERVICE_KEY" -H 'Content-Type: application/json' \
   -d "{\"email\":\"$email\",\"password\":\"$password\",\"email_confirm\":true}")
@@ -73,7 +85,38 @@ case "$code" in
   *) ok "POST /auth/v1/signup is rejected ($code)" ;;
 esac
 
+# 10. Phone OTP: an approved test number gets a code (no SMS) and signs in with 123456
+sql "insert into public.otp_requests (phone_e164, ip_hash, outcome) values ('+$APPROVED_PHONE', 'smoke', 'approved')" >/dev/null
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/auth/v1/otp" \
+  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' -d "{\"phone\":\"+$APPROVED_PHONE\"}")
+[ "$code" = 200 ] && ok "POST /auth/v1/otp (approved test number) -> 200" || nok "POST /auth/v1/otp (approved test number) -> 200" "got $code"
+resp=$(curl -s -X POST "$API_URL/auth/v1/verify" \
+  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -d "{\"type\":\"sms\",\"phone\":\"+$APPROVED_PHONE\",\"token\":\"123456\"}")
+phone_token=$(json access_token <<<"$resp")
+[ -n "$phone_token" ] && ok "POST /auth/v1/verify (test OTP 123456) returns access_token" || nok "POST /auth/v1/verify (test OTP 123456) returns access_token" "$resp"
+
+# 11. Phone OTP for a number the app's gate did not approve is refused, and no account is created
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/auth/v1/otp" \
+  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' -d "{\"phone\":\"+$UNAPPROVED_PHONE\"}")
+case "$code" in
+  2*|000) nok "POST /auth/v1/otp (unapproved number) is rejected" "got $code" ;;
+  *) ok "POST /auth/v1/otp (unapproved number) is rejected ($code)" ;;
+esac
+out=$(sql "select count(*) from auth.users where phone = '$UNAPPROVED_PHONE'")
+[ "$out" = 0 ] && ok "no auth.users row for the unapproved number" || nok "no auth.users row for the unapproved number" "$out"
+
+# 12. Email sign-up for an address that is not on the admin allow-list is refused
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/auth/v1/signup" \
+  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -d '{"email":"nobody@example.test","password":"xxxxxxxx"}')
+case "$code" in
+  2*|000) nok "POST /auth/v1/signup (nobody@example.test) is rejected" "got $code" ;;
+  *) ok "POST /auth/v1/signup (nobody@example.test) is rejected ($code)" ;;
+esac
+
 # Cleanup
+smoke_cleanup
 if [ -n "${user_id:-}" ]; then
   curl -s -o /dev/null -X DELETE "$API_URL/auth/v1/admin/users/$user_id" \
     -H "apikey: $SERVICE_KEY" -H "Authorization: Bearer $SERVICE_KEY"
