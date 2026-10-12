@@ -554,6 +554,7 @@ h1,h2,h3{text-wrap:balance}
   .reply-form .textarea{min-height:96px; font-size:17px; background:var(--surface)}
   .reply-actions{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px}
   .reply-actions .btn{flex:1 1 160px}
+  .thanks-list{margin:0; padding-left:22px; list-style:disc; display:grid; gap:8px; color:var(--ink-2); line-height:1.5}
   .report-done{display:grid; gap:14px}
   .report-done .done{padding:8px 4px 0}
   .report-done .done h2{font-size:32px; line-height:1.1}
