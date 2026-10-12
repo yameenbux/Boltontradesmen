@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from "node:crypto";
 import { ipHash } from "@/lib/ip-hash";
 import type { LineCheck } from "@/lib/line-type";
 import { toUkMobileE164 } from "@/lib/phone";
@@ -18,8 +19,11 @@ export const SIGN_IN_ERRORS = {
 export type GateDeps = {
   gate(phone: string, ipHash: string): Promise<{ requestId: number; verdict: string }>;
   record(id: number, outcome: string, lineType: string | null): Promise<void>;
+  /** Marks the request approved and binds it to the nonce (only its sha256 is stored). */
+  approve(id: number, lineType: string, nonceHash: string): Promise<void>;
   lookup(phone: string): Promise<LineCheck>;
-  send(phone: string): Promise<{ error: unknown | null }>;
+  /** Sends the code; the nonce must reach GoTrue in the sign-up metadata (`bv_nonce`). */
+  send(phone: string, nonce: string): Promise<{ error: unknown | null }>;
 };
 
 export type SignInCodeResult = { ok: true; phone: string } | { ok: false; error: string };
@@ -28,8 +32,10 @@ const GATE_VERDICTS = new Set(["number_limited", "ip_limited", "cap_reached"]);
 
 /**
  * Everything that happens before a sign-in text goes out, in order: validate the number → database gate
- * (rate limits and the monthly SMS cap, recorded in otp_requests) → line-type Lookup → record "approved"
- * (which the auth.users guard needs) → send → record "sent" or "send_failed".
+ * (rate limits and the monthly SMS cap, recorded in otp_requests) → line-type Lookup → approve the request,
+ * bound to a fresh single-use nonce → send, passing the nonce to GoTrue → record "sent" or "send_failed".
+ * The auth.users guard only lets a new phone account in with the nonce of an approved, unused request, so a
+ * sign-up that did not come through here (GoTrue's /signup with a password, say) is refused.
  * Fails closed: if anything before the send goes wrong, no text is sent.
  */
 export async function requestSignInCode(input: string, ip: string, deps: GateDeps): Promise<SignInCodeResult> {
@@ -42,6 +48,7 @@ export async function requestSignInCode(input: string, ip: string, deps: GateDep
 
   let requestId: number;
   let lineType: string;
+  const nonce = randomBytes(32).toString("base64url");
   try {
     const gate = await deps.gate(phone, ipHash(ip || "unknown"));
     requestId = gate.requestId;
@@ -68,7 +75,7 @@ export async function requestSignInCode(input: string, ip: string, deps: GateDep
       return { ok: false, error: SIGN_IN_ERRORS.not_mobile };
     }
     lineType = line.lineType;
-    await deps.record(requestId, "approved", lineType);
+    await deps.approve(requestId, lineType, createHash("sha256").update(nonce).digest("hex"));
   } catch (err) {
     console.error("sign-in: number check failed:", err);
     return { ok: false, error: SIGN_IN_ERRORS.lookup_failed };
@@ -76,7 +83,7 @@ export async function requestSignInCode(input: string, ip: string, deps: GateDep
 
   let sendError: unknown = null;
   try {
-    sendError = (await deps.send(phone)).error;
+    sendError = (await deps.send(phone, nonce)).error;
   } catch (err) {
     sendError = err;
   }

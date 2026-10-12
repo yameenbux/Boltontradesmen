@@ -41,3 +41,20 @@ describe("test OTP numbers", () => {
     }
   });
 });
+
+// Final review C1: a phone account must always be confirmed with a code sent to the phone. The database
+// guard refuses phone sign-ups that arrive already confirmed, so local and CI run with confirmations on,
+// exactly like production.
+describe("phone confirmations", () => {
+  it("are required in config.toml (CI)", () => {
+    const toml = readFileSync(path.join(root, "supabase/config.toml"), "utf8");
+    const section = /^\[auth\.sms\]\s*$([\s\S]*?)(?=^\[)/m.exec(toml);
+    expect(section?.[1]).toMatch(/^enable_confirmations = true$/m);
+  });
+
+  it("are required on the local stack (no SMS autoconfirm)", () => {
+    const sh = readFileSync(path.join(root, "scripts/local-stack/start.sh"), "utf8");
+    expect(sh).toMatch(/GOTRUE_SMS_AUTOCONFIRM=false/);
+    expect(sh).not.toMatch(/GOTRUE_SMS_AUTOCONFIRM=true/);
+  });
+});

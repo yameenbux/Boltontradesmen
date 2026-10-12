@@ -4,9 +4,10 @@
 begin;
 select plan(26);
 
-insert into public.otp_requests (phone_e164, ip_hash, outcome) values ('+447700900481', 'pgtap', 'approved');
-insert into auth.users (id, phone, created_at) values
-  ('00000000-0000-0000-0000-0000000009a1', '447700900481', now() - interval '3 days');   -- Della, deletes
+insert into public.otp_requests (phone_e164, ip_hash, outcome, nonce_hash)
+values ('+447700900481', 'pgtap', 'approved', encode(sha256(convert_to('del-nonce', 'UTF8')), 'hex'));
+insert into auth.users (id, phone, created_at, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-0000000009a1', '447700900481', now() - interval '3 days', '{"bv_nonce":"del-nonce"}');   -- Della, deletes
 insert into auth.users (id, created_at) values
   ('00000000-0000-0000-0000-0000000009a2', now() - interval '3 days');                   -- Ravi, stays
 insert into public.profiles (user_id, role, display_name, postcode_district) values

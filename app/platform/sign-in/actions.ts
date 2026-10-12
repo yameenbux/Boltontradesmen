@@ -45,9 +45,22 @@ export async function requestCode(_prev: SignInState, fd: FormData): Promise<Sig
       });
       if (error) throw new Error(`otp_record: ${error.message}`);
     },
+    approve: async (id, lineType, nonceHash) => {
+      const { error } = await service.rpc("otp_approve", {
+        p_request_id: id,
+        p_line_type: lineType,
+        p_nonce_hash: nonceHash,
+      });
+      if (error) throw new Error(`otp_approve: ${error.message}`);
+    },
     lookup: (phone) => checkLineType(phone),
-    send: async (phone) => {
-      const { error } = await supabase.auth.signInWithOtp({ phone, options: { shouldCreateUser: true } });
+    send: async (phone, nonce) => {
+      // bv_nonce reaches auth.users.raw_user_meta_data on a new account, where the database guard checks
+      // it against the approved request and strips it. Existing accounts ignore it.
+      const { error } = await supabase.auth.signInWithOtp({
+        phone,
+        options: { shouldCreateUser: true, data: { bv_nonce: nonce } },
+      });
       return { error };
     },
   });

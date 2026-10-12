@@ -85,16 +85,28 @@ case "$code" in
   *) ok "POST /auth/v1/signup is rejected ($code)" ;;
 esac
 
-# 10. Phone OTP: an approved test number gets a code (no SMS) and signs in with 123456
-sql "insert into public.otp_requests (phone_e164, ip_hash, outcome) values ('+$APPROVED_PHONE', 'smoke', 'approved')" >/dev/null
+# The app's sign-in action approves a request bound to a single-use nonce (only its sha256 is stored) and
+# passes the nonce to GoTrue in the sign-up metadata; the auth.users guard checks and consumes it.
+approve_with_nonce() {  # $1 phone without +, $2 nonce
+  sql "insert into public.otp_requests (phone_e164, ip_hash, outcome, nonce_hash)
+       values ('+$1', 'smoke', 'approved', encode(sha256(convert_to('$2', 'UTF8')), 'hex'))" >/dev/null
+}
+NONCE_409="smoke-nonce-409-$RANDOM$RANDOM"
+
+# 10. Phone OTP: the app's flow (approved request + its nonce) gets a code (no SMS) and signs in with 123456
+approve_with_nonce "$APPROVED_PHONE" "$NONCE_409"
 code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/auth/v1/otp" \
-  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' -d "{\"phone\":\"+$APPROVED_PHONE\"}")
-[ "$code" = 200 ] && ok "POST /auth/v1/otp (approved test number) -> 200" || nok "POST /auth/v1/otp (approved test number) -> 200" "got $code"
+  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -d "{\"phone\":\"+$APPROVED_PHONE\",\"create_user\":true,\"data\":{\"bv_nonce\":\"$NONCE_409\"}}")
+[ "$code" = 200 ] && ok "POST /auth/v1/otp (app flow: approved number + nonce) -> 200" || nok "POST /auth/v1/otp (app flow: approved number + nonce) -> 200" "got $code"
 resp=$(curl -s -X POST "$API_URL/auth/v1/verify" \
   -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
   -d "{\"type\":\"sms\",\"phone\":\"+$APPROVED_PHONE\",\"token\":\"123456\"}")
 phone_token=$(json access_token <<<"$resp")
 [ -n "$phone_token" ] && ok "POST /auth/v1/verify (test OTP 123456) returns access_token" || nok "POST /auth/v1/verify (test OTP 123456) returns access_token" "$resp"
+out=$(sql "select (raw_user_meta_data ? 'bv_nonce')::text || '|' || (select (consumed_at is not null)::text from public.otp_requests
+           where ip_hash = 'smoke' and phone_e164 = '+$APPROVED_PHONE') from auth.users where phone = '$APPROVED_PHONE'")
+[ "$out" = "false|true" ] && ok "the nonce is consumed and stripped from the account" || nok "the nonce is consumed and stripped from the account" "$out"
 
 # 11. Phone OTP for a number the app's gate did not approve is refused, and no account is created
 code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/auth/v1/otp" \
@@ -114,6 +126,56 @@ case "$code" in
   2*|000) nok "POST /auth/v1/signup (nobody@example.test) is rejected" "got $code" ;;
   *) ok "POST /auth/v1/signup (nobody@example.test) is rejected ($code)" ;;
 esac
+
+# 13. C1: an approved number without the app's nonce cannot be signed up with a password (the /signup race)
+sql "insert into public.otp_requests (phone_e164, ip_hash, outcome) values ('+$UNAPPROVED_PHONE', 'smoke', 'approved')" >/dev/null
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/auth/v1/signup" \
+  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -d "{\"phone\":\"+$UNAPPROVED_PHONE\",\"password\":\"attacker-pass-123\"}")
+case "$code" in
+  2*|000) nok "POST /auth/v1/signup (phone + password, no app nonce) is rejected" "got $code" ;;
+  *) ok "POST /auth/v1/signup (phone + password, no app nonce) is rejected ($code)" ;;
+esac
+out=$(sql "select count(*) from auth.users where phone = '$UNAPPROVED_PHONE'")
+[ "$out" = 0 ] && ok "no account for the password sign-up" || nok "no account for the password sign-up" "$out"
+
+# 14. C1: even a password sign-up carrying a valid nonce never gets a working password
+NONCE_408="smoke-nonce-408-$RANDOM$RANDOM"
+approve_with_nonce "$UNAPPROVED_PHONE" "$NONCE_408"
+resp=$(curl -s -w '\n%{http_code}' -X POST "$API_URL/auth/v1/signup" \
+  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -d "{\"phone\":\"+$UNAPPROVED_PHONE\",\"password\":\"attacker-pass-123\",\"data\":{\"bv_nonce\":\"$NONCE_408\"}}")
+code=$(tail -n1 <<<"$resp")
+[ -z "$(json access_token <<<"$(sed '$d' <<<"$resp")")" ] && ok "password sign-up with a nonce gets no session (confirmation required) ($code)" \
+  || nok "password sign-up with a nonce gets no session (confirmation required)" "$resp"
+password_grant() {
+  curl -s -X POST "$API_URL/auth/v1/token?grant_type=password" -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+    -d "{\"phone\":\"+$UNAPPROVED_PHONE\",\"password\":\"attacker-pass-123\"}"
+}
+[ -z "$(json access_token <<<"$(password_grant)")" ] && ok "the planted password does not sign in before confirmation" \
+  || nok "the planted password does not sign in before confirmation"
+sleep 5  # GOTRUE_SMS_MAX_FREQUENCY
+# the real owner later signs in through the app (no new account, so no nonce needed) and enters the code
+curl -s -o /dev/null -X POST "$API_URL/auth/v1/otp" -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -d "{\"phone\":\"+$UNAPPROVED_PHONE\"}"
+resp=$(curl -s -X POST "$API_URL/auth/v1/verify" -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -d "{\"type\":\"sms\",\"phone\":\"+$UNAPPROVED_PHONE\",\"token\":\"123456\"}")
+[ -n "$(json access_token <<<"$resp")" ] && ok "the owner confirms the number with their code" || nok "the owner confirms the number with their code" "$resp"
+resp=$(password_grant)
+[ -z "$(json access_token <<<"$resp")" ] && ok "the planted password still does not sign in after confirmation (no takeover)" \
+  || nok "the planted password still does not sign in after confirmation (no takeover)" "$resp"
+
+# 15. C1: a nonce works once. Delete the account and replay the same nonce: refused, no account.
+sql "delete from auth.users where phone = '$APPROVED_PHONE'" >/dev/null
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/auth/v1/otp" \
+  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -d "{\"phone\":\"+$APPROVED_PHONE\",\"create_user\":true,\"data\":{\"bv_nonce\":\"$NONCE_409\"}}")
+case "$code" in
+  2*|000) nok "POST /auth/v1/otp replaying a used nonce is rejected" "got $code" ;;
+  *) ok "POST /auth/v1/otp replaying a used nonce is rejected ($code)" ;;
+esac
+out=$(sql "select count(*) from auth.users where phone = '$APPROVED_PHONE'")
+[ "$out" = 0 ] && ok "no account from the replayed nonce" || nok "no account from the replayed nonce" "$out"
 
 # Cleanup
 smoke_cleanup

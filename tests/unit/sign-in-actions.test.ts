@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const auth = {
@@ -105,7 +106,17 @@ describe("requestCode", () => {
       form({ phone: "07700 900401", next: "/platform/account" }),
     );
     expect(res).toEqual({ step: "code", phone: "+447700900401", next: "/platform/account" });
-    expect(auth.signInWithOtp).toHaveBeenCalledWith({ phone: "+447700900401", options: { shouldCreateUser: true } });
+    expect(auth.signInWithOtp).toHaveBeenCalledWith({
+      phone: "+447700900401",
+      options: { shouldCreateUser: true, data: { bv_nonce: expect.stringMatching(/^[A-Za-z0-9_-]{43}$/) } },
+    });
+    const nonce = auth.signInWithOtp.mock.calls[0][0].options.data.bv_nonce as string;
+    expect(serviceRpc).toHaveBeenCalledWith("otp_approve", {
+      p_request_id: 5,
+      p_line_type: "mobile",
+      p_nonce_hash: createHash("sha256").update(nonce).digest("hex"),
+    });
+    expect(serviceRpc).not.toHaveBeenCalledWith("otp_record", expect.objectContaining({ p_outcome: "approved" }));
     expect(serviceRpc).toHaveBeenCalledWith("otp_gate", {
       p_phone: "+447700900401",
       // the rightmost X-Forwarded-For entry (appended by the trusted proxy), not the spoofable leftmost

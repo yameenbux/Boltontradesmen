@@ -1,6 +1,6 @@
 -- Phone accounts: OTP gate and limits, the auth.users guard, onboarding and provider linking.
 begin;
-select plan(54);
+select plan(51);
 
 -- ======================================================================== otp_gate limits
 set local role service_role;
@@ -70,26 +70,20 @@ select throws_ok($$select count(*) from public.otp_requests$$, '42501', null, 'a
 reset role;
 
 -- ======================================================================== auth.users guard
+-- The full guard rules (nonce binding, single use, passwords, phone changes) are in phone_guard.test.sql.
 select throws_ok(
   $$insert into auth.users (id, phone) values ('00000000-0000-0000-0000-0000000007a1', '447700900403')$$,
   null, 'phone sign-up not approved', 'phone sign-up without an approved request is refused');
 set local role service_role;
-select public.otp_record(g.request_id, 'approved', 'mobile') from public.otp_gate('+447700900403', 'ip-g') g;
+select public.otp_approve(g.request_id, 'mobile', encode(sha256(convert_to('acc-nonce-403', 'UTF8')), 'hex'))
+from public.otp_gate('+447700900403', 'ip-g') g;
 reset role;
-select lives_ok(
+select throws_ok(
   $$insert into auth.users (id, phone) values ('00000000-0000-0000-0000-0000000007a1', '447700900403')$$,
-  'phone sign-up after an approved request succeeds');
-select throws_ok(
-  $$insert into auth.users (id, phone) values ('00000000-0000-0000-0000-0000000007a2', '447700900403')$$,
-  null, 'phone already registered', 'a second account for the same number is refused');
-
-set local role service_role;
-select public.otp_record(g.request_id, 'approved', 'mobile') from public.otp_gate('+447700900404', 'ip-g') g;
-reset role;
-update public.otp_requests set created_at = now() - interval '16 minutes' where phone_e164 = '+447700900404';
-select throws_ok(
-  $$insert into auth.users (id, phone) values ('00000000-0000-0000-0000-0000000007a3', '447700900404')$$,
-  null, 'phone sign-up not approved', 'an approval 16 minutes old is too old');
+  null, 'phone sign-up not approved', 'an approved request alone (no nonce) is not enough');
+select lives_ok(
+  $$insert into auth.users (id, phone, raw_user_meta_data) values ('00000000-0000-0000-0000-0000000007a1', '447700900403', '{"bv_nonce":"acc-nonce-403"}')$$,
+  'phone sign-up carrying the approved request''s nonce succeeds');
 
 select throws_ok(
   $$insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000007a4', 'x@example.com')$$,
@@ -101,13 +95,6 @@ select lives_ok(
 select lives_ok(
   $$insert into auth.users (id) values ('00000000-0000-0000-0000-0000000007a5')$$,
   'a bare id (test fixtures) is accepted');
-
-select lives_ok(
-  $$update auth.users set phone = phone, updated_at = now() where id = '00000000-0000-0000-0000-0000000007a1'$$,
-  'an update that keeps the same phone is allowed');
-select throws_ok(
-  $$update auth.users set phone = '447700900408' where id = '00000000-0000-0000-0000-0000000007a1'$$,
-  null, 'phone sign-up not approved', 'changing to an unapproved number is refused');
 select lives_ok(
   $$update auth.users set deleted_at = now(), phone = 'deleted-0f3a' where id = '00000000-0000-0000-0000-0000000007a1'$$,
   'soft delete with an obfuscated phone is allowed');
@@ -118,10 +105,14 @@ insert into public.otp_requests (phone_e164, ip_hash, outcome, line_type) values
   ('+447700900405', 't', 'sent', 'mobile'),
   ('+447700900406', 't', 'sent', 'mobile'),
   ('+447700900301', 't', 'sent', 'mobile');
-insert into auth.users (id, phone) values
-  ('00000000-0000-0000-0000-0000000007b1', '447700900405'),  -- Sarah
-  ('00000000-0000-0000-0000-0000000007b2', '447700900406'),  -- admin with a phone
-  ('00000000-0000-0000-0000-0000000007b3', '447700900301');  -- Ace's listing number
+-- each account as the app's sign-up creates it: an approved request bound to a nonce, then the insert
+insert into public.otp_requests (phone_e164, ip_hash, outcome, nonce_hash)
+select p, 't', 'approved', encode(sha256(convert_to('n' || p, 'UTF8')), 'hex')
+from unnest(array['+447700900405', '+447700900406', '+447700900301']) p;
+insert into auth.users (id, phone, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-0000000007b1', '447700900405', '{"bv_nonce":"n+447700900405"}'),  -- Sarah
+  ('00000000-0000-0000-0000-0000000007b2', '447700900406', '{"bv_nonce":"n+447700900406"}'),  -- admin with a phone
+  ('00000000-0000-0000-0000-0000000007b3', '447700900301', '{"bv_nonce":"n+447700900301"}');  -- Ace's listing number
 insert into public.profiles (user_id, role) values ('00000000-0000-0000-0000-0000000007b2', 'admin');
 
 set local role authenticated;

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { requestSignInCode, SIGN_IN_ERRORS, type GateDeps } from "@/lib/otp-gate";
 import type { LineCheck } from "@/lib/line-type";
@@ -12,9 +13,12 @@ function deps(over: Partial<GateDeps> = {}) {
     record: vi.fn(async (id: number, outcome: string, lineType: string | null) => {
       calls.push(`record ${id} ${outcome} ${lineType}`);
     }),
+    approve: vi.fn(async (id: number, lineType: string, nonceHash: string) => {
+      calls.push(`approve ${id} ${lineType} ${nonceHash.length}`);
+    }),
     lookup: vi.fn(async (): Promise<LineCheck> => ({ kind: "mobile", lineType: "mobile" })),
-    send: vi.fn(async (phone: string) => {
-      calls.push(`send ${phone}`);
+    send: vi.fn(async (phone: string, nonce: string) => {
+      calls.push(`send ${phone} ${nonce.length > 0}`);
       return { error: null };
     }),
     ...over,
@@ -94,10 +98,32 @@ describe("requestSignInCode", () => {
     expect(await requestSignInCode("07700 900401", "1.2.3.4", d)).toEqual({ ok: true, phone: "+447700900401" });
     expect(calls).toEqual([
       "gate +447700900401 64",
-      "record 7 approved mobile",
-      "send +447700900401",
+      "approve 7 mobile 64",
+      "send +447700900401 true",
       "record 7 sent mobile",
     ]);
+  });
+
+  it("binds the approval to a fresh nonce: only its sha256 goes to the database, the nonce goes to the sign-up", async () => {
+    const { d } = deps();
+    await requestSignInCode("07700 900401", "1.2.3.4", d);
+    const nonce = vi.mocked(d.send).mock.calls[0][1];
+    expect(nonce).toMatch(/^[A-Za-z0-9_-]{43}$/); // 32 random bytes, base64url
+    expect(vi.mocked(d.approve).mock.calls[0][2]).toBe(createHash("sha256").update(nonce).digest("hex"));
+    expect(d.record).not.toHaveBeenCalledWith(7, "approved", expect.anything());
+
+    const second = deps();
+    await requestSignInCode("07700 900401", "1.2.3.4", second.d);
+    expect(vi.mocked(second.d.send).mock.calls[0][1]).not.toBe(nonce);
+  });
+
+  it("sends nothing when the approval can't be recorded", async () => {
+    const { d } = deps({ approve: vi.fn(async () => Promise.reject(new Error("db down"))) });
+    expect(await requestSignInCode("07700 900401", "1.2.3.4", d)).toEqual({
+      ok: false,
+      error: SIGN_IN_ERRORS.lookup_failed,
+    });
+    expect(d.send).not.toHaveBeenCalled();
   });
 
   it("hashes the IP rather than passing it raw", async () => {

@@ -343,8 +343,13 @@ In Supabase:
 1. **Authentication → Sign In / Providers → Phone**: on, SMS provider **Twilio
    Verify** (Account SID, Auth Token, Verify Service SID). No test numbers in
    production. **"Allow new users to sign up" → on** (phone sign-up needs it; the
-   database refuses email sign-ups). Leave the **Email** provider on, or the
-   admin can't sign in.
+   database refuses email sign-ups). **Phone confirmations ("Confirm phone") →
+   on, always**: the database refuses a phone account that arrives already
+   confirmed, so with it off nobody can sign up. Leave the **Email** provider on,
+   or the admin can't sign in. A new phone account is only accepted with the
+   single-use code the sign-in page hands to Supabase (`otp_approve` /
+   `bv_nonce`), and phone-only accounts can never use a password, so Supabase's
+   own `/signup` endpoint can't be used to create or pre-claim an account.
 2. **Authentication → Rate Limits**: SMS sent per hour 60; sign-ups and sign-ins,
    and token verifications, 150 per 5 minutes (every request comes from Railway).
 3. **Storage**: bucket `review-proofs` exists, is **private**, 10 MB, JPEG/PNG/WebP/PDF,
