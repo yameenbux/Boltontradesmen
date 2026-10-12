@@ -118,10 +118,10 @@ where key = 'email_limits';
 
 -- old rows go
 insert into public.email_requests (email_norm, ip_hash, outcome, created_at)
-values ('ancient@example.org', 'ip-old', 'sent', now() - interval '36 days');
+values ('ancient@example.org', 'ip-old', 'sent', now() - interval '31 days');
 select pg_temp.gate('fresh4@example.org', 'ip-7') is not null; -- (output 't', not a TAP 'ok')
 select is((select count(*)::int from public.email_requests where email_norm = 'ancient@example.org'), 0,
-  'rows older than 35 days are deleted');
+  'rows older than 30 days are deleted');
 
 select is((select value from public.settings where key = 'email_limits'),
   '{"address_15m":3,"address_24h":6,"ip_1h":10,"ip_24h":20,"daily_cap":90,"monthly_cap":2900}'::jsonb,

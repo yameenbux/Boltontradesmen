@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
+import { TidySignInRecordsForm } from "@/components/admin/ModerationForms";
 import { requireAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
@@ -73,6 +74,14 @@ export default async function AdminHome() {
           ))}
         </ul>
       )}
+      <section className="a-card" aria-labelledby="tidy-title">
+        <h2 id="tidy-title">Sign-in records</h2>
+        <p className="a-lede">
+          Sign-in records are deleted after 30 days, and accounts where a code was asked for but never used after 24
+          hours, as the privacy notice says. Email-code requests do this every hour; press this to do it now.
+        </p>
+        <TidySignInRecordsForm />
+      </section>
     </main>
   );
 }

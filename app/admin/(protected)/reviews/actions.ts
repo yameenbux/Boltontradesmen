@@ -154,6 +154,32 @@ export async function deleteDueProofFiles(_prev: FormState, _fd: FormData): Prom
   };
 }
 
+/**
+ * Deletes sign-in records over 30 days old and email accounts asked for but never used over 24 hours old (the
+ * privacy notice's promise). Every email-code request also does this, at most once an hour.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function tidySignInRecords(_prev: FormState, _fd: FormData): Promise<FormState> {
+  const { supabase } = await requireAdmin();
+  const { data, error } = await supabase.rpc("tidy_sign_in_records");
+  if (error) return refused("tidy_sign_in_records", error);
+  const n = (k: string) => {
+    const v = (data as Record<string, unknown> | null)?.[k];
+    return typeof v === "number" ? v : 0;
+  };
+  const records = n("email_requests") + n("phone_requests") + n("code_attempts");
+  const accounts = n("unused_accounts");
+  if (records === 0 && accounts === 0) {
+    return { ok: true, message: "Nothing to tidy: no sign-in records are due for deletion." };
+  }
+  return {
+    ok: true,
+    message:
+      `Deleted ${records} sign-in ${records === 1 ? "record" : "records"} over 30 days old and ` +
+      `${accounts} unused ${accounts === 1 ? "account" : "accounts"} over 24 hours old.`,
+  };
+}
+
 export async function removeReply(_prev: FormState, fd: FormData): Promise<FormState> {
   const { supabase } = await requireAdmin();
   const reply = id.safeParse(text(fd, "reply_id"));

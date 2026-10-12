@@ -74,6 +74,19 @@ test("the admin can delete proof files checked over 12 months ago (none are due 
   await expect(old.getByRole("status")).toHaveText("No proof files are due for deletion.");
 });
 
+test("the admin tidies sign-in records: rows over 30 days old go", async ({ page }, testInfo) => {
+  const old = `tidy-${testInfo.project.name}-${Date.now()}@example.org`;
+  sql(`insert into public.email_requests (email_norm, ip_hash, outcome, created_at)
+       values ('${old}', 'e2e-tidy', 'sent', now() - interval '31 days')`);
+  await adminSignIn(page);
+  const tidy = page.getByRole("region", { name: "Sign-in records" });
+  await expect(tidy).toContainText("Sign-in records are deleted after 30 days");
+  await tidy.getByRole("button", { name: "Tidy sign-in records" }).click();
+  // Another project's run may have tidied first; either way the old row is gone.
+  await expect(tidy.getByRole("status")).toHaveText(/^(Deleted \d+ sign-in records?|Nothing to tidy)/);
+  expect(sql(`select count(*) from public.email_requests where email_norm = '${old}'`)).toBe("0");
+});
+
 test("held reviews: the admin approves one (it appears on the profile) and removes another with a reason", async ({
   page,
   browser,

@@ -27,9 +27,9 @@ describe("docs/launch/plan-2b-production.sql", () => {
     .split("\n")
     .filter((l) => l.trim() && !l.trim().startsWith("--"));
 
-  it("covers 000018 to 000022 at least", () => {
-    expect(migrations.length).toBeGreaterThanOrEqual(5);
-    expect(TO >= "20261012000022").toBe(true);
+  it("covers 000018 to 000023 at least", () => {
+    expect(migrations.length).toBeGreaterThanOrEqual(6);
+    expect(TO >= "20261012000023").toBe(true);
   });
 
   it("is exactly what the generator writes from the migrations (regenerate it after changing one)", () => {
@@ -62,7 +62,7 @@ describe("docs/launch/plan-2b-production.sql", () => {
     const verify = sql.indexOf("do $verify$");
     expect(verify).toBeGreaterThan(sql.lastIndexOf("-- ==== "));
     expect(verify).toBeLessThan(sql.lastIndexOf("commit;"));
-    for (const name of ["email_gate", "email_verify_gate", "claim_trader_link", "admin_list_reviews_pending"]) {
+    for (const name of ["email_gate", "email_verify_gate", "claim_trader_link", "admin_list_reviews_pending", "tidy_sign_in_records"]) {
       expect(sql.slice(verify)).toContain(`'${name}'`);
     }
   });

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Builds the one-paste production script for a range of migrations (Plan 2b Task 12):
 //
-//   node scripts/build-production-sql.mjs --from 20261012000018 --to 20261012000022 --out docs/launch/plan-2b-production.sql
+//   node scripts/build-production-sql.mjs --from 20261012000018 --to <newest> --out docs/launch/plan-2b-production.sql
 //
 // The output is one transaction: begin; each migration under a "-- ==== <filename>" banner followed by its
 // supabase_migrations.schema_migrations row; a verification block that raises (rolling everything back) if a piece
@@ -47,7 +47,7 @@ declare
   f text;
   t text;
 begin
-  foreach f in array array['email_gate', 'email_verify_gate', 'claim_trader_link', 'admin_list_reviews_pending'] loop
+  foreach f in array array['email_gate', 'email_verify_gate', 'claim_trader_link', 'admin_list_reviews_pending', 'tidy_sign_in_records'] loop
     if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                    where n.nspname = 'public' and p.proname = f) then
       raise exception 'Plan 2b check failed: function public.% is missing', f;

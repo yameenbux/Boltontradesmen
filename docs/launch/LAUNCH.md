@@ -62,7 +62,7 @@ The reviews and phone sign-in release needs these database changes in production
 14. `20261012000015_otp_verify_limits.sql` — limits on wrong sign-in codes.
 15. `20261012000016_review2_minors.sql` — confirmed-mobile check, report limit, the admin can't delete itself.
 16. `20261012000017_owner_decisions.sql` — 5 wrong group codes per person a day; number Lookups count towards the £20 monthly cap (`lookup_cost_gbp`, £0.01); proof files can be deleted 12 months after they're checked.
-17. **Plan 2b (free sign-in):** paste the whole of `docs/launch/plan-2b-production.sql` **once** and **Run** (it's migrations 000018 to 000022 in one transaction, ending with a check that fails loudly if anything is missing). Do this before Plan 2b is merged to `main`, after Step 3b's settings.
+17. **Plan 2b (free sign-in):** paste the whole of `docs/launch/plan-2b-production.sql` **once** and **Run** (it's migrations 000018 onwards in one transaction, ending with a check that fails loudly if anything is missing; it should say `Plan 2b database changes applied` with the number of migrations in it). Do this before Plan 2b is merged to `main`, after Step 3b's settings.
 
 Check afterwards: `select proname from pg_proc where proname in ('otp_approve','sms_hook_gate','submit_review','delete_my_account','otp_verify_gate','proof_files_due');` returns six rows, and `select pg_get_function_identity_arguments('public.submit_review'::regproc);` shows `p_uid uuid, p jsonb, p_device_hash text`.
 
@@ -154,3 +154,7 @@ Send C only once at least a handful of traders are live, so the first visit does
 ## Every month — delete old proof files (until Plan 5)
 
 The privacy notice says proof files are deleted 12 months after they're checked. Until Plan 5 adds scheduled jobs, do it by hand once a month: **admin → Proofs → Old proof files → Delete proof files due now**. It deletes the files from Storage and keeps each review's Verified job label. (Plan 5: run this on a schedule, along with the other retention purges.)
+
+## Sign-in records (automatic, with a button)
+
+The privacy notice says sign-in records (which hold the email address or number that was entered) are kept for up to 30 days, and an account where a code was asked for but never used is deleted after 24 hours. Every "Email me a code" request does this tidy at most once an hour. If nobody has signed in for a while, press **admin → Sign-in records → Tidy sign-in records** (on the admin home page) now and then.

@@ -39,7 +39,9 @@ SQL
 echo "[check-prod] applying $SCRIPT"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT")"
 echo "$out" | tail -1
-echo "$out" | grep -q '^Plan 2b database changes applied|5$' || { echo "[check-prod] the closing check did not report 5 migrations"; exit 1; }
+# Every migration after $UNTIL is in the script (tests/unit/production-sql.test.ts checks the file matches them).
+expected="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^Plan 2b database changes applied|$expected\$" || { echo "[check-prod] the closing check did not report $expected migrations"; exit 1; }
 
 echo "[check-prod] applying it a second time (a re-run must not fail or change the pepper)"
 pepper_before="$("${PSQL[@]}" -A -t -c "select encode(value, 'hex') from private.secrets where key = 'identity_pepper'")"

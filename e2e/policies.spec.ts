@@ -134,3 +134,14 @@ test("the fake reviews policy says email-only reviews are checked first", async 
   await expect(page.getByRole("main")).toContainText("checked by us before they appear");
   await expect(page.getByRole("main")).toContainText("sign-in moved from mobile numbers to Google and email codes");
 });
+
+// Plan 2b final review I1: the notice says sign-in records hold the address or number as typed, and how long.
+test("the privacy notice is plain about sign-in records and unused accounts", async ({ page }) => {
+  await page.goto("/privacy");
+  const main = page.getByRole("main");
+  await expect(main).not.toContainText("a scrambled form of your email address");
+  await expect(main).toContainText("the email address or mobile number that was entered");
+  await expect(main).toContainText("kept for up to 30 days");
+  await expect(main).toContainText("deleted after 24 hours");
+  await expect(main).not.toContainText("35 days");
+});

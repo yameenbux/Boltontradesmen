@@ -9,6 +9,7 @@ import {
   removeReply,
   removeReview,
   resolveFlag,
+  tidySignInRecords,
 } from "@/app/admin/(protected)/reviews/actions";
 import type { FormState } from "@/lib/admin-shared";
 
@@ -135,6 +136,21 @@ export function DeleteDueProofFilesForm() {
       <div className="a-actions">
         <Button type="submit" variant="secondary" disabled={pending}>
           {pending ? "Deleting…" : "Delete proof files due now"}
+        </Button>
+      </div>
+      <Result state={state} />
+    </form>
+  );
+}
+
+/** Deletes old sign-in records and unused email accounts now (email-code requests also do it hourly). */
+export function TidySignInRecordsForm() {
+  const [state, action, pending] = useActionState(tidySignInRecords, {} as FormState);
+  return (
+    <form action={action} className="a-form">
+      <div className="a-actions">
+        <Button type="submit" variant="secondary" disabled={pending}>
+          {pending ? "Tidying…" : "Tidy sign-in records"}
         </Button>
       </div>
       <Result state={state} />

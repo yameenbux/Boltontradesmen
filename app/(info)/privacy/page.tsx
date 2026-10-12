@@ -52,7 +52,8 @@ export default function PrivacyPage() {
           "Whether you are in the Bolton Tradesmen WhatsApp group, if you add the group code.",
           "Your reviews and replies, which are published with your shown name.",
           "Proof files you choose to add to a review (a photo of an invoice or the finished work). They are kept private, we remove the photo's hidden details (such as location) before storing it, and only the admin sees them. Proof files are deleted 12 months after we check them; a review keeps its Verified job label.",
-          "Records of sign-in attempts: a scrambled form of your email address or number and of your connection, kept for 35 days to stop abuse.",
+          "Records of sign-in attempts: the email address or mobile number that was entered, and a scrambled signature of your connection, kept for up to 30 days to stop abuse.",
+          "If a sign-in code is asked for but never used, the unfinished account holding that email address is deleted after 24 hours.",
           "A hashed device signature saved with each review, so we can spot fake reviews posted from one device.",
           "Sign-in cookies, which keep you signed in. They are only set once you sign in.",
         ]}
@@ -79,7 +80,9 @@ export default function PrivacyPage() {
       <p>
         Retention policy (draft, subject to legal review): listing data is kept until the provider withdraws, after which the
         listing is hidden. Contact-event records (the hashed device signature and provider tapped) are kept for up to 12
-        months. Sign-in attempt records are kept for up to 35 days, and wrong group code tries for 2 days. Proof files are deleted 12 months after we check them.
+        months. Sign-in attempt records (with the email address or number entered) are kept for up to 30 days, an unfinished
+        account (a code asked for but never used) is deleted after 24 hours, and wrong group code tries are kept for 2
+        days. Proof files are deleted 12 months after we check them.
       </p>
 
       <H2>Deleting your account</H2>
