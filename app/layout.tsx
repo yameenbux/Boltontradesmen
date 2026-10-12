@@ -26,6 +26,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: "Bolton Vouched",
   description: "Local people, vouched for by Bolton.",
+  // Home-screen icon for iOS on every page (the showcase, the app, policies, the 404).
+  icons: { apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }] },
   ...(googleVerification ? { verification: { google: googleVerification } } : {}),
 };
 

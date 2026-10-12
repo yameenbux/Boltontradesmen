@@ -10,7 +10,11 @@ import { monthYear } from "@/lib/review-text";
 import { getPublicReview } from "@/lib/reviews";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Report a review | Bolton Vouched", robots: { index: false } };
+export const metadata: Metadata = {
+  title: "Report a review | Bolton Vouched",
+  description: "Tell us what's wrong with a review and we'll take a look.",
+  robots: { index: false },
+};
 
 const Chevron = () => (
   <svg

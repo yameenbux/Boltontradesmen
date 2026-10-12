@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { LoginForm } from "@/components/admin/LoginForm";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Admin sign in | Bolton Vouched", robots: { index: false } };
+export const metadata: Metadata = {
+  title: "Admin sign in | Bolton Vouched",
+  description: "Sign in to the Bolton Vouched admin area.",
+  robots: { index: false },
+};
 
 export default function LoginPage() {
   return (

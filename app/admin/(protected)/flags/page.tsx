@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { FlagActions, RemoveReplyForm, ReviewActions } from "@/components/admin/ModerationForms";
 import { ModerationReview, type AdminReview } from "@/components/admin/ModerationReview";
 import { Pill } from "@/components/ui/Pill";
@@ -6,6 +7,10 @@ import { dayMonthYear } from "@/lib/checks";
 import { ruleText } from "@/lib/moderation-text";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Flags | Admin | Bolton Vouched",
+  description: "Reports and automatic flags on reviews and replies waiting for a decision.",
+};
 
 type Row = {
   id: string;

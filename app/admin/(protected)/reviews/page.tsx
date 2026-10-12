@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { ReviewActions } from "@/components/admin/ModerationForms";
 import { ModerationReview, type AdminFlag, type AdminReview } from "@/components/admin/ModerationReview";
 import { requireAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Reviews under check | Admin | Bolton Vouched",
+  description: "Live reviews carrying an Under check label, to clear or remove.",
+};
 
 type Row = AdminReview & { flags: AdminFlag[] };
 

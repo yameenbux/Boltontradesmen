@@ -21,7 +21,11 @@ import {
 } from "@/lib/review-text";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Leave a review | Bolton Vouched", robots: { index: false } };
+export const metadata: Metadata = {
+  title: "Leave a review | Bolton Vouched",
+  description: "Tell Bolton how the job went: a few quick taps and a line or two.",
+  robots: { index: false },
+};
 
 type Existing = {
   id: string;

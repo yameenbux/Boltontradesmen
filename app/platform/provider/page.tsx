@@ -20,7 +20,11 @@ import {
 } from "@/lib/review-text";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Your listing | Bolton Vouched", robots: { index: false } };
+export const metadata: Metadata = {
+  title: "Your listing | Bolton Vouched",
+  description: "Your Bolton Vouched listing: see your reviews and reply to them.",
+  robots: { index: false },
+};
 
 type Reply = { id: string; body: string; status: "published" | "removed"; created_at: string; editable_until: string };
 type Review = {
