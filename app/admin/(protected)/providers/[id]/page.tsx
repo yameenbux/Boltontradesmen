@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Pill } from "@/components/ui/Pill";
 import { CheckForm, ConsentLinkButton, ProviderForm, StatusForm } from "@/components/admin/ProviderForms";
 import { requireAdmin } from "@/lib/admin";
+import { dayMonthYear } from "@/lib/checks";
 
 const STATUS_TONE = { invited: "gold", consented: "outline", live: "sage", paused: "muted", removed: "muted" } as const;
 
@@ -70,8 +71,8 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
             {p.checks.map((c) => (
               <li key={c.id}>
                 {c.kind}
-                {c.reference ? ` (${c.reference})` : ""} · checked {c.checked_at.slice(0, 10)}
-                {c.expires_on ? ` · expires ${c.expires_on}` : ""}
+                {c.reference ? ` (${c.reference})` : ""} · checked {dayMonthYear(c.checked_at)}
+                {c.expires_on ? ` · expires ${dayMonthYear(c.expires_on)}` : ""}
               </li>
             ))}
           </ul>
