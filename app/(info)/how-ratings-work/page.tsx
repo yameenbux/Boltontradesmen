@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { H2, List, PolicyPage } from "@/components/PolicyPage";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "How ratings work | Bolton Vouched" };
+export const metadata: Metadata = pageMetadata({
+  title: "How ratings work | Bolton Vouched",
+  description:
+    "How Bolton Vouched works out a local pro's figures from residents' reviews: would use again, on time, stuck to price, tidy and the overall quality score.",
+  path: "/how-ratings-work",
+});
 
 export default function HowRatingsWorkPage() {
   return (
