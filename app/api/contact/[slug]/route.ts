@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { clientIpFrom } from "@/lib/client-ip";
 import { deviceHash } from "@/lib/device-hash";
 import { isLinkPreviewBot } from "@/lib/bots";
 
@@ -19,7 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     return new NextResponse("Bad request", { status: 400, headers: { "Cache-Control": "no-store" } });
   }
 
-  const ip = (request.headers.get("x-forwarded-for") ?? "").split(",")[0].trim();
+  const ip = clientIpFrom(request.headers) ?? "";
   const ua = request.headers.get("user-agent") ?? "";
   const supabase = createServiceClient();
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { requireMember } from "@/lib/auth";
+import { clientIpFrom } from "@/lib/client-ip";
 import { deviceHash } from "@/lib/device-hash";
 import { platformPath } from "@/lib/paths";
 import {
@@ -36,7 +37,7 @@ function field(fd: FormData, name: string): string | undefined {
 
 async function device(): Promise<string> {
   const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip")?.trim() || "unknown";
+  const ip = clientIpFrom(h) ?? "unknown";
   return deviceHash(ip, h.get("user-agent") ?? "");
 }
 

@@ -22,6 +22,7 @@ vi.mock("@/lib/supabase/service", () => ({
 }));
 
 import { GET, HEAD } from "@/app/api/contact/[slug]/route";
+import { deviceHash } from "@/lib/device-hash";
 
 const call = (slug: string, via?: string, ua = "UA") =>
   GET(
@@ -49,6 +50,8 @@ describe("GET /api/contact/[slug]", () => {
     expect(name).toBe("log_contact");
     expect(args).toMatchObject({ p_slug: "acme", p_type: "call_tap", p_actor: null });
     expect(args.p_device_hash).toMatch(/^[0-9a-f]{64}$/);
+    // the rightmost X-Forwarded-For entry (appended by the trusted proxy), not the spoofable leftmost
+    expect(args.p_device_hash).toBe(deviceHash("10.0.0.1", "UA"));
   });
 
   it("via=whatsapp redirects to wa.me without plus", async () => {

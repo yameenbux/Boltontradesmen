@@ -20,6 +20,7 @@ vi.mock("next/navigation", () => ({
 import { requestCode, verifyCode } from "@/app/platform/sign-in/actions";
 import { completeOnboarding } from "@/app/platform/welcome/actions";
 import { SIGN_IN_ERRORS } from "@/lib/otp-gate";
+import { ipHash } from "@/lib/ip-hash";
 
 function form(entries: Record<string, string>) {
   const fd = new FormData();
@@ -107,7 +108,8 @@ describe("requestCode", () => {
     expect(auth.signInWithOtp).toHaveBeenCalledWith({ phone: "+447700900401", options: { shouldCreateUser: true } });
     expect(serviceRpc).toHaveBeenCalledWith("otp_gate", {
       p_phone: "+447700900401",
-      p_ip_hash: expect.stringMatching(/^[0-9a-f]{64}$/),
+      // the rightmost X-Forwarded-For entry (appended by the trusted proxy), not the spoofable leftmost
+      p_ip_hash: ipHash("10.0.0.1"),
     });
     expect(serviceRpc).toHaveBeenCalledWith("otp_record", {
       p_request_id: 5,

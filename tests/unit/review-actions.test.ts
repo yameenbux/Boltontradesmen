@@ -90,7 +90,7 @@ describe("submitReview", () => {
         use_again: "maybe",
         comment: "Good",
       },
-      p_device_hash: deviceHash("9.9.9.9", "Test/1"),
+      p_device_hash: deviceHash("10.0.0.1", "Test/1"),
     });
     expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
     expect(revalidatePath).toHaveBeenCalledWith("/platform/account");
@@ -140,7 +140,7 @@ describe("editReview", () => {
     expect(res).toMatchObject({ ok: true, status: "published" });
     expect(rpc).toHaveBeenCalledWith(
       "edit_review",
-      expect.objectContaining({ p_id: REVIEW, p_device_hash: deviceHash("9.9.9.9", "Test/1") }),
+      expect.objectContaining({ p_id: REVIEW, p_device_hash: deviceHash("10.0.0.1", "Test/1") }),
     );
     expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
   });

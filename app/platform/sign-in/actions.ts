@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { welcomePath } from "@/lib/auth";
+import { clientIpFrom } from "@/lib/client-ip";
 import { checkLineType } from "@/lib/line-type";
 import { requestSignInCode, SIGN_IN_ERRORS } from "@/lib/otp-gate";
 import { safeNext } from "@/lib/safe-next";
@@ -18,7 +19,7 @@ function field(fd: FormData, name: string): string {
 
 async function clientIp(): Promise<string> {
   const h = await headers();
-  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip")?.trim() || "unknown";
+  return clientIpFrom(h) ?? "unknown";
 }
 
 /** Step 1 (and "Send a new code"): checks the number, then texts a code. */

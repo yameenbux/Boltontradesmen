@@ -329,6 +329,7 @@ Railway service variables:
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only. Needed by Call/WhatsApp, the consent page, sign-in, proof uploads and account deletion. Never put it anywhere else |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | Server only. Twilio Lookup, which refuses internet and virtual numbers before a code is sent. `TWILIO_LOOKUP_STUB` must **not** be set in production |
 | `DEVICE_HASH_SECRET` | Server only. A long random secret (`openssl rand -hex 32`), never `change-me` |
+| `TRUSTED_PROXY_HOPS` | Optional, default `1`. How many trusted proxies append to `X-Forwarded-For` in front of the app. Railway's edge appends the real client IP as the last entry, so the app reads the entry this many places from the right and ignores anything a visitor puts on the left. Only change it if another proxy (a CDN) is put in front of Railway |
 | `OWNER_LEGAL_NAME` | `YSB Ventures Ltd`, matching Companies House character for character |
 | `CONTACT_EMAIL` | `support@ysbdesigns.uk` |
 
