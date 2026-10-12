@@ -156,3 +156,17 @@ test("the privacy notice is accurate about surnames, Google and the sign-in fing
   await expect(main).not.toContainText("can't be turned back into them");
   await expect(main).toContainText("made with a secret key, and used only to recognise the same sign-in");
 });
+
+// Launch checklist: the terms say who we are, when accounts can be suspended, our liability, changes and the law.
+test("the terms cover who we are, suspension, liability, changes and the courts", async ({ page }) => {
+  await page.goto("/terms");
+  const main = page.getByRole("main");
+  await expect(main).toContainText("Last updated: 12 October 2026.");
+  for (const heading of ["Who we are", "Accounts and suspension", "Our liability", "Changes to these terms", "Law and courts"]) {
+    await expect(main.getByRole("heading", { name: heading })).toBeVisible();
+  }
+  await expect(main).toContainText("company number 16022339");
+  await expect(main).toContainText("death or personal injury caused by our negligence, or for fraud");
+  await expect(main).toContainText("courts of England and Wales");
+  await expect(main).toContainText("Scotland or Northern Ireland");
+});
