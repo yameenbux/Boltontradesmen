@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { z } from "zod";
+import { clientIpFrom } from "@/lib/client-ip";
 import { CONSENT_TEXT_VERSION, consentStatement } from "@/lib/consent-text";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -15,7 +16,7 @@ export async function acceptConsent(token: string): Promise<ConsentResult> {
     return { status: "invalid" };
   }
   const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+  const ip = clientIpFrom(h);
   const { data, error } = await createServiceClient().rpc("accept_consent", {
     p_token: token,
     p_ip: ip,

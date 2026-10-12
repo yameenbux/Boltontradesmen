@@ -55,6 +55,8 @@ describe("buildSitemap", () => {
       `${BASE}/privacy`,
       `${BASE}/terms`,
       `${BASE}/how-ratings-work`,
+      `${BASE}/review-policy`,
+      `${BASE}/fake-reviews-policy`,
     ]);
   });
 
@@ -82,6 +84,8 @@ describe("buildSitemap", () => {
       `${BASE}/privacy`,
       `${BASE}/terms`,
       `${BASE}/how-ratings-work`,
+      `${BASE}/review-policy`,
+      `${BASE}/fake-reviews-policy`,
     ]);
   });
 });

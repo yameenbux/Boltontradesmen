@@ -40,7 +40,20 @@ export default function PrivacyPage() {
       <List
         items={[
           "When you tap Call or WhatsApp on a profile, we record which provider you tapped and a device signature. The signature is a one-way hash (HMAC) of your IP address and browser user agent, so we do not store your IP address or phone number for this. We use these records to count enquiries.",
-          "We do not set cookies for public visitors. Cookies are used only for the admin login.",
+          "If you only browse, we set no cookies and you need no account.",
+        ]}
+      />
+      <p>People who sign in (to leave a review, or to reply as a provider):</p>
+      <List
+        items={[
+          "Your mobile number. It is held by our sign-in provider. We use it to send your sign-in codes, to link you to your listing if you are a provider who signs in with your listing's number, and to limit sign-in attempts. Before we send a code we check the number with Twilio, to block internet and virtual numbers. It is never shown on the site. If you delete your account we keep it privately for 12 months (see below).",
+          "The name you show, like \"Sarah K.\" (your first name and the first letter of your surname; we do not keep your full surname), and your postcode district, which is never shown publicly.",
+          "Whether you are in the Bolton Tradesmen WhatsApp group, if you add the group code.",
+          "Your reviews and replies, which are published with your shown name.",
+          "Proof files you choose to add to a review (a photo of an invoice or the finished work). They are kept private, we remove the photo's hidden details (such as location) before storing it, and only the admin sees them. Proof files are deleted 12 months after we check them; a review keeps its Verified job label.",
+          "Records of sign-in attempts: the number and a scrambled signature of your connection, kept for 30 days to stop abuse.",
+          "A hashed device signature saved with each review, so we can spot fake reviews posted from one device.",
+          "Sign-in cookies, which keep you signed in. They are only set once you sign in.",
         ]}
       />
 
@@ -49,17 +62,30 @@ export default function PrivacyPage() {
         items={[
           "Publishing a provider's listing: consent. You can withdraw it at any time.",
           "Counting enquiries and keeping the site secure and free of abuse: legitimate interests. We keep this to what is needed and it does not identify visitors by name.",
+          "Your account, your reviews and your replies: contract (providing the service you signed up for).",
+          "Checking numbers, sign-in attempt records, device signatures and proof files: legitimate interests in preventing fraud and fake reviews.",
         ]}
       />
 
       <H2>Where it is stored</H2>
-      <p>Data is stored in the UK, in a Supabase database hosted in London.</p>
+      <p>
+        Data is stored in the UK, in a Supabase database hosted in London. Supabase also runs our sign-in. Twilio sends
+        sign-in codes and checks the type of a mobile number. Both act for us as processors.
+      </p>
 
       <H2>How long we keep it</H2>
       <p>
         Retention policy (draft, subject to legal review): listing data is kept until the provider withdraws, after which the
         listing is hidden. Contact-event records (the hashed device signature and provider tapped) are kept for up to 12
-        months.
+        months. Sign-in attempt records are kept for 30 days, and wrong group code tries for 2 days. Proof files are deleted 12 months after we check them.
+      </p>
+
+      <H2>Deleting your account</H2>
+      <p>
+        You can delete your account from your account page at any time. Your reviews and replies are taken down and your
+        shown name is removed. We keep your mobile number privately for 12 months in case of legal claims about your
+        reviews, and so that someone whose review was removed for breaking the rules can&apos;t sign up again with the
+        same number to review that provider again. Then we delete it.
       </p>
 
       <H2>Your rights</H2>

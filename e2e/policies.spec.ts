@@ -4,6 +4,8 @@ const policies = [
   { path: "/privacy", heading: /privacy/i },
   { path: "/terms", heading: /terms/i },
   { path: "/how-ratings-work", heading: /ratings work/i },
+  { path: "/review-policy", heading: /^Review policy$/ },
+  { path: "/fake-reviews-policy", heading: /^Fake reviews policy$/ },
 ];
 
 for (const { path, heading } of policies) {
@@ -15,7 +17,7 @@ for (const { path, heading } of policies) {
   });
 }
 
-for (const start of ["/platform", "/privacy", "/terms", "/how-ratings-work", "/admin/login"]) {
+for (const start of ["/", "/platform", "/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy", "/admin/login"]) {
   test(`footer on ${start} links to the policy pages`, async ({ page }) => {
     await page.goto(start);
     const footer = page.getByRole("contentinfo");
@@ -25,8 +27,41 @@ for (const start of ["/platform", "/privacy", "/terms", "/how-ratings-work", "/a
       "href",
       "/how-ratings-work",
     );
+    await expect(footer.getByRole("link", { name: "Review policy" })).toHaveAttribute("href", "/review-policy");
+    await expect(footer.getByRole("link", { name: "Fake reviews" })).toHaveAttribute("href", "/fake-reviews-policy");
   });
 }
+
+test("the fake reviews policy names the law and carries a dated risk assessment", async ({ page }) => {
+  await page.goto("/fake-reviews-policy");
+  const main = page.locator("main");
+  await expect(main).toContainText("Digital Markets, Competition and Consumers Act 2024");
+  await expect(main).toContainText("Risk assessment: 12 October 2026");
+});
+
+test("the review policy explains the quick check and Verified job", async ({ page }) => {
+  await page.goto("/review-policy");
+  const main = page.locator("main");
+  await expect(main).toContainText("Published, under a quick check");
+  await expect(main).toContainText("Verified job");
+});
+
+test("the privacy notice covers signed-in people: Twilio and the 12 months", async ({ page }) => {
+  await page.goto("/privacy");
+  const main = page.locator("main");
+  await expect(main).toContainText("Twilio");
+  await expect(main).toContainText("12 months");
+  await expect(main).toContainText("Proof files are deleted 12 months after we check them.");
+  await expect(main).not.toContainText("Cookies are used only for the admin login");
+});
+
+test("terms and how ratings work speak in the present tense", async ({ page }) => {
+  await page.goto("/terms");
+  await expect(page.locator("main")).toContainText("where residents leave reviews");
+  await page.goto("/how-ratings-work");
+  await expect(page.locator("main")).toContainText("Profiles show figures worked out from residents' reviews.");
+  await expect(page.locator("main")).not.toContainText(/once|will mean|will also/i);
+});
 
 test("privacy notice covers controller, rights and the ICO", async ({ page }) => {
   await page.goto("/privacy");
@@ -48,6 +83,9 @@ test("how ratings work states the minimum and that payment never affects ranking
   await page.goto("/how-ratings-work");
   await expect(page.getByText("Payment never affects ranking").first()).toBeVisible();
   await expect(page.getByText(/3 reviews/).first()).toBeVisible();
+  // The order is the quality score, then the number of reviews, then the most recent review (lib/directory.ts).
+  await expect(page.getByRole("heading", { name: "How lists are ordered" })).toBeVisible();
+  await expect(page.getByText(/highest quality score first\. If two have the same score/)).toBeVisible();
 });
 
 for (const { path } of policies) {
@@ -67,3 +105,16 @@ for (const path of ["/privacy", "/admin/login"]) {
     expect(overflow).toBeLessThanOrEqual(0);
   });
 }
+
+// Final review 2 minors: the policies say only what the site really does.
+test("policies are precise about same-trade reviews, the mobile number and reporting", async ({ page }) => {
+  await page.goto("/fake-reviews-policy");
+  await expect(page.getByRole("main")).toContainText(
+    "Providers can't review their own listing, or anyone who works in the same trade, when they sign in with the number on their listing.",
+  );
+  await page.goto("/privacy");
+  await expect(page.getByRole("main")).not.toContainText("used only to send your sign-in codes");
+  await expect(page.getByRole("main")).toContainText("to link you to your listing");
+  await page.goto("/terms");
+  await expect(page.getByRole("main")).toContainText("tap Report on that review (you need to be signed in), or email");
+});

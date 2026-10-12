@@ -86,6 +86,23 @@ describe("listProvidersInCategory", () => {
     expect(newcomers.map((p) => p.slug)).toEqual(["fresh", "old-new"]);
   });
 
+  it("needs a score and at least 3 reviews to be ranked (boundary)", async () => {
+    state.rows = [
+      row("two", { score: 4.9, review_count: 2, use_again_pct: 100 }),
+      row("three", { score: 4.1, review_count: 3, use_again_pct: 100 }),
+    ];
+    const { ranked, newcomers } = await listProvidersInCategory("plumber");
+    expect(ranked.map((p) => p.slug)).toEqual(["three"]);
+    expect(newcomers.map((p) => p.slug)).toEqual(["two"]);
+  });
+
+  it("maps verified_job_count", async () => {
+    state.rows = [row("v", { score: 4, review_count: 3, verified_job_count: 2 }), row("none", { review_count: 0 })];
+    const { ranked, newcomers } = await listProvidersInCategory("plumber");
+    expect(ranked[0].verifiedJobCount).toBe(2);
+    expect(newcomers[0].verifiedJobCount).toBe(0);
+  });
+
   it("maps columns to camelCase", async () => {
     state.rows = [row("a", { score: 4, review_count: 3, use_again_pct: 100, has_whatsapp: true, business_name: "A Ltd" })];
     const { ranked } = await listProvidersInCategory("plumber");

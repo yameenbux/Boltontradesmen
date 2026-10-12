@@ -64,3 +64,32 @@ values ('00000000-0000-0000-0000-0000000d0199', 'demo-invited-tiling', 'Deane Ti
   '00000000-0000-0000-0000-0000000dc0de');
 insert into public.provider_categories (provider_id, category_id)
 select '00000000-0000-0000-0000-0000000d0199', id from public.categories where slug = 'tiler';
+
+-- Reviewer names (only "First I." is ever stored), a few comments, a Group member or two, one accepted proof and one
+-- reply, so the profile screenshots show the reviews section as residents see it.
+insert into public.profiles (user_id, role, display_name, postcode_district, group_member_at)
+select ('00000000-0000-0000-0000-0000000d05' || lpad(n::text, 2, '0'))::uuid, 'resident', name, 'BL3',
+  case when n in (1, 3, 4, 7) then now() end
+from (values (1, 'Sarah K.'), (2, 'Mo A.'), (3, 'Claire W.'), (4, 'Dave H.'), (5, 'Priya S.'), (6, 'Gary T.'),
+             (7, 'Lou B.'), (8, 'Imran D.'), (9, 'Beth C.'), (10, 'Jas P.'), (11, 'Rob F.'), (12, 'Nina L.')) v(n, name)
+on conflict (user_id) do update set display_name = excluded.display_name, group_member_at = excluded.group_member_at;
+
+update public.reviews r set
+  tidy = true,
+  comment = case r.reviewer_id
+    when '00000000-0000-0000-0000-0000000d0501' then 'Boiler died on a Sunday. Danny came out the same afternoon, explained everything and charged what he said.'
+    when '00000000-0000-0000-0000-0000000d0502' then 'New radiator in the back bedroom. Tidy, polite and quick.'
+    when '00000000-0000-0000-0000-0000000d0503' then 'Full bathroom refit. Took a day longer than planned but he kept us posted. Lovely finish.'
+    when '00000000-0000-0000-0000-0000000d0505' then 'Fixed a leak under the sink in twenty minutes.'
+  end
+where r.provider_id = '00000000-0000-0000-0000-0000000d0101';
+
+insert into public.review_proofs (review_id, storage_path, mime_type, outcome, checked_at)
+select r.id, r.id::text || '/demo.jpg', 'image/jpeg', 'accepted', now()
+from public.reviews r
+where r.provider_id = '00000000-0000-0000-0000-0000000d0101' and r.reviewer_id = '00000000-0000-0000-0000-0000000d0501';
+
+insert into public.review_responses (review_id, provider_id, author_id, body)
+select r.id, r.provider_id, '00000000-0000-0000-0000-0000000d0512', 'Thanks Claire. Sorry about the extra day, the tiles came late. Enjoy the new bathroom!'
+from public.reviews r
+where r.provider_id = '00000000-0000-0000-0000-0000000d0101' and r.reviewer_id = '00000000-0000-0000-0000-0000000d0503';

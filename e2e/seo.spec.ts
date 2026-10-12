@@ -33,11 +33,13 @@ test("sitemap.xml lists public pages and live providers, nothing private, no pho
     "/privacy",
     "/terms",
     "/how-ratings-work",
+    "/review-policy",
+    "/fake-reviews-policy",
   ]) {
     expect(locs).toContain(`${ORIGIN}${path}`);
   }
   // Categories with nobody listed are left out.
-  expect(locs).not.toContain(`${ORIGIN}/platform/c/electrician`);
+  expect(locs).not.toContain(`${ORIGIN}/platform/c/bricklayer`);
   expect(locs.filter((l) => /\/admin|\/consent|\/api\//.test(l))).toEqual([]);
   expect(body).not.toMatch(PHONE_DIGITS);
 });

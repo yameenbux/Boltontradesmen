@@ -42,6 +42,7 @@ export type ShotName =
   | "category-area"
   | "profile"
   | "profile-checks"
+  | "profile-reviews"
   | "profile-contact"
   | "ratings"
   | "consent";
@@ -80,7 +81,7 @@ export const DECK: DeckCard[] = [
     crop: "top",
     tone: "sage",
     title: "Would they use them again?",
-    text: "Once reviews open, profiles lead with one honest number, with on time, on price and quality of work underneath.",
+    text: "Profiles lead with one honest number, with on time, on price and quality of work underneath.",
   },
   {
     shot: "profile-checks",
@@ -89,6 +90,14 @@ export const DECK: DeckCard[] = [
     tone: "ink",
     title: "What we've checked",
     text: "ID and insurance checks are shown with the month we checked them. Nothing is claimed that wasn't checked.",
+  },
+  {
+    shot: "profile-reviews",
+    alt: "Sample listing: a plumber's reviews, with Verified job and Group member badges and the plumber's reply",
+    crop: "top",
+    tone: "sage",
+    title: "Real reviews, with replies",
+    text: "Every reviewer signed in with a UK mobile. Traders can reply, and a checked invoice earns a Verified job badge.",
   },
   {
     shot: "profile-contact",
@@ -104,16 +113,15 @@ export const DECK: DeckCard[] = [
     crop: "top",
     tone: "gold",
     title: "Fair ranking",
-    text: "Nobody can pay to rank higher. Once reviews open, nobody gets a score until they have three, so a lucky one can't put anyone on top.",
+    text: "Nobody can pay to rank higher. Nobody gets a score until they have three, so a lucky one can't put anyone on top.",
   },
   {
     shot: "home-howto",
-    alt: "How it works, with step three: reviews are coming soon",
+    alt: "How it works, with step three: leave a review",
     crop: "top",
     tone: "sage",
-    soon: true,
-    title: "Reviews, coming soon",
-    text: "Soon you'll vouch for the people you've used, in a minute, so the next person in Bolton knows.",
+    title: "Vouch for them",
+    text: "Vouch for the people you've used in a minute, so the next person in Bolton knows.",
   },
 ];
 
@@ -122,8 +130,8 @@ export const DECK: DeckCard[] = [
 export type Segment = string | { href: string; label: string; external?: boolean };
 
 // "… by emailing support@… or on WhatsApp at 07466 487591", with both links going to the same kind of ticket.
-const ticketRoutes = (email: string, whatsapp: string): Segment[] => [
-  "Raise a support ticket by emailing ",
+const ticketRoutes = (email: string, whatsapp: string, lead = "Raise"): Segment[] => [
+  `${lead} a support ticket by emailing `,
   { href: email, label: CONTACT_EMAIL },
   " or on WhatsApp at ",
   { href: whatsapp, label: SUPPORT_WHATSAPP_DISPLAY, external: true },
@@ -134,7 +142,9 @@ export const FAQ: Faq[] = [
   {
     q: "Is it free?",
     a: [
-      ["Yes for residents: free to use, no sign-up, nothing to download."],
+      [
+        "Yes for residents: free to use, nothing to download, and no sign-up to look or call. You only sign in with your mobile to leave a review.",
+      ],
       [
         "For traders, a basic listing is free and stays free. Later we'll offer an optional paid upgrade for extra features; you'll never be removed for not taking it, and it never moves anyone up the list.",
       ],
@@ -144,7 +154,7 @@ export const FAQ: Faq[] = [
     q: "How are people ranked?",
     a: [
       [
-        "Reviews are coming soon, so for now everyone is listed as new. Once reviews open, people will be ranked by how many reviewers said they'd use them again. Nobody gets a score until they have three reviews, newer reviews will count for more, and a handful of reviews can't put anyone on top. Nobody can pay to move up.",
+        "People are ranked by what reviewers say about the quality of the work, with a fair adjustment so a couple of reviews can't put anyone on top. Nobody gets a score until they have three reviews, and newer reviews count for more. Nobody can pay to move up.",
       ],
       ["The full detail is on ", { href: "/how-ratings-work", label: "how ratings work" }, "."],
     ],
@@ -190,7 +200,8 @@ export const FAQ: Faq[] = [
     q: "How do I report a problem or a review?",
     a: [
       [
-        ...ticketRoutes(REPORT_TICKET, REPORT_WHATSAPP),
+        "On a review, tap Report. For anything else, ",
+        ...ticketRoutes(REPORT_TICKET, REPORT_WHATSAPP, "raise"),
         " and say which page it's on and what's wrong. Every ticket is looked at.",
       ],
     ],
@@ -200,6 +211,9 @@ export const FAQ: Faq[] = [
     a: [
       [
         "If you're just looking: no account, and no cookies. When you tap Call or WhatsApp we count the tap against that trader with a scrambled signature of your device (a one-way hash), not your IP address or phone number.",
+      ],
+      [
+        "If you sign in to leave a review, we keep your mobile number, the name you show (like Sarah K.) and your reviews. The privacy notice has the detail.",
       ],
       [
         "Traders' phone numbers are kept private, behind the buttons. Our database is hosted in London, UK. The ",

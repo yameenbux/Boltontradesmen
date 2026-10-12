@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { Button } from "@/components/ui/Button";
 import { requireAdmin } from "@/lib/admin";
 import { signOut } from "@/app/admin/login/actions";
@@ -6,10 +7,12 @@ import { signOut } from "@/app/admin/login/actions";
 export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
+  const { data: counts, error } = await supabase.rpc("admin_counts");
+  if (error) console.error("admin: admin_counts failed:", error.message);
   return (
     <div className="admin-wide flex w-full flex-col gap-5 py-2">
-      <nav className="admin-bar">
+      <div className="admin-bar">
         <Link href="/admin" className="a-link text-lg">
           Admin
         </Link>
@@ -19,7 +22,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             Sign out
           </Button>
         </form>
-      </nav>
+      </div>
+      <AdminNav counts={error ? null : counts} />
       {children}
     </div>
   );

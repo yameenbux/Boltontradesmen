@@ -32,7 +32,7 @@ const STEPS: { icon: IconName; title: string; text: string }[] = [
   {
     icon: "people",
     title: "See who Bolton recommends",
-    text: "Every listing shows what we've checked. Once reviews open, people are ranked by how many would use them again.",
+    text: "Every listing shows what we've checked. People are ranked by what reviewers say about the quality of their work.",
   },
   { icon: "phone", title: "Call or WhatsApp", text: "One tap from their page. No sign-up, no forms, no middleman." },
 ];
@@ -51,13 +51,12 @@ const TRADER_POINTS: { icon: IconName; title: string; soon?: boolean; text: stri
   {
     icon: "reply",
     title: "Reply to your reviews",
-    soon: true,
-    text: "When reviews arrive you'll be able to reply to every one, so customers hear your side.",
+    text: "Sign in with the number on your listing and reply to every review, so customers hear your side.",
   },
   {
     icon: "scales",
     title: "Nobody pays to rank",
-    text: "Not you, not the firm down the road. Once reviews open, your place will come from what your customers say.",
+    text: "Not you, not the firm down the road. Your place comes from what your customers say.",
   },
 ];
 
@@ -65,7 +64,7 @@ const FAIR: { icon: IconName; title: string; text: string }[] = [
   {
     icon: "star",
     title: "Ranked by people",
-    text: "Once reviews open, the order will come from how many would use someone again. Not adverts, and not who shouts loudest in the group.",
+    text: "The order comes from what reviewers say about the quality of the work. Not adverts, and not who shouts loudest in the group.",
   },
   {
     icon: "shield",
@@ -75,7 +74,7 @@ const FAIR: { icon: IconName; title: string; text: string }[] = [
   {
     icon: "lock",
     title: "Numbers stay private",
-    text: "Traders' phone numbers never appear on the page, and visitors get no cookies and no account to make.",
+    text: "Traders' phone numbers never appear on the page, and browsing sets no cookies and needs no account.",
   },
 ];
 
@@ -166,8 +165,8 @@ export default function ShowcasePage() {
           </h1>
           <p className="s-lede s-in s-in-3">
             Every week someone in the group asks for a plumber, a cleaner or a cake. Bolton Vouched keeps the answers in
-            one place. Once reviews open, people will be ranked by how many neighbours would use them again, and nobody
-            can pay to move up.
+            one place. People are ranked by what neighbours say about the quality of their work, and nobody can pay
+            to move up.
           </p>
           <div className="s-ctas s-in s-in-4">
             <Link href={PLATFORM} className="s-btn s-btn-primary">
@@ -177,7 +176,7 @@ export default function ShowcasePage() {
               Add it to your phone <Icon name="arrowDown" />
             </a>
           </div>
-          <p className="s-meta s-in s-in-5">Free · No sign-up · Made in Bolton</p>
+          <p className="s-meta s-in s-in-5">Free · No sign-up to look · Made in Bolton</p>
 
           <div className="s-fan phone-fan">
             <Phone
@@ -210,7 +209,7 @@ export default function ShowcasePage() {
             <li className="reveal" style={d(0.1)}>
               <h3>Would they use them again?</h3>
               <p>
-                Once reviews open: one honest number from people who&apos;ve had the work done, not a wall of stars.
+                One honest number from people who&apos;ve had the work done, not a wall of stars.
               </p>
             </li>
             <li className="reveal" style={d(0.2)}>
@@ -257,8 +256,7 @@ export default function ShowcasePage() {
             <CardDeck cards={DECK} label="Inside Bolton Vouched" />
           </div>
           <p className="s-caption">
-            Drag the top card away, or use the arrows. Cards marked “Coming soon” are being built next. The screens show
-            sample listings.
+            Drag the top card away, or use the arrows. The screens show sample listings.
           </p>
         </div>
       </section>

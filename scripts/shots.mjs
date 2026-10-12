@@ -30,6 +30,7 @@ const SHOTS = [
   }],
   ["profile", "/platform/p/demo-halliwell-plumbing", async () => {}],
   ["profile-checks", "/platform/p/demo-halliwell-plumbing", async (page) => scrollTo(page, "#checks-title, .checks", 220)],
+  ["profile-reviews", "/platform/p/demo-halliwell-plumbing", async (page) => scrollTo(page, "#reviews-title", 90)],
   ["profile-contact", "/platform/p/demo-spark-right", async () => {}],
   ["ratings", "/how-ratings-work", async () => {}],
   ["consent", `/platform/consent/${INVITED_TOKEN}`, async () => {}],
@@ -175,7 +176,7 @@ async function renderSocial(browser) {
     <div class="brand"><div class="mono">${brandMarkSvg("#FFF5E9", 36)}</div>Bolton Vouched</div>
     <h1>Anyone know a good…?<span>Bolton already does.</span></h1>
     <p>The local trades and services the group recommends, all in one place.</p>
-    <div class="meta">Free · No sign-up · Made in Bolton</div>
+    <div class="meta">Free · No sign-up to look · Made in Bolton</div>
   </div>
   ${phone("category.webp", "a")}${phone("profile.webp", "c")}${phone("home.webp", "b")}
   <div class="tag">Sample listings shown</div>

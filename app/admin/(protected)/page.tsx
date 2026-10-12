@@ -14,8 +14,36 @@ export default async function AdminHome() {
   const { data, error } = await supabase.rpc("admin_list_providers");
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as Row[];
+  const { data: c } = await supabase.rpc("admin_counts");
+  const counts = (c ?? { under_check: 0, open_flags: 0, pending_proofs: 0 }) as {
+    under_check: number;
+    open_flags: number;
+    pending_proofs: number;
+  };
+  const waiting = [
+    { href: "/admin/reviews", n: counts.under_check, text: `${counts.under_check} under check` },
+    {
+      href: "/admin/flags",
+      n: counts.open_flags,
+      text: `${counts.open_flags} open flag${counts.open_flags === 1 ? "" : "s"}`,
+    },
+    {
+      href: "/admin/proofs",
+      n: counts.pending_proofs,
+      text: `${counts.pending_proofs} proof${counts.pending_proofs === 1 ? "" : "s"} to check`,
+    },
+  ];
   return (
     <main className="flex flex-col gap-5">
+      <ul className="a-counts" aria-label="Waiting for you">
+        {waiting.map((w) => (
+          <li key={w.href}>
+            <Link href={w.href} className="press" data-some={w.n > 0 || undefined}>
+              {w.text}
+            </Link>
+          </li>
+        ))}
+      </ul>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="a-title">Providers</h1>
         <Button href="/admin/providers/new">Add provider</Button>

@@ -47,3 +47,9 @@ Deferred minor findings and parked items from Plan 1 reviews, triaged as safe to
 - Task 8: minor (deferred): hash excludes appended privacy link text; deploy-between-load-and-submit edge; staging stores placeholders
 - Task 9: minor (deferred): README explicit "never NEXT_PUBLIC_ prefix secrets"; layout formatting; PolicyPage key; privacy notice should list processors (Supabase, Vercel) — flag to user for legal review
 - Task 9: minor (deferred): how-ratings-work lines 14/25 still present tense; whitespace test; README should say set env for Preview builds too
+
+## From Plan 2 final review 2 (owner decisions)
+
+- M12 (feature for later, Plan 5): an admin view of the month's SMS and Lookup spend against the £20 cap, with an email alert at 80%. Not built now; the owner relies on Twilio's usage alerts at £10 and £20.
+- M5 (Plan 5): run the proof-file retention purge (`proof_files_due` / `mark_proof_files_deleted` via `lib/proof-retention.ts`) on a schedule instead of the admin's monthly button.
+

@@ -53,3 +53,27 @@ test("cannot go live without consent", async ({ page }) => {
   await expect(page.getByTestId("provider-status")).toHaveText("invited");
   await expect(page.getByRole("button", { name: "Set live" })).toBeDisabled();
 });
+
+test("a removed provider can only come back through Re-invite", async ({ page }) => {
+  await signIn(page);
+  await page.getByRole("link", { name: "Add provider" }).click();
+  await page.getByLabel("Business name").fill(`E2E Reinvite ${Date.now()}`);
+  await page.getByRole("textbox", { name: /^Phone/ }).fill("07700 900128");
+  await page.getByRole("button", { name: "Add provider" }).click();
+  await expect(page.getByTestId("provider-status")).toHaveText("invited");
+  await expect(page.getByRole("button", { name: "Re-invite" })).toHaveCount(0);
+
+  await page.getByLabel("Reason (required to remove)").fill("Asked to be taken off");
+  await page.getByRole("button", { name: "Remove" }).click();
+  await expect(page.getByTestId("provider-status")).toHaveText("removed");
+  await expect(page.getByRole("button", { name: "Pause" })).toBeDisabled();
+
+  await page.getByRole("button", { name: "Re-invite" }).click();
+  await expect(page.getByText("Enter a reason for re-inviting this provider")).toBeVisible();
+  await page.getByLabel(/^Reason for re-inviting/).fill("Wants to be listed again");
+  await page.getByRole("button", { name: "Re-invite" }).click();
+  await expect(page.getByTestId("provider-status")).toHaveText("invited");
+  await expect(page.getByRole("button", { name: "Copy consent link" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Consent link" })).toHaveValue(/\/platform\/consent\/[0-9a-f-]{36}$/);
+  await expect(page.getByText(/^Link expires on \d{1,2} [A-Z][a-z]+ \d{4}$/).first()).toBeVisible();
+});

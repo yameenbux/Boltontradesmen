@@ -36,7 +36,10 @@ select is((select score from public.provider_stats('00000000-0000-0000-0000-0000
 select is((select tidy_pct from public.provider_stats('00000000-0000-0000-0000-0000000000b5')), null, 'tidy_pct NULL when no tidy answers');
 
 -- Register: A 4x quality 5, B 4x quality 3, E 2x quality 5 would skew; remove E
+-- (fixture tidy-up only: reviews_never_deleted forbids deletes, so lift it for this one statement)
+alter table public.reviews disable trigger reviews_never_deleted;
 delete from public.reviews where provider_id = '00000000-0000-0000-0000-0000000000b5';
+alter table public.reviews enable trigger reviews_never_deleted;
 select pg_temp.add_review('b1', n, 5) from generate_series(1, 4) n;
 select pg_temp.add_review('b2', n, 3) from generate_series(1, 4) n;
 select is(public.register_mean_quality(), 4.0::numeric, 'register mean = 4.0');

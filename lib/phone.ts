@@ -19,3 +19,13 @@ export function toE164(input: string): string {
   if (!mobile && !landline) throw new InvalidPhoneError(input);
   return `+44${n}`;
 }
+
+// Sign-in numbers: UK mobiles only (+447[1-9]XXXXXXXX). Landlines, 070 personal numbers and
+// foreign numbers throw InvalidPhoneError before any Lookup or SMS happens.
+export function toUkMobileE164(input: string): string {
+  const parsed = parsePhoneNumberFromString(input.trim(), "GB");
+  if (!parsed || parsed.countryCallingCode !== "44") throw new InvalidPhoneError(input);
+  const n = parsed.nationalNumber;
+  if (!/^7[1-9]\d{8}$/.test(n)) throw new InvalidPhoneError(input);
+  return `+44${n}`;
+}

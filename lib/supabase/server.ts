@@ -14,8 +14,8 @@ export function createPublicClient() {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-// Cookie-based client carrying the signed-in user's session. Admin routes only: reading
-// cookies() makes a page dynamic, so public pages must keep using createPublicClient().
+// Cookie-based client carrying the signed-in user's session. Signed-in routes only (admin, and the resident/provider
+// routes listed in proxy.ts): reading cookies() makes a page dynamic, so public pages must keep using createPublicClient().
 export async function createServerAuthClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

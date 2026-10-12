@@ -82,6 +82,15 @@ start_postgres() {
   psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$HERE/shim.sql"
 }
 
+# Phone test numbers (GOTRUE_SMS_TEST_OTP below: code 123456, no SMS sent) must match [auth.sms.test_otp] in supabase/config.toml.
+# Dummy Twilio provider: Auth builds the SMS provider before it checks for a test OTP. Never a real secret.
+TWILIO_DUMMY_SID=AC00000000000000000000000000000000
+TWILIO_DUMMY_MESSAGE_SERVICE_SID=MG00000000000000000000000000000000
+TWILIO_DUMMY_TOKEN=local-dummy-not-a-secret
+# Send SMS hook (final review I1, GOTRUE_HOOK_SEND_SMS_* below): Auth hands every non-test text to the app,
+# which sends it only for a request its sign-in gate approved. Test OTP numbers skip the hook. The signing
+# secret is a dummy, identical to SUPABASE_SMS_HOOK_SECRET in .env.example (tests/unit/test-otp-config.test.ts).
+
 # ---------------------------------------------------------------- services
 is_running() {
   local pidfile="$RUN/$1.pid"
@@ -128,7 +137,7 @@ start_auth() {
     GOTRUE_DB_MIGRATIONS_PATH="$BIN/auth-migrations" \
     GOTRUE_SITE_URL=http://localhost:3000 \
     GOTRUE_URI_ALLOW_LIST="http://localhost:3000/**,http://127.0.0.1:3000/**" \
-    GOTRUE_DISABLE_SIGNUP=true \
+    GOTRUE_DISABLE_SIGNUP=false \
     GOTRUE_JWT_SECRET="$JWT_SECRET" \
     GOTRUE_JWT_EXP=3600 \
     GOTRUE_JWT_AUD=authenticated \
@@ -137,8 +146,18 @@ start_auth() {
     GOTRUE_JWT_ISSUER="$API_URL/auth/v1" \
     GOTRUE_EXTERNAL_EMAIL_ENABLED=true \
     GOTRUE_MAILER_AUTOCONFIRM=true \
-    GOTRUE_EXTERNAL_PHONE_ENABLED=false \
+    GOTRUE_EXTERNAL_PHONE_ENABLED=true \
     GOTRUE_SMS_AUTOCONFIRM=false \
+    GOTRUE_SMS_PROVIDER=twilio \
+    GOTRUE_SMS_TWILIO_ACCOUNT_SID="$TWILIO_DUMMY_SID" \
+    GOTRUE_SMS_TWILIO_AUTH_TOKEN="$TWILIO_DUMMY_TOKEN" \
+    GOTRUE_SMS_TWILIO_MESSAGE_SERVICE_SID="$TWILIO_DUMMY_MESSAGE_SERVICE_SID" \
+    GOTRUE_SMS_TEST_OTP="447700900301:123456,447700900401:123456,447700900402:123456,447700900403:123456,447700900404:123456,447700900405:123456,447700900406:123456,447700900407:123456,447700900408:123456,447700900409:123456,447700900411:123456" \
+    GOTRUE_SMS_MAX_FREQUENCY=5s \
+    GOTRUE_HOOK_SEND_SMS_ENABLED=true \
+    GOTRUE_HOOK_SEND_SMS_URI=http://localhost:3000/api/auth/sms-hook \
+    GOTRUE_HOOK_SEND_SMS_SECRETS="v1,whsec_bG9jYWwtZHVtbXktc21zLWhvb2stbm90LXNlY3JldCE=" \
+    GOTRUE_RATE_LIMIT_SMS_SENT=1000 \
     GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED=false \
     GOTRUE_RATE_LIMIT_EMAIL_SENT=1000 \
     GOTRUE_LOG_LEVEL=info \

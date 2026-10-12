@@ -25,7 +25,7 @@ export function absoluteUrl(path: string, base: string = siteUrl()): string {
 /** Paths crawlers must not visit. The consent links are private tokens; admin and the API are not content. */
 export const DISALLOWED_PATHS = ["/admin", "/api/", "/platform/consent/"] as const;
 
-export const POLICY_PATHS = ["/privacy", "/terms", "/how-ratings-work"] as const;
+export const POLICY_PATHS = ["/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy"] as const;
 
 export function buildRobots(base: string = siteUrl()): MetadataRoute.Robots {
   return {
@@ -159,8 +159,8 @@ export function categoryMetadata(c: { slug: string; name: string; liveCount: num
   const title = `${c.name} in Bolton | ${SITE_NAME}`;
   const description =
     c.liveCount > 0
-      ? `${plural(c.liveCount, "local pro", "local pros")} for ${c.name.toLowerCase()} in Bolton, recommended by local people. Covering BL1 to BL7 and nearby, with the checks we've made on each. Free, no sign-up.`
-      : `${c.name} in Bolton, recommended by local people. Covering BL1 to BL7 and nearby. Free, no sign-up.`;
+      ? `${plural(c.liveCount, "local pro", "local pros")} for ${c.name.toLowerCase()} in Bolton, recommended by local people. Covering BL1 to BL7 and nearby, with the checks we've made on each. Free, no sign-up to look.`
+      : `${c.name} in Bolton, recommended by local people. Covering BL1 to BL7 and nearby. Free, no sign-up to look.`;
   // Empty categories are thin pages: keep them out of the index (and the sitemap) until someone is listed.
   return pageMetadata({ title, description, path: platformPath("c", c.slug), noindex: c.liveCount === 0 });
 }
@@ -213,7 +213,10 @@ export function homeJsonLd(base: string = siteUrl()) {
   };
 }
 
-/** LocalBusiness for a profile. Deliberately no telephone, address or rating: reviews are not live yet. */
+/**
+ * LocalBusiness for a profile. Deliberately no telephone, address, reviews or aggregateRating: phone numbers never
+ * leave the server, and Google treats review markup a site publishes about the businesses it lists as self-serving.
+ */
 export function providerJsonLd(
   p: { slug: string; businessName: string; areas: string[]; trade: string | null },
   base: string = siteUrl(),

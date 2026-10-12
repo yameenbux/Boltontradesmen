@@ -1,7 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Refreshes the admin's Supabase session cookies. Scoped to /admin so public pages stay cookie-free.
+// Refreshes Supabase session cookies on the signed-in routes only (admin, sign-in, welcome, account, review form,
+// report, provider area), so public pages stay cookie-free and cacheable. This is not authorisation: every page and
+// server action checks the user itself (lib/admin.ts, lib/auth.ts).
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
@@ -23,4 +25,14 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/admin/:path*"] };
+export const config = {
+  matcher: [
+    "/admin/:path*",
+    "/platform/sign-in",
+    "/platform/welcome",
+    "/platform/account/:path*",
+    "/platform/p/:slug/review",
+    "/platform/report/:path*",
+    "/platform/provider/:path*",
+  ],
+};

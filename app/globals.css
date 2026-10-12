@@ -56,11 +56,13 @@
 /* ---------- base ---------- */
 html{-webkit-text-size-adjust:100%}
 body{background:var(--bg); color:var(--ink); font-family:var(--body); font-size:17px; line-height:1.5; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale}
-:focus-visible{outline:3px solid var(--brick); outline-offset:3px; border-radius:8px}
+:focus-visible:where(:not(.input)){outline:3px solid var(--brick); outline-offset:3px; border-radius:8px}
 h1,h2,h3{text-wrap:balance}
 /* The hero search shows focus on the whole form (.search:focus-within ring), so the input itself has no outline.
    Unlayered so it beats the global :focus-visible rule above. */
 .search input:focus-visible{outline:none}
+/* Signed-in forms: a soft brick ring on the field itself instead of the global outline (excluded above). */
+.input:focus-visible{outline:none; border-color:var(--brick); box-shadow:0 0 0 4px color-mix(in srgb,var(--brick) 22%,transparent)}
 
 @layer components {
   /* One phone-width column, centred (prototype .app). */
@@ -77,6 +79,7 @@ h1,h2,h3{text-wrap:balance}
   .mono svg{position:relative; z-index:1; width:26px; height:26px}
   .word{font-family:var(--display); font-size:21px; line-height:1}
   .word small{display:block; font-family:var(--body); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin-top:3px}
+  .bar-actions{display:flex; gap:8px; flex:none}
   .icon-btn{flex:none; width:48px; height:48px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:grid; place-items:center; cursor:pointer}
   .icon-btn svg{width:20px; height:20px}
 
@@ -138,6 +141,48 @@ h1,h2,h3{text-wrap:balance}
   .a-row small{display:block; margin-top:3px; font-size:14px; color:var(--ink-2); overflow-wrap:anywhere}
   .a-link{display:inline-flex; align-items:center; min-height:48px; font-weight:700; color:var(--brick); text-underline-offset:3px}
   .a-consent .btn{width:100%; min-height:64px; font-size:19px}
+
+  /* ---------- admin moderation: queues of reviews, flags and proofs ---------- */
+  .admin-nav{display:flex; flex-wrap:wrap; gap:8px}
+  .admin-nav .chip{text-decoration:none; font-weight:700}
+  .admin-nav .chip em{display:inline-grid; place-items:center; min-width:24px; height:24px; padding:0 7px; border-radius:999px; background:var(--brick); color:var(--on-brick); font-size:13px; font-weight:700}
+  .admin-nav .chip[aria-current="page"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+  .a-lede{margin:6px 0 0; color:var(--ink-2); font-size:16px; max-width:60ch}
+  .a-counts{display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0; list-style:none}
+  .a-counts a{display:inline-flex; align-items:center; min-height:44px; padding:0 14px; border-radius:12px; background:var(--surface-2); color:var(--ink-2); font-size:15px; font-weight:700; text-decoration:none}
+  .a-counts a[data-some]{background:var(--brick-tint); color:color-mix(in srgb,var(--brick) 72%,var(--ink))}
+  .mod-list{display:grid; gap:16px}
+  .mod-card{gap:16px}
+  .mod-review{display:grid; gap:8px}
+  .mod-head{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px}
+  .mod-head .a-link{font-size:19px; min-height:40px}
+  .mod-who,.mod-meta{margin:0; font-size:15px; color:var(--ink-2)}
+  .mod-who b{color:var(--ink); font-size:16.5px}
+  .mod-comment{margin:0; padding:10px 14px; border-left:3px solid var(--line); font-size:16px; white-space:pre-line; overflow-wrap:anywhere}
+  .mod-flags{display:grid; gap:6px; margin:0; padding:0; list-style:none}
+  .mod-flags li{padding:10px 12px; border-radius:12px; background:color-mix(in srgb,var(--gold) 14%,var(--surface)); font-size:15px; font-weight:600; color:var(--ink)}
+  .mod-card code{font-size:12.5px; font-weight:600; padding:1px 6px; border-radius:6px; background:var(--surface-2); color:var(--ink-2); overflow-wrap:anywhere}
+  .mod-flags q,.mod-report q{display:block; margin-top:4px; font-weight:500; font-style:italic; color:var(--ink-2)}
+  .mod-flag-list{list-style:none; margin:0; padding:0; display:grid; gap:10px}
+  .mod-flag-list li{display:grid; gap:8px}
+  .mod-flag-list li + li{padding-top:10px; border-top:1px dashed var(--line)}
+  .mod-flag-head{display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; font-size:16px}
+  .mod-flag-head small{margin-left:auto; color:var(--ink-3); font-size:14px}
+  .mod-report{margin:0; padding:12px 14px; border-radius:12px; background:var(--surface-2); font-size:15px; color:var(--ink-2)}
+  .mod-report q{font-size:16px; color:var(--ink)}
+  .mod-reply{padding:4px 0 4px 12px; border-left:3px solid var(--brick-tint); font-size:15px}
+  .mod-reply p{margin:2px 0 0; overflow-wrap:anywhere}
+  .mod-actions{display:grid; gap:14px; padding-top:14px; border-top:1px solid var(--line)}
+  .mod-actions .a-form{gap:10px}
+  .mod-actions .btn,.mod-card > .a-form .btn{width:100%}
+  .mod-card .a-actions .btn{width:auto}
+  .mod-more{border-top:1px solid var(--line); padding-top:10px}
+  .mod-more summary{display:flex; align-items:center; min-height:44px; font-weight:700; color:var(--brick); cursor:pointer}
+  .mod-more .mod-actions{border-top:0; padding-top:6px}
+  .mod-proof{display:grid; gap:6px; justify-items:start}
+  .mod-proof img{display:block; max-width:100%; max-height:420px; border-radius:var(--r-md); border:1px solid var(--line); background:var(--surface-2)}
+  .mod-proof small{color:var(--ink-3); font-size:14px}
+  .mod-proof-missing{margin:0; padding:14px; border:1.5px dashed var(--line); border-radius:var(--r-md); color:var(--ink-2)}
 
   /* ---------- motion primitives ---------- */
   /* "backwards", not "both": a held end state would pin transform:none and cancel .press/.lift on the children. */
@@ -238,7 +283,9 @@ h1,h2,h3{text-wrap:balance}
   .score{text-align:right; display:grid; justify-items:end}
   .score .pct{font-family:var(--display); font-size:34px; line-height:1; color:var(--brick); font-variant-numeric:tabular-nums}
   .score .lab{font-size:12px; font-weight:600; color:var(--ink-2); line-height:1.2; margin-top:4px}
-  .score .rev{font-size:12px; color:var(--ink-3)}
+  .score .rev{font-size:12px; color:var(--ink-3); display:grid; justify-items:end}
+  .score .vj{color:var(--sage); font-weight:600}
+  .score .vj .sep{display:none}
   .score .pending{font-size:13px; font-weight:600; color:var(--ink-2); max-width:11ch; line-height:1.3}
   .subhead{display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:28px 0 4px}
   .subhead h2{font-family:var(--display); font-weight:400; font-size:22px}
@@ -284,6 +331,30 @@ h1,h2,h3{text-wrap:balance}
   .checks b{display:block; font-size:16px}
   .checks li span span{font-size:14px; color:var(--ink-2)}
 
+  /* ---------- profile reviews (prototype .review / .reply) ---------- */
+  .reviews h2 em{font-style:normal; font-family:var(--body); font-size:16px; font-weight:600; color:var(--ink-3); margin-left:4px; vertical-align:2px}
+  .reviews .leave{width:100%}
+  .reviews-empty{margin:0 0 14px; color:var(--ink-2)}
+  .review-filters{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 6px}
+  .review-list{display:grid}
+  .review{display:grid; gap:8px; padding:16px 0; border-top:1px solid var(--line); animation:rise .5s var(--ease) backwards}
+  .review:first-child{border-top:0}
+  .review .rh{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:14px; color:var(--ink-2)}
+  .review .rh b{color:var(--ink); font-size:16.5px; overflow-wrap:anywhere}
+  .review .rh span{flex:none}
+  .review .badges{display:flex; flex-wrap:wrap; gap:6px}
+  .review .rq{display:flex; align-items:center; gap:10px; font-size:14px; color:var(--ink-2)}
+  .review .rq .stars svg{width:16px; height:16px}
+  .review .tags{display:flex; flex-wrap:wrap; gap:6px; margin:0; padding:0; list-style:none}
+  .review .tags li{font-size:13px; font-weight:600; background:var(--surface-2); border-radius:8px; padding:3px 8px; color:var(--ink-2)}
+  .review .comment{margin:0; font-size:16px; overflow-wrap:anywhere; white-space:pre-line}
+  .review .under-check{display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; margin:0; font-size:14px; color:var(--ink-2)}
+  .review .reply{margin-top:2px; border-left:3px solid var(--brick-tint); padding:4px 0 4px 12px; font-size:15px; color:var(--ink-2)}
+  .review .reply b{display:block; color:var(--ink); font-size:14px; margin-bottom:2px}
+  .review .reply p{margin:0; overflow-wrap:anywhere; white-space:pre-line}
+  .review .rf{display:flex; justify-content:flex-end; margin:-8px 0 -12px}
+  .review .report{display:inline-flex; align-items:center; min-height:44px; padding:0 4px; font-size:14px; color:var(--ink-3); text-decoration:underline; text-underline-offset:3px}
+
   /* ---------- sticky action bar (profile) ---------- */
   /* Rendered into <body> after hydration (components/profile/ActionBar.tsx), outside the animated route wrapper.
      Slides up on mount with a transform-only animation. */
@@ -322,6 +393,159 @@ h1,h2,h3{text-wrap:balance}
   h1[tabindex="-1"]:focus{outline:none}
   .done p{color:var(--ink-2); margin:0; max-width:32ch}
   .actionbar .bar-error{max-width:428px; margin:0 auto 10px; font-weight:600; color:var(--brick); text-align:center}
+
+  /* ---------- signed-in pages: sign-in, welcome, account (residents and providers) ---------- */
+  /* Same card language as the consent page; inputs are bigger than the admin's (56px, 18-20px text) for thumbs. */
+  .auth{display:grid; gap:16px; margin-top:8px}
+  .auth-card{background:var(--surface); border:1px solid var(--line); border-radius:26px; padding:22px; box-shadow:var(--shadow); display:grid; gap:18px}
+  .auth-card .eyebrow{margin:0; font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--brick)}
+  .auth-card h1{font-family:var(--display); font-weight:400; font-size:clamp(30px,8.4vw,34px); line-height:1.08; margin:6px 0 0; overflow-wrap:anywhere}
+  .auth-card h2{font-family:var(--display); font-weight:400; font-size:23px; line-height:1.15; margin:0}
+  .auth-card .lede{margin:8px 0 0; color:var(--ink-2); font-size:16.5px}
+  .auth-card .lede b{color:var(--ink); white-space:nowrap}
+  .auth-form{display:grid; gap:18px}
+  .field{display:grid; gap:7px; font-size:17px; font-weight:700; color:var(--ink)}
+  .field .hint{font-size:14.5px; font-weight:500; color:var(--ink-2)}
+  .field .opt{font-weight:500; color:var(--ink-3)}
+  .input{width:100%; min-height:56px; border:1.5px solid var(--ink-3); border-radius:14px; background:var(--bg); color:var(--ink); padding:0 16px; font:inherit; font-weight:500; font-size:19px; transition:border-color .2s, box-shadow .2s var(--ease)}
+  .input::placeholder{color:var(--ink-3); font-weight:400}
+  .input[aria-invalid="true"]{border-color:var(--brick)}
+  .input-code{font-size:28px; font-weight:700; letter-spacing:.32em; text-align:center; font-variant-numeric:tabular-nums; padding-left:calc(16px + .32em)}
+  .input-code::placeholder{letter-spacing:.32em}
+  .select{position:relative}
+  .select select{appearance:none; -webkit-appearance:none; padding-right:48px; cursor:pointer}
+  .select svg{position:absolute; right:16px; top:50%; width:20px; height:20px; margin-top:-10px; color:var(--ink-2); pointer-events:none}
+  .field-err{font-size:15px; font-weight:700; color:var(--brick)}
+  .form-alert{display:flex; gap:10px; align-items:flex-start; margin:0; padding:12px 14px; border-radius:14px; font-size:16px; font-weight:600; line-height:1.4;
+    background:var(--brick-tint); color:color-mix(in srgb,var(--brick) 70%,var(--ink)); border:1px solid color-mix(in srgb,var(--brick) 30%,var(--line))}
+  .form-alert svg{flex:none; width:20px; height:20px; margin-top:1px}
+  .form-note{display:flex; gap:10px; align-items:flex-start; margin:0; padding:12px 14px; border-radius:14px; font-size:16px; font-weight:600; line-height:1.4; background:var(--surface-2); color:var(--ink); border:1px solid var(--line)}
+  .form-note svg{flex:none; width:20px; height:20px; margin-top:1px; color:var(--ink-2)}
+  .form-ok{display:flex; gap:10px; align-items:flex-start; margin:0; padding:12px 14px; border-radius:14px; font-size:16px; font-weight:600; background:var(--sage-tint); color:var(--sage)}
+  .form-ok svg{flex:none; width:20px; height:20px; margin-top:1px}
+  .auth-form .btn, .auth-card > .btn{width:100%}
+  .text-btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 6px; border:0; background:none; font:inherit; font-size:16px; font-weight:700; color:var(--brick); text-decoration:underline; text-underline-offset:3px; cursor:pointer}
+  .text-btn:disabled{opacity:.55; cursor:not-allowed}
+  .text-row{display:flex; flex-direction:column; align-items:center; margin-top:-8px}
+  .preview-name{display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; background:var(--surface-2); font-size:15px; color:var(--ink-2)}
+  .preview-name .avatar{width:44px; height:44px; font-size:18px; flex:none}
+  .preview-name b{display:block; font-size:18px; color:var(--ink)}
+  .reassure{list-style:none; margin:0; padding:0; display:grid; gap:10px}
+  .reassure li{display:grid; grid-template-columns:34px minmax(0,1fr); gap:12px; align-items:center; font-size:15px; color:var(--ink-2)}
+  .reassure .ri{width:34px; height:34px; border-radius:10px; background:var(--sage-tint); color:var(--sage); display:grid; place-items:center}
+  .reassure .ri svg{width:18px; height:18px}
+  .who-card{display:flex; align-items:center; gap:16px}
+  .who-card .avatar{flex:none; width:64px; height:64px; font-size:26px}
+  .who-card .name{margin:0; font-size:30px; line-height:1.1}
+  .who-card .signed{display:block; margin-bottom:4px; font-family:var(--body); font-size:15px; color:var(--ink-2)}
+  .who-card .pill{margin-top:8px}
+  .account-link{display:grid; grid-template-columns:44px minmax(0,1fr) 20px; gap:14px; align-items:center; min-height:72px; padding:14px 16px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow); color:inherit; text-decoration:none}
+  .account-link .ai{width:44px; height:44px; border-radius:13px; background:var(--brick-tint); color:var(--brick); display:grid; place-items:center}
+  .account-link .ai svg{width:22px; height:22px}
+  .account-link b{display:block; font-size:18px; line-height:1.2}
+  .account-link small{display:block; margin-top:2px; font-size:14px; color:var(--ink-2); overflow-wrap:anywhere}
+  .account-link > svg{width:20px; height:20px; color:var(--ink-3)}
+
+  .who-card .area{margin:6px 0 0; font-size:15px; color:var(--ink-2)}
+  .auth-card h2 .count{font-style:normal; font-family:var(--body); font-size:15px; font-weight:700; color:var(--ink-3); margin-left:4px; vertical-align:middle}
+  .my-reviews{list-style:none; margin:0; padding:0; display:grid}
+  .my-reviews li{display:grid; gap:8px; padding:14px 0; border-top:1px solid var(--line)}
+  .my-reviews li:first-child{border-top:0; padding-top:0}
+  .my-reviews li:last-child{padding-bottom:0}
+  .mr-head{display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:2px 12px}
+  .mr-head a{color:inherit; text-decoration:none}
+  .mr-head a b{text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px}
+  .mr-head b{font-size:18px; overflow-wrap:anywhere}
+  .mr-head small{font-size:14px; color:var(--ink-3)}
+  .mr-status{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0; font-size:15px; color:var(--ink-2)}
+  .is-removed .mr-head b{color:var(--ink-2)}
+  .mr-edit{display:inline-flex; align-items:baseline; gap:8px; justify-self:start; min-height:44px; align-items:center; font-size:16px; font-weight:700; color:var(--brick); text-underline-offset:3px}
+  .mr-edit small{font-weight:500; font-size:14px; color:var(--ink-3); text-decoration:none}
+  .danger-zone summary{display:flex; align-items:center; min-height:48px; font-size:16px; font-weight:700; color:var(--brick); cursor:pointer; text-decoration:underline; text-underline-offset:3px}
+  .danger-zone[open] summary{margin-bottom:12px}
+  .confirm-box{display:grid; grid-template-columns:28px minmax(0,1fr); gap:12px; align-items:center; min-height:56px; padding:12px 14px; border:1.5px solid var(--line); border-radius:14px; background:var(--bg); font-size:16.5px; font-weight:600; cursor:pointer}
+  .confirm-box.has-err{border-color:var(--brick)}
+  .confirm-box input{width:24px; height:24px; margin:0; accent-color:var(--brick)}
+  .btn-danger{color:var(--brick); border-color:var(--brick)}
+
+  /* ---------- review form: one screen, every answer a big tap ---------- */
+  .review-form{display:grid; gap:16px}
+  .q-card{gap:26px}
+  fieldset.q{border:0; margin:0; padding:0; min-width:0; display:grid; gap:10px}
+  .q legend{padding:0; margin-bottom:10px; font-size:18px; font-weight:700; line-height:1.3; color:var(--ink)}
+  .q > .hint{margin:-6px 0 2px; font-size:14.5px; color:var(--ink-2)}
+  .taps{display:grid; gap:10px}
+  .taps-two{grid-template-columns:1fr 1fr}
+  .taps-three{grid-template-columns:repeat(3,1fr)}
+  .taps-five{grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px}
+  .tap{display:flex; align-items:center; justify-content:center; gap:12px; min-height:56px; padding:10px 12px; border:1.5px solid var(--line); border-radius:14px; background:var(--bg); color:var(--ink); font:inherit; font-size:16.5px; font-weight:700; line-height:1.25; text-align:center; cursor:pointer}
+  .taps-stack .tap{justify-content:flex-start; text-align:left; padding:12px 16px}
+  .tap[aria-pressed="true"]{border-color:var(--brick); background:var(--brick-tint); color:color-mix(in srgb,var(--brick) 72%,var(--ink)); box-shadow:inset 0 0 0 1px var(--brick)}
+  .tap-dot{flex:none; display:grid; place-items:center; width:24px; height:24px; border-radius:50%; border:2px solid var(--ink-3)}
+  .tap-dot svg{width:14px; height:14px}
+  .tap[aria-pressed="true"] .tap-dot{background:var(--brick); border-color:var(--brick); color:var(--on-brick)}
+  .taps-five .tap{flex-direction:column; gap:0; min-height:70px; padding:8px 2px}
+  .taps-five .tap-label{display:grid; justify-items:center; gap:2px; font-family:var(--display); font-weight:400; font-size:24px; line-height:1}
+  .taps-five .tap-label small{white-space:nowrap}
+  .tap-label small{display:block; font-family:var(--body); font-size:11.5px; font-weight:700; line-height:1.15; color:var(--ink-2)}
+  .tap[aria-pressed="true"] small{color:inherit}
+  .textarea{min-height:128px; padding:12px 16px; font-size:18px; line-height:1.45; resize:vertical}
+  .counter{justify-self:end; margin-top:-2px; font-size:14px; font-weight:600; color:var(--ink-3); font-variant-numeric:tabular-nums}
+  .counter[data-near]{color:var(--brick)}
+  .field > label{font:inherit}
+  .file-pick{position:relative; display:block}
+  .file-pick input{position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer}
+  .file-pick:focus-within{outline:3px solid var(--brick); outline-offset:3px; border-radius:14px}
+  .file-face{display:flex; align-items:center; justify-content:center; gap:10px; min-height:64px; padding:12px 16px; border:2px dashed var(--ink-3); border-radius:14px; background:var(--bg); color:var(--ink-2); font-size:16.5px; font-weight:700; text-align:center; overflow-wrap:anywhere}
+  .file-face svg{flex:none; width:22px; height:22px}
+  .has-file .file-face{border-style:solid; border-color:var(--sage); background:var(--sage-tint); color:var(--sage)}
+  .file-clear{justify-self:start; margin-top:-4px; font-size:15px}
+  .proof-sent{display:grid; grid-template-columns:34px minmax(0,1fr); gap:12px; align-items:center; margin:0; padding:12px 14px; border-radius:14px; background:var(--sage-tint); color:var(--sage); font-size:15px}
+  .proof-sent .ri{display:grid; place-items:center}
+  .proof-sent svg{width:22px; height:22px}
+  .proof-sent b{display:block; font-size:16.5px}
+  .post{display:grid; gap:14px; padding-top:4px}
+  .honest{margin:0; padding:14px 16px; border-radius:14px; background:var(--sage-tint); color:var(--sage); font-size:17px; font-weight:700; text-align:center; text-wrap:balance}
+  .post-note{margin:-2px 0 0; text-align:center; font-size:14.5px; color:var(--ink-2)}
+  .job-type{display:flex; align-items:baseline; gap:10px; margin:0; padding:10px 14px; border-radius:14px; background:var(--surface-2); font-size:14.5px; color:var(--ink-2)}
+  .job-type b{font-size:17px; color:var(--ink)}
+  .auth-card .done{padding:18px 4px 2px}
+  .auth-card .done .form-alert{text-align:left; max-width:none}
+  .done-check circle{stroke:var(--gold); fill:color-mix(in srgb,var(--gold) 16%,var(--surface))}
+  .done-check path{stroke:var(--gold)}
+  .auth-card > .text-btn{justify-self:center; margin-top:-8px}
+  .answer-tags{display:flex; flex-wrap:wrap; gap:6px; margin:0; padding:0; list-style:none}
+  .answer-tags li{font-size:14px; font-weight:600; background:var(--surface-2); border-radius:8px; padding:4px 9px; color:var(--ink-2)}
+  .my-comment{margin:0; font-size:16.5px; white-space:pre-line; overflow-wrap:anywhere}
+  .closed{display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin:0; font-size:15px; color:var(--ink-2)}
+
+  /* ---------- provider area (replies) and the Report page ---------- */
+  .provider-area{display:grid; gap:16px}
+  .provider-area .reviews{margin-top:0}
+  .listing-icon svg{width:30px; height:30px}
+  .reply-box{display:grid; gap:10px}
+  .reply-box .reply{margin-top:2px; border-left:3px solid var(--brick-tint); padding:4px 0 4px 12px; font-size:15px; color:var(--ink-2)}
+  .reply-box .reply b{display:block; color:var(--ink); font-size:14px; margin-bottom:2px}
+  .reply-box .reply p{margin:0; overflow-wrap:anywhere; white-space:pre-line}
+  .reply-edit-row{display:flex; flex-wrap:wrap; align-items:center; gap:2px 12px}
+  .reply-edit-row .text-btn{padding:0; min-height:44px}
+  .reply-edit-row small{font-size:14px; color:var(--ink-3)}
+  .reply-open{display:inline-flex; align-items:center; gap:8px; justify-self:start; min-height:48px; padding:0 16px; border:1.5px solid var(--sage); border-radius:14px; background:var(--surface); color:var(--sage); font:inherit; font-size:16px; font-weight:700; cursor:pointer}
+  .reply-open svg{width:18px; height:18px}
+  .reply-form{display:grid; gap:8px; margin-top:4px; padding:14px; border-radius:var(--r-md); background:var(--surface-2)}
+  .reply-form .field{font-size:16px}
+  .reply-form .textarea{min-height:96px; font-size:17px; background:var(--surface)}
+  .reply-actions{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px}
+  .reply-actions .btn{flex:1 1 160px}
+  .report-done{display:grid; gap:14px}
+  .report-done .done{padding:8px 4px 0}
+  .report-done .done h2{font-size:32px; line-height:1.1}
+  .report-done .btn{width:100%}
+  .report-quote{margin:0; display:grid; gap:8px; padding:14px 16px; border-radius:var(--r-md); background:var(--surface-2)}
+  .report-quote figcaption{display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; font-size:14.5px; color:var(--ink-2)}
+  .report-quote figcaption b{color:var(--ink)}
+  .report-quote blockquote{margin:0; font-size:16.5px; white-space:pre-line; overflow-wrap:anywhere}
+  .report-quote .no-comment{margin:0; font-size:15px; color:var(--ink-3)}
 
   /* ---------- 404 ---------- */
   .lost{display:grid; justify-items:start; gap:14px; padding:28px 0 8px}

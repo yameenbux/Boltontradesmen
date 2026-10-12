@@ -45,8 +45,8 @@ describe("FAQ search", () => {
 });
 
 describe("card deck", () => {
-  it("has seven cards, each with a committed screenshot", () => {
-    expect(DECK).toHaveLength(7);
+  it("has eight cards, each with a committed screenshot", () => {
+    expect(DECK).toHaveLength(8);
     for (const card of DECK) {
       expect(existsSync(path.join(__dirname, "..", "..", "public", shotSrc(card.shot))), card.shot).toBe(true);
     }

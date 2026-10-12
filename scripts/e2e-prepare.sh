@@ -16,6 +16,10 @@ SERVICE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-$(sed -n 's/^SUPABASE_SERVICE_ROLE_KEY
 E2E_ADMIN_EMAIL="admin@example.test"
 E2E_ADMIN_PASSWORD="e2e-admin-password"
 resp="$(mktemp)"; trap 'rm -f "$resp"' EXIT
+# The auth.users guard refuses email-only accounts unless the email is allow-listed (settings.admin_emails).
+psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1 -c \
+  "update public.settings set value = value || '[\"$E2E_ADMIN_EMAIL\"]'::jsonb
+   where key = 'admin_emails' and not value ? '$E2E_ADMIN_EMAIL'"
 for _ in $(seq 1 30); do
   status=$(curl -sS -o "$resp" -w '%{http_code}' -X POST "$API_URL/auth/v1/admin/users" \
     -H "apikey: $SERVICE_KEY" -H "Authorization: Bearer $SERVICE_KEY" -H "Content-Type: application/json" \

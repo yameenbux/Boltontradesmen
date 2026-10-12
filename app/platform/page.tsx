@@ -12,7 +12,7 @@ export const revalidate = 300;
 export const metadata = pageMetadata({
   title: "Find trusted local trades in Bolton | Bolton Vouched",
   description:
-    "Plumbers, electricians, cleaners and more across Bolton (BL1 to BL7), recommended by local people. See the checks on each listing, then call or WhatsApp them. Free, no sign-up.",
+    "Plumbers, electricians, cleaners and more across Bolton (BL1 to BL7), recommended by local people. See residents' reviews and the checks on each listing, then call or WhatsApp them. Free, no sign-up to look.",
   path: "/platform",
 });
 
@@ -52,7 +52,7 @@ export default async function Home() {
         <ol>
           <li>
             <span>
-              <b>Find someone.</b> Pick a trade and your area. Once reviews open, the ones people would use again come first.
+              <b>Find someone.</b> Pick a trade and your area. The ones whose work reviewers rate highest come first.
             </span>
           </li>
           <li>
@@ -62,7 +62,7 @@ export default async function Home() {
           </li>
           <li>
             <span>
-              <b>Vouch for them.</b> Reviews are coming soon, so you can tell the next person how it went.
+              <b>Vouch for them.</b> Leave a review in a minute, so the next person knows how it went.
             </span>
           </li>
         </ol>
