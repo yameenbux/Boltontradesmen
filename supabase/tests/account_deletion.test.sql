@@ -2,7 +2,7 @@
 -- their listings, marks the profile deleted and keeps the phone number privately in phone_retention for
 -- 12 months. my_reviews also reports each review's proof state for the account page.
 begin;
-select plan(26);
+select plan(28);
 
 -- The server action passes the signed-in user's id (from the verified session) to the service-role-only
 -- write functions. These test helpers do the same with auth.uid() from the test's JWT claims.
@@ -19,6 +19,7 @@ insert into public.otp_requests (phone_e164, ip_hash, outcome, nonce_hash)
 values ('+447700900481', 'pgtap', 'approved', encode(sha256(convert_to('del-nonce', 'UTF8')), 'hex'));
 insert into auth.users (id, phone, created_at, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000009a1', '447700900481', now() - interval '3 days', '{"bv_nonce":"del-nonce"}');   -- Della, deletes
+update auth.users set phone_confirmed_at = now() where id = '00000000-0000-0000-0000-0000000009a1';  -- she typed the code
 insert into auth.users (id, created_at) values
   ('00000000-0000-0000-0000-0000000009a2', now() - interval '3 days');                   -- Ravi, stays
 insert into public.profiles (user_id, role, display_name, postcode_district) values
@@ -84,6 +85,8 @@ select is((select phone_e164 from public.phone_retention where user_id = '000000
 select ok((select purge_after between now() + interval '12 months' - interval '1 minute' and now() + interval '12 months' + interval '1 minute'
   from public.phone_retention where user_id = '00000000-0000-0000-0000-0000000009a1'), 'kept for 12 months');
 select is((select count(*)::int from public.phone_retention where phone_e164 = '+447700900499'), 0, 'expired retention rows are purged');
+select is((select array_agg(identity_key) from public.identity_retention where user_id = '00000000-0000-0000-0000-0000000009a1'),
+  array[private.identity_key('phone', '+447700900481')], 'the hashed sign-in key is kept too (Plan 2b)');
 select is((select count(*)::int from public.audit_log where action = 'delete_account' and actor_id = '00000000-0000-0000-0000-0000000009a1'), 1,
   'one audit_log row');
 
@@ -92,6 +95,8 @@ select lives_ok($$select public.delete_my_account()$$, 'calling it again is safe
 reset role;
 select is((select count(*)::int from public.phone_retention where user_id = '00000000-0000-0000-0000-0000000009a1'), 1,
   'and adds no second retention row');
+select is((select count(*)::int from public.identity_retention where user_id = '00000000-0000-0000-0000-0000000009a1'), 1,
+  'and no second identity_retention row');
 
 set local role authenticated;
 select throws_ok($$select public.t_submit_review(jsonb_build_object(

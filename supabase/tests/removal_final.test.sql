@@ -93,6 +93,8 @@ reset role;
 
 -- After the 12 months, the number is purged and no longer blocks.
 update public.phone_retention set purge_after = now() - interval '1 day' where phone_e164 = '+447700900611';
+-- (Plan 2b: the lookup now uses the hashed key kept alongside it in identity_retention.)
+update public.identity_retention set purge_after = now() - interval '1 day' where user_id = '00000000-0000-0000-0000-00000000fa01';
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa11","role":"authenticated"}';
 select is((public.review_form_context('rf-final-1') ->> 'blocked'), null, 'an expired retention row no longer blocks');
