@@ -23,7 +23,7 @@ test("/ shows the hero and sends people to the platform", async ({ page }) => {
     "/platform",
   );
   await expect(main.getByRole("link", { name: "Add it to your phone" }).first()).toHaveAttribute("href", "#install");
-  await expect(main).toContainText("Free · No sign-up · Made in Bolton");
+  await expect(main).toContainText("Free · No sign-up to look · Made in Bolton");
   // Real screenshots in the phone mockups.
   const shot = page.locator(".phone-fan img").first();
   await expect(shot).toBeVisible();

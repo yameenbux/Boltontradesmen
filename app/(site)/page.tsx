@@ -173,7 +173,7 @@ export default function ShowcasePage() {
               Add it to your phone <Icon name="arrowDown" />
             </a>
           </div>
-          <p className="s-meta s-in s-in-5">Free · No sign-up · Made in Bolton</p>
+          <p className="s-meta s-in s-in-5">Free · No sign-up to look · Made in Bolton</p>
 
           <div className="s-fan phone-fan">
             <Phone
