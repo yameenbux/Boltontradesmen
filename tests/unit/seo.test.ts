@@ -23,9 +23,9 @@ describe("siteUrl", () => {
 });
 
 describe("buildRobots", () => {
-  it("allows everything except admin, the API and consent links, and points at the sitemap", () => {
+  it("allows everything except admin, the API and private token links, and points at the sitemap", () => {
     expect(buildRobots(BASE)).toEqual({
-      rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/api/", "/platform/consent/"] },
+      rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/api/", "/platform/consent/", "/platform/link/"] },
       sitemap: `${BASE}/sitemap.xml`,
     });
   });

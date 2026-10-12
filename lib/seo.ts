@@ -22,8 +22,8 @@ export function absoluteUrl(path: string, base: string = siteUrl()): string {
   return new URL(path, `${base}/`).toString();
 }
 
-/** Paths crawlers must not visit. The consent links are private tokens; admin and the API are not content. */
-export const DISALLOWED_PATHS = ["/admin", "/api/", "/platform/consent/"] as const;
+/** Paths crawlers must not visit. Consent and link URLs carry private tokens; admin and the API are not content. */
+export const DISALLOWED_PATHS = ["/admin", "/api/", "/platform/consent/", "/platform/link/"] as const;
 
 export const POLICY_PATHS = ["/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy"] as const;
 
