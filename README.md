@@ -152,7 +152,7 @@ server, and the server only ever reads providers through one view.**
 | **`private.*`** | `SECURITY DEFINER` wrappers the view calls, in a schema the public role can't even name |
 | **`admin_*` functions** | Every admin write: checks the caller is an admin, then writes one `audit_log` row |
 | **Postgres with RLS** | Row-level security on every table; the public roles have every default grant stripped |
-| **Supabase Auth** | Phone codes (Twilio Verify) for residents and traders; email and password for the admin. A trigger on `auth.users` refuses any phone the app didn't approve and any email not on the admin list |
+| **Supabase Auth** | Phone codes (texted by the app's Send SMS hook through Twilio) for residents and traders; email and password for the admin. A trigger on `auth.users` refuses any phone the app didn't approve and any email not on the admin list |
 | **GitHub Actions** | Lint, types, unit tests, pgTAP database tests and browser tests on every push and pull request |
 
 ### Why the public view, and why numbers never reach the page
@@ -215,7 +215,7 @@ hands the visitor off to.
 | **Tailwind 4** | The Bolton Brick palette as tokens in `app/globals.css`, light and dark |
 | **Gloock** and **Figtree** | Through `next/font`, served from our own domain, so no request goes to Google |
 | **Supabase Postgres** + RLS | Schema, view, functions and policies in `supabase/migrations/`, tested with pgTAP in `supabase/tests/` |
-| **Supabase Auth** | Phone sign-in (Twilio Verify; test codes locally) and the admin's email sign-in |
+| **Supabase Auth** | Phone sign-in (codes texted through the app's Send SMS hook; test codes locally) and the admin's email sign-in |
 | **zod**, **libphonenumber-js** | Every admin form is validated; numbers are stored as E.164 |
 | **Railway** | Service `web`, from `main` |
 | **GitHub Actions** | `.github/workflows/ci.yml`: the checks above on every push and pull request |
@@ -328,6 +328,8 @@ Railway service variables:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | The anon (public) key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only. Needed by Call/WhatsApp, the consent page, sign-in, proof uploads and account deletion. Never put it anywhere else |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | Server only. Twilio Lookup, which refuses internet and virtual numbers before a code is sent. `TWILIO_LOOKUP_STUB` must **not** be set in production |
+| `SUPABASE_SMS_HOOK_SECRET` | Server only. The signing secret Supabase shows for the **Send SMS hook** (`v1,whsec_…`). Without it the hook refuses every text (fail closed) |
+| `TWILIO_MESSAGING_SERVICE_SID` | Server only. The Twilio Messaging Service (`MG…`) the Send SMS hook texts codes through. `TWILIO_SMS_STUB` must **not** be set in production |
 | `DEVICE_HASH_SECRET` | Server only. A long random secret (`openssl rand -hex 32`), never `change-me` |
 | `TRUSTED_PROXY_HOPS` | Optional, default `1`. How many trusted proxies append to `X-Forwarded-For` in front of the app. Railway's edge appends the real client IP as the last entry, so the app reads the entry this many places from the right and ignores anything a visitor puts on the left. Only change it if another proxy (a CDN) is put in front of Railway |
 | `OWNER_LEGAL_NAME` | `YSB Ventures Ltd`, matching Companies House character for character |
@@ -340,8 +342,9 @@ prerendered with them. Redeploy after changing either. **Never give a secret a
 
 In Supabase:
 
-1. **Authentication → Sign In / Providers → Phone**: on, SMS provider **Twilio
-   Verify** (Account SID, Auth Token, Verify Service SID). No test numbers in
+1. **Authentication → Sign In / Providers → Phone**: on. Fill in the SMS provider
+   (Twilio Verify is fine): Supabase needs one configured, but once the Send SMS
+   hook (step 3) is on, the hook sends every text instead. No test numbers in
    production. **"Allow new users to sign up" → on** (phone sign-up needs it; the
    database refuses email sign-ups). **Phone confirmations ("Confirm phone") →
    on, always**: the database refuses a phone account that arrives already
@@ -350,14 +353,45 @@ In Supabase:
    single-use code the sign-in page hands to Supabase (`otp_approve` /
    `bv_nonce`), and phone-only accounts can never use a password, so Supabase's
    own `/signup` endpoint can't be used to create or pre-claim an account.
-2. **Authentication → Rate Limits**: SMS sent per hour 60; sign-ups and sign-ins,
+2. **Authentication → Rate Limits**: SMS sent per hour **30** (keep it modest: it is
+   project-wide and the only Supabase-side ceiling on texts); sign-ups and sign-ins,
    and token verifications, 150 per 5 minutes (every request comes from Railway).
-3. **Storage**: bucket `review-proofs` exists, is **private**, 10 MB, JPEG/PNG/WebP/PDF,
+3. **Authentication → Hooks → Send SMS hook → HTTPS**, URL
+   `https://boltonvouched.ysbdesigns.uk/api/auth/sms-hook`. Generate the secret and
+   put it in Railway as `SUPABASE_SMS_HOOK_SECRET`; set `TWILIO_MESSAGING_SERVICE_SID`
+   (see *Texts and the SMS bill* below). Turn the hook on **after** Railway has
+   redeployed with both variables.
+4. **Storage**: bucket `review-proofs` exists, is **private**, 10 MB, JPEG/PNG/WebP/PDF,
    no policies (the migration creates it when Storage is there).
-4. **Apply migrations through the SQL editor**: paste each new file from
+5. **Apply migrations through the SQL editor**: paste each new file from
    `supabase/migrations/` in order and run it. On launch day also run
    `docs/launch/finish-admin-function.sql`, before the first consent link goes out.
-5. Create the admin as in *Admin sign-in*.
+6. Create the admin as in *Admin sign-in*.
+
+#### Texts and the SMS bill
+
+The app's limits (3 codes per number per 15 minutes, 10 per connection per hour,
+and the monthly cap in `settings.sms_monthly_cap_gbp`, £20 by default) only see
+texts that go through the sign-in page. Supabase's own API can also text an
+existing account directly with the public key. Two things close that:
+
+- **The Send SMS hook (step 3 above).** With it on, Supabase hands every text to
+  `/api/auth/sms-hook` instead of sending it. The app sends only for a request
+  the sign-in page approved in the last 5 minutes, once per request
+  (`sms_hook_gate`), so every text passes the limits, the Lookup and the cap.
+  Anything else gets a refusal and no text. With the hook on, codes are sent by
+  **Twilio Programmable Messaging** through a Messaging Service (UK alphanumeric
+  sender `BoltonVouch`, *SMS Pumping Protection* on), and Supabase checks the
+  codes itself, so Twilio Verify is no longer used. With the hook **off**, the
+  app's cap is **not** a hard cap: direct texts are limited only by Supabase's
+  hourly rate limit and by Twilio.
+- **Twilio itself is the only true hard stop**, hook or not:
+  - pay as you go with **prepaid credit and auto-recharge OFF**. When the balance
+    runs out, texts stop. A usage trigger only sends an email;
+  - a **usage alert** (Console → Monitor → Usage triggers) at £10 and £20 a month
+    on SMS and Lookup, emailing the owner;
+  - **Geo permissions: United Kingdom only** for SMS;
+  - keep Supabase's **SMS sent per hour** modest (30).
 
 **Never run `supabase config push`**: `supabase/config.toml` holds dummy Twilio
 settings and test phone numbers for local use and CI only.
@@ -484,10 +518,14 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
       12-month retention; the job isn't built yet.
 - [ ] Run `docs/launch/finish-admin-function.sql` before sending the first consent
       link.
-- [ ] **Twilio for phone sign-in**: upgrade from trial, UK-only geo permissions,
-      a £20/month usage trigger on Verify and Lookup, a Verify service with Fraud
-      Guard on, and Lookup Line Type Intelligence enabled. Then the Supabase steps
-      in *Deploying*.
+- [ ] **Twilio for phone sign-in**: upgrade from trial, **prepaid credit with
+      auto-recharge OFF** (the only hard spending stop), UK-only geo permissions,
+      a **usage alert** at £10 and £20 a month on SMS and Lookup, a Messaging
+      Service for the Send SMS hook (SMS Pumping Protection on), and Lookup Line
+      Type Intelligence enabled. Then the Supabase steps in *Deploying*: phone
+      confirmations on, **SMS sent per hour 30**, and the **Send SMS hook** with
+      `SUPABASE_SMS_HOOK_SECRET` and `TWILIO_MESSAGING_SERVICE_SID` set. See
+      *Texts and the SMS bill*.
 
 ---
 

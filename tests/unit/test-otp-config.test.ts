@@ -58,3 +58,22 @@ describe("phone confirmations", () => {
     expect(sh).not.toMatch(/GOTRUE_SMS_AUTOCONFIRM=true/);
   });
 });
+
+// Final review I1: the local stack sends every non-test text through the app's Send SMS hook, signed with a
+// dummy secret the app (via .env.example) must share. CI's Supabase CLI stack leaves the hook off.
+describe("Send SMS hook (local stack)", () => {
+  const sh = readFileSync(path.join(root, "scripts/local-stack/start.sh"), "utf8");
+  const envExample = readFileSync(path.join(root, ".env.example"), "utf8");
+
+  it("is enabled and points at the app's hook route", () => {
+    expect(sh).toMatch(/GOTRUE_HOOK_SEND_SMS_ENABLED=true/);
+    expect(sh).toMatch(/GOTRUE_HOOK_SEND_SMS_URI=http:\/\/localhost:3000\/api\/auth\/sms-hook/);
+  });
+
+  it("signs with the same secret the app reads from .env.example", () => {
+    const stack = /GOTRUE_HOOK_SEND_SMS_SECRETS="?([^"\s\\]+)"?/.exec(sh)?.[1];
+    const app = /^SUPABASE_SMS_HOOK_SECRET=(.+)$/m.exec(envExample)?.[1];
+    expect(stack).toMatch(/^v1,whsec_[A-Za-z0-9+/=]+$/);
+    expect(app).toBe(stack);
+  });
+});

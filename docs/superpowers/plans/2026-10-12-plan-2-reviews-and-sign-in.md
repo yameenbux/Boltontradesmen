@@ -15,7 +15,7 @@
 ## Global Constraints
 
 - UI copy says **Bolton Vouched**; code says **provider**. British English; dates day-month-year in `Europe/London`.
-- Sign-in: **UK +44 mobile numbers only**, validated server-side; VoIP/virtual numbers rejected with a plain-English message; one account per number; OTP rate limits per number and per IP; hard monthly SMS spend cap (`settings.sms_monthly_cap_gbp`).
+- Sign-in: **UK +44 mobile numbers only**, validated server-side; VoIP/virtual numbers rejected with a plain-English message; one account per number; OTP rate limits per number and per IP; monthly SMS spend cap (`settings.sms_monthly_cap_gbp`). The app's cap covers every text only with the Supabase Send SMS hook on (`/api/auth/sms-hook`, final review I1); the hard stop is Twilio prepaid credit with auto-recharge off (README → *Texts and the SMS bill*).
 - Lookup failure (error, timeout, missing credentials) **fails closed**: no code is sent; the person sees a retry message. SMS failures show a retry message, never a raw error.
 - Admin keeps email + password sign-in. New email-only accounts are refused unless the email is in `settings.admin_emails`.
 - Review fields exactly as spec §3: `value_band` `<250` / `250-1k` / `1k-5k` / `5k+`; `on_time` `yes` / `late_informed` / `no`; `on_price` `yes` / `slightly_over_explained` / `significantly_over`; `quality` 1–5; `tidy` only when the category's group has `asks_tidy`; `use_again` `yes` / `maybe` / `no`; `comment` ≤ 400 characters.

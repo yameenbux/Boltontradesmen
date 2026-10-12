@@ -39,8 +39,20 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 
 ## Step 3 — Two clicks in Supabase
 
-1. **Authentication → Sign In / Providers → "Allow new users to sign up" → OFF.** Only you should have an account.
+1. **Authentication → Sign In / Providers → "Allow new users to sign up" → ON**, and under **Phone**, **"Confirm phone" → ON**. Phone sign-in needs both; the database itself refuses email sign-ups (except the admin allow-list) and any phone account that didn't come through the sign-in page.
 2. **SQL Editor → New query →** paste the whole of `docs/launch/finish-admin-function.sql` → **Run**. Do this **before you send the first consent link**. It does two things: it lets admin *remove* a category from a provider (adding already works), and it makes the consent page greet the trader by name and show the WhatsApp button note. It shows a "destructive operation" warning because the function contains a `delete` — that's expected; confirm.
+
+## Step 3b — Cap the SMS bill (Twilio and Supabase, 15 minutes)
+
+Sign-in codes cost money per text. The app limits how many it asks for, but only Twilio can truly stop the spending. Before anyone signs in:
+
+- [ ] **Twilio → Billing:** pay as you go with **prepaid credit** (top up £20) and **auto-recharge OFF**. When the credit runs out, texts stop. This is the only hard stop.
+- [ ] **Twilio → Monitor → Usage triggers:** a **usage alert** emailing you at **£10** and **£20** a month for SMS and for Lookup. (An alert only emails; it doesn't stop anything.)
+- [ ] **Twilio → Messaging → Settings → Geo permissions:** **United Kingdom only**.
+- [ ] **Twilio → Messaging → Services:** create a Messaging Service (sender: alphanumeric **BoltonVouch**), turn on **SMS Pumping Protection**, copy its **MG…** SID into Railway as `TWILIO_MESSAGING_SERVICE_SID`.
+- [ ] **Supabase → Authentication → Rate Limits:** **SMS sent per hour → 30**.
+- [ ] **Supabase → Authentication → Hooks → Send SMS hook → HTTPS:** URL `https://boltonvouched.ysbdesigns.uk/api/auth/sms-hook`, generate the secret, paste it into Railway as `SUPABASE_SMS_HOOK_SECRET`, wait for Railway to redeploy, then **enable** the hook. From then on Supabase can't text anyone the sign-in page didn't approve, so every text counts towards the app's £20 monthly cap.
+- [ ] Test: sign in on your own phone at `/platform/sign-in`. If the code doesn't arrive, turn the hook off again and check Railway's logs for `sms-hook:`.
 
 ## Step 4 — Sign in and add traders
 
