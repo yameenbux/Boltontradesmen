@@ -285,8 +285,13 @@ npm run typecheck
 npm test              # Vitest unit tests
 npm run db:reset && npm run test:db   # pgTAP: needs an empty register, so reset first
 npm run test:stack    # the local stack's own guard and smoke tests
-PW_CHROMIUM_PATH=/path/to/chrome npm run test:e2e   # Playwright; builds and serves the app
+PW_CHROMIUM_PATH=/path/to/chrome npm run test:e2e   # Playwright; builds and serves the app (:3000, and :3001 with phone sign-in on)
+npm run db:check-prod # the one-paste production script applies on a 000017-state database
 ```
+
+After changing a migration from 000018 on, regenerate the production paste with
+`node scripts/build-production-sql.mjs --from 20261012000018 --to <newest> --out docs/launch/plan-2b-production.sql`
+(`tests/unit/production-sql.test.ts` fails until you do).
 
 Run `npm run test:db` straight after a reset: the scoring tests expect an empty
 register, without the E2E fixtures. `npm run test:e2e` loads its own fixtures and

@@ -44,5 +44,8 @@ jobs:
         env:
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
       - run: npm run test:e2e
+      # The one-paste production script applies in one transaction on a database at production's state (000017),
+      # and the pgTAP tests pass on the result. Last, because it resets the database.
+      - run: npm run db:check-prod
       - if: always()
         run: npx supabase stop

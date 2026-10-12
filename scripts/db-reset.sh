@@ -4,6 +4,8 @@
 # where postgres is a superuser. With SUPABASE_CLI_STACK=1 (the real Supabase CLI
 # stack, as in CI) it runs `supabase db reset` instead, which applies the same
 # migrations and seed.sql under Supabase's own ownership model (ruling R16).
+# DB_RESET_UNTIL=<version> stops after the last migration whose version is <= it
+# (e.g. 20261012000017 for the state production is in before a one-paste script).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 SUPABASE_DB_URL="${SUPABASE_DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}"
@@ -14,7 +16,11 @@ assert_local_db
 
 if [ "${SUPABASE_CLI_STACK:-}" = 1 ]; then
   echo "[db-reset] SUPABASE_CLI_STACK=1: running supabase db reset --local"
-  npx supabase db reset --local --yes
+  if [ -n "${DB_RESET_UNTIL:-}" ]; then
+    npx supabase db reset --local --yes --version "$DB_RESET_UNTIL"
+  else
+    npx supabase db reset --local --yes
+  fi
   exit 0
 fi
 
@@ -45,6 +51,11 @@ if [ ${#migrations[@]} -eq 0 ]; then
   echo "[db-reset] no migrations in supabase/migrations"
 fi
 for f in "${migrations[@]}"; do   # glob expansion is sorted by filename
+  version="$(basename "$f")"; version="${version%%_*}"
+  if [ -n "${DB_RESET_UNTIL:-}" ] && [[ "$version" > "$DB_RESET_UNTIL" ]]; then
+    echo "[db-reset] DB_RESET_UNTIL=$DB_RESET_UNTIL: stopping before $f"
+    break
+  fi
   echo "[db-reset] applying $f"
   "${PSQL[@]}" -f "$f"
 done
