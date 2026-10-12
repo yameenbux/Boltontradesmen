@@ -38,6 +38,29 @@ test("nav anchors scroll to their sections", async ({ page }) => {
   for (const [name, id] of [
     ["How it works", "how"],
     ["Inside", "inside"],
+for (const width of [360, 390, 768, 1024, 1280, 1440, 1920]) {
+  test(`hero phones and caption sit above the blurbs at ${width}px`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    const box = await page.evaluate(() => {
+      const fan = document.querySelector(".s-fan")!;
+      const r = fan.getBoundingClientRect();
+      const phones = [...fan.querySelectorAll(".s-phone")].map((p) => p.getBoundingClientRect().bottom);
+      return {
+        clip: getComputedStyle(fan).overflowY,
+        // What shows of the phones: the fan clips them at its foot.
+        phonesBottom: Math.min(Math.max(...phones), r.bottom),
+        caption: document.querySelector(".s-fan + .s-sample")!.getBoundingClientRect(),
+        trioTop: document.querySelector(".s-trio")!.getBoundingClientRect().top,
+      };
+    });
+    expect(box.clip).toBe("clip");
+    expect(box.caption.top - box.phonesBottom).toBeGreaterThanOrEqual(12);
+    expect(box.trioTop - box.caption.bottom).toBeGreaterThanOrEqual(24);
+  });
+}
+
     ["For traders", "traders"],
     ["Support", "support"],
   ]) {
