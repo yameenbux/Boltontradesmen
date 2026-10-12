@@ -1,7 +1,7 @@
 -- Review posting (Plan 2, Task 6): submit_review / edit_review rules, review_form_context, my_reviews,
 -- and the new review_proofs / review_responses / flags tables staying closed to browsers.
 begin;
-select plan(52);
+select plan(61);
 
 -- ---------------------------------------------------------------- fixture
 insert into auth.users (id, created_at) values
@@ -187,6 +187,36 @@ select is((public.review_form_context('rw-paused')), null, 'no context for a pro
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a4","role":"authenticated"}';
 select is((public.review_form_context('rw-plumb') ->> 'blocked'), 'shares_category', 'context says why Lee cannot review');
 select is((public.review_form_context('rw-own') ->> 'blocked'), 'own_listing', 'context: own listing');
+reset role;
+
+-- ---------------------------------------------------------------- proofs (Task 10): add_review_proof
+create temp view amy2 as select (v ->> 'id') as id from res where k = 'amy2';
+grant select on amy2 to authenticated;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a2","role":"authenticated"}';
+select throws_ok(format($$select public.add_review_proof(%L, %L, 'image/jpeg')$$, (select id from amy2), (select id from amy2) || '/a.jpg'),
+  'P0001', 'not_your_review', 'someone else''s review: not_your_review');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated"}';
+select throws_ok(format($$select public.add_review_proof(%L, %L, 'image/jpeg')$$, (select id from amy2),
+  (select v ->> 'id' from res where k = 'amy1') || '/a.jpg'), 'P0001', 'bad_proof_path', 'a path under another review: bad_proof_path');
+select throws_ok(format($$select public.add_review_proof(%L, %L, 'image/heic')$$, (select id from amy2), (select id from amy2) || '/a.heic'),
+  'P0001', 'bad_proof_type', 'an unsupported type: bad_proof_type');
+select isnt(public.add_review_proof((select id::uuid from amy2), (select id from amy2) || '/a.jpg', 'image/jpeg'), null,
+  'the owner adds a proof');
+select is((public.review_form_context('rw-cater') -> 'existing' ->> 'has_active_proof')::boolean, true, 'the form knows a proof is in');
+select throws_ok(format($$select public.add_review_proof(%L, %L, 'image/png')$$, (select id from amy2), (select id from amy2) || '/b.png'),
+  'P0001', 'proof_exists', 'a second pending proof: proof_exists');
+reset role;
+update public.review_proofs set outcome = 'rejected' where review_id = (select id::uuid from amy2);
+set local role authenticated;
+select isnt(public.add_review_proof((select id::uuid from amy2), (select id from amy2) || '/c.pdf', 'application/pdf'), null,
+  'after a rejection a new proof is accepted');
+select throws_ok(format($$select public.add_review_proof(%L, %L, 'image/jpeg')$$, (select v ->> 'id' from res where k = 'amy1'),
+  (select v ->> 'id' from res where k = 'amy1') || '/a.jpg'), 'P0001', 'edit_window_closed', 'after 14 days: edit_window_closed');
+reset role;
+set local role anon;
+select throws_ok($$select public.add_review_proof(gen_random_uuid(), 'x/a.jpg', 'image/jpeg')$$, '42501', null,
+  'anon cannot call add_review_proof');
 reset role;
 
 -- ---------------------------------------------------------------- privileges

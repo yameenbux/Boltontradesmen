@@ -5,6 +5,12 @@ import type { OnPrice, OnTime, UseAgain, ValueBand } from "@/lib/review-text";
 // actions share it. The database (submit_review / edit_review) applies the same rules again and is the authority.
 
 export const COMMENT_MAX = 400;
+
+// Proof of the job (checked again on the server from the file's bytes: lib/proofs.ts).
+export const MAX_PROOF_BYTES = 10 * 1024 * 1024;
+export const PROOF_ACCEPT = "image/jpeg,image/png,image/webp,application/pdf";
+export const PROOF_WRONG_TYPE = "Please upload a photo (JPEG, PNG or WebP) or a PDF.";
+export const PROOF_TOO_BIG = "Files must be 10 MB or smaller.";
 // Ten or more digits, however they are spaced or punctuated, is a phone number (same pattern as the database).
 const PHONE_IN_TEXT = /([0-9][ ().-]*){10,}/;
 

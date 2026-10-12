@@ -8,6 +8,10 @@ import { editReview, submitReview, type ReviewFormState } from "@/app/platform/p
 import { clearDraft, loadDraft, saveDraft } from "@/lib/review-draft";
 import {
   COMMENT_MAX,
+  MAX_PROOF_BYTES,
+  PROOF_ACCEPT,
+  PROOF_TOO_BIG,
+  PROOF_WRONG_TYPE,
   ON_PRICE_OPTIONS,
   ON_TIME_OPTIONS,
   QUALITY_OPTIONS,
@@ -30,7 +34,7 @@ type Props = {
   categories: ReviewCategory[];
   months: { value: string; label: string }[];
   /** Editing the person's own review (within 14 days): its id, answers and the last day it can change. */
-  existing?: { id: string; values: ReviewValues; editableUntil: string };
+  existing?: { id: string; values: ReviewValues; editableUntil: string; hasProof: boolean };
   /** The page's title card, shown above the questions and replaced by the result once posted. */
   header?: React.ReactNode;
 };
@@ -301,6 +305,18 @@ function Form({
             </span>
             {errors.comment && <span className="field-err">{errors.comment}</span>}
           </label>
+          {existing?.hasProof ? (
+            <p className="proof-sent">
+              <span className="ri" aria-hidden="true">
+                <PaperIcon />
+              </span>
+              <span>
+                <b>Proof sent</b> Only the admin sees it.
+              </span>
+            </p>
+          ) : (
+            <ProofField />
+          )}
         </section>
 
         <div className="post">
@@ -322,5 +338,92 @@ function Form({
         </div>
       </form>
     </>
+  );
+}
+
+const PaperIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+    <path d="M14 3v5h5M9 13h6M9 17h4" />
+  </svg>
+);
+
+/**
+ * Optional proof of the job. The accept list makes iPhones convert HEIC photos to JPEG when one is picked.
+ * Size and type are checked here for a quick answer, and again on the server from the file itself.
+ */
+function ProofField() {
+  const input = useRef<HTMLInputElement>(null);
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+
+  function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    setError("");
+    setName("");
+    if (!file) return;
+    const problem =
+      file.size > MAX_PROOF_BYTES
+        ? PROOF_TOO_BIG
+        : !PROOF_ACCEPT.split(",").includes(file.type)
+          ? PROOF_WRONG_TYPE
+          : "";
+    if (problem) {
+      setError(problem);
+      e.target.value = "";
+      return;
+    }
+    setName(file.name);
+  }
+
+  function clear() {
+    if (input.current) input.current.value = "";
+    setName("");
+    setError("");
+  }
+
+  return (
+    <div className="field q" data-field="proof">
+      <label htmlFor="proof">
+        Proof of the job <span className="opt">(optional)</span>
+      </label>
+      <span className="hint" id="proof-hint">
+        A photo of the invoice or the finished work. Optional — only the admin sees this.
+      </span>
+      <span className={name ? "file-pick has-file" : "file-pick"}>
+        <input
+          ref={input}
+          id="proof"
+          name="proof"
+          type="file"
+          accept={PROOF_ACCEPT}
+          onChange={onPick}
+          aria-describedby="proof-hint"
+          aria-invalid={error ? true : undefined}
+        />
+        <span className="file-face" aria-hidden="true">
+          <PaperIcon />
+          <span>{name || "Add a photo or PDF"}</span>
+        </span>
+      </span>
+      {name && (
+        <button type="button" className="text-btn file-clear" onClick={clear}>
+          Remove this file
+        </button>
+      )}
+      {error && (
+        <span className="field-err" role="alert">
+          {error}
+        </span>
+      )}
+    </div>
   );
 }

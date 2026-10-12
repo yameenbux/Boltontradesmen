@@ -162,7 +162,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ slug: s
         displayName={account.displayName ?? ""}
         categories={ctx.categories.map((c) => ({ id: c.id, name: c.name, asksTidy: c.asks_tidy }))}
         months={recentMonths(new Date())}
-        existing={e ? { id: e.id, values: toValues(e), editableUntil: until } : undefined}
+        existing={e ? { id: e.id, values: toValues(e), editableUntil: until, hasProof: e.has_active_proof } : undefined}
         header={
           <section className="auth-card" aria-labelledby="review-title">
             <div>

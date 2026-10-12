@@ -11,11 +11,16 @@ vi.mock("next/navigation", () => ({
     throw new Error(`REDIRECT ${url}`);
   },
 }));
+const storageUpload = vi.fn();
+const storageRemove = vi.fn();
+const storageFrom = vi.fn(() => ({ upload: storageUpload, remove: storageRemove }));
+vi.mock("@/lib/supabase/service", () => ({ createServiceClient: () => ({ storage: { from: storageFrom } }) }));
 const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath: (...a: unknown[]) => revalidatePath(...a) }));
 
 import { editReview, submitReview } from "@/app/platform/p/[slug]/review/actions";
 import { deviceHash } from "@/lib/device-hash";
+import sharp from "sharp";
 
 const ACCOUNT = {
   user_id: "u1",
@@ -61,6 +66,9 @@ beforeEach(() => {
   auth.getUser.mockReset();
   rpc.mockReset();
   revalidatePath.mockClear();
+  storageUpload.mockReset().mockResolvedValue({ error: null });
+  storageRemove.mockReset().mockResolvedValue({ error: null });
+  storageFrom.mockClear();
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -134,5 +142,62 @@ describe("editReview", () => {
     signedIn({ error: { message: "edit_window_closed", code: "P0001" } });
     const res = await editReview({}, form({ ...answers, review_id: REVIEW }));
     expect(res.error).toBe("Reviews can only be edited for 14 days after posting.");
+  });
+});
+
+describe("proof upload after posting", () => {
+  async function jpeg() {
+    return sharp({ create: { width: 4, height: 4, channels: 3, background: "#ffffff" } })
+      .jpeg()
+      .withExif({ IFD3: { GPSLatitudeRef: "N", GPSLatitude: "53/1 34/1 0/1" } })
+      .toBuffer();
+  }
+  function withProof(file: File) {
+    const fd = form(answers);
+    fd.append("proof", file);
+    return fd;
+  }
+
+  it("strips the photo, uploads it privately and records it against the new review", async () => {
+    signedIn({ data: { id: REVIEW, status: "published" } });
+    const res = await submitReview({}, withProof(new File([await jpeg()], "IMG_0001.jpg", { type: "image/jpeg" })));
+    expect(res).toMatchObject({ ok: true, status: "published" });
+    expect(res.proofError).toBeUndefined();
+    expect(storageFrom).toHaveBeenCalledWith("review-proofs");
+    const [path, body, opts] = storageUpload.mock.calls[0];
+    expect(path).toMatch(new RegExp(`^${REVIEW}/[0-9a-f-]{36}\\.jpg$`));
+    expect((await sharp(body).metadata()).exif).toBeUndefined();
+    expect(opts).toEqual({ contentType: "image/jpeg", upsert: false });
+    expect(rpc).toHaveBeenCalledWith("add_review_proof", { p_review: REVIEW, p_path: path, p_mime: "image/jpeg" });
+  });
+
+  it("keeps the review posted when the file is not a photo or PDF", async () => {
+    signedIn({ data: { id: REVIEW, status: "published" } });
+    const res = await submitReview({}, withProof(new File(["ftypheic....."], "IMG_0002.HEIC", { type: "image/heic" })));
+    expect(res).toMatchObject({ ok: true, status: "published" });
+    expect(res.proofError).toBe(
+      "Your review is posted, but the proof didn't upload: Please upload a photo (JPEG, PNG or WebP) or a PDF. You can add it by editing your review within 14 days.",
+    );
+    expect(storageUpload).not.toHaveBeenCalled();
+  });
+
+  it("removes the uploaded file when the database refuses the proof", async () => {
+    auth.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
+    rpc.mockImplementation(async (name: string) => {
+      if (name === "my_account") return { data: ACCOUNT, error: null };
+      if (name === "add_review_proof") return { data: null, error: { message: "proof_exists" } };
+      return { data: { id: REVIEW, status: "published" }, error: null };
+    });
+    const res = await submitReview({}, withProof(new File([await jpeg()], "a.jpg", { type: "image/jpeg" })));
+    expect(res.ok).toBe(true);
+    expect(res.proofError).toMatch(/^Your review is posted, but the proof didn't upload: /);
+    expect(storageRemove).toHaveBeenCalledWith([storageUpload.mock.calls[0][0]]);
+  });
+
+  it("ignores an empty file input", async () => {
+    signedIn({ data: { id: REVIEW, status: "published" } });
+    const res = await submitReview({}, withProof(new File([], "", { type: "application/octet-stream" })));
+    expect(res.proofError).toBeUndefined();
+    expect(storageUpload).not.toHaveBeenCalled();
   });
 });

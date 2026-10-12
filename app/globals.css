@@ -425,6 +425,18 @@ h1,h2,h3{text-wrap:balance}
   .textarea{min-height:128px; padding:12px 16px; font-size:18px; line-height:1.45; resize:vertical}
   .counter{justify-self:end; margin-top:-2px; font-size:14px; font-weight:600; color:var(--ink-3); font-variant-numeric:tabular-nums}
   .counter[data-near]{color:var(--brick)}
+  .field > label{font:inherit}
+  .file-pick{position:relative; display:block}
+  .file-pick input{position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer}
+  .file-pick:focus-within{outline:3px solid var(--brick); outline-offset:3px; border-radius:14px}
+  .file-face{display:flex; align-items:center; justify-content:center; gap:10px; min-height:64px; padding:12px 16px; border:2px dashed var(--ink-3); border-radius:14px; background:var(--bg); color:var(--ink-2); font-size:16.5px; font-weight:700; text-align:center; overflow-wrap:anywhere}
+  .file-face svg{flex:none; width:22px; height:22px}
+  .has-file .file-face{border-style:solid; border-color:var(--sage); background:var(--sage-tint); color:var(--sage)}
+  .file-clear{justify-self:start; margin-top:-4px; font-size:15px}
+  .proof-sent{display:grid; grid-template-columns:34px minmax(0,1fr); gap:12px; align-items:center; margin:0; padding:12px 14px; border-radius:14px; background:var(--sage-tint); color:var(--sage); font-size:15px}
+  .proof-sent .ri{display:grid; place-items:center}
+  .proof-sent svg{width:22px; height:22px}
+  .proof-sent b{display:block; font-size:16.5px}
   .post{display:grid; gap:14px; padding-top:4px}
   .honest{margin:0; padding:14px 16px; border-radius:14px; background:var(--sage-tint); color:var(--sage); font-size:17px; font-weight:700; text-align:center; text-wrap:balance}
   .post-note{margin:-2px 0 0; text-align:center; font-size:14.5px; color:var(--ink-2)}
