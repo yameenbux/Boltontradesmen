@@ -6,7 +6,7 @@
  * set on <html> by app/layout.tsx), because next/font self-hosts the fonts under generated family names.
  */
 :root{
-  --bg:#F5EEE3; --surface:#FFFBF5; --surface-2:#EFE5D7; --ink:#231A15; --ink-2:#6B5D53; --ink-3:#97887C; --line:#E4D6C5;
+  --bg:#F5EEE3; --surface:#FFFBF5; --surface-2:#EFE5D7; --ink:#231A15; --ink-2:#6B5D53; --ink-3:#73655A; --line:#E4D6C5;
   --brick:#9C3A25; --brick-deep:#6E2616; --brick-tint:#F2DCD2; --hero:#8C3220; --on-brick:#FFF5E9;
   --sage:#46684A; --sage-tint:#DDE9DA; --gold:#B5862C;
   --shadow:0 1px 2px rgba(60,30,15,.06),0 8px 24px -10px rgba(60,30,15,.18);
@@ -16,12 +16,12 @@
   --ease:cubic-bezier(.2,.8,.2,1);
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#161009; --surface:#211812; --surface-2:#2A1F18; --ink:#F3E9DC; --ink-2:#BBA998; --ink-3:#8D7C6E; --line:#3A2B22;
+  --bg:#161009; --surface:#211812; --surface-2:#2A1F18; --ink:#F3E9DC; --ink-2:#BBA998; --ink-3:#9C8B7D; --line:#3A2B22;
   --brick:#D9704F; --brick-deep:#A9452C; --brick-tint:#3B2018; --hero:#6E2818; --on-brick:#FFF2E4;
   --sage:#93BC95; --sage-tint:#20301F; --gold:#D7A94C;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark }}
 :root[data-theme="dark"]{
-  --bg:#161009; --surface:#211812; --surface-2:#2A1F18; --ink:#F3E9DC; --ink-2:#BBA998; --ink-3:#8D7C6E; --line:#3A2B22;
+  --bg:#161009; --surface:#211812; --surface-2:#2A1F18; --ink:#F3E9DC; --ink-2:#BBA998; --ink-3:#9C8B7D; --line:#3A2B22;
   --brick:#D9704F; --brick-deep:#A9452C; --brick-tint:#3B2018; --hero:#6E2818; --on-brick:#FFF2E4;
   --sage:#93BC95; --sage-tint:#20301F; --gold:#D7A94C;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark }
@@ -109,7 +109,7 @@ h1,h2,h3{text-wrap:balance}
   .policy h1{font-family:var(--display); font-weight:400; font-size:clamp(32px,9vw,40px); line-height:1.08; margin:4px 0 16px}
   .policy h2{font-family:var(--display); font-weight:400; font-size:23px; line-height:1.15; padding-top:10px}
   .policy-body{display:grid; gap:14px; line-height:1.6; color:var(--ink); overflow-wrap:anywhere}
-  .policy-body a{color:var(--brick); text-underline-offset:3px}
+  .policy-body a{color:var(--brick); text-decoration:underline; text-underline-offset:3px}
   .policy-body ul{margin:0; padding-left:22px; list-style:disc; display:grid; gap:6px}
   .policy-body code{font-size:.88em; padding:1px 5px; border-radius:6px; background:var(--surface-2); overflow-wrap:anywhere}
   .policy-table{overflow-x:auto; border:1px solid var(--line); border-radius:14px}
@@ -314,7 +314,7 @@ h1,h2,h3{text-wrap:balance}
   .score .pending{font-size:13px; font-weight:600; color:var(--ink-2); max-width:11ch; line-height:1.3}
   .subhead{display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:28px 0 4px}
   .subhead h2{font-family:var(--display); font-weight:400; font-size:22px}
-  .subhead .tag{font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); border:1px solid color-mix(in srgb,var(--gold) 50%,transparent); border-radius:999px; padding:3px 8px}
+  .subhead .tag{font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:color-mix(in srgb,var(--gold) 55%,var(--ink)); border:1px solid color-mix(in srgb,var(--gold) 50%,transparent); border-radius:999px; padding:3px 8px}
   .muted{color:var(--ink-2); font-size:16px; margin:0}
   .cat-empty{display:grid; justify-items:center; gap:6px; margin-top:12px}
   .cat-empty p{margin:0}

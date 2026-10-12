@@ -151,7 +151,7 @@ body:has(.site){background:#150F0C}
 .s-traders .s-sample{margin:18px auto 0 !important}
 .s-trio{display:grid; gap:26px; margin:36px auto 0; padding:0; list-style:none; max-width:980px; position:relative; z-index:4}
 .s-trio li{text-align:center}
-.s-trio h3{font-size:24px; line-height:1.15}
+.s-trio h2{font-size:24px; line-height:1.15}
 .s-trio p{margin-top:8px; color:var(--s-ink-2); max-width:32ch; margin-left:auto; margin-right:auto}
 @media (min-width:880px){.s-trio{grid-template-columns:repeat(3,1fr); gap:36px; margin-top:44px}}
 

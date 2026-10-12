@@ -6,7 +6,7 @@ test("brand bar shows the name and tagline", async ({ page }) => {
   await expect(header).toContainText("Bolton Vouched");
   await expect(header).toContainText("Local trades & services");
   await expect(header).not.toContainText("Recommended by Bolton");
-  await expect(header.getByRole("link", { name: "Bolton Vouched home" })).toHaveAttribute("href", "/platform");
+  await expect(header.getByRole("link", { name: /^Bolton Vouched Local trades/ })).toHaveAttribute("href", "/platform");
 });
 
 test("footer names the operator and the registered company", async ({ page }) => {

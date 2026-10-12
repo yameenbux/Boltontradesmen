@@ -204,17 +204,17 @@ export default function ShowcasePage() {
 
           <ul className="s-trio">
             <li className="reveal">
-              <h3>Find by trade</h3>
+              <h2>Find by trade</h2>
               <p>From plumbers and sparkies to cakes and bouncy castles, sorted for your part of Bolton.</p>
             </li>
             <li className="reveal" style={d(0.1)}>
-              <h3>Would they use them again?</h3>
+              <h2>Would they use them again?</h2>
               <p>
                 One honest number from people who&apos;ve had the work done, not a wall of stars.
               </p>
             </li>
             <li className="reveal" style={d(0.2)}>
-              <h3>Call or WhatsApp</h3>
+              <h2>Call or WhatsApp</h2>
               <p>Straight from their page, in one tap. No account, no forms, nobody in the middle.</p>
             </li>
           </ul>
