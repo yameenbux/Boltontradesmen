@@ -367,7 +367,8 @@ In Supabase:
 4. **Storage**: bucket `review-proofs` exists, is **private**, 10 MB, JPEG/PNG/WebP/PDF,
    no policies (the migration creates it when Storage is there).
 5. **Apply migrations through the SQL editor**: paste each new file from
-   `supabase/migrations/` in order and run it. On launch day also run
+   `supabase/migrations/` in order and run it (`docs/launch/LAUNCH.md` → Step 3a
+   lists them, with the checks to run). On launch day also run
    `docs/launch/finish-admin-function.sql`, before the first consent link goes out.
 6. Create the admin as in *Admin sign-in*.
 

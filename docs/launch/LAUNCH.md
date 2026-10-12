@@ -42,6 +42,30 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 1. **Authentication → Sign In / Providers → "Allow new users to sign up" → ON**, and under **Phone**, **"Confirm phone" → ON**. Phone sign-in needs both; the database itself refuses email sign-ups (except the admin allow-list) and any phone account that didn't come through the sign-in page.
 2. **SQL Editor → New query →** paste the whole of `docs/launch/finish-admin-function.sql` → **Run**. Do this **before you send the first consent link**. It does two things: it lets admin *remove* a category from a provider (adding already works), and it makes the consent page greet the trader by name and show the WhatsApp button note. It shows a "destructive operation" warning because the function contains a `delete` — that's expected; confirm.
 
+## Step 3a — Paste the database changes (before merging Plan 2 to `main`, 20 minutes)
+
+The reviews and phone sign-in release needs these database changes in production **before** its code reaches `main` (the new code calls functions they add; the live code keeps working on the new schema). In Supabase → **SQL Editor**, paste each whole file from `supabase/migrations/` once, in this order, and **Run** it. The editor runs a file as one transaction, so a file that fails leaves nothing behind and can be re-run once fixed. Skip a file only if you've already run it.
+
+1. `20261012000002_plan1_followups.sql` — open consent links get 14 days from now; removal reasons on reviews.
+2. `20261012000003_phone_accounts.sql` — **care:** it adds a name-format check to `profiles`. First run `select user_id, display_name, postcode_district from public.profiles;` and make sure the admin's row has `display_name` and `postcode_district` empty (null) or valid (e.g. "Sarah K." / "BL3"); fix it if not, then paste. It also creates triggers on `auth.users`; afterwards `select tgname from pg_trigger where tgrelid = 'auth.users'::regclass and not tgisinternal;` should list `bv_guard_auth_user_insert` and `bv_guard_auth_user_phone`.
+3. `20261012000004_review_posting.sql`
+4. `20261012000005_review_flags.sql`
+5. `20261012000006_review_public.sql` (must follow 000004)
+6. `20261012000007_review_proofs.sql` — then check **Storage → `review-proofs`** exists, is private, 10 MB, JPEG/PNG/WebP/PDF, no policies.
+7. `20261012000008_admin_moderation.sql`
+8. `20261012000009_provider_replies.sql`
+9. `20261012000010_account_deletion.sql`
+10. `20261012000011_phone_signup_nonce.sql` — **care:** it drops and re-creates the two `auth.users` triggers from 000003. In plain Postgres only the table's owner (`supabase_auth_admin`) may drop a trigger; Supabase says its `postgres` user can, but it hasn't been tried there. If the editor says *must be owner of relation users*, edit the pasted text: delete the two `drop trigger if exists … / create trigger …` pairs for `bv_guard_auth_user_insert` and `bv_guard_auth_user_phone` (the triggers from 000003 already call the new `private.guard_auth_user()`), keep the `bv_scrub_auth_user` lines, and run it again. Then re-run the trigger check from step 2: it should now also list `bv_scrub_auth_user`.
+11. `20261012000012_sms_hook.sql`
+12. `20261012000013_review_writes_server_only.sql` — review writes become server-only (the device check can't be dodged).
+13. `20261012000014_removal_survives_resignup.sql` — a removal for cause survives deleting the account and signing up again.
+14. `20261012000015_otp_verify_limits.sql` — limits on wrong sign-in codes.
+15. `20261012000016_review2_minors.sql` — confirmed-mobile check, report limit, the admin can't delete itself.
+
+Check afterwards: `select proname from pg_proc where proname in ('otp_approve','sms_hook_gate','submit_review','delete_my_account','otp_verify_gate');` returns five rows, and `select pg_get_function_identity_arguments('public.submit_review'::regproc);` shows `p_uid uuid, p jsonb, p_device_hash text`.
+
+Then set a private group code (the one members type on Welcome to get the Group member badge; the default is easy to guess): `update public.settings set value = '"<your code>"'::jsonb where key = 'group_code';`
+
 ## Step 3b — Cap the SMS bill (Twilio and Supabase, 15 minutes)
 
 Sign-in codes cost money per text. The app limits how many it asks for, but only Twilio can truly stop the spending. Before anyone signs in:
@@ -50,7 +74,7 @@ Sign-in codes cost money per text. The app limits how many it asks for, but only
 - [ ] **Twilio → Monitor → Usage triggers:** a **usage alert** emailing you at **£10** and **£20** a month for SMS and for Lookup. (An alert only emails; it doesn't stop anything.)
 - [ ] **Twilio → Messaging → Settings → Geo permissions:** **United Kingdom only**.
 - [ ] **Twilio → Messaging → Services:** create a Messaging Service (sender: alphanumeric **BoltonVouch**), turn on **SMS Pumping Protection**, copy its **MG…** SID into Railway as `TWILIO_MESSAGING_SERVICE_SID`.
-- [ ] **Supabase → Authentication → Rate Limits:** **SMS sent per hour → 30**.
+- [ ] **Supabase → Authentication → Rate Limits:** **SMS sent per hour → 30**. This is site-wide, so on the day you post in the group (717 members) more than 30 people may try to sign in within an hour and some will see "couldn't send a text". Once the Send SMS hook below is on, the app's monthly cap bounds the spend, so you may raise it (e.g. to 100) for launch day and lower it again after.
 - [ ] **Supabase → Authentication → Hooks → Send SMS hook → HTTPS:** URL `https://boltonvouched.ysbdesigns.uk/api/auth/sms-hook`, generate the secret, paste it into Railway as `SUPABASE_SMS_HOOK_SECRET`, wait for Railway to redeploy, then **enable** the hook. From then on Supabase can't text anyone the sign-in page didn't approve, so every text counts towards the app's £20 monthly cap.
 - [ ] Test: sign in on your own phone at `/platform/sign-in`. If the code doesn't arrive, turn the hook off again and check Railway's logs for `sms-hook:`.
 
