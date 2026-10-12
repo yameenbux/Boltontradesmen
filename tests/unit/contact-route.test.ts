@@ -21,12 +21,12 @@ vi.mock("@/lib/supabase/service", () => ({
   }),
 }));
 
-import { GET } from "@/app/api/contact/[slug]/route";
+import { GET, HEAD } from "@/app/api/contact/[slug]/route";
 
-const call = (slug: string, via?: string) =>
+const call = (slug: string, via?: string, ua = "UA") =>
   GET(
     new Request(`http://localhost/api/contact/${slug}${via ? `?via=${via}` : ""}`, {
-      headers: { "x-forwarded-for": "9.9.9.9, 10.0.0.1", "user-agent": "UA" },
+      headers: { "x-forwarded-for": "9.9.9.9, 10.0.0.1", "user-agent": ua },
     }),
     { params: Promise.resolve({ slug }) },
   );
@@ -95,5 +95,22 @@ describe("GET /api/contact/[slug]", () => {
       throw new Error("db down");
     };
     expect((await call("acme", "call")).status).toBe(404);
+  });
+
+  it("does not log link-preview bots, but still redirects via the direct lookup", async () => {
+    state.select = async () => ({ data: { phone_e164: "+447700900123", whatsapp_e164: null }, error: null });
+    const res = await call("acme", "call", "WhatsApp/2.23.20.0");
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe("tel:+447700900123");
+    expect(state.rpcArgs).toHaveLength(0);
+  });
+});
+
+describe("HEAD /api/contact/[slug]", () => {
+  it("returns 204 no-store and logs nothing", async () => {
+    const res = await HEAD();
+    expect(res.status).toBe(204);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(state.rpcArgs).toHaveLength(0);
   });
 });

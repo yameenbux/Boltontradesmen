@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pill } from "@/components/ui/Pill";
-import { CheckForm, ConsentLinkButton, ProviderForm, StatusForm } from "@/components/admin/ProviderForms";
+import { CheckForm, ConsentLinkButton, ProviderForm, ReinviteForm, StatusForm } from "@/components/admin/ProviderForms";
 import { requireAdmin } from "@/lib/admin";
 import { dayMonthYear } from "@/lib/checks";
 
@@ -21,6 +21,7 @@ type Detail = {
   bio: string | null;
   status: string;
   consent_at: string | null;
+  consent_token_expires_at: string | null;
   category_ids: string[];
   checks: Check[];
 };
@@ -54,7 +55,9 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
 
       <section aria-label="Consent link" className="a-card a-consent">
         <h2>Consent</h2>
-        <ConsentLinkButton providerId={p.id} status={p.status} />
+        <ConsentLinkButton providerId={p.id} status={p.status} expires={dayMonthYear(p.consent_token_expires_at)} />
+        {/* Always mounted, so the new link stays on screen after the page refreshes to "invited". */}
+        <ReinviteForm providerId={p.id} removed={p.status === "removed"} />
       </section>
 
       <section aria-label="Status" className="a-card">

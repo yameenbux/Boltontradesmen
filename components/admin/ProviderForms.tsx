@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { newConsentLink, recordCheck, saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
+import { newConsentLink, recordCheck, reinviteProvider, saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
 import { CHECK_KINDS, type FormState } from "@/lib/admin-shared";
 
 const initial: FormState = {};
@@ -156,8 +156,9 @@ export function StatusForm({ providerId, current, hasConsent }: { providerId: st
   );
 }
 
-export function ConsentLinkButton({ providerId, status }: { providerId: string; status: string }) {
+export function ConsentLinkButton({ providerId, status, expires }: { providerId: string; status: string; expires?: string | null }) {
   const [link, setLink] = useState<string | null>(null);
+  const [expiresOn, setExpiresOn] = useState<string | null>(expires ?? null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -171,6 +172,7 @@ export function ConsentLinkButton({ providerId, status }: { providerId: string; 
       return;
     }
     setLink(res.url);
+    if (res.expires) setExpiresOn(res.expires);
     try {
       await navigator.clipboard.writeText(res.url);
       setMessage("Link copied. Any earlier link no longer works.");
@@ -188,8 +190,60 @@ export function ConsentLinkButton({ providerId, status }: { providerId: string; 
         New consent link
       </Button>
       <p className="a-hint">Creates a fresh link and copies it, ready to paste into WhatsApp.</p>
+      {expiresOn && <p className="a-hint">Link expires on {expiresOn}</p>}
       {message && <p role="status" className="a-ok">{message}</p>}
       {link && <input readOnly aria-label="Consent link" value={link} onFocus={(e) => e.currentTarget.select()} className={`${input} w-full`} />}
     </div>
+  );
+}
+
+// Only for removed providers: back to invited with a fresh consent link (they must agree again).
+export function ReinviteForm({ providerId, removed }: { providerId: string; removed: boolean }) {
+  const [state, action, pending] = useActionState(reinviteProvider, initial);
+  const [copied, setCopied] = useState<string | null>(null);
+  const url = typeof state.values?.consent_url === "string" ? state.values.consent_url : null;
+  const expires = typeof state.values?.consent_expires === "string" ? state.values.consent_expires : null;
+
+  async function copy() {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied("Link copied.");
+    } catch {
+      setCopied("Copy the link below.");
+    }
+  }
+
+  if (state.ok && url) {
+    return (
+      <div className="grid gap-3">
+        <Status state={state} />
+        <Button type="button" onClick={copy}>
+          Copy consent link
+        </Button>
+        {expires && <p className="a-hint">Link expires on {expires}</p>}
+        {copied && <p role="status" className="a-ok">{copied}</p>}
+        <input readOnly aria-label="Consent link" value={url} onFocus={(e) => e.currentTarget.select()} className={`${input} w-full`} />
+      </div>
+    );
+  }
+  if (!removed) return null;
+  return (
+    <form action={action} className="a-form">
+      <h3>Re-invite</h3>
+      <input type="hidden" name="provider_id" value={providerId} />
+      <label className="a-field">
+        Reason for re-inviting (kept in the audit log)
+        <textarea name="reason" rows={2} className={input} defaultValue={typeof state.values?.reason === "string" ? state.values.reason : ""} />
+        <FieldError id="reason" state={state} />
+      </label>
+      <Status state={state} />
+      <div className="a-actions">
+        <Button type="submit" variant="primary" disabled={pending}>
+          Re-invite
+        </Button>
+      </div>
+      <p className="a-hint">They go back to invited with a new consent link, and must agree again before going live.</p>
+    </form>
   );
 }

@@ -20,8 +20,9 @@ fi
 
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
-echo "[db-reset] recreating schema public"
+echo "[db-reset] dropping schema private, recreating schema public"
 "${PSQL[@]}" <<'SQL'
+drop schema if exists private cascade;
 drop schema if exists public cascade;
 create schema public authorization postgres;
 comment on schema public is 'standard public schema';

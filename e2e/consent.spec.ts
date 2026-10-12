@@ -95,6 +95,24 @@ test("provider consents via their link, then the admin sets them live", async ({
   await expect(page.getByTestId("provider-status")).toHaveText("live");
 });
 
+test.describe("an expired consent link", () => {
+  let token = "";
+  test.beforeAll(() => {
+    const slug = `e2e-expired-${Date.now()}`;
+    token = sql(
+      `insert into public.providers (slug, business_name, phone_e164, areas, consent_token_expires_at)
+       values ('${slug}', 'E2E Expired', '+447700900129', '{BL1}', now() - interval '1 minute') returning consent_token`,
+    );
+  });
+
+  test("shows the invalid message", async ({ page }) => {
+    expect(token).toMatch(/^[0-9a-f-]{36}$/);
+    await page.goto(`/platform/consent/${token}`);
+    await expect(page.getByText("This link is no longer valid").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "I agree, list me" })).toHaveCount(0);
+  });
+});
+
 test("garbage and unknown tokens show the invalid message", async ({ page }) => {
   await page.goto("/platform/consent/not-a-token");
   await expect(page.getByText("This link is no longer valid").first()).toBeVisible();

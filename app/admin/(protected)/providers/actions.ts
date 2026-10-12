@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/admin";
 import { CHECK_KINDS, SETTABLE_STATUSES, type FormState } from "@/lib/admin-shared";
 import { InvalidPhoneError, toE164 } from "@/lib/phone";
 import { PLATFORM_BASE, platformPath } from "@/lib/paths";
+import { dayMonthYear } from "@/lib/checks";
 
 // Public pages read providers from the database (home is prerendered), so status changes and
 // edits must invalidate them for paused/removed providers to disappear immediately.
@@ -155,6 +156,9 @@ export async function setStatus(_prev: FormState, formData: FormData): Promise<F
       return { errors: { status: "A provider can only go live after giving consent (and not once removed)" } };
     }
     if (error.message.includes("reason is required")) return { errors: { reason: "Enter a reason for removing this provider" } };
+    if (error.message.includes("only return through a new invite")) {
+      return { errors: { status: "A removed provider can only come back through Re-invite" } };
+    }
     return { message: "Could not change the status. Try again." };
   }
   revalidatePath(`/admin/providers/${v.provider_id}`);
@@ -163,12 +167,49 @@ export async function setStatus(_prev: FormState, formData: FormData): Promise<F
   return { ok: true, message: "Status updated" };
 }
 
-// Rotates the provider's consent token (invalidating any earlier link) and returns the new link.
-export async function newConsentLink(providerId: string): Promise<{ url?: string; error?: string }> {
+function consentUrl(token: string): string {
+  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+  return `${base}${platformPath("consent", token)}`;
+}
+
+// Reads the expiry of the provider's current consent token, as "26 October 2026".
+async function consentExpiry(supabase: Awaited<ReturnType<typeof requireAdmin>>["supabase"], providerId: string) {
+  const { data } = await supabase.rpc("admin_get_provider", { p_id: providerId });
+  return dayMonthYear((data as { consent_token_expires_at?: string } | null)?.consent_token_expires_at) ?? undefined;
+}
+
+// Rotates the provider's consent token (invalidating any earlier link) and returns the new link and its expiry.
+export async function newConsentLink(providerId: string): Promise<{ url?: string; expires?: string; error?: string }> {
   const { supabase } = await requireAdmin();
   if (!z.string().uuid().safeParse(providerId).success) return { error: "Unknown provider" };
   const { data, error } = await supabase.rpc("admin_new_consent_token", { p_provider: providerId });
   if (error) return { error: "Could not create a consent link" };
-  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
-  return { url: `${base}${platformPath("consent", data as string)}` };
+  return { url: consentUrl(data as string), expires: await consentExpiry(supabase, providerId) };
+}
+
+const reinviteSchema = z.object({
+  provider_id: z.string().uuid(),
+  reason: z.string().min(1, "Enter a reason for re-inviting this provider").max(500),
+});
+
+// Brings a removed provider back to invited with a fresh consent link. They must consent again before going live.
+export async function reinviteProvider(_prev: FormState, fd: FormData): Promise<FormState> {
+  const { supabase } = await requireAdmin();
+  const parsed = reinviteSchema.safeParse({ provider_id: text(fd.get("provider_id")), reason: text(fd.get("reason")) });
+  if (!parsed.success) return { errors: fieldErrors(parsed.error), values: { reason: text(fd.get("reason")) } };
+  const v = parsed.data;
+  const { data, error } = await supabase.rpc("admin_reinvite_provider", { p_id: v.provider_id, p_reason: v.reason });
+  if (error) {
+    if (error.message.includes("only a removed provider")) return { message: "Only a removed provider can be re-invited." };
+    return { message: "Could not re-invite the provider. Try again.", values: { reason: v.reason } };
+  }
+  revalidatePath(`/admin/providers/${v.provider_id}`);
+  revalidatePath("/admin");
+  revalidatePublicPages();
+  const expires = await consentExpiry(supabase, v.provider_id);
+  return {
+    ok: true,
+    message: "Re-invited. Send them the new consent link: they need to agree again before going live.",
+    values: { consent_url: consentUrl(data as string), ...(expires ? { consent_expires: expires } : {}) },
+  };
 }

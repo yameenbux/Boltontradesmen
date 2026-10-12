@@ -12,7 +12,7 @@ vi.mock("next/navigation", () => ({
 const rpc = vi.fn();
 vi.mock("@/lib/admin", () => ({ requireAdmin: async () => ({ supabase: { rpc }, user: { id: "u" } }) }));
 
-import { newConsentLink, recordCheck, saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
+import { newConsentLink, recordCheck, reinviteProvider, saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
 
 const PID = "11111111-1111-4111-8111-111111111111";
 const PUBLIC_PATHS = [
@@ -76,5 +76,28 @@ describe("newConsentLink", () => {
     rpc.mockResolvedValue({ data: "22222222-2222-4222-8222-222222222222", error: null });
     const res = await newConsentLink(PID);
     expect(res.url).toBe("https://boltonvouched.example/platform/consent/22222222-2222-4222-8222-222222222222");
+  });
+});
+
+describe("reinviteProvider", () => {
+  it("needs a reason and calls nothing without one", async () => {
+    const res = await reinviteProvider({}, form({ provider_id: PID, reason: "  " }));
+    expect(res.errors?.reason).toBe("Enter a reason for re-inviting this provider");
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("re-invites with the reason, returns the new link and revalidates public pages", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://boltonvouched.example";
+    rpc.mockImplementation(async (name: string) =>
+      name === "admin_reinvite_provider"
+        ? { data: "33333333-3333-4333-8333-333333333333", error: null }
+        : { data: { consent_token_expires_at: "2026-10-26T09:00:00Z" }, error: null },
+    );
+    const res = await reinviteProvider({}, form({ provider_id: PID, reason: "asked to come back" }));
+    expect(rpc).toHaveBeenCalledWith("admin_reinvite_provider", { p_id: PID, p_reason: "asked to come back" });
+    expect(res.ok).toBe(true);
+    expect(res.values?.consent_url).toBe("https://boltonvouched.example/platform/consent/33333333-3333-4333-8333-333333333333");
+    expect(res.values?.consent_expires).toBe("26 October 2026");
+    for (const args of PUBLIC_PATHS) expect(revalidatePath).toHaveBeenCalledWith(...args);
   });
 });
