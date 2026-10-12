@@ -14,6 +14,7 @@ test("a provider signs in with their listing's number, replies to a review, and 
   }
 
   const pat = page.getByRole("article", { name: "Review by Pat P." });
+  await pat.getByRole("button", { name: "Reply to Pat" }).click();
   await pat.getByLabel("Your reply").fill("Thanks Pat, glad the boiler's behaving.");
   await expect(pat.getByText("39/400")).toBeVisible();
   await pat.getByRole("button", { name: "Post reply" }).click();

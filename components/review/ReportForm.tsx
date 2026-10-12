@@ -21,17 +21,17 @@ export function ReportForm({
 
   if (state.ok) {
     return (
-      <section className="auth-card" aria-live="polite">
+      <div className="report-done" aria-live="polite">
         <div className="done">
           <svg viewBox="0 0 100 100" aria-hidden="true">
             <circle cx="50" cy="50" r="46" />
             <path d="M30 52 44 65 71 37" />
           </svg>
-          <h1 className="display">Report sent</h1>
+          <h2 className="display">Report sent</h2>
           <p>{state.message}</p>
         </div>
         <Button href={backHref}>Back to {backLabel}</Button>
-      </section>
+      </div>
     );
   }
 

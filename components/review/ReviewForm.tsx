@@ -93,12 +93,18 @@ function Form({
   const [v, setV] = useState<ReviewValues>(initial);
   const formRef = useRef<HTMLFormElement>(null);
   const resultRef = useRef<HTMLHeadingElement>(null);
-  const errors = state.errors ?? {};
+  // A field's error goes as soon as the person changes that answer; a new result brings fresh errors.
+  const [fixed, setFixed] = useState<{ for: ReviewFormState; keys: string[] }>({ for: state, keys: [] });
+  if (fixed.for !== state) setFixed({ for: state, keys: [] });
+  const errors = Object.fromEntries(
+    Object.entries(state.errors ?? {}).filter(([k]) => fixed.for !== state || !fixed.keys.includes(k)),
+  );
 
   const category = categories.find((c) => c.id === v.category_id);
   const asksTidy = category?.asksTidy ?? false;
 
   function set(name: keyof ReviewValues, value: string) {
+    if (state.errors?.[name]) setFixed((f) => ({ ...f, keys: [...f.keys, name] }));
     setV((prev) => {
       const next = { ...prev, [name]: value };
       if (!existing) saveDraft(storage(), slug, next);
@@ -142,10 +148,7 @@ function Form({
               counts. Our automatic checks pick out lots of reviews, good and bad, so it isn&apos;t a judgement on you.
             </p>
           ) : (
-            <p>
-              Thanks, {displayName}. Your review is on {businessName}&apos;s page now, helping the next person in
-              Bolton.
-            </p>
+            <p>Thank you. Your review is live on the {businessName} page now, helping the next person in Bolton.</p>
           )}
           {state.proofError && (
             <p role="alert" className="form-alert">
@@ -175,6 +178,7 @@ function Form({
       <form ref={formRef} onSubmit={onSubmit} className="review-form" aria-label="Your review" noValidate>
         <input type="hidden" name="slug" value={slug} />
         <input type="hidden" name="provider_id" value={providerId} />
+        <input type="hidden" name="asks_tidy" value={asksTidy ? "1" : ""} />
         {existing && <input type="hidden" name="review_id" value={existing.id} />}
 
         {missing && (

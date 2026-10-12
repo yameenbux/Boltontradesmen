@@ -69,9 +69,13 @@ async function prepare(fd: FormData): Promise<Prepared> {
     use_again: field(fd, "use_again") || undefined,
     comment: field(fd, "comment"),
   });
-  if (!parsed.success) {
+  // The form says whether the chosen trade asks about tidiness, so a missing answer is marked with the others.
+  // (Only a convenience: submit_review / edit_review decide from the category itself.)
+  const tidyMissing = field(fd, "asks_tidy") === "1" && !field(fd, "tidy");
+  if (!parsed.success || tidyMissing) {
     const errors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) errors[String(issue.path[0])] ??= issue.message;
+    for (const issue of parsed.success ? [] : parsed.error.issues) errors[String(issue.path[0])] ??= issue.message;
+    if (tidyMissing) errors.tidy = REVIEW_ERRORS.tidy_required;
     return { kind: "done", state: { errors } };
   }
   return { kind: "ready", slug, supabase, p: { provider_id: providerId, ...parsed.data } };

@@ -16,6 +16,7 @@ export function ruleText(rule: string): string {
 export function accountAge(createdAt: string | null, now: Date = new Date()): string {
   if (!createdAt) return "account age unknown";
   const mins = Math.max(0, Math.round((now.getTime() - new Date(createdAt).getTime()) / 60000));
+  if (mins < 1) return "account made just now";
   if (mins < 60) return `account made ${mins} minute${mins === 1 ? "" : "s"} ago`;
   const hours = Math.round(mins / 60);
   if (hours < 48) return `account made ${hours} hour${hours === 1 ? "" : "s"} ago`;

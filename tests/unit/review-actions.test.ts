@@ -117,6 +117,13 @@ describe("submitReview", () => {
     expect(rpc).not.toHaveBeenCalledWith("submit_review", expect.anything());
   });
 
+  it("marks a missing tidy answer when the trade asks it", async () => {
+    signedIn({});
+    const res = await submitReview({}, form({ ...answers, asks_tidy: "1" }));
+    expect(res.errors).toEqual({ tidy: "Tell us whether they left the place tidy." });
+    expect(rpc).not.toHaveBeenCalledWith("submit_review", expect.anything());
+  });
+
   it("sends a signed-out person to sign in, coming back to the form", async () => {
     auth.getUser.mockResolvedValue({ data: { user: null } });
     await expect(submitReview({}, form(answers))).rejects.toThrow(

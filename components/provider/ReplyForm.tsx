@@ -36,6 +36,15 @@ export function ReplyForm({
   const err = state.errors?.body;
   const fieldId = `reply-${reviewId}`;
 
+  if (!reply && !editing) {
+    return (
+      <button type="button" className="reply-open press" onClick={() => setEditing(true)}>
+        <ReplyIcon />
+        Reply to {reviewerName.split(" ")[0]}
+      </button>
+    );
+  }
+
   if (reply && !editing) {
     return (
       <div className="reply-box">
@@ -94,6 +103,7 @@ export function ReplyForm({
         onChange={(e) => setBody(e.target.value)}
         placeholder={`Thank ${reviewerName.split(" ")[0]}, or give your side politely.`}
         aria-invalid={err ? true : undefined}
+        autoFocus
       />
       <span className="counter" data-near={body.length > REPLY_MAX - 40 || undefined}>
         {body.length}/{REPLY_MAX}
@@ -109,12 +119,25 @@ export function ReplyForm({
         <Button type="submit" disabled={pending} aria-busy={pending}>
           {pending ? "Posting…" : reply ? "Save reply" : "Post reply"}
         </Button>
-        {reply && (
-          <button type="button" className="text-btn" onClick={() => setEditing(false)}>
-            Cancel
-          </button>
-        )}
+        <button type="button" className="text-btn" onClick={() => setEditing(false)}>
+          Cancel
+        </button>
       </div>
     </form>
   );
 }
+
+const ReplyIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M9 17 4 12l5-5" />
+    <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+  </svg>
+);
