@@ -1,4 +1,6 @@
-// Response headers and redirects for next.config.ts: HTTPS, CSP and the usual hardening headers.
+// Response headers for next.config.ts: HSTS, CSP and the usual hardening headers.
+// http → https itself happens at Railway's edge (docs.railway.com: "Railway redirects HTTP to HTTPS"). An app-level
+// X-Forwarded-Proto redirect also caught Next's own internal fetch after a server action redirect, so there isn't one.
 // Pure (no "@/" imports, no server-only) so next.config.ts can import it and it can be unit tested.
 type Env = Record<string, string | undefined>;
 type Header = { key: string; value: string };
@@ -84,23 +86,5 @@ export function securityHeaders(env: Env = process.env) {
       source,
       headers: [{ key: "Referrer-Policy", value: "no-referrer" }, noindex],
     })),
-  ];
-}
-
-/**
- * http → https, same host and path. Railway terminates TLS and passes the scheme in X-Forwarded-Proto; a local
- * `next start` gets no such header, so plain-http e2e runs are never redirected.
- */
-export function httpsRedirects() {
-  return [
-    {
-      source: "/:path*",
-      has: [
-        { type: "header" as const, key: "x-forwarded-proto", value: "http" },
-        { type: "host" as const, value: "(?<host>.+)" },
-      ],
-      destination: "https://:host/:path*",
-      permanent: true,
-    },
   ];
 }

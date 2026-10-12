@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contentSecurityPolicy, httpsRedirects, securityHeaders, supabaseOrigin } from "@/lib/security-headers";
+import { contentSecurityPolicy, securityHeaders, supabaseOrigin } from "@/lib/security-headers";
 
 const PROD = { NODE_ENV: "production", NEXT_PUBLIC_SUPABASE_URL: "https://abc.supabase.co/" };
 const directive = (csp: string, name: string) => csp.split("; ").find((d) => d.startsWith(`${name} `));
@@ -79,21 +79,5 @@ describe("securityHeaders", () => {
     // Next applies every matching rule in order, the last one winning, so the override must follow the catch-all.
     const order = rules.map((r) => r.source);
     expect(order.indexOf("/platform/consent/:path*")).toBeGreaterThan(order.indexOf("/:path*"));
-  });
-});
-
-describe("httpsRedirects", () => {
-  it("permanently redirects requests that reached the proxy over http to the same host and path", () => {
-    expect(httpsRedirects()).toEqual([
-      {
-        source: "/:path*",
-        has: [
-          { type: "header", key: "x-forwarded-proto", value: "http" },
-          { type: "host", value: "(?<host>.+)" },
-        ],
-        destination: "https://:host/:path*",
-        permanent: true,
-      },
-    ]);
   });
 });
