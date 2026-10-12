@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import { ActionBar } from "@/components/profile/ActionBar";
 import { ChecksList } from "@/components/profile/ChecksList";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { ReviewList } from "@/components/profile/ReviewList";
 import { StatCard } from "@/components/profile/StatCard";
 import { getProvider, listCategoryGroups } from "@/lib/directory";
 import { firstName } from "@/lib/initials";
 import { platformPath } from "@/lib/paths";
+import { listProviderReviews } from "@/lib/reviews";
 
 export const revalidate = 300;
 
@@ -39,6 +41,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
     const name = names.get(s);
     return name ? [{ slug: s, name }] : [];
   });
+  const reviews = await listProviderReviews(p.id);
   const back = trades[0] ? { href: platformPath("c", trades[0].slug), label: trades[0].name } : { href: platformPath(), label: "All trades" };
 
   return (
@@ -62,6 +65,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
           <p className="bio">{p.bio}</p>
         </section>
       )}
+      <ReviewList reviews={reviews} slug={p.slug} businessName={p.businessName} />
       <ActionBar
         slug={p.slug}
         businessName={p.businessName}

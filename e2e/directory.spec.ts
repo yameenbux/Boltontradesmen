@@ -9,8 +9,8 @@ test("category page ranks scored providers and lists newcomers separately", asyn
   const ranked = page.getByTestId("ranked-list");
   const ace = ranked.getByRole("link", { name: /Ace Plumbing/ });
   await expect(ace).toHaveAttribute("href", "/platform/p/e2e-ace-plumbing");
-  await expect(ace.getByTestId("score")).toHaveText(/^100%\s*would use again\s*4 reviews$/);
-  await expect(ace.getByText("Verified")).toBeVisible();
+  await expect(ace.getByTestId("score")).toHaveText(/^100%\s*would use again\s*4 reviews · 1 verified job$/);
+  await expect(ace.getByText("Verified", { exact: true })).toBeVisible();
   await expect(ace.getByText("BL1 · BL3 · BL4")).toBeVisible();
   await expect(ace.getByText("AP", { exact: true })).toBeVisible();
   await expect(ranked.getByText("Fresh Pipes")).toHaveCount(0);
@@ -61,16 +61,21 @@ test("area chips filter providers and show an empty state when none cover the ar
   await expect(page.getByText(/Nobody listed for/)).toHaveCount(0);
 });
 
-test("category with no live providers shows a friendly empty state and its guidance note", async ({ page }) => {
-  const res = await page.goto("/platform/c/electrician");
+test("category with no live providers shows a friendly empty state", async ({ page }) => {
+  const res = await page.goto("/platform/c/roofer");
   expect(res?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Electrician");
-  await expect(page.getByText(/NICEIC\/NAPIT/)).toBeVisible();
-  await expect(page.getByText("Nobody's listed for Electrician yet.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Roofer");
+  await expect(page.getByText("Nobody's listed for Roofer yet.")).toBeVisible();
   await expect(page.getByText("Know a good one? Message the group admin to get them added.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Browse other trades" })).toHaveAttribute("href", "/platform");
   await expect(page.getByRole("group", { name: "Your area" })).toHaveCount(0);
   await expect(page.getByTestId("ranked-list")).toHaveCount(0);
+});
+
+test("a category's guidance note shows at the top", async ({ page }) => {
+  await page.goto("/platform/c/electrician");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Electrician");
+  await expect(page.getByText(/NICEIC\/NAPIT/)).toBeVisible();
 });
 
 test("unknown category and provider are 404", async ({ page }) => {
@@ -104,7 +109,47 @@ test("profile shows the header, stat card, checks list and about card", async ({
   ]);
 
   await expect(page.getByRole("region", { name: "About" })).toContainText("Boilers, leaks and bathrooms across Bolton.");
-  await expect(page.getByRole("heading", { name: /Reviews/ })).toHaveCount(0);
+});
+
+test("profile lists reviews with Verified job and Group member filters", async ({ page }) => {
+  await page.goto("/platform/p/e2e-ace-plumbing");
+  const section = page.getByRole("region", { name: /^Reviews/ });
+  const items = section.getByRole("article");
+  await expect(items).toHaveCount(4);
+  for (const name of ["Pat P.", "Jo B.", "Sam T.", "Ali R."]) await expect(section.getByText(name, { exact: true })).toBeVisible();
+  await expect(section.getByRole("link", { name: "Leave a review" })).toHaveAttribute(
+    "href",
+    "/platform/p/e2e-ace-plumbing/review",
+  );
+
+  const verified = section.getByRole("button", { name: /Verified job/ });
+  await verified.click();
+  await expect(verified).toHaveAttribute("aria-pressed", "true");
+  await expect(items).toHaveCount(1);
+  await expect(items.first()).toContainText("Pat P.");
+  await expect(items.first().getByText("Verified job", { exact: true })).toBeVisible();
+  await verified.click();
+  await expect(items).toHaveCount(4);
+
+  await section.getByRole("button", { name: /Group member/ }).click();
+  await expect(items).toHaveCount(2);
+
+  const report = items.first().getByRole("link", { name: "Report" });
+  await expect(report).toHaveAttribute("href", /^\/platform\/report\/[0-9a-f-]{36}$/);
+  await expect(report).toHaveAttribute("rel", /nofollow/);
+});
+
+test("an under-check review stays visible with its label; a profile with no reviews invites one", async ({ page }) => {
+  await page.goto("/platform/p/e2e-calm-carpentry");
+  const section = page.getByRole("region", { name: /^Reviews/ });
+  await expect(section.getByRole("article")).toHaveCount(1);
+  await expect(section.getByText("Under check", { exact: true })).toBeVisible();
+  await expect(section.getByText("This review is being checked. It still counts while we look.")).toBeVisible();
+
+  await page.goto("/platform/p/e2e-tidy-vans");
+  const empty = page.getByRole("region", { name: /^Reviews/ });
+  await expect(empty.getByText("No reviews yet. Used them? Be the first to leave one.")).toBeVisible();
+  await expect(empty.getByRole("link", { name: "Leave a review" })).toHaveAttribute("href", "/platform/p/e2e-tidy-vans/review");
 });
 
 test("profile action bar calls by first name, sits at the viewport bottom and hides nothing", async ({ page, request }) => {

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-// Fixture (supabase/tests/fixtures/e2e.sql): three live providers, all plumbers. Every other category is empty.
+// Fixture (supabase/tests/fixtures/e2e.sql): three live plumbers, plus one live joiner, electrician and man & van
+// (review targets for the sign-in specs). Every other category is empty.
 
 test("hero shows the headline and the search", async ({ page }) => {
   await page.goto("/platform");
@@ -13,7 +14,7 @@ test("hero shows the headline and the search", async ({ page }) => {
 test("most asked for shows tiles only for categories with live providers", async ({ page }) => {
   await page.goto("/platform");
   const tiles = page.getByTestId("popular-tiles");
-  await expect(tiles.getByRole("link")).toHaveCount(1);
+  await expect(tiles.getByRole("link")).toHaveCount(4);
   const plumber = tiles.getByRole("link", { name: /Plumber/ });
   await expect(plumber).toHaveAttribute("href", "/platform/c/plumber");
   // 3 fixture plumbers; consent.spec may set a 4th plumber live (and revalidate /platform) while this runs.
@@ -33,7 +34,7 @@ test("everything else groups show counts, links for live categories and 'soon' c
     await expect(page.locator("details.group > summary", { hasText: name })).toBeVisible();
   }
   const home = page.locator("details", { hasText: "Home & trades" });
-  await expect(home.locator("summary")).toContainText("· 1 with pros");
+  await expect(home.locator("summary")).toContainText("· 3 with pros");
   await home.locator("summary").click();
   await expect(home.getByRole("link", { name: /Plumber/ })).toHaveAttribute("href", "/platform/c/plumber");
   // Empty categories are plain text, not links.

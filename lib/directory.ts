@@ -24,6 +24,8 @@ export type PublicProvider = {
   score: number | null;
   lastReviewAt: string | null;
   createdAt: string;
+  /** Published or under-check reviews with a proof the admin accepted ("Verified job"). */
+  verifiedJobCount: number;
 };
 
 export type Group = { id: string; name: string; slug: string; sort: number };
@@ -58,6 +60,7 @@ function toProvider(r: any): PublicProvider {
     score: r.score === null || r.score === undefined ? null : Number(r.score),
     lastReviewAt: r.last_review_at,
     createdAt: r.created_at,
+    verifiedJobCount: r.verified_job_count ?? 0,
   };
 }
 
@@ -107,9 +110,10 @@ export async function listProvidersInCategory(
   const { data, error } = await q;
   if (error) throw new Error(`listProvidersInCategory: ${error.message}`);
   const all = (data ?? []).map(toProvider);
-  // Ordering depends only on review data; nothing about payment is available here.
+  // Ordering depends only on review data; nothing about payment is available here. A score needs 3 reviews
+  // (the view enforces it too); the count check keeps the two lists disjoint whatever the view returns.
   const ranked = all
-    .filter((p) => p.score !== null)
+    .filter((p) => p.score !== null && p.reviewCount >= 3)
     .sort(
       (a, b) =>
         (b.score as number) - (a.score as number) ||

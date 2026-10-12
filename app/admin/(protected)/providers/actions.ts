@@ -6,16 +6,11 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
 import { CHECK_KINDS, SETTABLE_STATUSES, type FormState } from "@/lib/admin-shared";
 import { InvalidPhoneError, toE164 } from "@/lib/phone";
-import { PLATFORM_BASE, platformPath } from "@/lib/paths";
+import { platformPath } from "@/lib/paths";
 import { dayMonthYear } from "@/lib/checks";
-
 // Public pages read providers from the database (home is prerendered), so status changes and
 // edits must invalidate them for paused/removed providers to disappear immediately.
-function revalidatePublicPages() {
-  revalidatePath(`${PLATFORM_BASE}/p/[slug]`, "page");
-  revalidatePath(`${PLATFORM_BASE}/c/[category]`, "page");
-  revalidatePath(platformPath());
-}
+import { revalidatePublicPages } from "@/lib/revalidate-public";
 
 const text = (v: FormDataEntryValue | null) => (typeof v === "string" ? v.trim() : "");
 
