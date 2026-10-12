@@ -29,6 +29,17 @@ export default function HowRatingsWorkPage() {
       <H2>Minimum number of reviews</H2>
       <p>No score is shown for a provider with fewer than 3 reviews. Until then they are listed as new.</p>
 
+      <H2>How lists are ordered</H2>
+      <p>
+        In each trade, providers with 3 or more reviews come first, highest quality score first. If two have the same
+        score, the one with more reviews comes first, then the one with the most recent review. Providers with fewer than
+        3 reviews are listed after them under &ldquo;New on Bolton Vouched&rdquo;, newest listing first.
+      </p>
+      <p>
+        Would use again, On time, Stuck to price and Tidy are shown on each listing to help you choose, but they
+        don&apos;t decide the order.
+      </p>
+
       <H2>Newer reviews count more</H2>
       <p>Recent work is the best guide, so a review&apos;s influence halves every two years.</p>
 

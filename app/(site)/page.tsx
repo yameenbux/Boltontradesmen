@@ -30,7 +30,7 @@ const STEPS: { icon: IconName; title: string; text: string }[] = [
   {
     icon: "people",
     title: "See who Bolton recommends",
-    text: "Every listing shows what we've checked. People are ranked by how many would use them again.",
+    text: "Every listing shows what we've checked. People are ranked by what reviewers say about the quality of their work.",
   },
   { icon: "phone", title: "Call or WhatsApp", text: "One tap from their page. No sign-up, no forms, no middleman." },
 ];
@@ -62,7 +62,7 @@ const FAIR: { icon: IconName; title: string; text: string }[] = [
   {
     icon: "star",
     title: "Ranked by people",
-    text: "The order comes from how many would use someone again. Not adverts, and not who shouts loudest in the group.",
+    text: "The order comes from what reviewers say about the quality of the work. Not adverts, and not who shouts loudest in the group.",
   },
   {
     icon: "shield",
@@ -162,8 +162,8 @@ export default function ShowcasePage() {
           </h1>
           <p className="s-lede s-in s-in-3">
             Every week someone in the group asks for a plumber, a cleaner or a cake. Bolton Vouched keeps the answers in
-            one place. People are ranked by how many neighbours would use them again, and nobody can pay to move
-            up.
+            one place. People are ranked by what neighbours say about the quality of their work, and nobody can pay
+            to move up.
           </p>
           <div className="s-ctas s-in s-in-4">
             <Link href={PLATFORM} className="s-btn s-btn-primary">

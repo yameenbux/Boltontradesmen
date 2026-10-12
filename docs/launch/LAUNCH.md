@@ -84,7 +84,7 @@ Sign-in codes cost money per text. The app limits how many it asks for, but only
 >
 > Your page: [PROFILE LINK — e.g. https://boltonvouched.ysbdesigns.uk/platform/p/ace-plumbing]
 >
-> People can now find you and ring or WhatsApp you straight from it. Your place in the list comes from reviews only; nobody can pay to jump ahead. Reviews are open, so share your link with happy customers and ask them to leave one. Sign in with this number to reply.
+> People can now find you and ring or WhatsApp you straight from it. Your place in the list comes from what reviewers say about the quality of your work; nobody can pay to jump ahead. Reviews are open, so share your link with happy customers and ask them to leave one. Sign in with this number to reply.
 >
 > If anything on your listing needs changing, just drop me a message.
 

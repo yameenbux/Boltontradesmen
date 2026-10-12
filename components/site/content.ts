@@ -154,7 +154,7 @@ export const FAQ: Faq[] = [
     q: "How are people ranked?",
     a: [
       [
-        "People are ranked by how many reviewers said they'd use them again. Nobody gets a score until they have three reviews, newer reviews count for more, and a handful of reviews can't put anyone on top. Nobody can pay to move up.",
+        "People are ranked by what reviewers say about the quality of the work, with a fair adjustment so a couple of reviews can't put anyone on top. Nobody gets a score until they have three reviews, and newer reviews count for more. Nobody can pay to move up.",
       ],
       ["The full detail is on ", { href: "/how-ratings-work", label: "how ratings work" }, "."],
     ],

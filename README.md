@@ -95,7 +95,7 @@ One site, free for residents and free for traders.
   ("Published", or "Published, under a quick check" when an anti-fake rule trips),
   editable for 14 days, with an optional private proof photo or PDF (location data
   stripped). Profiles list them with Verified job and Group member filters, and the
-  category list ranks anyone with three or more.
+  category list ranks anyone with three or more by their quality score.
 - **Provider replies** at `/platform/provider`: a trader signs in with the number on
   their listing and replies once to each review.
 - **Report** on every review, and **My reviews** and **Delete account** at

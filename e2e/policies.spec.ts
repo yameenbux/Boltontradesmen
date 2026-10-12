@@ -82,6 +82,9 @@ test("how ratings work states the minimum and that payment never affects ranking
   await page.goto("/how-ratings-work");
   await expect(page.getByText("Payment never affects ranking").first()).toBeVisible();
   await expect(page.getByText(/3 reviews/).first()).toBeVisible();
+  // The order is the quality score, then the number of reviews, then the most recent review (lib/directory.ts).
+  await expect(page.getByRole("heading", { name: "How lists are ordered" })).toBeVisible();
+  await expect(page.getByText(/highest quality score first\. If two have the same score/)).toBeVisible();
 });
 
 for (const { path } of policies) {
