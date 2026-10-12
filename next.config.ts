@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { httpsRedirects, securityHeaders } from "./lib/security-headers";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -15,8 +16,13 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  async headers() {
+    // HSTS, CSP and the other hardening headers on every route; see lib/security-headers.ts.
+    return securityHeaders();
+  },
   async redirects() {
     return [
+      ...httpsRedirects(),
       // The directory moved under /platform. Old links (shared in WhatsApp, sent as consent links) keep working: 308.
       { source: "/c/:category", destination: "/platform/c/:category", permanent: true },
       { source: "/p/:slug", destination: "/platform/p/:slug", permanent: true },
