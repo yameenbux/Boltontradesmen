@@ -407,6 +407,7 @@ h1,h2,h3{text-wrap:balance}
   .auth-card h1{font-family:var(--display); font-weight:400; font-size:clamp(30px,8.4vw,34px); line-height:1.08; margin:6px 0 0; overflow-wrap:anywhere}
   .auth-card h2{font-family:var(--display); font-weight:400; font-size:23px; line-height:1.15; margin:0}
   .auth-card .lede{margin:8px 0 0; color:var(--ink-2); font-size:16.5px}
+  .auth-card .lede a{color:var(--brick); font-weight:700; text-decoration:underline; text-underline-offset:3px}
   .auth-card .lede b{color:var(--ink); white-space:nowrap}
   .auth-form{display:grid; gap:18px}
   .field{display:grid; gap:7px; font-size:17px; font-weight:700; color:var(--ink)}

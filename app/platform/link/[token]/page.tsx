@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AlertIcon, ShopIcon } from "@/components/auth/icons";
+import { AlertIcon } from "@/components/auth/icons";
 import { CONTACT_EMAIL, MAILTO, SUPPORT_WHATSAPP_DISPLAY, WHATSAPP } from "@/components/site/content";
 import { Button } from "@/components/ui/Button";
 import { requireMember } from "@/lib/auth";
@@ -30,21 +30,14 @@ export default async function TraderLinkPage({ params }: { params: Promise<{ tok
     return (
       <main className="auth">
         <section className="auth-card" aria-labelledby="link-title">
-          <div className="who-card">
-            <span className="avatar listing-icon" aria-hidden="true">
-              <ShopIcon />
-            </span>
-            <div>
-              <p className="eyebrow">Your listing</p>
-              <h1 id="link-title" className="name">
-                Link {business} to your account?
-              </h1>
-            </div>
+          <div>
+            <p className="eyebrow">Your listing</p>
+            <h1 id="link-title">Link {business} to your account?</h1>
+            <p className="lede">
+              You&apos;ll be able to reply to reviews of {business} when you&apos;re signed in. Only say yes if this is
+              your business. The link works once.
+            </p>
           </div>
-          <p className="lede">
-            You&apos;ll be able to reply to reviews of {business} when you&apos;re signed in. Only say yes if this is
-            your business. The link works once.
-          </p>
           <ClaimForm token={token} />
         </section>
       </main>
