@@ -21,11 +21,12 @@ export default async function AdminHome() {
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as Row[];
   const { data: c } = await supabase.rpc("admin_counts");
-  const counts = (c ?? { pending: 0, under_check: 0, open_flags: 0, pending_proofs: 0 }) as {
+  const counts = (c ?? { pending: 0, under_check: 0, open_flags: 0, pending_proofs: 0, listing_requests: 0 }) as {
     pending: number;
     under_check: number;
     open_flags: number;
     pending_proofs: number;
+    listing_requests?: number;
   };
   const waiting = [
     {
@@ -43,6 +44,11 @@ export default async function AdminHome() {
       href: "/admin/proofs",
       n: counts.pending_proofs,
       text: `${counts.pending_proofs} proof${counts.pending_proofs === 1 ? "" : "s"} to check`,
+    },
+    {
+      href: "/admin/requests",
+      n: counts.listing_requests ?? 0,
+      text: `${counts.listing_requests ?? 0} new listing request${counts.listing_requests === 1 ? "" : "s"}`,
     },
   ];
   return (
@@ -82,8 +88,9 @@ export default async function AdminHome() {
       <section className="a-card" aria-labelledby="tidy-title">
         <h2 id="tidy-title">Sign-in records</h2>
         <p className="a-lede">
-          Sign-in records are deleted after 30 days, and accounts where a code was asked for but never used after 24
-          hours, as the privacy notice says. Email-code requests do this every hour; press this to do it now.
+          Sign-in records are deleted after 30 days, accounts where a code was asked for but never used after 24
+          hours, and listing requests after 90 days, as the privacy notice says. Email-code requests do this every
+          hour; press this to do it now.
         </p>
         <TidySignInRecordsForm />
       </section>

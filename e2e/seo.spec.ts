@@ -35,6 +35,8 @@ test("sitemap.xml lists public pages and live providers, nothing private, no pho
     "/how-ratings-work",
     "/review-policy",
     "/fake-reviews-policy",
+    "/cookies",
+    "/get-listed",
   ]) {
     expect(locs).toContain(`${ORIGIN}${path}`);
   }

@@ -5,6 +5,7 @@ import {
   CONTACT_EMAIL,
   DECK,
   FAQ,
+  GET_LISTED,
   LISTING_TICKET,
   LISTING_WHATSAPP,
   MAILTO,
@@ -359,14 +360,22 @@ export default function ShowcasePage() {
               <div className="s-listme reveal">
                 <h3>Want to be listed?</h3>
                 <p>
-                  Raise a support ticket by emailing <a href={LISTING_TICKET}>{CONTACT_EMAIL}</a> or on WhatsApp at{" "}
+                  Fill in a short form and we&apos;ll WhatsApp or call you within 2 working days. You&apos;ll see your
+                  listing before anyone else does.
+                </p>
+                <p>
+                  Prefer to message? Raise a support ticket by emailing <a href={LISTING_TICKET}>{CONTACT_EMAIL}</a> or
+                  on WhatsApp at{" "}
                   <a href={LISTING_WHATSAPP} target="_blank" rel="noopener noreferrer">
                     {SUPPORT_WHATSAPP_DISPLAY}
                   </a>{" "}
-                  with your name, trade and the areas you cover. You&apos;ll see your listing before anyone else does.
+                  with your name, trade and the areas you cover.
                 </p>
                 <div className="s-listme-ctas">
-                  <a href={LISTING_WHATSAPP} target="_blank" rel="noopener noreferrer" className="s-btn s-btn-primary">
+                  <Link href={GET_LISTED} className="s-btn s-btn-primary">
+                    <Icon name="check" /> Request a listing
+                  </Link>
+                  <a href={LISTING_WHATSAPP} target="_blank" rel="noopener noreferrer" className="s-btn s-btn-ghost">
                     <Icon name="whatsapp" /> WhatsApp us
                   </a>
                   <a href={LISTING_TICKET} className="s-btn s-btn-ghost">

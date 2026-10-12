@@ -45,9 +45,10 @@ describe("buildSitemap", () => {
   const map = buildSitemap({ categories, providers }, BASE);
   const urls = map.map((e) => e.url);
 
-  it("lists home, the directory, live categories, live providers and policy pages", () => {
+  it("lists home, the Get listed form, the directory, live categories, live providers and policy pages", () => {
     expect(urls).toEqual([
       `${BASE}/`,
+      `${BASE}/get-listed`,
       `${BASE}/platform`,
       `${BASE}/platform/c/plumber`,
       `${BASE}/platform/c/electrician`,
@@ -58,6 +59,7 @@ describe("buildSitemap", () => {
       `${BASE}/how-ratings-work`,
       `${BASE}/review-policy`,
       `${BASE}/fake-reviews-policy`,
+      `${BASE}/cookies`,
     ]);
   });
 
@@ -79,6 +81,7 @@ describe("buildSitemap", () => {
   it("works with no providers at all", () => {
     expect(buildSitemap({ categories, providers: [] }, BASE).map((e) => e.url)).toEqual([
       `${BASE}/`,
+      `${BASE}/get-listed`,
       `${BASE}/platform`,
       `${BASE}/platform/c/plumber`,
       `${BASE}/platform/c/electrician`,
@@ -87,6 +90,7 @@ describe("buildSitemap", () => {
       `${BASE}/how-ratings-work`,
       `${BASE}/review-policy`,
       `${BASE}/fake-reviews-policy`,
+      `${BASE}/cookies`,
     ]);
   });
 });

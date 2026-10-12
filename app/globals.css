@@ -111,6 +111,12 @@ h1,h2,h3{text-wrap:balance}
   .policy-body{display:grid; gap:14px; line-height:1.6; color:var(--ink); overflow-wrap:anywhere}
   .policy-body a{color:var(--brick); text-underline-offset:3px}
   .policy-body ul{margin:0; padding-left:22px; list-style:disc; display:grid; gap:6px}
+  .policy-body code{font-size:.88em; padding:1px 5px; border-radius:6px; background:var(--surface-2); overflow-wrap:anywhere}
+  .policy-table{overflow-x:auto; border:1px solid var(--line); border-radius:14px}
+  .policy-table table{width:100%; min-width:520px; border-collapse:collapse; font-size:15px; line-height:1.45}
+  .policy-table th,.policy-table td{padding:10px 12px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line)}
+  .policy-table tr:last-child td{border-bottom:0}
+  .policy-table th{font-weight:700; background:var(--surface-2)}
   .draft-note{margin:6px 0 14px; padding:12px 14px; border-radius:var(--r-sm); font-size:15px; font-weight:700;
     background:color-mix(in srgb,var(--gold) 16%,var(--surface)); color:color-mix(in srgb,var(--gold) 62%,var(--ink));
     border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line))}
@@ -154,6 +160,9 @@ h1,h2,h3{text-wrap:balance}
   .a-counts a{display:inline-flex; align-items:center; min-height:44px; padding:0 14px; border-radius:12px; background:var(--surface-2); color:var(--ink-2); font-size:15px; font-weight:700; text-decoration:none}
   .a-counts a[data-some]{background:var(--brick-tint); color:color-mix(in srgb,var(--brick) 72%,var(--ink))}
   .mod-list{display:grid; gap:16px}
+  .a-dl{display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 14px; margin:0; font-size:16px}
+  .a-dl dt{font-weight:700; color:var(--ink-2)}
+  .a-dl dd{margin:0; overflow-wrap:anywhere}
   .mod-card{gap:16px}
   .mod-review{display:grid; gap:8px}
   .mod-head{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px}
@@ -565,6 +574,7 @@ h1,h2,h3{text-wrap:balance}
   .reply-form .textarea{min-height:96px; font-size:17px; background:var(--surface)}
   .reply-actions{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px}
   .reply-actions .btn{flex:1 1 160px}
+  .thanks-list{margin:0; padding-left:22px; list-style:disc; display:grid; gap:8px; color:var(--ink-2); line-height:1.5}
   .report-done{display:grid; gap:14px}
   .report-done .done{padding:8px 4px 0}
   .report-done .done h2{font-size:32px; line-height:1.1}

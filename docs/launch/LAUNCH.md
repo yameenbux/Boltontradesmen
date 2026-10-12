@@ -63,6 +63,7 @@ The reviews and phone sign-in release needs these database changes in production
 15. `20261012000016_review2_minors.sql` — confirmed-mobile check, report limit, the admin can't delete itself.
 16. `20261012000017_owner_decisions.sql` — 5 wrong group codes per person a day; number Lookups count towards the £20 monthly cap (`lookup_cost_gbp`, £0.01); proof files can be deleted 12 months after they're checked.
 17. **Plan 2b (free sign-in):** paste the whole of `docs/launch/plan-2b-production.sql` **once** and **Run** (it's migrations 000018 onwards in one transaction, ending with a check that fails loudly if anything is missing; it should say `Plan 2b database changes applied` with the number of migrations in it). Do this before Plan 2b is merged to `main`, after Step 3b's settings.
+18. **Launch checklist (Get listed form):** after step 17, paste the whole of `docs/launch/launch-checklist-production.sql` **once** and **Run** (migration 000026 onwards in one transaction; it refuses to run, changing nothing, if step 17 hasn't been done). It should say `Launch checklist database changes applied` with the number of migrations in it. Do this before the launch checklist branch is merged to `main`: the /get-listed form needs it.
 
 Check afterwards: `select proname from pg_proc where proname in ('otp_approve','sms_hook_gate','submit_review','delete_my_account','otp_verify_gate','proof_files_due');` returns six rows, and `select pg_get_function_identity_arguments('public.submit_review'::regproc);` shows `p_uid uuid, p jsonb, p_device_hash text`.
 

@@ -121,6 +121,7 @@ test("traders can see how to get listed", async ({ page }) => {
   await expect(traders).toContainText(
     "Raise a support ticket by emailing support@ysbdesigns.uk or on WhatsApp at 07466 487591",
   );
+  await expect(traders.getByRole("link", { name: "Request a listing" })).toHaveAttribute("href", "/get-listed");
   const whatsapp = traders.getByRole("link", { name: "WhatsApp us" });
   await expect(whatsapp).toHaveAttribute("href", LISTING_WA);
   await expect(whatsapp).toHaveAttribute("target", "_blank");

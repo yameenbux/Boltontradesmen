@@ -21,8 +21,11 @@ test("a resident reports a review; the admin sees it under Flags", async ({ page
   await expect(page).toHaveURL(new RegExp(`${next}$`));
 
   await expect(page.getByText("New radiator in the back bedroom. Tidy, polite and quick.")).toBeVisible();
+  // An empty report is stopped by the browser (required); the server still refuses one on its own.
   await page.getByRole("button", { name: "Send report" }).click();
-  await expect(page.getByText("Tell us what's wrong with it, in up to 500 characters.")).toBeVisible();
+  const box = page.getByLabel("What's wrong with this review?");
+  expect(await box.evaluate((el: HTMLTextAreaElement) => el.validity.valueMissing)).toBe(true);
+  await expect(page).toHaveURL(new RegExp(`${next}$`));
   const note = `Jo is the owner's brother ${Date.now()}`;
   await page.getByLabel("What's wrong with this review?").fill(note);
   await page.getByRole("button", { name: "Send report" }).click();

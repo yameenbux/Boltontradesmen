@@ -22,6 +22,9 @@ export const LISTING_WHATSAPP = whatsappTicket(
 export const REMOVAL_WHATSAPP = whatsappTicket("Hi, please remove my Bolton Vouched listing.");
 export const REPORT_WHATSAPP = whatsappTicket("Hi, I'd like to report a problem on Bolton Vouched: …");
 
+// The "Get listed" request form (the main way in for traders; the email and WhatsApp tickets above still work).
+export const GET_LISTED = "/get-listed";
+
 // The legally required company details (registered name and number), shared with the platform footer and policies.
 export { COMPANY_LINE } from "@/lib/company";
 export const PLATFORM = platformPath();
@@ -162,7 +165,12 @@ export const FAQ: Faq[] = [
   {
     q: "How do I get listed?",
     a: [
-      [...ticketRoutes(LISTING_TICKET, LISTING_WHATSAPP), " with your name, trade and the areas you cover."],
+      [
+        "Fill in the ",
+        { href: GET_LISTED, label: "Get listed form" },
+        " and we'll WhatsApp or call you within 2 working days. It's free.",
+      ],
+      [...ticketRoutes(LISTING_TICKET, LISTING_WHATSAPP, "Or raise"), " with your name, trade and the areas you cover."],
       [
         "You'll get a link showing exactly how your listing will look. Nothing goes live until you've read it and tapped to agree.",
       ],
