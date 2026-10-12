@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import { H2, List, PolicyPage } from "@/components/PolicyPage";
+import { pageMetadata } from "@/lib/seo";
 import { COMPANY_LINE } from "@/lib/company";
 import { policyIdentity } from "@/lib/policy-config";
 
-export const metadata: Metadata = { title: "Privacy notice | Bolton Vouched" };
+export const metadata: Metadata = pageMetadata({
+  title: "Privacy notice | Bolton Vouched",
+  description:
+    "What personal information Bolton Vouched collects, why, where it is stored, how long it is kept and your rights under UK data protection law.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   // Same owner/contact configuration as the consent page; throws (failing the build) if unset in production.

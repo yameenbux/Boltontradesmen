@@ -15,6 +15,8 @@ import {
 import { Faq } from "@/components/site/Faq";
 import { Icon, type IconName } from "@/components/site/icons";
 import { Phone } from "@/components/site/Phone";
+import { JsonLd } from "@/components/JsonLd";
+import { homeJsonLd } from "@/lib/seo";
 
 // The showcase site at "/". Fully static: no data fetching, no cookies. The live directory is at /platform.
 export const dynamic = "force-static";
@@ -152,6 +154,7 @@ function Steps({ items, android = false }: { items: typeof IPHONE_STEPS; android
 export default function ShowcasePage() {
   return (
     <main>
+      <JsonLd data={homeJsonLd()} />
       {/* ---------- hero ---------- */}
       <section className="s-hero" aria-labelledby="hero-title">
         <div className="s-wrap">

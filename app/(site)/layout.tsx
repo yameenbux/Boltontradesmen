@@ -10,7 +10,6 @@ const DESCRIPTION =
   "Anyone know a good…? Bolton already does. The local trades and services the group recommends, in one place. Free, no sign-up.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://boltonvouched.ysbdesigns.uk"),
   title: { absolute: TITLE },
   description: DESCRIPTION,
   alternates: { canonical: "/" },

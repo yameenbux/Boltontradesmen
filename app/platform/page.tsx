@@ -4,9 +4,17 @@ import { Hero } from "@/components/home/Hero";
 import { TrustStrip } from "@/components/home/TrustStrip";
 import { popularCategories } from "@/lib/category-search";
 import { listCategoryGroups } from "@/lib/directory";
+import { pageMetadata } from "@/lib/seo";
 
 // Categories plus live-provider counts only; cached and refreshed every 5 minutes, no cookies.
 export const revalidate = 300;
+
+export const metadata = pageMetadata({
+  title: "Find trusted local trades in Bolton | Bolton Vouched",
+  description:
+    "Plumbers, electricians, cleaners and more across Bolton (BL1 to BL7), recommended by local people. See the checks on each listing, then call or WhatsApp them. Free, no sign-up.",
+  path: "/platform",
+});
 
 export default async function Home() {
   const groups = await listCategoryGroups();
