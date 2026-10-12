@@ -30,7 +30,7 @@ export default function TermsPage() {
 
       <H2>Leaving a review</H2>
       <p>
-        To leave a review you sign in with your own UK mobile number. You agree to follow the{" "}
+        To leave a review you sign in with your Google account or a code sent to your email address. You agree to follow the{" "}
         <a href="/review-policy">review policy</a>: write about a job you had done yourself, be honest, and leave out phone
         numbers and other personal details. Fake reviews are not allowed; the{" "}
         <a href="/fake-reviews-policy">fake reviews policy</a> says how we look for them. Providers can reply to reviews

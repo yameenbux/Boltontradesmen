@@ -77,3 +77,13 @@ describe("consentStatement", () => {
     expect(consentStatement(env, "production")).not.toBeNull();
   });
 });
+
+describe("consent text and sign-in (Plan 2b)", () => {
+  it("says nothing about how traders sign in, so the version stays 2026-10-12", () => {
+    const text = consentStatement(env, "development")!.paragraphs.join("\n");
+    for (const word of ["mobile", "sign in", "Google", "email code"]) {
+      expect(text.toLowerCase()).not.toContain(word.toLowerCase());
+    }
+    expect(CONSENT_TEXT_VERSION).toBe("2026-10-12");
+  });
+});

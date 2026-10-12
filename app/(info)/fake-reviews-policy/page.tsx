@@ -14,22 +14,22 @@ const RISKS: { risk: string; control: string }[] = [
   {
     risk: "Friends and family reviewing a provider",
     control:
-      "Providers signed in with the number on their listing can't review themselves; one review per person per provider; checks for reviews from one device, for accounts made together, and for a brand-new account's lone 5-star review; Report on every review.",
+      "Providers linked to their listing can't review themselves; one review per person per provider; checks for reviews from one device, for accounts made together, and for a brand-new account's lone 5-star review; Report on every review.",
   },
   {
     risk: "Competitors posting bad reviews",
     control:
-      "Providers signed in with the number on their listing can't review anyone in the same trade; the checks treat a burst of bad reviews the same as a burst of good ones; reviews come down only for a logged reason.",
+      "Providers linked to their listing can't review anyone in the same trade; the checks treat a burst of bad reviews the same as a burst of good ones; reviews come down only for a logged reason.",
   },
   {
     risk: "Review swaps between providers",
     control:
-      "Providers in the same trade can't review each other when they sign in with the number on their listing; the admin can see who reviewed whom and remove swapped reviews.",
+      "Providers in the same trade can't review each other once they're linked to their listings; the admin can see who reviewed whom and remove swapped reviews.",
   },
   {
     risk: "Bulk or throwaway accounts",
     control:
-      "Sign-in needs a real UK mobile number (internet and virtual numbers are refused); one account per number; limits on sign-in codes per number and per connection; a new account can post one review in its first day; accounts made within minutes of each other are flagged.",
+      "Sign-in with Google or a code sent to your email (temporary and throwaway email addresses are refused); one account per Google account or email address; limits on sign-in codes per address and per connection; reviews from email-only accounts are checked by us before they appear; a new account can post one review in its first 24 hours; accounts made within minutes of each other are flagged.",
   },
 ];
 
@@ -50,9 +50,10 @@ export default function FakeReviewsPolicyPage() {
       <H2>Rules when you post</H2>
       <List
         items={[
-          "Every reviewer signs in with their own UK mobile number. Internet and virtual numbers are refused, and each number can have one account.",
+          "Every reviewer signs in with Google or with a code sent to their own email address. Temporary email addresses are refused.",
+          "If you sign in with an email code, we check your review before it appears.",
           "One review per provider per person.",
-          "Providers can't review their own listing, or anyone who works in the same trade, when they sign in with the number on their listing.",
+          "Providers can't review their own listing, or anyone who works in the same trade, once they're linked to their listing.",
           "A new account can post one review in its first 24 hours.",
         ]}
       />
@@ -94,6 +95,10 @@ export default function FakeReviewsPolicyPage() {
           </li>
         ))}
       </ul>
+      <p>
+        12 October 2026: sign-in moved from mobile numbers to Google and email codes. Email-only reviews are held for
+        approval to make up for the weaker check.
+      </p>
       <p>We look at this assessment again whenever the rules change, and at least once a year.</p>
     </PolicyPage>
   );

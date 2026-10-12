@@ -51,7 +51,7 @@ const TRADER_POINTS: { icon: IconName; title: string; soon?: boolean; text: stri
   {
     icon: "reply",
     title: "Reply to your reviews",
-    text: "Sign in with the number on your listing and reply to every review, so customers hear your side.",
+    text: "Ask us for your private sign-in link, then reply to every review, so customers hear your side.",
   },
   {
     icon: "scales",

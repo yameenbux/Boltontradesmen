@@ -56,7 +56,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         {phoneOn && (
           <>
             <Divider>or use your mobile</Divider>
-            <SignInForm next={next} title="Sign in with your mobile" level={2} />
+            <SignInForm next={next} title="Use your mobile number" level={2} />
           </>
         )}
       </section>
