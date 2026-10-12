@@ -6,6 +6,7 @@ const policies = [
   { path: "/how-ratings-work", heading: /ratings work/i },
   { path: "/review-policy", heading: /^Review policy$/ },
   { path: "/fake-reviews-policy", heading: /^Fake reviews policy$/ },
+  { path: "/cookies", heading: /^Cookies$/ },
 ];
 
 for (const { path, heading } of policies) {
@@ -17,7 +18,7 @@ for (const { path, heading } of policies) {
   });
 }
 
-for (const start of ["/", "/platform", "/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy", "/admin/login"]) {
+for (const start of ["/", "/platform", "/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy", "/cookies", "/admin/login"]) {
   test(`footer on ${start} links to the policy pages`, async ({ page }) => {
     await page.goto(start);
     const footer = page.getByRole("contentinfo");
@@ -29,6 +30,7 @@ for (const start of ["/", "/platform", "/privacy", "/terms", "/how-ratings-work"
     );
     await expect(footer.getByRole("link", { name: "Review policy" })).toHaveAttribute("href", "/review-policy");
     await expect(footer.getByRole("link", { name: "Fake reviews" })).toHaveAttribute("href", "/fake-reviews-policy");
+    await expect(footer.getByRole("link", { name: "Cookies" })).toHaveAttribute("href", "/cookies");
   });
 }
 
@@ -169,4 +171,25 @@ test("the terms cover who we are, suspension, liability, changes and the courts"
   await expect(main).toContainText("death or personal injury caused by our negligence, or for fraud");
   await expect(main).toContainText("courts of England and Wales");
   await expect(main).toContainText("Scotland or Northern Ireland");
+});
+
+// Launch checklist: no cookie banner, and the page says why: sign-in cookies, local storage, Turnstile, analytics.
+test("the cookies page lists the sign-in cookies and what's kept on the device", async ({ page }) => {
+  await page.goto("/cookies");
+  const main = page.getByRole("main");
+  await expect(main).toContainText("doesn't show a cookie banner");
+  const table = main.getByRole("table");
+  await expect(table).toContainText("auth-token");
+  await expect(table).toContainText("code-verifier");
+  await expect(main).toContainText("bv-theme");
+  await expect(main).toContainText("bv-review-draft:");
+  await expect(main).toContainText("Cloudflare Turnstile");
+  await expect(main).toContainText("Cloudflare Web Analytics");
+});
+
+test("no horizontal scroll at 360px on /cookies", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.goto("/cookies");
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
 });

@@ -25,7 +25,7 @@ export function absoluteUrl(path: string, base: string = siteUrl()): string {
 /** Paths crawlers must not visit. The consent links are private tokens; admin and the API are not content. */
 export const DISALLOWED_PATHS = ["/admin", "/api/", "/platform/consent/"] as const;
 
-export const POLICY_PATHS = ["/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy"] as const;
+export const POLICY_PATHS = ["/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy", "/cookies"] as const;
 
 export function buildRobots(base: string = siteUrl()): MetadataRoute.Robots {
   return {

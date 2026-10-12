@@ -111,6 +111,12 @@ h1,h2,h3{text-wrap:balance}
   .policy-body{display:grid; gap:14px; line-height:1.6; color:var(--ink); overflow-wrap:anywhere}
   .policy-body a{color:var(--brick); text-underline-offset:3px}
   .policy-body ul{margin:0; padding-left:22px; list-style:disc; display:grid; gap:6px}
+  .policy-body code{font-size:.88em; padding:1px 5px; border-radius:6px; background:var(--surface-2); overflow-wrap:anywhere}
+  .policy-table{overflow-x:auto; border:1px solid var(--line); border-radius:14px}
+  .policy-table table{width:100%; min-width:520px; border-collapse:collapse; font-size:15px; line-height:1.45}
+  .policy-table th,.policy-table td{padding:10px 12px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line)}
+  .policy-table tr:last-child td{border-bottom:0}
+  .policy-table th{font-weight:700; background:var(--surface-2)}
   .draft-note{margin:6px 0 14px; padding:12px 14px; border-radius:var(--r-sm); font-size:15px; font-weight:700;
     background:color-mix(in srgb,var(--gold) 16%,var(--surface)); color:color-mix(in srgb,var(--gold) 62%,var(--ink));
     border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line))}

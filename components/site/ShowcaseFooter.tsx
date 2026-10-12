@@ -21,6 +21,7 @@ export function ShowcaseFooter() {
           <Link href="/how-ratings-work">How ratings work</Link>
           <Link href="/review-policy">Review policy</Link>
           <Link href="/fake-reviews-policy">Fake reviews</Link>
+          <Link href="/cookies">Cookies</Link>
           <Link href={GET_LISTED}>Get listed</Link>
           <Link href={PLATFORM}>Open the platform</Link>
         </nav>

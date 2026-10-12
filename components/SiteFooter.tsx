@@ -10,6 +10,7 @@ export function SiteFooter() {
         <Link href="/how-ratings-work">How ratings work</Link>
         <Link href="/review-policy">Review policy</Link>
         <Link href="/fake-reviews-policy">Fake reviews</Link>
+        <Link href="/cookies">Cookies</Link>
       </nav>
       <p className="m-0">{COMPANY_LINE}</p>
     </footer>
