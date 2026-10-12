@@ -41,6 +41,15 @@ export default function PrivacyPage() {
         items={[
           "When you tap Call or WhatsApp on a profile, we record which provider you tapped and a device signature. The signature is a one-way hash (HMAC) of your IP address and browser user agent, so we do not store your IP address or phone number for this. We use these records to count enquiries.",
           "If you only browse, we set no cookies and you need no account.",
+          "If you choose the light or dark look, that choice is saved in your browser's own storage (local storage), not sent to us.",
+        ]}
+      />
+      <p>Traders who ask to be listed (the Get listed form):</p>
+      <List
+        items={[
+          "Your business name, your name, your trade, the areas you cover, your phone number, and your email address and message if you add them.",
+          "A scrambled signature of your connection (a keyed hash, not your IP address), to limit how many requests one connection can send.",
+          "We use these only to contact you about a listing.",
         ]}
       />
       <p>People who sign in (to leave a review, or to reply as a provider):</p>
@@ -56,8 +65,13 @@ export default function PrivacyPage() {
           "If a sign-in code is asked for but never used, the unfinished account holding that email address is deleted after 24 hours.",
           "A hashed device signature saved with each review, so we can spot fake reviews posted from one device.",
           "Sign-in cookies, which keep you signed in. They are only set once you sign in.",
+          "A review you've started writing is saved in your browser's local storage until you post it, so it isn't lost. It isn't sent to us until you post.",
         ]}
       />
+      <p>
+        The <a href="/cookies">cookies page</a> lists the sign-in cookies and what&apos;s saved on your device, and
+        explains why there&apos;s no cookie banner.
+      </p>
 
       <H2>Why we use it, and our lawful basis</H2>
       <List
@@ -66,13 +80,18 @@ export default function PrivacyPage() {
           "Counting enquiries and keeping the site secure and free of abuse: legitimate interests. We keep this to what is needed and it does not identify visitors by name.",
           "Your account, your reviews and your replies: contract (providing the service you signed up for).",
           "Sign-in attempt records, the sign-in fingerprint we keep after deletion, device signatures and proof files: legitimate interests in preventing fraud and fake reviews.",
+          "A request to be listed: legitimate interests in answering it, and taking the steps you asked for before you agree to be listed. The connection signature: legitimate interests in stopping spam.",
+          "The security check on forms (Cloudflare Turnstile) and counting page views: legitimate interests in keeping the site secure and knowing which pages are used.",
         ]}
       />
 
       <H2>Where it is stored</H2>
       <p>
         Data is stored in the UK, in a Supabase database hosted in London. Supabase also runs our sign-in. Resend sends our
-        sign-in emails. Supabase and Resend act for us as processors. If you choose Continue with Google, Google is an
+        sign-in emails. Cloudflare runs the security check (Turnstile) on the sign-in page, the admin login and the Get
+        listed form, which may look at signals from your device and browser, and, if it&apos;s switched on, counts page
+        views without cookies or a profile of you (Cloudflare Web Analytics). Supabase, Resend and Cloudflare act for us
+        as processors. If you choose Continue with Google, Google is an
         independent controller for your Google account, under its own terms, and only tells us who you are.
       </p>
 
@@ -82,7 +101,8 @@ export default function PrivacyPage() {
         listing is hidden. Contact-event records (the hashed device signature and provider tapped) are kept for up to 12
         months. Sign-in attempt records (with the email address or number entered) are kept for up to 30 days, an unfinished
         account (a code asked for but never used) is deleted after 24 hours, and wrong group code tries are kept for 2
-        days. Proof files are deleted 12 months after we check them.
+        days. Proof files are deleted 12 months after we check them. A request to be listed is deleted 90 days after
+        you send it; if you&apos;re listed, the details the listing needs are kept with it instead.
       </p>
 
       <H2>Deleting your account</H2>

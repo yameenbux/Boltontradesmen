@@ -193,3 +193,14 @@ test("no horizontal scroll at 360px on /cookies", async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+// Launch checklist: the privacy notice names Cloudflare, local storage and listing requests, and links /cookies.
+test("the privacy notice covers Cloudflare, local storage and listing requests", async ({ page }) => {
+  await page.goto("/privacy");
+  const main = page.getByRole("main");
+  await expect(main).toContainText("Supabase, Resend and Cloudflare act for us as processors.");
+  await expect(main).toContainText("local storage");
+  await expect(main.getByRole("link", { name: "cookies page" })).toHaveAttribute("href", "/cookies");
+  await expect(main).toContainText("Traders who ask to be listed");
+  await expect(main).toContainText("A request to be listed is deleted 90 days after you send it");
+});
