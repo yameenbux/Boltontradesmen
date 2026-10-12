@@ -8,17 +8,17 @@ const RISKS: { risk: string; control: string }[] = [
   {
     risk: "Friends and family reviewing a provider",
     control:
-      "Providers can't review themselves; one review per person per provider; checks for reviews from one device, for accounts made together, and for a brand-new account's lone 5-star review; Report on every review.",
+      "Providers signed in with the number on their listing can't review themselves; one review per person per provider; checks for reviews from one device, for accounts made together, and for a brand-new account's lone 5-star review; Report on every review.",
   },
   {
     risk: "Competitors posting bad reviews",
     control:
-      "Providers can't review anyone in the same trade; the checks treat a burst of bad reviews the same as a burst of good ones; reviews come down only for a logged reason.",
+      "Providers signed in with the number on their listing can't review anyone in the same trade; the checks treat a burst of bad reviews the same as a burst of good ones; reviews come down only for a logged reason.",
   },
   {
     risk: "Review swaps between providers",
     control:
-      "Providers in the same trade can't review each other; the admin can see who reviewed whom and remove swapped reviews.",
+      "Providers in the same trade can't review each other when they sign in with the number on their listing; the admin can see who reviewed whom and remove swapped reviews.",
   },
   {
     risk: "Bulk or throwaway accounts",
@@ -46,7 +46,7 @@ export default function FakeReviewsPolicyPage() {
         items={[
           "Every reviewer signs in with their own UK mobile number. Internet and virtual numbers are refused, and each number can have one account.",
           "One review per provider per person.",
-          "Providers can't review their own listing, or anyone who works in the same trade.",
+          "Providers can't review their own listing, or anyone who works in the same trade, when they sign in with the number on their listing.",
           "A new account can post one review in its first 24 hours.",
         ]}
       />
@@ -57,7 +57,7 @@ export default function FakeReviewsPolicyPage() {
         items={[
           "Three or more reviews for one provider within 48 hours.",
           "Three or more reviewers of one provider whose accounts were made within 10 minutes of each other.",
-          "Reviews of one provider posted from the same device by different people.",
+          "Reviews of one provider posted or edited from the same device by different people.",
           "A brand-new account (under a day old) whose only review is 5 stars, or 1 star.",
         ]}
       />

@@ -49,8 +49,9 @@ export default function TermsPage() {
 
       <H2>Reporting content</H2>
       <p>
-        If you think a review is wrong, unfair or unlawful, tap Report on that review. For anything else on the site, tell
-        us at {contact} and say which page it is on.
+        If you think a review is wrong, unfair or unlawful, tap Report on that review (you need to be signed in), or email
+        us at {contact} and say which review it is. For anything else on the site, tell us at {contact} and say which page
+        it is on.
       </p>
       <List items={["We will review the reports we receive."]} />
     </PolicyPage>

@@ -17,7 +17,7 @@ export default function ReviewPolicyPage() {
         items={[
           "Anyone who has had work done by a provider on the site, and signs in with their own UK mobile number. Internet and virtual numbers can't sign in.",
           "One review per provider per person. You can edit it instead of posting another.",
-          "Providers can't review their own listing, or anyone who works in the same trade as them.",
+          "Providers can't review their own listing, or anyone who works in the same trade as them, when they sign in with the number on their listing.",
           "A new account can post one review in its first 24 hours.",
         ]}
       />

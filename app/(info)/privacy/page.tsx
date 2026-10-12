@@ -40,7 +40,7 @@ export default function PrivacyPage() {
       <p>People who sign in (to leave a review, or to reply as a provider):</p>
       <List
         items={[
-          "Your mobile number. It is held by our sign-in provider and used only to send your sign-in codes. Before we send a code we check the number with Twilio, to block internet and virtual numbers. It is never shown on the site.",
+          "Your mobile number. It is held by our sign-in provider. We use it to send your sign-in codes, to link you to your listing if you are a provider who signs in with your listing's number, and to limit sign-in attempts. Before we send a code we check the number with Twilio, to block internet and virtual numbers. It is never shown on the site. If you delete your account we keep it privately for 12 months (see below).",
           "The name you show, like \"Sarah K.\" (your first name and the first letter of your surname; we do not keep your full surname), and your postcode district, which is never shown publicly.",
           "Whether you are in the Bolton Tradesmen WhatsApp group, if you add the group code.",
           "Your reviews and replies, which are published with your shown name.",
@@ -78,7 +78,8 @@ export default function PrivacyPage() {
       <p>
         You can delete your account from your account page at any time. Your reviews and replies are taken down and your
         shown name is removed. We keep your mobile number privately for 12 months in case of legal claims about your
-        reviews, and then delete it.
+        reviews, and so that someone whose review was removed for breaking the rules can&apos;t sign up again with the
+        same number to review that provider again. Then we delete it.
       </p>
 
       <H2>Your rights</H2>

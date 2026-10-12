@@ -104,3 +104,16 @@ for (const path of ["/privacy", "/admin/login"]) {
     expect(overflow).toBeLessThanOrEqual(0);
   });
 }
+
+// Final review 2 minors: the policies say only what the site really does.
+test("policies are precise about same-trade reviews, the mobile number and reporting", async ({ page }) => {
+  await page.goto("/fake-reviews-policy");
+  await expect(page.getByRole("main")).toContainText(
+    "Providers can't review their own listing, or anyone who works in the same trade, when they sign in with the number on their listing.",
+  );
+  await page.goto("/privacy");
+  await expect(page.getByRole("main")).not.toContainText("used only to send your sign-in codes");
+  await expect(page.getByRole("main")).toContainText("to link you to your listing");
+  await page.goto("/terms");
+  await expect(page.getByRole("main")).toContainText("tap Report on that review (you need to be signed in), or email");
+});
