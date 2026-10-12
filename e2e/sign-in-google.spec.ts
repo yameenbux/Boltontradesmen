@@ -21,7 +21,7 @@ test("coming back from Google with an error shows the Google copy on the sign-in
   await page.goto("/platform/auth/callback?error=access_denied&next=/platform/account");
   await expect(page).toHaveURL(/\/platform\/sign-in\?error=google&next=%2Fplatform%2Faccount$/);
   await expect(page.getByRole("main").getByRole("alert")).toHaveText(
-    "We couldn't sign you in with Google. Please try again, or use an email code.",
+    "We couldn't sign you in with Google. Please try again, or use an email code. If you've signed in with an email code before, use that.",
   );
 });
 

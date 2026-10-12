@@ -21,7 +21,7 @@ afterEach(() => vi.unstubAllEnvs());
 
 describe("GOOGLE_SIGN_IN_ERROR", () => {
   it("has the exact copy", () => {
-    expect(GOOGLE_SIGN_IN_ERROR).toBe("We couldn't sign you in with Google. Please try again, or use an email code.");
+    expect(GOOGLE_SIGN_IN_ERROR).toBe("We couldn't sign you in with Google. Please try again, or use an email code. If you've signed in with an email code before, use that.");
   });
 });
 

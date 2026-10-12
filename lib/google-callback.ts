@@ -2,7 +2,7 @@ import { welcomePath } from "@/lib/auth";
 import { safeNext } from "@/lib/safe-next";
 
 /** Shown on the sign-in page when it is opened with ?error=google. */
-export const GOOGLE_SIGN_IN_ERROR = "We couldn't sign you in with Google. Please try again, or use an email code.";
+export const GOOGLE_SIGN_IN_ERROR = "We couldn't sign you in with Google. Please try again, or use an email code. If you've signed in with an email code before, use that.";
 
 export function googleErrorPath(next: string | null | undefined): string {
   return `/platform/sign-in?error=google&next=${encodeURIComponent(safeNext(next))}`;
