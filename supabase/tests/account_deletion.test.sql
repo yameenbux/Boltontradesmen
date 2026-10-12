@@ -4,6 +4,17 @@
 begin;
 select plan(26);
 
+-- The server action passes the signed-in user's id (from the verified session) to the service-role-only
+-- write functions. These test helpers do the same with auth.uid() from the test's JWT claims.
+create function public.t_submit_review(p jsonb, h text) returns jsonb
+language sql security definer set search_path = '' as $$ select public.submit_review(auth.uid(), p, h) $$;
+create function public.t_edit_review(p_id uuid, p jsonb, h text) returns jsonb
+language sql security definer set search_path = '' as $$ select public.edit_review(auth.uid(), p_id, p, h) $$;
+create function public.t_add_review_proof(p_review uuid, p_path text, p_mime text) returns uuid
+language sql security definer set search_path = '' as $$ select public.add_review_proof(auth.uid(), p_review, p_path, p_mime) $$;
+grant execute on function public.t_submit_review(jsonb, text), public.t_edit_review(uuid, jsonb, text),
+  public.t_add_review_proof(uuid, text, text) to authenticated;
+
 insert into public.otp_requests (phone_e164, ip_hash, outcome, nonce_hash)
 values ('+447700900481', 'pgtap', 'approved', encode(sha256(convert_to('del-nonce', 'UTF8')), 'hex'));
 insert into auth.users (id, phone, created_at, raw_user_meta_data) values
@@ -83,7 +94,7 @@ select is((select count(*)::int from public.phone_retention where user_id = '000
   'and adds no second retention row');
 
 set local role authenticated;
-select throws_ok($$select public.submit_review(jsonb_build_object(
+select throws_ok($$select public.t_submit_review(jsonb_build_object(
     'provider_id', '00000000-0000-0000-0000-0000000009b1', 'category_id', (select id from public.categories where slug = 'plumber'),
     'job_month', to_char(date_trunc('month', now() at time zone 'Europe/London'), 'YYYY-MM-01'),
     'value_band', '<250', 'on_time', 'yes', 'on_price', 'yes', 'quality', 3, 'tidy', true, 'use_again', 'yes'), 'h')$$,

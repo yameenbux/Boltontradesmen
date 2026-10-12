@@ -1,7 +1,18 @@
 -- Review posting (Plan 2, Task 6): submit_review / edit_review rules, review_form_context, my_reviews,
 -- and the new review_proofs / review_responses / flags tables staying closed to browsers.
 begin;
-select plan(61);
+select plan(70);
+
+-- The server action passes the signed-in user's id (from the verified session) to the service-role-only
+-- write functions. These test helpers do the same with auth.uid() from the test's JWT claims.
+create function public.t_submit_review(p jsonb, h text) returns jsonb
+language sql security definer set search_path = '' as $$ select public.submit_review(auth.uid(), p, h) $$;
+create function public.t_edit_review(p_id uuid, p jsonb, h text) returns jsonb
+language sql security definer set search_path = '' as $$ select public.edit_review(auth.uid(), p_id, p, h) $$;
+create function public.t_add_review_proof(p_review uuid, p_path text, p_mime text) returns uuid
+language sql security definer set search_path = '' as $$ select public.add_review_proof(auth.uid(), p_review, p_path, p_mime) $$;
+grant execute on function public.t_submit_review(jsonb, text), public.t_edit_review(uuid, jsonb, text),
+  public.t_add_review_proof(uuid, text, text) to authenticated;
 
 -- ---------------------------------------------------------------- fixture
 insert into auth.users (id, created_at) values
@@ -61,70 +72,70 @@ set local role authenticated;
 
 -- ---------------------------------------------------------------- who may post
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a5","role":"authenticated"}';
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
   'P0001', 'not_member', 'no profile: not_member');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a6","role":"authenticated"}';
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
   'P0001', 'blocked', 'blocked account: blocked');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated"}';
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b4', 'plumber'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b4', 'plumber'), 'h')$$,
   'P0001', 'provider_not_found', 'paused provider: provider_not_found');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008ff', 'plumber'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008ff', 'plumber'), 'h')$$,
   'P0001', 'provider_not_found', 'unknown provider: provider_not_found');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a4","role":"authenticated"}';
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b5', 'plumber'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b5', 'plumber'), 'h')$$,
   'P0001', 'own_listing', 'own listing: own_listing');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
   'P0001', 'shares_category', 'a plumber reviewing another plumber: shares_category');
-select is((public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b3', 'caterer'), 'h-lee')) ->> 'status',
+select is((public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b3', 'caterer'), 'h-lee')) ->> 'status',
   'published', 'a plumber may review a caterer');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a7","role":"authenticated"}';
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
   'P0001', 'removed_before', 'a review removed by the admin: removed_before');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a8","role":"authenticated"}';
-select is((public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h-dee')) ->> 'status',
+select is((public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h-dee')) ->> 'status',
   'published', 'a removal caused by deleting an account does not block a new review');
 
 -- ---------------------------------------------------------------- field rules
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated"}';
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'caterer', '{"tidy":null}'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'caterer', '{"tidy":null}'), 'h')$$,
   'P0001', 'bad_category', 'a category the provider is not listed in: bad_category');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber',
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber',
     jsonb_build_object('job_month', to_char(date_trunc('month', now() at time zone 'Europe/London') + interval '1 month', 'YYYY-MM-01'))), 'h')$$,
   'P0001', 'bad_job_month', 'next month: bad_job_month');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber',
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber',
     jsonb_build_object('job_month', to_char(date_trunc('month', now() at time zone 'Europe/London') - interval '37 months', 'YYYY-MM-01'))), 'h')$$,
   'P0001', 'bad_job_month', '37 months ago: bad_job_month');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber',
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber',
     jsonb_build_object('job_month', to_char(date_trunc('month', now() at time zone 'Europe/London'), 'YYYY-MM-15'))), 'h')$$,
   'P0001', 'bad_job_month', 'not the first of a month: bad_job_month');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"job_month":"soon"}'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"job_month":"soon"}'), 'h')$$,
   'P0001', 'bad_job_month', 'not a date: bad_job_month');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"tidy":null}'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"tidy":null}'), 'h')$$,
   'P0001', 'tidy_required', 'plumber without tidy: tidy_required');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b3', 'caterer', '{"tidy":true}'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b3', 'caterer', '{"tidy":true}'), 'h')$$,
   'P0001', 'tidy_not_asked', 'caterer with tidy: tidy_not_asked');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber',
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber',
     jsonb_build_object('comment', repeat('a', 401))), 'h')$$,
   'P0001', 'comment_too_long', '401 characters: comment_too_long');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"comment":"ring him on 07700 900 123"}'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"comment":"ring him on 07700 900 123"}'), 'h')$$,
   'P0001', 'comment_has_phone', 'a spaced mobile number: comment_has_phone');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"comment":"+44 7700 900123"}'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"comment":"+44 7700 900123"}'), 'h')$$,
   'P0001', 'comment_has_phone', 'an international number: comment_has_phone');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"comment":"0770090012 3"}'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"comment":"0770090012 3"}'), 'h')$$,
   'P0001', 'comment_has_phone', 'a number split by a space: comment_has_phone');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"quality":6}'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"quality":6}'), 'h')$$,
   'P0001', 'bad_input', 'quality 6: bad_input');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"on_time":"sometimes"}'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"on_time":"sometimes"}'), 'h')$$,
   'P0001', 'bad_input', 'an unknown answer: bad_input');
 
 -- ---------------------------------------------------------------- happy path and one review per provider
-insert into res select 'amy1', public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber',
+insert into res select 'amy1', public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber',
   '{"comment":"  Fitted 2 radiators for £350 in 2026  "}'), 'hash-amy');
 select is((select v ->> 'status' from res where k = 'amy1'), 'published', 'a good review is published');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
   'P0001', 'already_reviewed', 'a second review of the same provider: already_reviewed');
-insert into res select 'amy2', public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b3', 'caterer', '{"comment":"   "}'), 'hash-amy');
+insert into res select 'amy2', public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b3', 'caterer', '{"comment":"   "}'), 'hash-amy');
 reset role;
 
 select is((select device_hash from public.reviews where id = (select (v ->> 'id')::uuid from res where k = 'amy1')), 'hash-amy', 'device hash is stored');
@@ -141,29 +152,29 @@ update public.reviews set created_at = now() - interval '3 days'
 where provider_id = '00000000-0000-0000-0000-0000000008b1' and status <> 'removed';
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a3","role":"authenticated"}';
-select is((public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h-nia')) ->> 'status',
+select is((public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h-nia')) ->> 'status',
   'published', 'a new account may post one review');
-select throws_ok($$select public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b2', 'plumber'), 'h')$$,
+select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b2', 'plumber'), 'h')$$,
   'P0001', 'new_account_limit', 'a second review within 24 hours: new_account_limit');
 reset role;
 update auth.users set created_at = now() - interval '25 hours' where id = '00000000-0000-0000-0000-0000000008a3';
 set local role authenticated;
-select is((public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b2', 'plumber'), 'h-nia')) ->> 'status',
+select is((public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b2', 'plumber'), 'h-nia')) ->> 'status',
   'published', 'allowed once the account is 25 hours old');
 
 -- ---------------------------------------------------------------- edits
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a2","role":"authenticated"}';
-select throws_ok(format($$select public.edit_review(%L, public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
+select throws_ok(format($$select public.t_edit_review(%L, public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
     (select v ->> 'id' from res where k = 'amy1')),
   'P0001', 'not_your_review', 'someone else''s review: not_your_review');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated"}';
 reset role;
 update public.reviews set created_at = now() - interval '13 days' where id = (select (v ->> 'id')::uuid from res where k = 'amy1');
 set local role authenticated;
-select is((public.edit_review((select (v ->> 'id')::uuid from res where k = 'amy1'),
+select is((public.t_edit_review((select (v ->> 'id')::uuid from res where k = 'amy1'),
     public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"quality":2,"comment":"Changed my mind"}'), 'h')) ->> 'status',
   'published', 'an edit on day 13 is allowed');
-select throws_ok(format($$select public.edit_review(%L, public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"comment":"call 07700900123"}'), 'h')$$,
+select throws_ok(format($$select public.t_edit_review(%L, public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber', '{"comment":"call 07700900123"}'), 'h')$$,
     (select v ->> 'id' from res where k = 'amy1')),
   'P0001', 'comment_has_phone', 'edits re-run the field checks');
 reset role;
@@ -171,7 +182,7 @@ select is((select quality from public.reviews where id = (select (v ->> 'id')::u
 select isnt((select edited_at from public.reviews where id = (select (v ->> 'id')::uuid from res where k = 'amy1')), null, 'edited_at is set');
 update public.reviews set created_at = now() - interval '15 days' where id = (select (v ->> 'id')::uuid from res where k = 'amy1');
 set local role authenticated;
-select throws_ok(format($$select public.edit_review(%L, public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
+select throws_ok(format($$select public.t_edit_review(%L, public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
     (select v ->> 'id' from res where k = 'amy1')),
   'P0001', 'edit_window_closed', 'an edit on day 15: edit_window_closed');
 
@@ -194,35 +205,59 @@ create temp view amy2 as select (v ->> 'id') as id from res where k = 'amy2';
 grant select on amy2 to authenticated;
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a2","role":"authenticated"}';
-select throws_ok(format($$select public.add_review_proof(%L, %L, 'image/jpeg')$$, (select id from amy2), (select id from amy2) || '/a.jpg'),
+select throws_ok(format($$select public.t_add_review_proof(%L, %L, 'image/jpeg')$$, (select id from amy2), (select id from amy2) || '/a.jpg'),
   'P0001', 'not_your_review', 'someone else''s review: not_your_review');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated"}';
-select throws_ok(format($$select public.add_review_proof(%L, %L, 'image/jpeg')$$, (select id from amy2),
+select throws_ok(format($$select public.t_add_review_proof(%L, %L, 'image/jpeg')$$, (select id from amy2),
   (select v ->> 'id' from res where k = 'amy1') || '/a.jpg'), 'P0001', 'bad_proof_path', 'a path under another review: bad_proof_path');
-select throws_ok(format($$select public.add_review_proof(%L, %L, 'image/heic')$$, (select id from amy2), (select id from amy2) || '/a.heic'),
+select throws_ok(format($$select public.t_add_review_proof(%L, %L, 'image/heic')$$, (select id from amy2), (select id from amy2) || '/a.heic'),
   'P0001', 'bad_proof_type', 'an unsupported type: bad_proof_type');
-select isnt(public.add_review_proof((select id::uuid from amy2), (select id from amy2) || '/a.jpg', 'image/jpeg'), null,
+select isnt(public.t_add_review_proof((select id::uuid from amy2), (select id from amy2) || '/a.jpg', 'image/jpeg'), null,
   'the owner adds a proof');
 select is((public.review_form_context('rw-cater') -> 'existing' ->> 'has_active_proof')::boolean, true, 'the form knows a proof is in');
-select throws_ok(format($$select public.add_review_proof(%L, %L, 'image/png')$$, (select id from amy2), (select id from amy2) || '/b.png'),
+select throws_ok(format($$select public.t_add_review_proof(%L, %L, 'image/png')$$, (select id from amy2), (select id from amy2) || '/b.png'),
   'P0001', 'proof_exists', 'a second pending proof: proof_exists');
 reset role;
 update public.review_proofs set outcome = 'rejected' where review_id = (select id::uuid from amy2);
 set local role authenticated;
-select isnt(public.add_review_proof((select id::uuid from amy2), (select id from amy2) || '/c.pdf', 'application/pdf'), null,
+select isnt(public.t_add_review_proof((select id::uuid from amy2), (select id from amy2) || '/c.pdf', 'application/pdf'), null,
   'after a rejection a new proof is accepted');
-select throws_ok(format($$select public.add_review_proof(%L, %L, 'image/jpeg')$$, (select v ->> 'id' from res where k = 'amy1'),
+select throws_ok(format($$select public.t_add_review_proof(%L, %L, 'image/jpeg')$$, (select v ->> 'id' from res where k = 'amy1'),
   (select v ->> 'id' from res where k = 'amy1') || '/a.jpg'), 'P0001', 'edit_window_closed', 'after 14 days: edit_window_closed');
 reset role;
 set local role anon;
-select throws_ok($$select public.add_review_proof(gen_random_uuid(), 'x/a.jpg', 'image/jpeg')$$, '42501', null,
+select throws_ok($$select public.add_review_proof(gen_random_uuid(), gen_random_uuid(), 'x/a.jpg', 'image/jpeg')$$, '42501', null,
   'anon cannot call add_review_proof');
 reset role;
 
 -- ---------------------------------------------------------------- privileges
 set local role anon;
-select throws_ok($$select public.submit_review('{}'::jsonb, 'h')$$, '42501', null, 'anon cannot call submit_review');
+select throws_ok($$select public.submit_review(gen_random_uuid(), '{}'::jsonb, 'h')$$, '42501', null, 'anon cannot call submit_review');
+select throws_ok($$select public.edit_review(gen_random_uuid(), gen_random_uuid(), '{}'::jsonb, 'h')$$, '42501', null, 'anon cannot call edit_review');
 reset role;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a2","role":"authenticated"}';
+-- Final review 2, I1: the device hash comes from the server, so a signed-in person must not reach these.
+select throws_ok($$select public.submit_review('00000000-0000-0000-0000-0000000008a2',
+    public.rw_p('00000000-0000-0000-0000-0000000008b2', 'plumber'), 'forged-hash')$$, '42501', null,
+  'authenticated cannot call submit_review (so cannot choose the device hash)');
+select throws_ok($$select public.edit_review('00000000-0000-0000-0000-0000000008a2', gen_random_uuid(),
+    public.rw_p('00000000-0000-0000-0000-0000000008b2', 'plumber'), 'forged-hash')$$, '42501', null,
+  'authenticated cannot call edit_review');
+select throws_ok($$select public.add_review_proof('00000000-0000-0000-0000-0000000008a2', gen_random_uuid(), 'x/a.jpg', 'image/jpeg')$$,
+  '42501', null, 'authenticated cannot call add_review_proof');
+reset role;
+select ok(to_regprocedure('public.submit_review(jsonb, text)') is null, 'the old browser-callable submit_review is gone');
+select ok(to_regprocedure('public.edit_review(uuid, jsonb, text)') is null, 'the old browser-callable edit_review is gone');
+select ok(to_regprocedure('public.add_review_proof(uuid, text, text)') is null, 'the old browser-callable add_review_proof is gone');
+select ok(has_function_privilege('service_role', 'public.submit_review(uuid, jsonb, text)', 'execute')
+      and has_function_privilege('service_role', 'public.edit_review(uuid, uuid, jsonb, text)', 'execute')
+      and has_function_privilege('service_role', 'public.add_review_proof(uuid, uuid, text, text)', 'execute'),
+  'the service role (the app''s server) can call all three');
+select ok(not has_function_privilege('authenticated', 'public.submit_review(uuid, jsonb, text)', 'execute')
+      and not has_function_privilege('anon', 'public.submit_review(uuid, jsonb, text)', 'execute')
+      and not has_function_privilege('public', 'public.submit_review(uuid, jsonb, text)', 'execute'),
+  'no API role but service_role holds execute on submit_review');
 set local role authenticated;
 select throws_ok($$select count(*) from public.reviews$$, '42501', null, 'authenticated cannot read reviews directly');
 select throws_ok($$insert into public.reviews (provider_id) values ('00000000-0000-0000-0000-0000000008b1')$$, '42501', null,

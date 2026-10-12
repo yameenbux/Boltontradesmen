@@ -2,7 +2,18 @@
 -- reviewer's JWT; created_at values are moved as postgres so each rule can be tested on its own
 -- (inside one transaction now() is constant, so every new review would otherwise count as a burst).
 begin;
-select plan(29);
+select plan(35);
+
+-- The server action passes the signed-in user's id (from the verified session) to the service-role-only
+-- write functions. These test helpers do the same with auth.uid() from the test's JWT claims.
+create function public.t_submit_review(p jsonb, h text) returns jsonb
+language sql security definer set search_path = '' as $$ select public.submit_review(auth.uid(), p, h) $$;
+create function public.t_edit_review(p_id uuid, p jsonb, h text) returns jsonb
+language sql security definer set search_path = '' as $$ select public.edit_review(auth.uid(), p_id, p, h) $$;
+create function public.t_add_review_proof(p_review uuid, p_path text, p_mime text) returns uuid
+language sql security definer set search_path = '' as $$ select public.add_review_proof(auth.uid(), p_review, p_path, p_mime) $$;
+grant execute on function public.t_submit_review(jsonb, text), public.t_edit_review(uuid, jsonb, text),
+  public.t_add_review_proof(uuid, text, text) to authenticated;
 
 -- ---------------------------------------------------------------- fixture
 -- Users 01-30: about 3 days old, 20 minutes apart (so no three were made together) unless a test changes it.
@@ -16,7 +27,7 @@ from generate_series(1, 30) n;
 insert into public.providers (id, slug, business_name, phone_e164, status, consent_at, consent_evidence)
 select ('00000000-0000-0000-0000-000000000a' || lpad(n::text, 2, '0'))::uuid, 'rf-' || n, 'RF ' || n,
   '+4477009003' || lpad(n::text, 2, '0'), 'live', now(), '{}'::jsonb
-from generate_series(1, 9) n;
+from generate_series(1, 11) n;
 insert into public.provider_categories (provider_id, category_id)
 select p.id, c.id from public.providers p, public.categories c where p.slug like 'rf-%' and c.slug = 'caterer';
 
@@ -29,13 +40,30 @@ begin
   perform set_config('request.jwt.claims',
     json_build_object('sub', '00000000-0000-0000-0000-0000000009' || lpad(usr::text, 2, '0'), 'role', 'authenticated')::text, true);
   set local role authenticated;
-  v := public.submit_review(jsonb_build_object(
+  v := public.t_submit_review(jsonb_build_object(
     'provider_id', '00000000-0000-0000-0000-000000000a' || lpad(prov::text, 2, '0'),
     'category_id', (select id from public.categories where slug = 'caterer'),
     'job_month', to_char(date_trunc('month', now() at time zone 'Europe/London'), 'YYYY-MM-01'),
     'value_band', '<250', 'on_time', 'yes', 'on_price', 'yes', 'quality', q, 'tidy', null, 'use_again', 'yes'), dev);
   reset role;
   return (v ->> 'id')::uuid;
+end;
+$$;
+-- User c<usr> edits their review from the device dev (same answers, 4 stars); returns the new status.
+create function public.rf_edit(usr int, p_review uuid, dev text) returns text
+language plpgsql as $$
+declare
+  v jsonb;
+begin
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', '00000000-0000-0000-0000-0000000009' || lpad(usr::text, 2, '0'), 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  v := public.t_edit_review(p_review, jsonb_build_object(
+    'category_id', (select id from public.categories where slug = 'caterer'),
+    'job_month', to_char(date_trunc('month', now() at time zone 'Europe/London'), 'YYYY-MM-01'),
+    'value_band', '<250', 'on_time', 'yes', 'on_price', 'yes', 'quality', 4, 'tidy', null, 'use_again', 'yes'), dev);
+  reset role;
+  return v ->> 'status';
 end;
 $$;
 create function public.rf_status(p uuid) returns text language sql as $$ select status::text from public.reviews where id = p $$;
@@ -128,11 +156,33 @@ select is((select count(*)::int from public.flags where rule = 'lone_extreme_new
 -- edits re-run the rules
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000922","role":"authenticated"}', true);
-select is(public.edit_review((select id from rv where k = 'e4'), jsonb_build_object(
+select is(public.t_edit_review((select id from rv where k = 'e4'), jsonb_build_object(
     'category_id', (select id from public.categories where slug = 'caterer'),
     'job_month', to_char(date_trunc('month', now() at time zone 'Europe/London'), 'YYYY-MM-01'),
     'value_band', '<250', 'on_time', 'yes', 'on_price', 'yes', 'quality', 5, 'tidy', null, 'use_again', 'yes'), 'd22') ->> 'status',
   'under_check', 'editing a new account''s only review to 5 stars puts it under check');
+
+-- ---------------------------------------------------------------- shared_device after an edit (final review 2, M10)
+reset role;
+insert into rv values ('dm1', public.rf_post(26, 10, 4, 'dev-m1'));
+select public.rf_age((select id from rv where k = 'dm1'), '4 days');
+insert into rv values ('dm2', public.rf_post(27, 10, 4, 'dev-m2'));
+select public.rf_age((select id from rv where k = 'dm2'), '4 days');
+select is(public.rf_edit(27, (select id from rv where k = 'dm2'), 'dev-m1'), 'under_check',
+  'an edit from another reviewer''s device puts the edited review under check');
+select is(public.rf_status((select id from rv where k = 'dm1')), 'under_check', 'and the other reviewer''s review too');
+select is((select device_hash || '/' || edit_device_hash from public.reviews where id = (select id from rv where k = 'dm2')),
+  'dev-m2/dev-m1', 'an edit keeps the posting device and records the editing device');
+insert into rv values ('dn1', public.rf_post(28, 11, 4, 'dev-n1'));
+select public.rf_age((select id from rv where k = 'dn1'), '4 days');
+select is(public.rf_edit(28, (select id from rv where k = 'dn1'), 'dev-n2'), 'published', 'an edit from a fresh device is fine');
+insert into rv values ('dn2', public.rf_post(29, 11, 4, 'dev-n1'));
+select is(public.rf_status((select id from rv where k = 'dn2')), 'under_check',
+  'the posting device still counts after the review was edited from elsewhere');
+select public.rf_edit(28, (select id from rv where k = 'dn1'), '');
+select is((select device_hash || '/' || edit_device_hash from public.reviews where id = (select id from rv where k = 'dn1')),
+  'dev-n1/dev-n2', 'an edit without a device hash keeps the review''s earlier devices');
+set local role authenticated;
 
 -- ---------------------------------------------------------------- report_review
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000925","role":"authenticated"}', true);
