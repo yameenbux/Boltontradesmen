@@ -65,7 +65,7 @@ test("unknown route shows the branded 404 with a link home", async ({ page }) =>
   await expect(main.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(main.getByRole("link", { name: /home/i })).toHaveAttribute("href", "/platform");
   await expect(page.getByRole("banner")).toContainText("Bolton Vouched");
-  await expect(page.getByRole("contentinfo")).toContainText("operated by");
+  await expect(page.getByRole("contentinfo")).toContainText("YSB Designs platform");
 });
 
 test("no horizontal scroll at 360px on /platform", async ({ page }) => {
