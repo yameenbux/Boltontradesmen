@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree, Gloock } from "next/font/google";
 import "./globals.css";
+import { siteUrl } from "@/lib/seo";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 const display = Gloock({
@@ -17,9 +18,15 @@ const body = Figtree({
   display: "swap",
 });
 
+// Search Console ownership tag, only when GOOGLE_SITE_VERIFICATION is set (read at build: rebuild after changing it).
+const googleVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
+
 export const metadata: Metadata = {
+  // Resolves every relative canonical and Open Graph URL against the public origin.
+  metadataBase: new URL(siteUrl()),
   title: "Bolton Vouched",
   description: "Local people, vouched for by Bolton.",
+  ...(googleVerification ? { verification: { google: googleVerification } } : {}),
 };
 
 // viewport-fit=cover lets the installed app draw edge to edge; the CSS pads with env(safe-area-inset-*).

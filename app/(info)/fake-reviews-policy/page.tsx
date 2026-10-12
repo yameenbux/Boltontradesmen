@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { H2, List, PolicyPage } from "@/components/PolicyPage";
 import { CONTACT_EMAIL, MAILTO, SUPPORT_WHATSAPP_DISPLAY, WHATSAPP } from "@/components/site/content";
 
-export const metadata: Metadata = { title: "Fake reviews policy | Bolton Vouched" };
+export const metadata: Metadata = pageMetadata({
+  title: "Fake reviews policy | Bolton Vouched",
+  description:
+    "How Bolton Vouched works against fake reviews: we don't pay for reviews, the rules when you post, the automatic checks, what happens to a flagged review and how to report one.",
+  path: "/fake-reviews-policy",
+});
 
 const RISKS: { risk: string; control: string }[] = [
   {

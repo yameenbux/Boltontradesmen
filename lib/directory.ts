@@ -135,3 +135,25 @@ export const getProvider = cache(async (slug: string): Promise<PublicProvider | 
   if (error) throw new Error(`getProvider: ${error.message}`);
   return data ? toProvider(data) : null;
 });
+
+export type LiveProviderSummary = {
+  slug: string;
+  categorySlugs: string[];
+  createdAt: string;
+  lastReviewAt: string | null;
+};
+
+/** Every live provider (the public view only holds live ones), with just what the sitemap needs. */
+export async function listLiveProviders(): Promise<LiveProviderSummary[]> {
+  const { data, error } = await createPublicClient()
+    .from("provider_public")
+    .select("slug, category_slugs, created_at, last_review_at")
+    .order("slug");
+  if (error) throw new Error(`listLiveProviders: ${error.message}`);
+  return (data ?? []).map((r: any) => ({
+    slug: r.slug,
+    categorySlugs: r.category_slugs ?? [],
+    createdAt: r.created_at,
+    lastReviewAt: r.last_review_at,
+  }));
+}

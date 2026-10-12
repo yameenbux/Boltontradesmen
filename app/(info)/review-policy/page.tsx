@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { H2, List, PolicyPage } from "@/components/PolicyPage";
 import { CONTACT_EMAIL, MAILTO, SUPPORT_WHATSAPP_DISPLAY, WHATSAPP } from "@/components/site/content";
 
-export const metadata: Metadata = { title: "Review policy | Bolton Vouched" };
+export const metadata: Metadata = pageMetadata({
+  title: "Review policy | Bolton Vouched",
+  description:
+    "Who can review a local pro on Bolton Vouched, what to write, editing, replies, proof of the job, how to report a review and when one comes down.",
+  path: "/review-policy",
+});
 
 export default function ReviewPolicyPage() {
   return (

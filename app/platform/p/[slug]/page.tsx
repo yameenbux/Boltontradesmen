@@ -10,6 +10,8 @@ import { getProvider, listCategoryGroups } from "@/lib/directory";
 import { firstName } from "@/lib/initials";
 import { platformPath } from "@/lib/paths";
 import { listProviderReviews } from "@/lib/reviews";
+import { JsonLd } from "@/components/JsonLd";
+import { providerJsonLd, providerMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
 
@@ -18,9 +20,22 @@ export function generateStaticParams() {
   return [];
 }
 
+// The provider's live trades, in their category order, with display names.
+async function tradesOf(categorySlugs: string[]) {
+  const names = new Map(
+    (await listCategoryGroups()).flatMap(({ categories }) => categories.map((c) => [c.slug, c.name] as const)),
+  );
+  return categorySlugs.flatMap((s) => {
+    const name = names.get(s);
+    return name ? [{ slug: s, name }] : [];
+  });
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const p = await getProvider((await params).slug);
-  return p ? { title: `${p.businessName} | Bolton Vouched` } : {};
+  if (!p) return {};
+  const trades = await tradesOf(p.categorySlugs);
+  return providerMetadata({ ...p, trade: trades[0]?.name ?? null });
 }
 
 const Chevron = () => (
@@ -34,18 +49,13 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
   if (!p) notFound();
 
   // Trade names for the header and the back link, in the provider's category order.
-  const names = new Map(
-    (await listCategoryGroups()).flatMap(({ categories }) => categories.map((c) => [c.slug, c.name] as const)),
-  );
-  const trades = p.categorySlugs.flatMap((s) => {
-    const name = names.get(s);
-    return name ? [{ slug: s, name }] : [];
-  });
+  const trades = await tradesOf(p.categorySlugs);
   const reviews = await listProviderReviews(p.id);
   const back = trades[0] ? { href: platformPath("c", trades[0].slug), label: trades[0].name } : { href: platformPath(), label: "All trades" };
 
   return (
     <main className="profile">
+      <JsonLd data={providerJsonLd({ ...p, trade: trades[0]?.name ?? null })} />
       <Link href={back.href} className="back press">
         <Chevron />
         {back.label}

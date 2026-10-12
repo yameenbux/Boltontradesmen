@@ -5,6 +5,7 @@ import { AreaFilter } from "@/components/category/AreaFilter";
 import { localPros } from "@/components/home/CategoryTile";
 import { listCategoryGroups, listProvidersInCategory } from "@/lib/directory";
 import { platformPath } from "@/lib/paths";
+import { categoryMetadata } from "@/lib/seo";
 
 // Static and cookie-free: the area filter runs client-side, so no searchParams.
 export const revalidate = 300;
@@ -25,7 +26,7 @@ async function findCategory(slug: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }): Promise<Metadata> {
   const found = await findCategory((await params).category);
-  return found ? { title: `${found.category.name} in Bolton | Bolton Vouched` } : {};
+  return found ? categoryMetadata(found.category) : {};
 }
 
 const Chevron = () => (

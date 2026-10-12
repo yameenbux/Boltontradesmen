@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import { H2, List, PolicyPage } from "@/components/PolicyPage";
+import { pageMetadata } from "@/lib/seo";
 import { COMPANY_LINE } from "@/lib/company";
 import { policyIdentity } from "@/lib/policy-config";
 
-export const metadata: Metadata = { title: "Terms | Bolton Vouched" };
+export const metadata: Metadata = pageMetadata({
+  title: "Terms | Bolton Vouched",
+  description:
+    "The terms of use for Bolton Vouched, the local directory of recommended trades and services in Bolton: what the site is, how listings and reviews work and who runs it.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
   const { contact } = policyIdentity();
