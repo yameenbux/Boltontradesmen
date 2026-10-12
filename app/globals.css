@@ -56,11 +56,13 @@
 /* ---------- base ---------- */
 html{-webkit-text-size-adjust:100%}
 body{background:var(--bg); color:var(--ink); font-family:var(--body); font-size:17px; line-height:1.5; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale}
-:focus-visible{outline:3px solid var(--brick); outline-offset:3px; border-radius:8px}
+:focus-visible:where(:not(.input)){outline:3px solid var(--brick); outline-offset:3px; border-radius:8px}
 h1,h2,h3{text-wrap:balance}
 /* The hero search shows focus on the whole form (.search:focus-within ring), so the input itself has no outline.
    Unlayered so it beats the global :focus-visible rule above. */
 .search input:focus-visible{outline:none}
+/* Signed-in forms: a soft brick ring on the field itself instead of the global outline (excluded above). */
+.input:focus-visible{outline:none; border-color:var(--brick); box-shadow:0 0 0 4px color-mix(in srgb,var(--brick) 22%,transparent)}
 
 @layer components {
   /* One phone-width column, centred (prototype .app). */
@@ -77,6 +79,7 @@ h1,h2,h3{text-wrap:balance}
   .mono svg{position:relative; z-index:1; width:26px; height:26px}
   .word{font-family:var(--display); font-size:21px; line-height:1}
   .word small{display:block; font-family:var(--body); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin-top:3px}
+  .bar-actions{display:flex; gap:8px; flex:none}
   .icon-btn{flex:none; width:48px; height:48px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:grid; place-items:center; cursor:pointer}
   .icon-btn svg{width:20px; height:20px}
 
@@ -322,6 +325,56 @@ h1,h2,h3{text-wrap:balance}
   h1[tabindex="-1"]:focus{outline:none}
   .done p{color:var(--ink-2); margin:0; max-width:32ch}
   .actionbar .bar-error{max-width:428px; margin:0 auto 10px; font-weight:600; color:var(--brick); text-align:center}
+
+  /* ---------- signed-in pages: sign-in, welcome, account (residents and providers) ---------- */
+  /* Same card language as the consent page; inputs are bigger than the admin's (56px, 18-20px text) for thumbs. */
+  .auth{display:grid; gap:16px; margin-top:8px}
+  .auth-card{background:var(--surface); border:1px solid var(--line); border-radius:26px; padding:22px; box-shadow:var(--shadow); display:grid; gap:18px}
+  .auth-card .eyebrow{margin:0; font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--brick)}
+  .auth-card h1{font-family:var(--display); font-weight:400; font-size:clamp(30px,8.4vw,34px); line-height:1.08; margin:6px 0 0; overflow-wrap:anywhere}
+  .auth-card h2{font-family:var(--display); font-weight:400; font-size:23px; line-height:1.15; margin:0}
+  .auth-card .lede{margin:8px 0 0; color:var(--ink-2); font-size:16.5px}
+  .auth-card .lede b{color:var(--ink); white-space:nowrap}
+  .auth-form{display:grid; gap:18px}
+  .field{display:grid; gap:7px; font-size:17px; font-weight:700; color:var(--ink)}
+  .field .hint{font-size:14.5px; font-weight:500; color:var(--ink-2)}
+  .field .opt{font-weight:500; color:var(--ink-3)}
+  .input{width:100%; min-height:56px; border:1.5px solid var(--ink-3); border-radius:14px; background:var(--bg); color:var(--ink); padding:0 16px; font:inherit; font-weight:500; font-size:19px; transition:border-color .2s, box-shadow .2s var(--ease)}
+  .input::placeholder{color:var(--ink-3); font-weight:400}
+  .input[aria-invalid="true"]{border-color:var(--brick)}
+  .input-code{font-size:28px; font-weight:700; letter-spacing:.32em; text-align:center; font-variant-numeric:tabular-nums; padding-left:calc(16px + .32em)}
+  .input-code::placeholder{letter-spacing:.32em}
+  .select{position:relative}
+  .select select{appearance:none; -webkit-appearance:none; padding-right:48px; cursor:pointer}
+  .select svg{position:absolute; right:16px; top:50%; width:20px; height:20px; margin-top:-10px; color:var(--ink-2); pointer-events:none}
+  .field-err{font-size:15px; font-weight:700; color:var(--brick)}
+  .form-alert{display:flex; gap:10px; align-items:flex-start; margin:0; padding:12px 14px; border-radius:14px; font-size:16px; font-weight:600; line-height:1.4;
+    background:var(--brick-tint); color:color-mix(in srgb,var(--brick) 70%,var(--ink)); border:1px solid color-mix(in srgb,var(--brick) 30%,var(--line))}
+  .form-alert svg{flex:none; width:20px; height:20px; margin-top:1px}
+  .form-ok{display:flex; gap:10px; align-items:flex-start; margin:0; padding:12px 14px; border-radius:14px; font-size:16px; font-weight:600; background:var(--sage-tint); color:var(--sage)}
+  .form-ok svg{flex:none; width:20px; height:20px; margin-top:1px}
+  .auth-form .btn, .auth-card > .btn{width:100%}
+  .text-btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 6px; border:0; background:none; font:inherit; font-size:16px; font-weight:700; color:var(--brick); text-decoration:underline; text-underline-offset:3px; cursor:pointer}
+  .text-btn:disabled{opacity:.55; cursor:not-allowed}
+  .text-row{display:flex; flex-direction:column; align-items:center; margin-top:-8px}
+  .preview-name{display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; background:var(--surface-2); font-size:15px; color:var(--ink-2)}
+  .preview-name .avatar{width:44px; height:44px; font-size:18px; flex:none}
+  .preview-name b{display:block; font-size:18px; color:var(--ink)}
+  .reassure{list-style:none; margin:0; padding:0; display:grid; gap:10px}
+  .reassure li{display:grid; grid-template-columns:34px minmax(0,1fr); gap:12px; align-items:center; font-size:15px; color:var(--ink-2)}
+  .reassure .ri{width:34px; height:34px; border-radius:10px; background:var(--sage-tint); color:var(--sage); display:grid; place-items:center}
+  .reassure .ri svg{width:18px; height:18px}
+  .who-card{display:flex; align-items:center; gap:16px}
+  .who-card .avatar{flex:none; width:64px; height:64px; font-size:26px}
+  .who-card .name{margin:0; font-size:30px; line-height:1.1}
+  .who-card .signed{display:block; margin-bottom:4px; font-family:var(--body); font-size:15px; color:var(--ink-2)}
+  .who-card .pill{margin-top:8px}
+  .account-link{display:grid; grid-template-columns:44px minmax(0,1fr) 20px; gap:14px; align-items:center; min-height:72px; padding:14px 16px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow); color:inherit; text-decoration:none}
+  .account-link .ai{width:44px; height:44px; border-radius:13px; background:var(--brick-tint); color:var(--brick); display:grid; place-items:center}
+  .account-link .ai svg{width:22px; height:22px}
+  .account-link b{display:block; font-size:18px; line-height:1.2}
+  .account-link small{display:block; margin-top:2px; font-size:14px; color:var(--ink-2); overflow-wrap:anywhere}
+  .account-link > svg{width:20px; height:20px; color:var(--ink-3)}
 
   /* ---------- 404 ---------- */
   .lost{display:grid; justify-items:start; gap:14px; padding:28px 0 8px}
