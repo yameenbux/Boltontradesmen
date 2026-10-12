@@ -234,3 +234,19 @@ export function providerJsonLd(
       : [{ "@type": "City", name: "Bolton" }],
   };
 }
+
+export type Crumb = { name: string; path: string };
+
+/** BreadcrumbList for the trail shown at the top of a page (components/Breadcrumbs.tsx), with absolute URLs. */
+export function breadcrumbJsonLd(crumbs: Crumb[], base: string = siteUrl()) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: c.name,
+      item: absoluteUrl(c.path, base),
+    })),
+  };
+}

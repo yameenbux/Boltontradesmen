@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ActionBar } from "@/components/profile/ActionBar";
 import { ChecksList } from "@/components/profile/ChecksList";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
@@ -11,7 +11,7 @@ import { firstName } from "@/lib/initials";
 import { platformPath } from "@/lib/paths";
 import { listProviderReviews } from "@/lib/reviews";
 import { JsonLd } from "@/components/JsonLd";
-import { providerJsonLd, providerMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, type Crumb, providerJsonLd, providerMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
 
@@ -38,28 +38,29 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return providerMetadata({ ...p, trade: trades[0]?.name ?? null });
 }
 
-const Chevron = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="m15 18-6-6 6-6" />
-  </svg>
-);
+/** Trades › first trade › business (the trade is left out when the provider has no live category). */
+function profileTrail(p: { slug: string; businessName: string }, trade?: { slug: string; name: string }): Crumb[] {
+  return [
+    { name: "Trades", path: platformPath() },
+    ...(trade ? [{ name: trade.name, path: platformPath("c", trade.slug) }] : []),
+    { name: p.businessName, path: platformPath("p", p.slug) },
+  ];
+}
 
 export default async function ProviderPage({ params }: { params: Promise<{ slug: string }> }) {
   const p = await getProvider((await params).slug);
   if (!p) notFound();
 
-  // Trade names for the header and the back link, in the provider's category order.
+  // Trade names for the header and the breadcrumbs, in the provider's category order.
   const trades = await tradesOf(p.categorySlugs);
   const reviews = await listProviderReviews(p.id);
-  const back = trades[0] ? { href: platformPath("c", trades[0].slug), label: trades[0].name } : { href: platformPath(), label: "All trades" };
+  const trail = profileTrail(p, trades[0]);
 
   return (
     <main className="profile">
       <JsonLd data={providerJsonLd({ ...p, trade: trades[0]?.name ?? null })} />
-      <Link href={back.href} className="back press">
-        <Chevron />
-        {back.label}
-      </Link>
+      <JsonLd data={breadcrumbJsonLd(trail)} />
+      <Breadcrumbs trail={trail} />
       <ProfileHeader
         businessName={p.businessName}
         contactName={p.contactName}

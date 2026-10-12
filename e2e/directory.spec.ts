@@ -4,7 +4,9 @@ test("category page ranks scored providers and lists newcomers separately", asyn
   await page.goto("/platform/c/plumber");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Plumber");
   await expect(page.getByText(/^\d+ local pros? · ranked by reviews$/)).toBeVisible();
-  await expect(page.getByRole("link", { name: "All trades" })).toHaveAttribute("href", "/platform");
+  const crumbs = page.getByRole("navigation", { name: "Breadcrumb" });
+  await expect(crumbs.getByRole("link", { name: "Trades", exact: true })).toHaveAttribute("href", "/platform");
+  await expect(crumbs.locator("[aria-current=page]")).toHaveText("Plumber");
 
   const ranked = page.getByTestId("ranked-list");
   const ace = ranked.getByRole("link", { name: /Ace Plumbing/ });
@@ -30,7 +32,7 @@ test("area chips filter providers and show an empty state when none cover the ar
   await expect(page.getByText("Fresh Pipes")).toBeVisible();
 
   // The keyboard focus ring (outline + offset) must fit inside the scrolling chip row, which clips it otherwise.
-  await page.getByRole("link", { name: "All trades" }).focus();
+  await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Trades", exact: true }).focus();
   await page.keyboard.press("Tab");
   await expect(areas.getByRole("button", { name: "All of Bolton" })).toBeFocused();
   const ring = await areas.evaluate((row) => {
@@ -90,7 +92,10 @@ test("profile shows the header, stat card, checks list and about card", async ({
   await expect(page.getByText("Alan Ace · Plumber")).toBeVisible();
   await expect(page.getByText("Covers BL1, BL3, BL4")).toBeVisible();
   await expect(page.locator(".prof-head").getByText("Verified")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Plumber", exact: true })).toHaveAttribute("href", "/platform/c/plumber");
+  const crumbs = page.getByRole("navigation", { name: "Breadcrumb" });
+  await expect(crumbs.getByRole("link", { name: "Trades", exact: true })).toHaveAttribute("href", "/platform");
+  await expect(crumbs.getByRole("link", { name: "Plumber", exact: true })).toHaveAttribute("href", "/platform/c/plumber");
+  await expect(crumbs.locator("[aria-current=page]")).toHaveText("Ace Plumbing");
 
   const stat = page.getByRole("region", { name: "What people say" });
   await expect(stat.getByText("Would use again")).toBeVisible();
