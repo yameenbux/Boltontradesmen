@@ -1,0 +1,31 @@
+flowchart TB
+    APP["<b>Bolton Vouched</b><br/>boltonvouched.ysbdesigns.uk"]
+
+    subgraph LIVE["Live today: free for residents and traders"]
+        direction LR
+        L1["<b>Showcase site</b><br/>at /, the link to share"]
+        L2["<b>The directory</b><br/>at /platform, adds to<br/>the Home Screen"]
+        L3["<b>Seven groups<br/>of trades</b><br/>Transport included"]
+        L4["<b>Profiles with checks</b><br/>ID, insurance, Gas Safe,<br/>DVSA and more"]
+        L5["<b>Call and WhatsApp</b><br/>counted as enquiries,<br/>numbers never in the page"]
+        L6["<b>Consent links<br/>and admin</b><br/>with evidence kept"]
+    end
+
+    subgraph NEXT["Coming: not built"]
+        direction LR
+        N1["<b>Resident sign-in<br/>and reviews</b>"]
+        N2["<b>Community<br/>questions</b>"]
+        N3["<b>Trader<br/>dashboards</b>"]
+        N4["<b>Verified tier</b><br/>optional, £10 a month<br/>or £100 a year"]
+    end
+
+    APP --> LIVE
+    APP -.-> NEXT
+
+    classDef core fill:#9C3A25,stroke:#B5862C,stroke-width:3px,color:#FFF5E9
+    classDef live fill:#DDE9DA,stroke:#46684A,stroke-width:2px,color:#231A15
+    classDef dev fill:#F6EAD0,stroke:#B5862C,stroke-width:2px,stroke-dasharray:6 4,color:#231A15
+    classDef ext fill:#EFE5D7,stroke:#97887C,stroke-width:1.5px,color:#231A15
+    class APP core
+    class L1,L2,L3,L4,L5,L6 live
+    class N1,N2,N3,N4 dev
