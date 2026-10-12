@@ -7,7 +7,8 @@
 --   * 20 wrong codes from one connection in 1 hour (ip_hash; IPv6 grouped by /64 in the app) -> 'ip_locked'
 -- An attempt counts from the moment it is let through until otp_verify_record marks it right ('ok'), so
 -- parallel guesses can't slip past. Refused attempts are recorded as 'locked' and don't extend a lockout.
--- Limits live in settings.otp_verify_limits. Rows are kept a day. Supabase's own limits stay as the outer ceiling.
+-- Limits live in settings.otp_verify_limits. Rows are kept a day. Each call also purges phone_retention rows
+-- past purge_after (M4). Supabase's own limits stay as the outer ceiling.
 -- Re-runnable.
 
 create table if not exists public.otp_verify_attempts (
@@ -41,6 +42,9 @@ begin
   perform pg_advisory_xact_lock(hashtext('otp_verify:phone:' || coalesce(p_phone, '')));
   perform pg_advisory_xact_lock(hashtext('otp_verify:ip:' || coalesce(p_ip_hash, '')));
   delete from public.otp_verify_attempts where created_at < now() - interval '1 day';
+  -- Final review 2, M4: deleted people's numbers go after 12 months, as the privacy notice says. This runs on
+  -- every code check, so the purge doesn't wait for the next account deletion.
+  delete from public.phone_retention where purge_after < now();
 
   select value into v_limits from public.settings where key = 'otp_verify_limits';
   v_limits := coalesce(v_limits, '{}'::jsonb);

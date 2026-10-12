@@ -4,6 +4,7 @@ import { requireMember } from "@/lib/auth";
 import type { FormState } from "@/lib/admin-shared";
 import { platformPath } from "@/lib/paths";
 import { ID_PATTERN } from "@/lib/review-form";
+import { CONTACT_EMAIL } from "@/components/site/content";
 
 const REPORT_THANKS = "Thanks. We'll look at this review. Reports don't change a review on their own.";
 const NOTE_NEEDED = "Tell us what's wrong with it, in up to 500 characters.";
@@ -11,6 +12,7 @@ const NOTE_NEEDED = "Tell us what's wrong with it, in up to 500 characters.";
 const REPORT_ERRORS: Record<string, string> = {
   already_reported: "You've already reported this review. We'll look at it.",
   review_not_found: "That review isn't on the site any more.",
+  report_limit: `You've sent 10 reports today, which is the most we take from one person in a day. Please try again tomorrow, or email ${CONTACT_EMAIL}.`,
 };
 
 /** A signed-in person's report: it creates a flag for the admin and never changes the review by itself. */

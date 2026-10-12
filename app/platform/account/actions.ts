@@ -1,7 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { DELETE_CONFIRM_ERROR, DELETE_FAILED_MESSAGE, DELETE_RETRY_MESSAGE } from "@/lib/account-text";
+import {
+  DELETE_ADMIN_MESSAGE,
+  DELETE_CONFIRM_ERROR,
+  DELETE_FAILED_MESSAGE,
+  DELETE_RETRY_MESSAGE,
+} from "@/lib/account-text";
 import { GROUP_CODE_ERROR, requireMember, requireSignedIn } from "@/lib/auth";
 import type { FormState } from "@/lib/admin-shared";
 import { platformPath } from "@/lib/paths";
@@ -44,6 +49,7 @@ export async function deleteAccount(_prev: FormState, fd: FormData): Promise<For
 
   const { data, error } = await supabase.rpc("delete_my_account");
   if (error) {
+    if (error.message === "admin_account") return { message: DELETE_ADMIN_MESSAGE };
     console.error("account: delete_my_account failed:", error.message);
     return { message: DELETE_FAILED_MESSAGE };
   }

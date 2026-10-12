@@ -77,6 +77,13 @@ describe("deleteAccount", () => {
     expect(deleteUser).not.toHaveBeenCalled();
   });
 
+  it("explains that the admin account can't be deleted here", async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: "admin_account" } });
+    const res = await deleteAccount({}, form({ confirm: "on" }));
+    expect(res.message).toBe("The admin account can't be deleted from here. Nothing was deleted.");
+    expect(deleteUser).not.toHaveBeenCalled();
+  });
+
   it("sends a signed-out person to sign in", async () => {
     auth.getUser.mockResolvedValue({ data: { user: null } });
     await expect(deleteAccount({}, form({ confirm: "on" }))).rejects.toThrow(

@@ -103,6 +103,14 @@ describe("reportReview", () => {
     expect(rpc).not.toHaveBeenCalledWith("report_review", expect.anything());
   });
 
+  it("says plainly when the person has reached the daily report limit", async () => {
+    signedIn({ error: { message: "report_limit" } });
+    const res = await reportReview({}, form({ review_id: REVIEW, note: "Another" }));
+    expect(res.message).toBe(
+      "You've sent 10 reports today, which is the most we take from one person in a day. Please try again tomorrow, or email support@ysbdesigns.uk.",
+    );
+  });
+
   it("says so when the person already reported it", async () => {
     signedIn({ error: { message: "already_reported" } });
     const res = await reportReview({}, form({ review_id: REVIEW, note: "Again" }));

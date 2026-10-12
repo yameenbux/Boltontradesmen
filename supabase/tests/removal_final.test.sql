@@ -26,6 +26,7 @@ language sql as $$
   values ('+' || p_phone, 'pgtap', 'approved', encode(sha256(convert_to(p_nonce, 'UTF8')), 'hex'));
   insert into auth.users (id, phone, created_at, raw_user_meta_data)
   values (p_id, p_phone, now() - p_age, jsonb_build_object('bv_nonce', p_nonce));
+  update auth.users set phone_confirmed_at = now() where id = p_id;  -- they typed the code
 $$;
 
 insert into public.providers (id, slug, business_name, phone_e164, status, consent_at, consent_evidence) values

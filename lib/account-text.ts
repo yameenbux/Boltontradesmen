@@ -6,6 +6,7 @@ export const DELETE_RETRY_MESSAGE =
   "Your reviews are down, but we couldn't finish deleting your account. Please try again.";
 export const DELETE_FAILED_MESSAGE = "Something went wrong. Nothing was deleted. Please try again.";
 export const DELETE_CONFIRM_ERROR = "Tick the box to confirm.";
+export const DELETE_ADMIN_MESSAGE = "The admin account can't be deleted from here. Nothing was deleted.";
 
 export type ProofState = "pending" | "accepted" | "rejected";
 export type MyReviewRow = {
