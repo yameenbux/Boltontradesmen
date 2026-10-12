@@ -13,7 +13,8 @@
 --   * private.guard_auth_user (new body, triggers untouched): a new email account needs the nonce of an
 --     approved, unused request for its normalised address from the last 15 minutes, arrives unconfirmed,
 --     on an allowed domain, with an address nobody else holds; a Google account is accepted unless its
---     normalised email is taken; anything else with an email (a password sign-up, say) is refused;
+--     normalised email is taken; an abandoned email account (code asked for, never used, over 15 minutes
+--     old) holds nothing and is removed when a new account for its normalised address arrives; anything else with an email (a password sign-up, say) is refused;
 --     admin allow-list and phone path unchanged.
 --   * private.scrub_auth_user (new body): no usable password on any non-admin account; email changes
 --     refused for non-admins; the nonce never stays in the metadata.
@@ -36,7 +37,30 @@ as $$
 $$;
 revoke execute on function private.is_admin_email(text) from public, anon, authenticated;
 
--- A live account (other than p_except) whose email normalises to p_norm.
+-- An "abandoned" email account: someone asked for a code but never used it. Unconfirmed, never signed in, no
+-- phone, no identity but its email one, no profile, not an admin, and older than the 15-minute code expiry
+-- (so its code can no longer work). It must not lock its mailbox out of a later sign-in (a Google account or
+-- an email code for a dot/+tag variant of the same address): it doesn't count as holding its address, and
+-- the guard removes it when a new account for that normalised address arrives.
+create or replace function private.abandoned_email_account(p_uid uuid) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from auth.users u
+    where u.id = p_uid
+      and u.deleted_at is null
+      and coalesce(u.email, '') <> '' and u.email_confirmed_at is null
+      and coalesce(u.phone, '') = '' and u.phone_confirmed_at is null
+      and u.last_sign_in_at is null
+      and u.created_at < now() - interval '15 minutes'
+      and not private.is_admin_email(u.email)
+      and not exists (select 1 from auth.identities i where i.user_id = u.id and i.provider <> 'email')
+      and not exists (select 1 from public.profiles p where p.user_id = u.id)
+  );
+$$;
+revoke execute on function private.abandoned_email_account(uuid) from public, anon, authenticated;
+
+-- A live account (other than p_except) whose email normalises to p_norm. Abandoned accounts don't count.
 create or replace function private.email_norm_taken(p_norm text, p_except uuid default null) returns boolean
 language sql stable security definer set search_path = ''
 as $$
@@ -46,9 +70,25 @@ as $$
       and (p_except is null or u.id <> p_except)
       and coalesce(u.email, '') <> ''
       and private.normalise_email(u.email) = p_norm
+      and not private.abandoned_email_account(u.id)
   );
 $$;
 revoke execute on function private.email_norm_taken(text, uuid) from public, anon, authenticated;
+
+-- Removes abandoned accounts (other than p_except) for a normalised address, when a new account for it arrives.
+-- Their identities and sessions go with them (auth's own cascades); they have no profile, so nothing else does.
+create or replace function private.drop_abandoned_email_accounts(p_norm text, p_except uuid) returns void
+language sql security definer set search_path = ''
+as $$
+  delete from auth.users u
+  where p_norm is not null
+    and u.deleted_at is null
+    and (p_except is null or u.id <> p_except)
+    and coalesce(u.email, '') <> ''
+    and private.normalise_email(u.email) = p_norm
+    and private.abandoned_email_account(u.id);
+$$;
+revoke execute on function private.drop_abandoned_email_accounts(text, uuid) from public, anon, authenticated, service_role;
 
 -- ---------------------------------------------------------------- email_requests
 -- One row per "Email me a code", whatever happened to it. Kept 35 days (purged by email_gate).
@@ -130,6 +170,7 @@ begin
     select 1 from auth.users u
     where u.deleted_at is null and coalesce(u.email, '') <> ''
       and private.normalise_email(u.email) = v_norm and lower(u.email) <> v_typed
+      and not private.abandoned_email_account(u.id)
   ) then
     v_outcome := 'address_taken';
     v_verdict := 'address_taken';
@@ -337,6 +378,7 @@ begin
       if private.email_norm_taken(v_norm, new.id) then
         raise exception 'email already registered' using errcode = 'unique_violation';
       end if;
+      perform private.drop_abandoned_email_accounts(v_norm, new.id);
       new.encrypted_password := private.random_password_hash();
       return new;
     end if;
@@ -366,6 +408,7 @@ begin
     end if;
 
     update public.email_requests set consumed_at = now() where id = v_request;
+    perform private.drop_abandoned_email_accounts(v_norm, new.id);
     new.raw_user_meta_data := new.raw_user_meta_data - 'bv_nonce';
     new.encrypted_password := private.random_password_hash();
   end if;

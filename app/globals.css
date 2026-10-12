@@ -430,6 +430,14 @@ h1,h2,h3{text-wrap:balance}
   .auth-card .lede b.addr{white-space:normal; overflow-wrap:anywhere}
   .or-divider{display:flex; align-items:center; gap:14px; margin:0; font-size:14.5px; font-weight:700; color:var(--ink-3)}
   .or-divider::before,.or-divider::after{content:""; flex:1; height:1px; background:var(--line)}
+  /* Continue with Google: Google's neutral button (light #FFF / #747775 / #1F1F1F, dark #131314 / #8E918F / #E3E3E3,
+     official G mark), sized like our other big taps. Dark values are set with the theme rules at the end of this file. */
+  .google-form{display:grid; gap:10px}
+  .btn-google{display:flex; align-items:center; justify-content:center; gap:12px; width:100%; min-height:56px; padding:0 20px; border-radius:16px; border:1px solid #747775; background:#FFFFFF; color:#1F1F1F; font-family:"Roboto", var(--body); font-size:17px; font-weight:600; letter-spacing:.01em; cursor:pointer}
+  .btn-google svg{flex:none; width:20px; height:20px}
+  .btn-google:hover{box-shadow:0 1px 2px rgba(60,64,67,.3),0 1px 3px 1px rgba(60,64,67,.15)}
+  .standalone-only{display:none; margin:0; font-size:14.5px; color:var(--ink-2); text-align:center}
+  @media (display-mode: standalone){ .standalone-only{display:block} }
   .preview-name{display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; background:var(--surface-2); font-size:15px; color:var(--ink-2)}
   .preview-name .avatar{width:44px; height:44px; font-size:18px; flex:none}
   .preview-name b{display:block; font-size:18px; color:var(--ink)}
@@ -559,6 +567,8 @@ h1,h2,h3{text-wrap:balance}
 
 :root[data-theme="dark"] .avatar{color:var(--brick)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .avatar{color:var(--brick)}}
+:root[data-theme="dark"] .btn-google{background:#131314; border-color:#8E918F; color:#E3E3E3}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn-google{background:#131314; border-color:#8E918F; color:#E3E3E3}}
 
 /* ---------- keyframes ---------- */
 @keyframes rise{from{transform:translateY(14px) scale(.985); opacity:.35} to{transform:none; opacity:1}}

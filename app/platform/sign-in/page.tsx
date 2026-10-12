@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { ChatIcon, LockIcon } from "@/components/auth/icons";
+import { AlertIcon, ChatIcon, LockIcon } from "@/components/auth/icons";
 import { EmailCodeForm } from "@/components/auth/EmailCodeForm";
+import { GoogleButton } from "@/components/auth/GoogleButton";
 import { SignInForm } from "@/components/auth/SignInForm";
+import { GOOGLE_SIGN_IN_ERROR } from "@/lib/google-callback";
 import { safeNext } from "@/lib/safe-next";
 import { phoneSignInEnabled } from "@/lib/sign-in-methods";
 
@@ -23,15 +25,33 @@ function Divider({ children }: { children: string }) {
   );
 }
 
-export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
-  const raw = (await searchParams).next;
-  const next = safeNext(Array.isArray(raw) ? raw[0] : raw);
+type Search = { next?: string | string[]; error?: string | string[] };
+
+export default async function SignInPage({ searchParams }: { searchParams: Promise<Search> }) {
+  const params = await searchParams;
+  const next = safeNext(Array.isArray(params.next) ? params.next[0] : params.next);
+  const googleFailed = (Array.isArray(params.error) ? params.error[0] : params.error) === "google";
   // Read at request time (SIGN_IN_PHONE): only enabled methods are shown.
   const phoneOn = phoneSignInEnabled();
   return (
     <main className="auth">
       <section className="auth-card" aria-labelledby="signin-title">
-        <EmailCodeForm next={next} title={heading(next)} before={<Divider>or use your email</Divider>} />
+        <EmailCodeForm
+          next={next}
+          title={heading(next)}
+          before={
+            <>
+              {googleFailed && (
+                <p role="alert" className="form-alert">
+                  <AlertIcon />
+                  {GOOGLE_SIGN_IN_ERROR}
+                </p>
+              )}
+              <GoogleButton next={next} />
+              <Divider>or use your email</Divider>
+            </>
+          }
+        />
         {phoneOn && (
           <>
             <Divider>or use your mobile</Divider>

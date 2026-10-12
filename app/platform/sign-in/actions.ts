@@ -6,6 +6,7 @@ import { welcomePath } from "@/lib/auth";
 import { clientIpFrom } from "@/lib/client-ip";
 import { normaliseEmail } from "@/lib/email";
 import { EMAIL_SIGN_IN_ERRORS, requestEmailSignInCode } from "@/lib/email-gate";
+import { googleErrorPath } from "@/lib/google-callback";
 import { ipHash } from "@/lib/ip-hash";
 import { checkLineType } from "@/lib/line-type";
 import { requestSignInCode, SIGN_IN_ERRORS } from "@/lib/otp-gate";
@@ -225,4 +226,34 @@ export async function verifyEmailCode(prev: EmailSignInState, fd: FormData): Pro
   const row = account as { display_name: string | null; deleted: boolean } | null;
   if (!row || !row.display_name || row.deleted) redirect(welcomePath(next));
   redirect(next);
+}
+
+// ---------------------------------------------------------------- Google
+
+/**
+ * "Continue with Google": starts Supabase's Google OAuth with PKCE (the cookie client stores the code verifier)
+ * and sends the browser to it. Google comes back through Supabase to /platform/auth/callback, built on
+ * NEXT_PUBLIC_SITE_URL (never the Host header), carrying `next`.
+ */
+export async function startGoogleSignIn(fd: FormData): Promise<void> {
+  const next = safeNext(field(fd, "next"));
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  let url: string | null = null;
+  try {
+    const supabase = await createServerAuthClient();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${site}/platform/auth/callback?next=${encodeURIComponent(next)}`,
+        skipBrowserRedirect: true,
+        queryParams: { prompt: "select_account" },
+      },
+    });
+    if (error) console.error("google sign-in: could not start:", error.message);
+    else url = data.url ?? null;
+  } catch (err) {
+    console.error("google sign-in: could not start:", err);
+  }
+  if (!site || !url) redirect(googleErrorPath(next));
+  redirect(url);
 }
