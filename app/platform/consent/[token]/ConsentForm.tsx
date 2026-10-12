@@ -40,7 +40,7 @@ export function ConsentForm({
         <h1 className="display" ref={heading} tabIndex={-1}>
           {firstName ? `You're all set, ${firstName}` : "You're all set"}
         </h1>
-        <p>Thanks. Your listing goes live once Yameen has checked it, usually within a day.</p>
+        <p>Thanks. Your listing goes live once we&apos;ve checked it, usually within a day.</p>
       </div>
     );
   }

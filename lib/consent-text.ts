@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 // The statement a provider reads before agreeing to be listed. Bump the version when the wording changes:
 // the version and a hash of the exact rendered text are stored with each consent as evidence.
-export const CONSENT_TEXT_VERSION = "2026-10-11c";
+export const CONSENT_TEXT_VERSION = "2026-10-11d";
 
 export const PRIVACY_PATH = "/privacy";
 // The words in the privacy card's title that link to PRIVACY_PATH (the link adds no text of its own).
@@ -64,7 +64,9 @@ export function consentStatement(
     {
       key: "fairness",
       title: "Free, and fair",
-      body: "Your place in the list comes from reviews only. Nobody can pay to move up the list.",
+      body:
+        "Your basic listing is free. Your place in the list comes from reviews only. Nobody can pay to move up the list. " +
+        "We may later offer optional paid extras; you'll never be removed for not buying them, and they never change your place in the list.",
     },
     { key: "privacy", title: `I have read the ${PRIVACY_LINK_TEXT}`, body: "It explains what we keep and why." },
     {

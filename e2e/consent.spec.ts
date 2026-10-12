@@ -64,14 +64,14 @@ test("provider consents via their link, then the admin sets them live", async ({
 
   await consent.getByRole("button", { name: "I agree, list me" }).click();
   await expect(consent.getByRole("heading", { name: "You're all set, Sam" })).toBeVisible();
-  await expect(consent.getByText("once Yameen has checked it", { exact: false })).toBeVisible();
+  await expect(consent.getByText("once we've checked it", { exact: false })).toBeVisible();
   await expect(consent.getByRole("button", { name: "I agree, list me" })).toHaveCount(0);
 
   await consent.goto(`/platform/consent/${token}`);
   await expect(consent.getByText("This link is no longer valid").first()).toBeVisible();
   await ctx.close();
 
-  expect(sql(`select consent_evidence->>'text_version' from public.providers where business_name = '${name}'`)).toBe("2026-10-11c");
+  expect(sql(`select consent_evidence->>'text_version' from public.providers where business_name = '${name}'`)).toBe("2026-10-11d");
   // Review Focus 5: the stored hash is the hash of exactly the paragraphs the provider saw.
   const shown = createHash("sha256").update(paragraphs.join("\n\n")).digest("hex");
   expect(sql(`select consent_evidence->>'text_sha256' from public.providers where business_name = '${name}'`)).toBe(shown);

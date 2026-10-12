@@ -5,8 +5,8 @@ import { CONSENT_TEXT_VERSION, consentStatement, PRIVACY_LINK_TEXT } from "@/lib
 const env = { OWNER_LEGAL_NAME: "Jane Doe Ltd", CONTACT_EMAIL: "jane@example.org" };
 
 describe("consentStatement", () => {
-  it("is the 2026-10-11c wording", () => {
-    expect(CONSENT_TEXT_VERSION).toBe("2026-10-11c");
+  it("is the 2026-10-11d wording", () => {
+    expect(CONSENT_TEXT_VERSION).toBe("2026-10-11d");
   });
 
   it("covers every required point in plain English", () => {
@@ -18,6 +18,9 @@ describe("consentStatement", () => {
       "within one working day",
       "come back if you list again",
       "comes from reviews only",
+      "Your basic listing is free.",
+      "you'll never be removed for not buying them",
+      "they never change your place in the list",
       "I have read the privacy notice",
       "operated by",
       "data controller",
