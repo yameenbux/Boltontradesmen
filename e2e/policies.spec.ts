@@ -34,6 +34,16 @@ test("privacy notice covers controller, rights and the ICO", async ({ page }) =>
   await expect(page.getByText("hello@example.com").first()).toBeVisible();
 });
 
+for (const path of ["/privacy", "/terms"]) {
+  test(`${path} names YSB Designs and the registered company, and no person`, async ({ page }) => {
+    await page.goto(path);
+    const main = page.locator("main");
+    await expect(main).toContainText("Bolton Vouched is a YSB Designs platform.");
+    await expect(main).toContainText("YSB Ventures Ltd, registered in England and Wales, company number 16022339.");
+    await expect(main).not.toContainText(/yameen/i);
+  });
+}
+
 test("how ratings work states the minimum and that payment never affects ranking", async ({ page }) => {
   await page.goto("/how-ratings-work");
   await expect(page.getByText("Payment never affects ranking").first()).toBeVisible();

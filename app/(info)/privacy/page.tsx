@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { H2, List, PolicyPage } from "@/components/PolicyPage";
+import { COMPANY_LINE } from "@/lib/company";
 import { policyIdentity } from "@/lib/policy-config";
 
 export const metadata: Metadata = { title: "Privacy notice | Bolton Vouched" };
@@ -16,7 +17,7 @@ export default function PrivacyPage() {
 
       <H2>Who is responsible</H2>
       <p>
-        Bolton Vouched is run by {owner}, which is the data controller. Contact: {contact}.
+        {COMPANY_LINE} The data controller is {owner}. Contact: {contact}.
       </p>
 
       <H2>What we collect</H2>

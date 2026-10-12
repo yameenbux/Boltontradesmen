@@ -41,7 +41,7 @@ export default function RootLayout({
 }) {
   return (
     // The head script may add data-theme before hydration, so React must not treat it as a mismatch.
-    <html lang="en" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
+    <html lang="en-GB" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
       <head>
         {/* Static string, no user input: applies a stored light/dark choice before first paint. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />

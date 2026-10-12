@@ -19,6 +19,19 @@ const PATHS = {
       <path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.5A6.5 6.5 0 0 1 21.5 20" />
     </>
   ),
+  // A chat bubble with a handset: the WhatsApp support route (line art, not the WhatsApp logo).
+  whatsapp: (
+    <>
+      <path d="M4 20.5 5.2 16.4A8.6 8.6 0 1 1 8 19.2Z" />
+      <path d="M9.2 8.6c.2 3.4 2.8 6 6.2 6.2l.9-1.7-2-1-.9.9a4 4 0 0 1-2.4-2.4l.9-.9-1-2Z" />
+    </>
+  ),
+  mail: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2.5" />
+      <path d="m4 7 8 6 8-6" />
+    </>
+  ),
   phone: <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" />,
   shield: (
     <>

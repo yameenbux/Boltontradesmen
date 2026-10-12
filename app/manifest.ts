@@ -7,6 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Bolton Vouched",
     short_name: "Vouched",
     description: "Local people, vouched for by Bolton.",
+    lang: "en-GB",
+    dir: "ltr",
     start_url: "/platform",
     scope: "/platform",
     display: "standalone",

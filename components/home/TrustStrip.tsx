@@ -29,7 +29,9 @@ export function TrustStrip() {
       </li>
       <li>
         <svg {...icon}>
-          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          {/* Pound sign (£), matching the consent page's "Free, and fair" icon. */}
+          <path d="M16.5 7a4 4 0 0 0-8 1v12" />
+          <path d="M5.5 13h8M5.5 20h13" />
         </svg>
         <strong>Fair</strong>Nobody pays to rank
       </li>

@@ -64,7 +64,7 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 >
 > Fair warning: people who've used you will be able to leave reviews, and I won't remove one just because it's unflattering, only if it's fake or abusive. you'll be able to reply to any review, and you can come off any time.
 >
-> Free, no catch. Any questions just message me.
+> Your basic listing is free, no catch. Any questions just message me.
 
 ### B. To each trader once they're live
 
@@ -80,7 +80,7 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 
 > Morning all 👋
 >
-> Every week someone in here asks "anyone know a good…?" and the answers get lost in the scroll. So I've built **Bolton Vouched**, a home for the people this group recommends:
+> Every week someone in here asks "anyone know a good…?" and the answers get lost in the scroll. So there's now **Bolton Vouched**, a home for the people this group recommends, built by YSB Designs:
 >
 > 👉 https://boltonvouched.ysbdesigns.uk
 >
@@ -90,9 +90,9 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 > • Reviews from people in Bolton are coming soon
 > • Tip: tap "Add it to your phone" on the page and it works like an app
 >
-> **Traders in the group:** if you'd like to be added (it's free), just drop me a message with your name, trade and the areas you cover and I'll get you on.
+> **Traders in the group:** if you'd like to be added (a basic listing is free), raise a support ticket by emailing **support@ysbdesigns.uk** or on WhatsApp at **07466 487591** with your name, trade and the areas you cover (or tap "WhatsApp us" or "Email a ticket" on the site) and the Bolton Vouched team will get you on.
 >
-> It's brand new, so tell me what you think. Still ask in here as normal, I'll keep adding the people you recommend.
+> It's brand new, so let us know what you think. Still ask in here as normal; we'll keep adding the people you recommend.
 
 Send C only once at least a handful of traders are live, so the first visit doesn't look empty.
 

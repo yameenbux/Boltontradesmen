@@ -1,10 +1,29 @@
 // Words and data for the showcase site at "/". Kept in one place so the owner can change wording without touching layout.
 import { platformPath } from "@/lib/paths";
 
-export const CONTACT_EMAIL = "yameen@ysbdesigns.uk";
-export const MAILTO = `mailto:${CONTACT_EMAIL}`;
-export const COMPANY_LINE =
-  "Bolton Vouched is operated by YSB Ventures Ltd, registered in England and Wales, company number 16022339.";
+// Every question goes to the support inbox as a ticket, with a subject line so tickets can be sorted.
+export const CONTACT_EMAIL = "support@ysbdesigns.uk";
+export const ticket = (subject: string) =>
+  `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Bolton Vouched: ${subject}`)}`;
+export const MAILTO = ticket("support request");
+export const LISTING_TICKET = ticket("please list me");
+export const REMOVAL_TICKET = ticket("remove my listing");
+export const REPORT_TICKET = ticket("report a problem");
+
+// The other support route: the operator's own WhatsApp (public on purpose; traders' numbers never appear on the site).
+// Each link opens a chat with a message already typed, mirroring the email subjects above.
+export const SUPPORT_WHATSAPP_DISPLAY = "07466 487591";
+export const SUPPORT_WHATSAPP_E164 = "447466487591";
+export const whatsappTicket = (text: string) => `https://wa.me/${SUPPORT_WHATSAPP_E164}?text=${encodeURIComponent(text)}`;
+export const WHATSAPP = whatsappTicket("Hi, I have a question about Bolton Vouched.");
+export const LISTING_WHATSAPP = whatsappTicket(
+  "Hi, I'd like to be listed on Bolton Vouched. Name: … Trade: … Areas: …",
+);
+export const REMOVAL_WHATSAPP = whatsappTicket("Hi, please remove my Bolton Vouched listing.");
+export const REPORT_WHATSAPP = whatsappTicket("Hi, I'd like to report a problem on Bolton Vouched: …");
+
+// The legally required company details (registered name and number), shared with the platform footer and policies.
+export { COMPANY_LINE } from "@/lib/company";
 export const PLATFORM = platformPath();
 
 export const SECTIONS = [
@@ -99,13 +118,27 @@ export const DECK: DeckCard[] = [
 ];
 
 // FAQ answers are paragraphs of plain text and links, so the search can match on the exact words shown.
-export type Segment = string | { href: string; label: string };
+// `external` links (WhatsApp) open in a new tab.
+export type Segment = string | { href: string; label: string; external?: boolean };
+
+// "… by emailing support@… or on WhatsApp at 07466 487591", with both links going to the same kind of ticket.
+const ticketRoutes = (email: string, whatsapp: string): Segment[] => [
+  "Raise a support ticket by emailing ",
+  { href: email, label: CONTACT_EMAIL },
+  " or on WhatsApp at ",
+  { href: whatsapp, label: SUPPORT_WHATSAPP_DISPLAY, external: true },
+];
 export type Faq = { q: string; a: Segment[][] };
 
 export const FAQ: Faq[] = [
   {
     q: "Is it free?",
-    a: [["Yes. Free to use, with no sign-up and nothing to download."], ["It's free for traders to be listed, too."]],
+    a: [
+      ["Yes for residents: free to use, no sign-up, nothing to download."],
+      [
+        "For traders, a basic listing is free and stays free. Later we'll offer an optional paid upgrade for extra features; you'll never be removed for not taking it, and it never moves anyone up the list.",
+      ],
+    ],
   },
   {
     q: "How are people ranked?",
@@ -119,7 +152,7 @@ export const FAQ: Faq[] = [
   {
     q: "How do I get listed?",
     a: [
-      ["Message Yameen in the group, or email ", { href: MAILTO, label: CONTACT_EMAIL }, "."],
+      [...ticketRoutes(LISTING_TICKET, LISTING_WHATSAPP), " with your name, trade and the areas you cover."],
       [
         "You'll get a link showing exactly how your listing will look. Nothing goes live until you've read it and tapped to agree.",
       ],
@@ -129,9 +162,8 @@ export const FAQ: Faq[] = [
     q: "How do I come off it?",
     a: [
       [
-        "Tell us and you're removed within one working day, no reason needed. Message Yameen or email ",
-        { href: MAILTO, label: CONTACT_EMAIL },
-        ".",
+        ...ticketRoutes(REMOVAL_TICKET, REMOVAL_WHATSAPP),
+        " and you're removed within one working day, no reason needed.",
       ],
     ],
   },
@@ -147,7 +179,10 @@ export const FAQ: Faq[] = [
     q: "Who runs Bolton Vouched?",
     a: [
       [
-        "Yameen, through his company YSB Ventures Ltd, registered in England and Wales, company number 16022339. It started from the same question everyone asks in the group: anyone know a good…?",
+        "Bolton Vouched is built and run by YSB Designs, a UK software studio that designs and builds web platforms for local communities and businesses. It started from the question everyone asks in the group: anyone know a good…?",
+      ],
+      [
+        "YSB Designs is a trading name of YSB Ventures Ltd, registered in England and Wales, company number 16022339.",
       ],
     ],
   },
@@ -155,9 +190,8 @@ export const FAQ: Faq[] = [
     q: "How do I report a problem or a review?",
     a: [
       [
-        "Email ",
-        { href: MAILTO, label: CONTACT_EMAIL },
-        " and say which page it's on and what's wrong. Every report is looked at.",
+        ...ticketRoutes(REPORT_TICKET, REPORT_WHATSAPP),
+        " and say which page it's on and what's wrong. Every ticket is looked at.",
       ],
     ],
   },

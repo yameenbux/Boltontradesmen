@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { policyIdentity } from "@/lib/policy-config";
+import { COMPANY_LINE } from "@/lib/company";
 
 export function SiteFooter() {
-  const { owner } = policyIdentity();
   return (
     <footer className="foot">
       <nav aria-label="Policies">
@@ -10,7 +9,7 @@ export function SiteFooter() {
         <Link href="/terms">Terms</Link>
         <Link href="/how-ratings-work">How ratings work</Link>
       </nav>
-      <p className="m-0">Bolton Vouched is operated by {owner}.</p>
+      <p className="m-0">{COMPANY_LINE}</p>
     </footer>
   );
 }

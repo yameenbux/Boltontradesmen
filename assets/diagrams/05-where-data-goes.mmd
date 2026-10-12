@@ -1,0 +1,26 @@
+flowchart TB
+    LOOK["<b>Looking around</b><br/>the site and the directory"]
+    TAP["<b>Tapping Call<br/>or WhatsApp</b>"]
+    CONS["<b>A trader agrees<br/>to be listed</b>"]
+    ADM["<b>The admin changes<br/>a listing</b>"]
+
+    NOTHING["<b>Nothing kept</b><br/>no cookies, no account,<br/>no analytics"]
+    EV[("<b>Contact events</b><br/>a salted device hash<br/>and the trader, not your<br/>IP or your number")]
+    EVID[("<b>Consent evidence</b><br/>IP, text version and<br/>SHA-256 of the exact text")]
+    LOG[("<b>Audit log</b><br/>who, what, when, why")]
+    NEVER["<b>Trackers, ads,<br/>analytics SDKs</b><br/>none on any page"]
+
+    LOOK --> NOTHING
+    TAP --> EV
+    CONS --> EVID
+    ADM --> LOG
+    NOTHING ~~~ NEVER
+
+    classDef core fill:#9C3A25,stroke:#B5862C,stroke-width:3px,color:#FFF5E9
+    classDef live fill:#DDE9DA,stroke:#46684A,stroke-width:2px,color:#231A15
+    classDef dev fill:#F6EAD0,stroke:#B5862C,stroke-width:2px,stroke-dasharray:6 4,color:#231A15
+    classDef ext fill:#EFE5D7,stroke:#97887C,stroke-width:1.5px,color:#231A15
+    class LOOK,TAP,CONS,ADM ext
+    class EV,EVID,LOG core
+    class NOTHING live
+    class NEVER ext

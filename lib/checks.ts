@@ -26,6 +26,27 @@ function monthYear(date: string | null | undefined): string | null {
   return month ? `${month} ${m[1]}` : null;
 }
 
+/**
+ * A UK-style full date, "12 October 2026". A plain date ("2027-03-01") is shown as written; a timestamp is shown as
+ * its date in Bolton (Europe/London), so a check made just after midnight in summer lands on the right day.
+ */
+export function dayMonthYear(date: string | null | undefined): string | null {
+  if (!date) return null;
+  const plain = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (plain) {
+    const month = MONTHS[Number(plain[2]) - 1];
+    return month ? `${Number(plain[3])} ${month} ${plain[1]}` : null;
+  }
+  const t = new Date(date);
+  if (Number.isNaN(t.getTime())) return null;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/London",
+  }).format(t);
+}
+
 /** "Valid until March 2027", else "Checked October 2026", else "Checked". */
 function validity(c: Check): string {
   const until = monthYear(c.expires_on);

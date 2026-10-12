@@ -1,7 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CardDeck } from "@/components/site/CardDeck";
-import { CONTACT_EMAIL, DECK, FAQ, MAILTO, PLATFORM } from "@/components/site/content";
+import {
+  CONTACT_EMAIL,
+  DECK,
+  FAQ,
+  LISTING_TICKET,
+  LISTING_WHATSAPP,
+  MAILTO,
+  PLATFORM,
+  SUPPORT_WHATSAPP_DISPLAY,
+  WHATSAPP,
+} from "@/components/site/content";
 import { Faq } from "@/components/site/Faq";
 import { Icon, type IconName } from "@/components/site/icons";
 import { Phone } from "@/components/site/Phone";
@@ -26,7 +36,11 @@ const STEPS: { icon: IconName; title: string; text: string }[] = [
 ];
 
 const TRADER_POINTS: { icon: IconName; title: string; soon?: boolean; text: string }[] = [
-  { icon: "pound", title: "Free to be listed", text: "No fee to join and no fee to stay on." },
+  {
+    icon: "pound",
+    title: "Free to be listed",
+    text: "Your basic listing is free and stays free. An optional paid upgrade is coming later; it never affects your place in the list.",
+  },
   {
     icon: "eye",
     title: "You see it first",
@@ -344,12 +358,20 @@ export default function ShowcasePage() {
               <div className="s-listme reveal">
                 <h3>Want to be listed?</h3>
                 <p>
-                  Message Yameen in the group, or email <a href={MAILTO}>{CONTACT_EMAIL}</a>. You&apos;ll see your
-                  listing before anyone else does.
+                  Raise a support ticket by emailing <a href={LISTING_TICKET}>{CONTACT_EMAIL}</a> or on WhatsApp at{" "}
+                  <a href={LISTING_WHATSAPP} target="_blank" rel="noopener noreferrer">
+                    {SUPPORT_WHATSAPP_DISPLAY}
+                  </a>{" "}
+                  with your name, trade and the areas you cover. You&apos;ll see your listing before anyone else does.
                 </p>
-                <a href={MAILTO} className="s-btn s-btn-primary">
-                  Email Yameen <Icon name="arrowRight" />
-                </a>
+                <div className="s-listme-ctas">
+                  <a href={LISTING_WHATSAPP} target="_blank" rel="noopener noreferrer" className="s-btn s-btn-primary">
+                    <Icon name="whatsapp" /> WhatsApp us
+                  </a>
+                  <a href={LISTING_TICKET} className="s-btn s-btn-ghost">
+                    <Icon name="mail" /> Email a ticket
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -388,7 +410,11 @@ export default function ShowcasePage() {
           <div className="s-stuck reveal">
             <h3>Still stuck?</h3>
             <p>
-              Email <a href={MAILTO}>{CONTACT_EMAIL}</a>. You&apos;ll hear back from Yameen, who runs Bolton Vouched.
+              Raise a support ticket by emailing <a href={MAILTO}>{CONTACT_EMAIL}</a> or on WhatsApp at{" "}
+              <a href={WHATSAPP} target="_blank" rel="noopener noreferrer">
+                {SUPPORT_WHATSAPP_DISPLAY}
+              </a>{" "}
+              and we&apos;ll get back to you.
             </p>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { H2, List, PolicyPage } from "@/components/PolicyPage";
+import { COMPANY_LINE } from "@/lib/company";
 import { policyIdentity } from "@/lib/policy-config";
 
 export const metadata: Metadata = { title: "Terms | Bolton Vouched" };
@@ -13,6 +14,7 @@ export default function TermsPage() {
         Bolton Vouched is a local directory of recommended local pros in Bolton, where residents will be able to leave
         reviews about the people they have used. It is an information service, not a trade body or a marketplace.
       </p>
+      <p>{COMPANY_LINE}</p>
 
       <H2>Reviews are opinions</H2>
       <p>

@@ -2,6 +2,13 @@ import { expect, test } from "@playwright/test";
 
 // The showcase site at "/" (the platform itself lives at /platform).
 
+// Support tickets: email or the operator's WhatsApp (a public support number, not a trader's).
+const WA = "https://wa.me/447466487591?text=";
+const SUPPORT_MAIL = "mailto:support@ysbdesigns.uk?subject=Bolton%20Vouched%3A%20support%20request";
+const SUPPORT_WA = `${WA}Hi%2C%20I%20have%20a%20question%20about%20Bolton%20Vouched.`;
+const LISTING_MAIL = "mailto:support@ysbdesigns.uk?subject=Bolton%20Vouched%3A%20please%20list%20me";
+const LISTING_WA = `${WA}Hi%2C%20I'd%20like%20to%20be%20listed%20on%20Bolton%20Vouched.%20Name%3A%20%E2%80%A6%20Trade%3A%20%E2%80%A6%20Areas%3A%20%E2%80%A6`;
+
 test("/ shows the hero and sends people to the platform", async ({ page }) => {
   const res = await page.goto("/");
   expect(res?.status()).toBe(200);
@@ -30,6 +37,29 @@ test("/ shows the hero and sends people to the platform", async ({ page }) => {
   await expect(page.locator(".phone-fan + .s-sample")).toHaveText("Sample listings shown");
   await expect(page.locator("#traders")).toContainText("Sample listing shown");
 });
+
+for (const width of [360, 390, 768, 1024, 1280, 1440, 1920]) {
+  test(`hero phones and caption sit above the blurbs at ${width}px`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    const box = await page.evaluate(() => {
+      const fan = document.querySelector(".s-fan")!;
+      const r = fan.getBoundingClientRect();
+      const phones = [...fan.querySelectorAll(".s-phone")].map((p) => p.getBoundingClientRect().bottom);
+      return {
+        clip: getComputedStyle(fan).overflowY,
+        // What shows of the phones: the fan clips them at its foot.
+        phonesBottom: Math.min(Math.max(...phones), r.bottom),
+        caption: document.querySelector(".s-fan + .s-sample")!.getBoundingClientRect(),
+        trioTop: document.querySelector(".s-trio")!.getBoundingClientRect().top,
+      };
+    });
+    expect(box.clip).toBe("clip");
+    expect(box.caption.top - box.phonesBottom).toBeGreaterThanOrEqual(12);
+    expect(box.trioTop - box.caption.bottom).toBeGreaterThanOrEqual(24);
+  });
+}
 
 test("nav anchors scroll to their sections", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -88,11 +118,53 @@ test("install steps cover iPhone and Android", async ({ page }) => {
 test("traders can see how to get listed", async ({ page }) => {
   await page.goto("/");
   const traders = page.locator("#traders");
-  await expect(traders).toContainText("yameen@ysbdesigns.uk");
-  await expect(traders.getByRole("link", { name: /yameen@ysbdesigns\.uk|Email Yameen/ }).first()).toHaveAttribute(
-    "href",
-    "mailto:yameen@ysbdesigns.uk",
+  await expect(traders).toContainText(
+    "Raise a support ticket by emailing support@ysbdesigns.uk or on WhatsApp at 07466 487591",
   );
+  const whatsapp = traders.getByRole("link", { name: "WhatsApp us" });
+  await expect(whatsapp).toHaveAttribute("href", LISTING_WA);
+  await expect(whatsapp).toHaveAttribute("target", "_blank");
+  await expect(whatsapp).toHaveAttribute("rel", "noopener noreferrer");
+  await expect(traders.getByRole("link", { name: "Email a ticket" })).toHaveAttribute("href", LISTING_MAIL);
+  await expect(traders.getByRole("link", { name: "support@ysbdesigns.uk" })).toHaveAttribute("href", LISTING_MAIL);
+  await expect(traders.getByRole("link", { name: "07466 487591" })).toHaveAttribute("href", LISTING_WA);
+  await expect(traders).toContainText("Your basic listing is free and stays free.");
+  await expect(traders).not.toContainText(/yameen/i);
+});
+
+test("FAQ and the Still stuck box offer email and WhatsApp tickets", async ({ page }) => {
+  await page.goto("/");
+  const support = page.locator("#support");
+  for (const [q, mailHref, waHref] of [
+    ["How do I get listed?", LISTING_MAIL, LISTING_WA],
+    [
+      "How do I come off it?",
+      "mailto:support@ysbdesigns.uk?subject=Bolton%20Vouched%3A%20remove%20my%20listing",
+      `${WA}Hi%2C%20please%20remove%20my%20Bolton%20Vouched%20listing.`,
+    ],
+    [
+      "How do I report a problem or a review?",
+      "mailto:support@ysbdesigns.uk?subject=Bolton%20Vouched%3A%20report%20a%20problem",
+      `${WA}Hi%2C%20I'd%20like%20to%20report%20a%20problem%20on%20Bolton%20Vouched%3A%20%E2%80%A6`,
+    ],
+  ]) {
+    const item = support.locator("details.faq-item", { hasText: q });
+    await item.locator("summary").click();
+    await expect(item).toContainText("Raise a support ticket by emailing support@ysbdesigns.uk or on WhatsApp at 07466 487591");
+    await expect(item.getByRole("link", { name: "support@ysbdesigns.uk" })).toHaveAttribute("href", mailHref);
+    const wa = item.getByRole("link", { name: "07466 487591" });
+    await expect(wa).toHaveAttribute("href", waHref);
+    await expect(wa).toHaveAttribute("target", "_blank");
+    await expect(wa).toHaveAttribute("rel", "noopener noreferrer");
+  }
+  const who = support.locator("details.faq-item", { hasText: "Who runs Bolton Vouched?" });
+  await who.locator("summary").click();
+  await expect(who).toContainText("built and run by YSB Designs");
+  await expect(who).toContainText("company number 16022339");
+  const stuck = page.locator(".s-stuck");
+  await expect(stuck.getByRole("link", { name: "support@ysbdesigns.uk" })).toHaveAttribute("href", SUPPORT_MAIL);
+  await expect(stuck.getByRole("link", { name: "07466 487591" })).toHaveAttribute("href", SUPPORT_WA);
+  await expect(page.locator("body")).not.toContainText(/yameen/i);
 });
 
 test("FAQ search filters questions and says when nothing matches", async ({ page }) => {
@@ -110,7 +182,7 @@ test("FAQ search filters questions and says when nothing matches", async ({ page
 
   await search.fill("zzqxj");
   await expect(support.locator("details.faq-item:visible")).toHaveCount(0);
-  await expect(support).toContainText("No questions match that. Try another word, or email us below.");
+  await expect(support).toContainText("No questions match that. Try another word, or raise a support ticket below.");
 
   await search.fill("");
   await expect(support.locator("details.faq-item:visible")).toHaveCount(total);
@@ -120,12 +192,12 @@ test("footer names the company and links the policies", async ({ page }) => {
   await page.goto("/");
   const footer = page.getByRole("contentinfo");
   await expect(footer).toContainText(
-    "Bolton Vouched is operated by YSB Ventures Ltd, registered in England and Wales, company number 16022339.",
+    "Bolton Vouched is a YSB Designs platform. YSB Designs is a trading name of YSB Ventures Ltd, registered in England and Wales, company number 16022339.",
   );
-  await expect(footer.getByRole("link", { name: "yameen@ysbdesigns.uk" })).toHaveAttribute(
-    "href",
-    "mailto:yameen@ysbdesigns.uk",
-  );
+  await expect(footer.getByRole("link", { name: "support@ysbdesigns.uk" })).toHaveAttribute("href", SUPPORT_MAIL);
+  const wa = footer.getByRole("link", { name: "07466 487591" });
+  await expect(wa).toHaveAttribute("href", SUPPORT_WA);
+  await expect(wa).toHaveAttribute("rel", "noopener noreferrer");
   for (const [name, href] of [
     ["Privacy", "/privacy"],
     ["Terms", "/terms"],

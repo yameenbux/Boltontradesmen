@@ -1,0 +1,45 @@
+flowchart LR
+    subgraph WRITE["① What gets written"]
+        direction TB
+        TS["<b>TypeScript</b><br/>strict mode"]
+        REACT["<b>React 19</b><br/>server components"]
+        TW["<b>Tailwind 4</b><br/>Bolton Brick tokens"]
+        SQL["<b>SQL migrations</b><br/>RLS, views, functions"]
+    end
+
+    subgraph BUILD["② What it becomes"]
+        direction TB
+        NEXT["<b>A Next.js 16 app</b><br/>App Router, Turbopack"]
+        SCHEMA["<b>A Postgres schema</b><br/>applied in order"]
+    end
+
+    subgraph RUN["③ Where it runs"]
+        direction TB
+        RAIL["<b>Railway</b><br/>service web, from main"]
+        SB["<b>Supabase</b><br/>Postgres and Auth, London"]
+    end
+
+    subgraph OUT["④ What it hands off to"]
+        direction TB
+        PHONE["<b>The phone's dialler</b><br/>tel: links"]
+        WAPP["<b>WhatsApp</b><br/>wa.me links"]
+    end
+
+    TS --> NEXT
+    REACT --> NEXT
+    TW --> NEXT
+    SQL --> SCHEMA
+    NEXT --> RAIL
+    SCHEMA --> SB
+    RAIL --> SB
+    RAIL -.-> PHONE
+    RAIL -.-> WAPP
+
+    classDef core fill:#9C3A25,stroke:#B5862C,stroke-width:3px,color:#FFF5E9
+    classDef live fill:#DDE9DA,stroke:#46684A,stroke-width:2px,color:#231A15
+    classDef dev fill:#F6EAD0,stroke:#B5862C,stroke-width:2px,stroke-dasharray:6 4,color:#231A15
+    classDef ext fill:#EFE5D7,stroke:#97887C,stroke-width:1.5px,color:#231A15
+    class TS,REACT,TW,SQL ext
+    class NEXT,SCHEMA core
+    class RAIL,SB live
+    class PHONE,WAPP ext

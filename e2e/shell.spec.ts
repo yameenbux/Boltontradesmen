@@ -1,22 +1,21 @@
 import { expect, test } from "@playwright/test";
 
-// OWNER_LEGAL_NAME comes from .env.example via playwright.config.ts (or CI's environment).
-const owner = process.env.OWNER_LEGAL_NAME ?? "";
-
 test("brand bar shows the name and tagline", async ({ page }) => {
   await page.goto("/platform");
   const header = page.getByRole("banner");
   await expect(header).toContainText("Bolton Vouched");
-  await expect(header).toContainText("Recommended by Bolton");
+  await expect(header).toContainText("Local trades & services");
+  await expect(header).not.toContainText("Recommended by Bolton");
   await expect(header.getByRole("link", { name: "Bolton Vouched home" })).toHaveAttribute("href", "/platform");
 });
 
-test("footer names the operator", async ({ page }) => {
-  expect(owner).not.toBe("");
+test("footer names the operator and the registered company", async ({ page }) => {
   await page.goto("/platform");
   const footer = page.getByRole("contentinfo");
-  await expect(footer).toContainText("operated by");
-  await expect(footer).toContainText(`Bolton Vouched is operated by ${owner}.`);
+  await expect(footer).toContainText(
+    "Bolton Vouched is a YSB Designs platform. YSB Designs is a trading name of YSB Ventures Ltd, registered in England and Wales, company number 16022339.",
+  );
+  await expect(footer).not.toContainText(/yameen/i);
 });
 
 test("theme toggle sets data-theme and it applies before DOMContentLoaded after reload", async ({ page }) => {
@@ -66,7 +65,7 @@ test("unknown route shows the branded 404 with a link home", async ({ page }) =>
   await expect(main.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(main.getByRole("link", { name: /home/i })).toHaveAttribute("href", "/platform");
   await expect(page.getByRole("banner")).toContainText("Bolton Vouched");
-  await expect(page.getByRole("contentinfo")).toContainText("operated by");
+  await expect(page.getByRole("contentinfo")).toContainText("YSB Designs platform");
 });
 
 test("no horizontal scroll at 360px on /platform", async ({ page }) => {
