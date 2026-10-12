@@ -142,6 +142,45 @@ h1,h2,h3{text-wrap:balance}
   .a-link{display:inline-flex; align-items:center; min-height:48px; font-weight:700; color:var(--brick); text-underline-offset:3px}
   .a-consent .btn{width:100%; min-height:64px; font-size:19px}
 
+  /* ---------- admin moderation: queues of reviews, flags and proofs ---------- */
+  .admin-nav{display:flex; flex-wrap:wrap; gap:8px}
+  .admin-nav .chip{text-decoration:none; font-weight:700}
+  .admin-nav .chip em{display:inline-grid; place-items:center; min-width:24px; height:24px; padding:0 7px; border-radius:999px; background:var(--brick); color:var(--on-brick); font-size:13px; font-weight:700}
+  .admin-nav .chip[aria-current="page"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+  .a-lede{margin:6px 0 0; color:var(--ink-2); font-size:16px; max-width:60ch}
+  .a-counts{display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0; list-style:none}
+  .a-counts a{display:inline-flex; align-items:center; min-height:44px; padding:0 14px; border-radius:12px; background:var(--surface-2); color:var(--ink-2); font-size:15px; font-weight:700; text-decoration:none}
+  .a-counts a[data-some]{background:var(--brick-tint); color:color-mix(in srgb,var(--brick) 72%,var(--ink))}
+  .mod-list{display:grid; gap:16px}
+  .mod-card{gap:16px}
+  .mod-review{display:grid; gap:8px}
+  .mod-head{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px}
+  .mod-head .a-link{font-size:19px; min-height:40px}
+  .mod-who,.mod-meta{margin:0; font-size:15px; color:var(--ink-2)}
+  .mod-who b{color:var(--ink); font-size:16.5px}
+  .mod-comment{margin:0; padding:10px 14px; border-left:3px solid var(--line); font-size:16px; white-space:pre-line; overflow-wrap:anywhere}
+  .mod-flags{display:grid; gap:6px; margin:0; padding:0; list-style:none}
+  .mod-flags li{padding:10px 12px; border-radius:12px; background:color-mix(in srgb,var(--gold) 14%,var(--surface)); font-size:15px; font-weight:600; color:var(--ink)}
+  .mod-card code{font-size:12.5px; font-weight:600; padding:1px 6px; border-radius:6px; background:var(--surface-2); color:var(--ink-2); overflow-wrap:anywhere}
+  .mod-flags q,.mod-report q{display:block; margin-top:4px; font-weight:500; font-style:italic; color:var(--ink-2)}
+  .mod-flag-head{display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; font-size:16px}
+  .mod-flag-head small{margin-left:auto; color:var(--ink-3); font-size:14px}
+  .mod-report{margin:0; padding:12px 14px; border-radius:12px; background:var(--surface-2); font-size:15px; color:var(--ink-2)}
+  .mod-report q{font-size:16px; color:var(--ink)}
+  .mod-reply{padding:4px 0 4px 12px; border-left:3px solid var(--brick-tint); font-size:15px}
+  .mod-reply p{margin:2px 0 0; overflow-wrap:anywhere}
+  .mod-actions{display:grid; gap:14px; padding-top:14px; border-top:1px solid var(--line)}
+  .mod-actions .a-form{gap:10px}
+  .mod-actions .btn,.mod-card > .a-form .btn{width:100%}
+  .mod-card .a-actions .btn{width:auto}
+  .mod-more{border-top:1px solid var(--line); padding-top:10px}
+  .mod-more summary{display:flex; align-items:center; min-height:44px; font-weight:700; color:var(--brick); cursor:pointer}
+  .mod-more .mod-actions{border-top:0; padding-top:6px}
+  .mod-proof{display:grid; gap:6px; justify-items:start}
+  .mod-proof img{display:block; max-width:100%; max-height:420px; border-radius:var(--r-md); border:1px solid var(--line); background:var(--surface-2)}
+  .mod-proof small{color:var(--ink-3); font-size:14px}
+  .mod-proof-missing{margin:0; padding:14px; border:1.5px dashed var(--line); border-radius:var(--r-md); color:var(--ink-2)}
+
   /* ---------- motion primitives ---------- */
   /* "backwards", not "both": a held end state would pin transform:none and cancel .press/.lift on the children. */
   .stagger > *{animation:rise .6s var(--ease) backwards}

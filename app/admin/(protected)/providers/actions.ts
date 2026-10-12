@@ -46,7 +46,12 @@ const providerSchema = z.object({
   whatsapp: phoneField(false),
   areas: z
     .string()
-    .transform((v) => v.split(/[\s,]+/).map((a) => a.toUpperCase()).filter(Boolean))
+    .transform((v) =>
+      v
+        .split(/[\s,]+/)
+        .map((a) => a.toUpperCase())
+        .filter(Boolean),
+    )
     .refine((a) => a.every((d) => /^[A-Z]{1,2}\d{1,2}[A-Z]?$/.test(d)), "Use postcode districts like BL1, BL2"),
   bio: z.string().max(1000, "Keep the bio under 1000 characters"),
   category_ids: z.array(z.string().uuid()).max(3, "Choose at most 3 categories"),
@@ -64,7 +69,10 @@ export async function saveProvider(_prev: FormState, formData: FormData): Promis
     bio: text(formData.get("bio")),
     category_ids: formData.getAll("category_ids").filter((v): v is string => typeof v === "string"),
   };
-  const values = Object.fromEntries(Object.entries(raw).filter(([, x]) => x !== undefined)) as Record<string, string | string[]>;
+  const values = Object.fromEntries(Object.entries(raw).filter(([, x]) => x !== undefined)) as Record<
+    string,
+    string | string[]
+  >;
   const parsed = providerSchema.safeParse(raw);
   if (!parsed.success) return { errors: fieldErrors(parsed.error), values };
   const v = parsed.data;
@@ -82,10 +90,16 @@ export async function saveProvider(_prev: FormState, formData: FormData): Promis
     },
   });
   if (error) {
-    if (error.message.includes("max 3 categories")) return { errors: { category_ids: "Choose at most 3 categories" }, values };
+    if (error.message.includes("max 3 categories"))
+      return { errors: { category_ids: "Choose at most 3 categories" }, values };
     const req = /category requires (\w+) check/.exec(error.message);
     if (req) {
-      return { errors: { category_ids: `A category needs an in-date ${req[1]} check first. Save the provider, record the check, then add the category.` }, values };
+      return {
+        errors: {
+          category_ids: `A category needs an in-date ${req[1]} check first. Save the provider, record the check, then add the category.`,
+        },
+        values,
+      };
     }
     return { message: "Could not save the provider. Try again.", values };
   }
@@ -98,7 +112,10 @@ const checkSchema = z.object({
   provider_id: z.string().uuid(),
   kind: z.enum(CHECK_KINDS.map(([k]) => k) as [string, ...string[]]),
   reference: z.string().max(200),
-  expires_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date").or(z.literal("")),
+  expires_on: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date")
+    .or(z.literal("")),
 });
 
 export async function recordCheck(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -118,7 +135,8 @@ export async function recordCheck(_prev: FormState, formData: FormData): Promise
     p_expires_on: v.expires_on || null,
   });
   if (error) {
-    if (error.message.includes("expiry required")) return { errors: { expires_on: "This kind of check needs an expiry date" } };
+    if (error.message.includes("expiry required"))
+      return { errors: { expires_on: "This kind of check needs an expiry date" } };
     return { message: "Could not record the check. Try again." };
   }
   revalidatePath(`/admin/providers/${v.provider_id}`);
@@ -126,11 +144,16 @@ export async function recordCheck(_prev: FormState, formData: FormData): Promise
   return { ok: true, message: "Check recorded" };
 }
 
-const statusSchema = z.object({
-  provider_id: z.string().uuid(),
-  status: z.enum(SETTABLE_STATUSES),
-  reason: z.string().max(500),
-}).refine((v) => v.status !== "removed" || v.reason.length > 0, { path: ["reason"], message: "Enter a reason for removing this provider" });
+const statusSchema = z
+  .object({
+    provider_id: z.string().uuid(),
+    status: z.enum(SETTABLE_STATUSES),
+    reason: z.string().max(500),
+  })
+  .refine((v) => v.status !== "removed" || v.reason.length > 0, {
+    path: ["reason"],
+    message: "Enter a reason for removing this provider",
+  });
 
 export async function setStatus(_prev: FormState, formData: FormData): Promise<FormState> {
   const { supabase } = await requireAdmin();
@@ -150,7 +173,8 @@ export async function setStatus(_prev: FormState, formData: FormData): Promise<F
     if (error.message.includes("providers_live_requires_consent") || error.message.includes("can only go live")) {
       return { errors: { status: "A provider can only go live after giving consent (and not once removed)" } };
     }
-    if (error.message.includes("reason is required")) return { errors: { reason: "Enter a reason for removing this provider" } };
+    if (error.message.includes("reason is required"))
+      return { errors: { reason: "Enter a reason for removing this provider" } };
     if (error.message.includes("only return through a new invite")) {
       return { errors: { status: "A removed provider can only come back through Re-invite" } };
     }
@@ -195,7 +219,8 @@ export async function reinviteProvider(_prev: FormState, fd: FormData): Promise<
   const v = parsed.data;
   const { data, error } = await supabase.rpc("admin_reinvite_provider", { p_id: v.provider_id, p_reason: v.reason });
   if (error) {
-    if (error.message.includes("only a removed provider")) return { message: "Only a removed provider can be re-invited." };
+    if (error.message.includes("only a removed provider"))
+      return { message: "Only a removed provider can be re-invited." };
     return { message: "Could not re-invite the provider. Try again.", values: { reason: v.reason } };
   }
   revalidatePath(`/admin/providers/${v.provider_id}`);
