@@ -73,8 +73,9 @@ test("searching with no match shows a message and a way to browse", async ({ pag
   await expect(page).toHaveURL(/\/platform$/);
 });
 
-test("how it works says reviews are coming soon", async ({ page }) => {
+test("how it works invites a review", async ({ page }) => {
   await page.goto("/platform");
   await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
-  await expect(page.getByText("Reviews are coming soon")).toBeVisible();
+  await expect(page.getByText("Leave a review in a minute")).toBeVisible();
+  await expect(page.getByText(/coming soon|once reviews open/i)).toHaveCount(0);
 });

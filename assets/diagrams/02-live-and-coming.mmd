@@ -9,11 +9,12 @@ flowchart TB
         L4["<b>Profiles with checks</b><br/>ID, insurance, Gas Safe,<br/>DVSA and more"]
         L5["<b>Call and WhatsApp</b><br/>counted as enquiries,<br/>numbers never in the page"]
         L6["<b>Consent links<br/>and admin</b><br/>with evidence kept"]
+        L7["<b>Phone sign-in<br/>and reviews</b><br/>live at once, anti-fake<br/>checks, private proof"]
+        L8["<b>Replies and<br/>moderation</b><br/>traders reply; admin<br/>clears or removes"]
     end
 
     subgraph NEXT["Coming: not built"]
         direction LR
-        N1["<b>Resident sign-in<br/>and reviews</b>"]
         N2["<b>Community<br/>questions</b>"]
         N3["<b>Trader<br/>dashboards</b>"]
         N4["<b>Verified tier</b><br/>optional, £10 a month<br/>or £100 a year"]
@@ -27,5 +28,5 @@ flowchart TB
     classDef dev fill:#F6EAD0,stroke:#B5862C,stroke-width:2px,stroke-dasharray:6 4,color:#231A15
     classDef ext fill:#EFE5D7,stroke:#97887C,stroke-width:1.5px,color:#231A15
     class APP core
-    class L1,L2,L3,L4,L5,L6 live
-    class N1,N2,N3,N4 dev
+    class L1,L2,L3,L4,L5,L6,L7,L8 live
+    class N2,N3,N4 dev

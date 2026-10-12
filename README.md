@@ -7,7 +7,8 @@
 **Local people, vouched for by Bolton.**
 
 The tradespeople Bolton's WhatsApp group recommends, in one place, with the checks we've made.
-Pick a trade and an area, then call or WhatsApp them in one tap. No sign-up, no cookies.
+Pick a trade and an area, then call or WhatsApp them in one tap. No sign-up, no cookies to look
+or call; sign in with a UK mobile to leave a review.
 
 Made by YSB Designs, a trading name of YSB Ventures Ltd.
 
@@ -68,7 +69,7 @@ to call or WhatsApp them. Every trader on it has agreed to be listed.
 
 One site, free for residents and free for traders.
 
-<img src="assets/diagrams/02-live-and-coming.svg" alt="What is live today (the showcase site, the directory, seven groups of trades, profiles with checks, Call and WhatsApp, consent links and admin) and what is coming and not built (resident sign-in and reviews, community questions, trader dashboards, the optional Verified tier)" width="100%">
+<img src="assets/diagrams/02-live-and-coming.svg" alt="What is live today (the showcase site, the directory, seven groups of trades, profiles with checks, Call and WhatsApp, consent links, phone sign-in and reviews, and admin) and what is coming and not built (community questions, trader dashboards, the optional Verified tier)" width="100%">
 
 **Live today**
 
@@ -87,21 +88,34 @@ One site, free for residents and free for traders.
   are never in the page's HTML.**
 - **Consent links**: a trader is listed only after they open their link, read
   exactly how they'll appear, and agree. What they agreed to is kept as evidence.
+- **Phone sign-in** at `/platform/sign-in`: UK mobiles only, checked with Twilio
+  Lookup so internet and virtual numbers are refused, rate-limited per number and
+  per connection, with a monthly text budget.
+- **Reviews** at `/platform/p/<slug>/review`: one screen of taps, live at once
+  ("Published", or "Published, under a quick check" when an anti-fake rule trips),
+  editable for 14 days, with an optional private proof photo or PDF (location data
+  stripped). Profiles list them with Verified job and Group member filters, and the
+  category list ranks anyone with three or more.
+- **Provider replies** at `/platform/provider`: a trader signs in with the number on
+  their listing and replies once to each review.
+- **Report** on every review, and **My reviews** and **Delete account** at
+  `/platform/account` (reviews come down; the number is kept privately for 12 months).
 - **Admin** at `/admin`, for the owner only: add and edit providers, record
-  checks, copy consent links, set live, pause or remove.
+  checks, copy consent links, set live, pause or remove; clear or remove reviews
+  under check (with a logged reason), resolve flags and reports, and accept proofs.
 
 **Coming, and not built**
 
-- Resident sign-in and reviews.
 - Community questions.
 - Trader dashboards.
 - The optional paid **Verified** tier (see *Free and Verified*).
 
 > [!IMPORTANT]
-> **Only the green boxes are built.** Reviews, resident accounts, community
-> questions, trader dashboards and the Verified tier **do not exist yet**. Don't
-> describe them anywhere (the site, the WhatsApp group, a message to a trader,
-> a listing) as features. Say *coming soon*, or say nothing.
+> **Only the green boxes are built.** Never claim community questions, dashboards
+> or Verified exist before they do: not on the site, in the WhatsApp group, in a
+> message to a trader or on a listing. Say *coming soon*, or say nothing.
+> `tests/unit/no-stale-claims.test.ts` fails if old "reviews are coming" wording
+> comes back.
 
 ---
 
@@ -138,7 +152,7 @@ server, and the server only ever reads providers through one view.**
 | **`private.*`** | `SECURITY DEFINER` wrappers the view calls, in a schema the public role can't even name |
 | **`admin_*` functions** | Every admin write: checks the caller is an admin, then writes one `audit_log` row |
 | **Postgres with RLS** | Row-level security on every table; the public roles have every default grant stripped |
-| **Supabase Auth** | Email and password for the admin only. Sign-ups are off |
+| **Supabase Auth** | Phone codes (Twilio Verify) for residents and traders; email and password for the admin. A trigger on `auth.users` refuses any phone the app didn't approve and any email not on the admin list |
 | **GitHub Actions** | Lint, types, unit tests, pgTAP database tests and browser tests on every push and pull request |
 
 ### Why the public view, and why numbers never reach the page
@@ -164,9 +178,10 @@ What it costs, said plainly:
 > **Never expose phone, billing, consent or document columns** through
 > `provider_public`, a new view, a new function the public roles can call, or a
 > page's props. **Never add trackers, analytics, pixels, chat widgets or cookies
-> to public pages.** The only cookies on the site are the admin's sign-in, and
-> `proxy.ts` is scoped to `/admin` so it stays that way. The theme choice lives
-> in `localStorage` for the same reason.
+> to public pages.** The only cookies on the site are sign-in cookies, and
+> `proxy.ts` is scoped to `/admin` and the signed-in `/platform` routes (sign-in,
+> account, review form, report, provider area) so public pages stay cookie-free.
+> The theme choice lives in `localStorage` for the same reason.
 
 ### Where data goes
 
@@ -179,6 +194,9 @@ Only where it has to.
 | Someone looks around | Nothing. No cookies, no account, no analytics | Nowhere |
 | Someone taps Call or WhatsApp | A salted hash of the device (HMAC with `DEVICE_HASH_SECRET`) and which trader. Not the IP, not their number | `contact_events`, readable only by the service role |
 | A trader agrees to be listed | The IP, the consent text version and a SHA-256 of the exact text they were shown | The provider's consent evidence |
+| Someone signs in | Their mobile number (in Supabase Auth), the name they show ("Sarah K."), their postcode district (never public); sign-in attempts with a hashed connection signature for 30 days | `auth.users`, `profiles`, `otp_requests` |
+| Someone posts a review | The answers, a salted device hash to catch fake reviews, and an optional proof file with its metadata stripped, seen only by the admin | `reviews`, `review_proofs`, the private `review-proofs` bucket |
+| Someone deletes their account | Their reviews and replies come down; their number is kept for 12 months for legal claims, readable only by the database owner | `phone_retention` |
 | The admin changes anything | Who, what, when and the reason | `audit_log` |
 
 ---
@@ -197,7 +215,7 @@ hands the visitor off to.
 | **Tailwind 4** | The Bolton Brick palette as tokens in `app/globals.css`, light and dark |
 | **Gloock** and **Figtree** | Through `next/font`, served from our own domain, so no request goes to Google |
 | **Supabase Postgres** + RLS | Schema, view, functions and policies in `supabase/migrations/`, tested with pgTAP in `supabase/tests/` |
-| **Supabase Auth** | Admin sign-in only |
+| **Supabase Auth** | Phone sign-in (Twilio Verify; test codes locally) and the admin's email sign-in |
 | **zod**, **libphonenumber-js** | Every admin form is validated; numbers are stored as E.164 |
 | **Railway** | Service `web`, from `main` |
 | **GitHub Actions** | `.github/workflows/ci.yml`: the checks above on every push and pull request |
@@ -277,12 +295,15 @@ and runs Playwright. The Docker-free stack is never used in CI.
 
 ### Admin sign-in
 
-The admin area (`/admin`) uses Supabase email and password. Public sign-ups are
-off. To create the admin:
+The admin area (`/admin`) uses Supabase email and password. Email sign-ups are
+refused by the database unless the address is in `settings.admin_emails`. To
+create the admin:
 
-1. Supabase dashboard → **Authentication → Users → Add user** (email and
+1. Add the address to the allow-list in the SQL editor:
+   `update public.settings set value = value || '["admin@example.com"]'::jsonb where key = 'admin_emails';`
+2. Supabase dashboard → **Authentication → Users → Add user** (email and
    password, auto-confirm).
-2. In the SQL editor, give that user the admin role:
+3. In the SQL editor, give that user the admin role:
 
    ```sql
    insert into public.profiles (user_id, role)
@@ -305,7 +326,8 @@ Railway service variables:
 | `NEXT_PUBLIC_SITE_URL` | `https://boltonvouched.ysbdesigns.uk`. Must be set, or consent links copied from admin are relative paths that don't work when sent to a trader |
 | `NEXT_PUBLIC_SUPABASE_URL` | The Supabase project's API URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | The anon (public) key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server only. Needed by Call/WhatsApp and the consent page. Never put it anywhere else |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server only. Needed by Call/WhatsApp, the consent page, sign-in, proof uploads and account deletion. Never put it anywhere else |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | Server only. Twilio Lookup, which refuses internet and virtual numbers before a code is sent. `TWILIO_LOOKUP_STUB` must **not** be set in production |
 | `DEVICE_HASH_SECRET` | Server only. A long random secret (`openssl rand -hex 32`), never `change-me` |
 | `OWNER_LEGAL_NAME` | `YSB Ventures Ltd`, matching Companies House character for character |
 | `CONTACT_EMAIL` | `support@ysbdesigns.uk` |
@@ -317,11 +339,22 @@ prerendered with them. Redeploy after changing either. **Never give a secret a
 
 In Supabase:
 
-1. **Authentication → Sign In / Providers → "Allow new users to sign up" → off.**
-2. **Apply migrations through the SQL editor**: paste each new file from
+1. **Authentication → Sign In / Providers → Phone**: on, SMS provider **Twilio
+   Verify** (Account SID, Auth Token, Verify Service SID). No test numbers in
+   production. **"Allow new users to sign up" → on** (phone sign-up needs it; the
+   database refuses email sign-ups). Leave the **Email** provider on, or the
+   admin can't sign in.
+2. **Authentication → Rate Limits**: SMS sent per hour 60; sign-ups and sign-ins,
+   and token verifications, 150 per 5 minutes (every request comes from Railway).
+3. **Storage**: bucket `review-proofs` exists, is **private**, 10 MB, JPEG/PNG/WebP/PDF,
+   no policies (the migration creates it when Storage is there).
+4. **Apply migrations through the SQL editor**: paste each new file from
    `supabase/migrations/` in order and run it. On launch day also run
    `docs/launch/finish-admin-function.sql`, before the first consent link goes out.
-3. Create the admin as in *Admin sign-in*.
+5. Create the admin as in *Admin sign-in*.
+
+**Never run `supabase config push`**: `supabase/config.toml` holds dummy Twilio
+settings and test phone numbers for local use and CI only.
 
 `docs/launch/LAUNCH.md` has the launch morning step by step.
 
@@ -349,15 +382,22 @@ In Supabase:
 | The device hash | `lib/device-hash.ts` |
 | The consent wording and its version | `lib/consent-text.ts` |
 | The consent page | `app/platform/consent/[token]/` |
+| Phone sign-in, the number check and Welcome | `app/platform/sign-in/`, `app/platform/welcome/`, `lib/otp-gate.ts`, `lib/line-type.ts` |
+| The account page, My reviews, Delete account | `app/platform/account/`, `components/account/` |
+| The review form and proof uploads | `app/platform/p/[slug]/review/`, `components/review/`, `lib/review-form.ts`, `lib/proofs.ts` |
+| Reviews on profiles | `components/profile/ReviewList.tsx`, `lib/reviews.ts` |
+| The provider area (replies) and Report | `app/platform/provider/`, `app/platform/report/[reviewId]/` |
+| Review moderation | `app/admin/(protected)/reviews/`, `flags/`, `proofs/` |
+| Posting rules and the anti-fake checks | `supabase/migrations/20261012000004_review_posting.sql`, `…000005_review_flags.sql` |
 | Admin pages and actions | `app/admin/(protected)/`, `lib/admin.ts` |
 | Categories and groups | `supabase/seed.sql`, then a new migration for the live database |
 | What the public can read | `supabase/migrations/20261011000003_public_view_rls.sql` |
 | Enquiry logging and counting | `supabase/migrations/20261011000004_contact_events.sql` |
 | Admin functions and the audit log | `supabase/migrations/20261011000005_admin_consent.sql` |
-| Privacy, terms, how ratings will work | `app/(info)/`, `components/PolicyPage.tsx` (the draft banner) |
+| Privacy, terms, how ratings work, review and fake-reviews policies | `app/(info)/`, `components/PolicyPage.tsx` (the draft banner) |
 | Owner and contact on the policy pages | `lib/policy-config.ts` |
 | Old-link redirects | `next.config.ts` |
-| Admin session cookies, `/admin` only | `proxy.ts` |
+| Sign-in session cookies, signed-in routes only | `proxy.ts` |
 | Installing to the Home Screen | `app/manifest.ts`, `scripts/make-icons.mjs` |
 | Colours and type, light and dark | `app/globals.css`, `app/layout.tsx` |
 | The showcase screenshots and social image | `scripts/shots.mjs` |
@@ -402,6 +442,7 @@ rest is a bug, and a fix reaches everyone, not only the person who reported it.
 | A wrong detail on a listing | **The owner**, in admin | Edit the provider; it's in the audit log |
 | A trader wants to come off | **The owner**, in admin | Removed within one working day of asking |
 | A complaint about a trader | **The owner** | Pause the listing in admin while it's looked into |
+| A reported or flagged review | **The owner**, in admin → Reviews / Flags | Clear it, or remove it with a reason (kept in the audit log). Never because a trader disagrees |
 | A page that breaks, a wrong count | **Whoever maintains the code** | Reproduce, add a failing test, fix, merge to `main` |
 | The site is down | **Whoever maintains the code** | Railway's deploy logs for service `web`, then Supabase's status |
 
@@ -423,7 +464,7 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
 > the site footer and the privacy notice.
 
 - [ ] **Legal review of the draft policy pages** (`/privacy`, `/terms`,
-      `/how-ratings-work`), then remove the *Draft — pending legal review* banner
+      `/how-ratings-work`, `/review-policy`, `/fake-reviews-policy`), then remove the *Draft — pending legal review* banner
       (`DRAFT_BANNER` in `components/PolicyPage.tsx`).
 - [ ] **Register YSB Ventures Ltd with the ICO** (the data protection fee) as the
       controller for Bolton Vouched.
@@ -436,16 +477,21 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
 - [ ] **Build the 12-month purge of contact events.** The privacy notice states
       12-month retention; the job isn't built yet.
 - [ ] Run `docs/launch/finish-admin-function.sql` before sending the first consent
-      link, and turn sign-ups off.
+      link.
+- [ ] **Twilio for phone sign-in**: upgrade from trial, UK-only geo permissions,
+      a £20/month usage trigger on Verify and Lookup, a Verify service with Fraud
+      Guard on, and Lookup Line Type Intelligence enabled. Then the Supabase steps
+      in *Deploying*.
 
 ---
 
 ## Before you change any copy
 
 > [!CAUTION]
-> **Never claim reviews exist before they do.** Not on the site, not in a message
-> to a trader, not in the WhatsApp group. Reviews are *coming*. The same goes
-> for every other feature in the sand boxes above.
+> **Never claim community questions, dashboards or Verified exist before they
+> do.** Not on the site, not in a message to a trader, not in the WhatsApp group.
+> They're *coming*. The same goes for every other feature in the sand boxes above.
+> Reviews, replies and phone sign-in are live, so say so plainly.
 
 Four more that catch people out:
 

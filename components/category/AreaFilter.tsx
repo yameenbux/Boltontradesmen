@@ -40,7 +40,7 @@ export function AreaFilter({ ranked, newcomers }: { ranked: PublicProvider[]; ne
             <h2 id="new-title">New on Bolton Vouched</h2>
             <span className="tag">Under 3 reviews</span>
           </div>
-          <p className="muted">Not enough reviews for a score yet. Reviews are coming soon.</p>
+          <p className="muted">Not enough reviews for a score yet. Used one of them? Leave a review on their page.</p>
           <ProviderList key={`n-${area}`} providers={n} testId="newcomers-list" />
         </section>
       )}

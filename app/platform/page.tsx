@@ -44,7 +44,7 @@ export default async function Home() {
         <ol>
           <li>
             <span>
-              <b>Find someone.</b> Pick a trade and your area. Once reviews open, the ones people would use again come first.
+              <b>Find someone.</b> Pick a trade and your area. The ones people would use again come first.
             </span>
           </li>
           <li>
@@ -54,7 +54,7 @@ export default async function Home() {
           </li>
           <li>
             <span>
-              <b>Vouch for them.</b> Reviews are coming soon, so you can tell the next person how it went.
+              <b>Vouch for them.</b> Leave a review in a minute, so the next person knows how it went.
             </span>
           </li>
         </ol>

@@ -98,12 +98,12 @@ test("the card deck advances with the arrows and shows a counter", async ({ page
   await deck.scrollIntoViewIfNeeded();
   const counter = deck.getByTestId("deck-counter");
   await deck.getByRole("button", { name: /pause/i }).click();
-  await expect(counter).toHaveText("01 / 07");
+  await expect(counter).toHaveText("01 / 08");
   await deck.getByRole("button", { name: "Next card" }).click();
-  await expect(counter).toHaveText("02 / 07");
+  await expect(counter).toHaveText("02 / 08");
   await deck.getByRole("button", { name: "Previous card" }).click();
   await deck.getByRole("button", { name: "Previous card" }).click();
-  await expect(counter).toHaveText("07 / 07");
+  await expect(counter).toHaveText("08 / 08");
 });
 
 test("install steps cover iPhone and Android", async ({ page }) => {
@@ -150,13 +150,16 @@ test("FAQ and the Still stuck box offer email and WhatsApp tickets", async ({ pa
   ]) {
     const item = support.locator("details.faq-item", { hasText: q });
     await item.locator("summary").click();
-    await expect(item).toContainText("Raise a support ticket by emailing support@ysbdesigns.uk or on WhatsApp at 07466 487591");
+    await expect(item).toContainText(/raise a support ticket by emailing support@ysbdesigns\.uk or on WhatsApp at 07466 487591/i);
     await expect(item.getByRole("link", { name: "support@ysbdesigns.uk" })).toHaveAttribute("href", mailHref);
     const wa = item.getByRole("link", { name: "07466 487591" });
     await expect(wa).toHaveAttribute("href", waHref);
     await expect(wa).toHaveAttribute("target", "_blank");
     await expect(wa).toHaveAttribute("rel", "noopener noreferrer");
   }
+  await expect(support.locator("details.faq-item", { hasText: "How do I report a problem or a review?" })).toContainText(
+    "On a review, tap Report. For anything else, raise a support ticket",
+  );
   const who = support.locator("details.faq-item", { hasText: "Who runs Bolton Vouched?" });
   await who.locator("summary").click();
   await expect(who).toContainText("built and run by YSB Designs");
@@ -239,9 +242,9 @@ test("reduced motion: no animations, no hidden reveal content, deck does not aut
   );
   expect(faded).toBe(0);
   const counter = page.getByTestId("deck-counter");
-  await expect(counter).toHaveText("01 / 07");
+  await expect(counter).toHaveText("01 / 08");
   await page.waitForTimeout(6500);
-  await expect(counter).toHaveText("01 / 07");
+  await expect(counter).toHaveText("01 / 08");
 });
 
 test("content is visible without JavaScript", async ({ browser }) => {

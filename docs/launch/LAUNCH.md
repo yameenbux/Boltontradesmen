@@ -62,7 +62,7 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 > This link shows exactly how you'll appear (name, trade, areas and Call/WhatsApp buttons; your number isn't shown on the page). If you're happy, tap "I agree":
 > [CONSENT LINK]
 >
-> Fair warning: people who've used you will be able to leave reviews, and I won't remove one just because it's unflattering, only if it's fake or abusive. you'll be able to reply to any review, and you can come off any time.
+> Fair warning: people who've used you can leave reviews, and I won't remove one just because it's unflattering, only if it's fake or abusive. You can reply to any review by signing in with your number, and you can come off any time.
 >
 > Your basic listing is free, no catch. Any questions just message me.
 
@@ -72,7 +72,7 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 >
 > Your page: [PROFILE LINK — e.g. https://boltonvouched.ysbdesigns.uk/platform/p/ace-plumbing]
 >
-> People can now find you and ring or WhatsApp you straight from it. Your place in the list comes from reviews only; nobody can pay to jump ahead. Reviews are coming soon, so it's worth sharing your link with happy customers.
+> People can now find you and ring or WhatsApp you straight from it. Your place in the list comes from reviews only; nobody can pay to jump ahead. Reviews are open, so share your link with happy customers and ask them to leave one. Sign in with this number to reply.
 >
 > If anything on your listing needs changing, just drop me a message.
 
@@ -87,7 +87,7 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 > • Find plumbers, electricians, caterers, bouncy castles, man & van and more
 > • Tap Call or WhatsApp straight from their page, no sign-up
 > • Every pro on there has agreed to be listed, and nobody can pay to rank higher
-> • Reviews from people in Bolton are coming soon
+> • Leave a review for someone you've used: sign in with your mobile, takes a minute
 > • Tip: tap "Add it to your phone" on the page and it works like an app
 >
 > **Traders in the group:** if you'd like to be added (a basic listing is free), raise a support ticket by emailing **support@ysbdesigns.uk** or on WhatsApp at **07466 487591** with your name, trade and the areas you cover (or tap "WhatsApp us" or "Email a ticket" on the site) and the Bolton Vouched team will get you on.
@@ -100,6 +100,6 @@ Send C only once at least a handful of traders are live, so the first visit does
 
 ## What's live vs coming
 
-- **Live:** directory, categories, provider profiles, Call/WhatsApp (counted as enquiries), consent links, admin.
-- **Coming (Plan 2):** resident sign-in and reviews, community questions, trader dashboards and the paid Verified tier.
+- **Live:** directory, categories, provider profiles, Call/WhatsApp (counted as enquiries), consent links, admin, phone sign-in, reviews with replies and proof checks, review moderation.
+- **Coming:** community questions (Plan 3); trader dashboard and the optional Verified tier (Plan 4); complaints process and monitoring (Plan 5).
 - Before wider promotion: solicitor review of the draft policy pages (they show "Draft — pending legal review"), and ICO registration for YSB Ventures Ltd.

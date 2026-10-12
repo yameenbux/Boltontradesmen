@@ -30,6 +30,7 @@ const SHOTS = [
   }],
   ["profile", "/platform/p/demo-halliwell-plumbing", async () => {}],
   ["profile-checks", "/platform/p/demo-halliwell-plumbing", async (page) => scrollTo(page, "#checks-title, .checks", 220)],
+  ["profile-reviews", "/platform/p/demo-halliwell-plumbing", async (page) => scrollTo(page, "#reviews-title", 90)],
   ["profile-contact", "/platform/p/demo-spark-right", async () => {}],
   ["ratings", "/how-ratings-work", async () => {}],
   ["consent", `/platform/consent/${INVITED_TOKEN}`, async () => {}],
