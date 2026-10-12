@@ -1,0 +1,26 @@
+flowchart TB
+    subgraph GROUP["Asking in the WhatsApp group"]
+        direction LR
+        A["<b>Monday</b><br/>'anyone know a good<br/>plumber in Farnworth?'"]
+        B["<b>Twelve replies</b><br/>three names, two numbers,<br/>'DM me'"]
+        C["<b>Thursday</b><br/>buried under 200 messages<br/><i>so someone asks again</i>"]
+        A --> B --> C
+    end
+
+    subgraph BV["The same answers in Bolton Vouched"]
+        direction LR
+        D["<b>One place</b><br/>the people the group<br/>recommends, by trade"]
+        E["<b>Pick a trade and an area</b><br/>BL1 to BL7, and nearby"]
+        F["<b>A profile with checks</b><br/>ID, insurance, Gas Safe<br/>where it applies"]
+        G["<b>Call or WhatsApp</b><br/>one tap, no sign-up"]
+        D --> E --> F --> G
+    end
+
+    GROUP -.->|"same recommendations,<br/>kept where you can find them"| BV
+
+    classDef core fill:#9C3A25,stroke:#B5862C,stroke-width:3px,color:#FFF5E9
+    classDef live fill:#DDE9DA,stroke:#46684A,stroke-width:2px,color:#231A15
+    classDef dev fill:#F6EAD0,stroke:#B5862C,stroke-width:2px,stroke-dasharray:6 4,color:#231A15
+    classDef ext fill:#EFE5D7,stroke:#97887C,stroke-width:1.5px,color:#231A15
+    class A,B,C ext
+    class D,E,F,G core

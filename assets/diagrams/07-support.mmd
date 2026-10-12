@@ -1,0 +1,24 @@
+flowchart LR
+    C["<b>Something's wrong</b><br/>a wrong listing, a page<br/>that breaks, a removal"]
+    TICKET["<b>Raise a ticket</b><br/>support@ysbdesigns.uk<br/>or WhatsApp Business"]
+    Q{{"A listing,<br/>or the site?"}}
+    ADMIN["<b>Fixed in admin</b><br/>edit, pause or remove;<br/>removal within<br/>one working day"]
+    REPRO["<b>We reproduce it</b><br/>locally, with a test<br/>that fails first"]
+    FIX["<b>Fixed and checked</b><br/>CI on the pull request"]
+    MAIN["<b>Merged to main</b><br/>Railway deploys it"]
+    ALL["<b>Everyone gets it</b><br/>not only the person<br/>who reported it"]
+
+    C --> TICKET --> Q
+    Q -->|"listing"| ADMIN
+    Q -->|"site"| REPRO --> FIX --> MAIN --> ALL
+    ADMIN -.->|"we reply and<br/>say so"| C
+    ALL -.->|"we reply and<br/>say so"| C
+
+    classDef core fill:#9C3A25,stroke:#B5862C,stroke-width:3px,color:#FFF5E9
+    classDef live fill:#DDE9DA,stroke:#46684A,stroke-width:2px,color:#231A15
+    classDef dev fill:#F6EAD0,stroke:#B5862C,stroke-width:2px,stroke-dasharray:6 4,color:#231A15
+    classDef ext fill:#EFE5D7,stroke:#97887C,stroke-width:1.5px,color:#231A15
+    class C ext
+    class TICKET,Q,REPRO core
+    class ADMIN,FIX live
+    class MAIN,ALL core

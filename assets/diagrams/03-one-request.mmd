@@ -1,0 +1,22 @@
+flowchart LR
+    R["<b>A resident needs<br/>a plumber</b><br/>a leak under the sink"]
+    O["<b>Opens /platform</b><br/>from the Home Screen<br/>or a shared link"]
+    T["<b>Picks a trade<br/>and a BL area</b><br/>Plumber · BL4"]
+    P["<b>The profile</b><br/>areas, checks,<br/>enquiry count"]
+    W["<b>Taps WhatsApp</b><br/>a link to our server,<br/>not to a number"]
+    API["<b>/api/contact</b><br/>logs one enquiry,<br/>counted once a day<br/>per device"]
+    WA["<b>wa.me opens</b><br/>a chat with the trader<br/>in WhatsApp"]
+    NO["<b>The number in<br/>the page's HTML</b><br/>never: it isn't there"]
+
+    R --> O --> T --> P --> W --> API
+    API -->|"302 redirect"| WA
+    P -.-> NO
+
+    classDef core fill:#9C3A25,stroke:#B5862C,stroke-width:3px,color:#FFF5E9
+    classDef live fill:#DDE9DA,stroke:#46684A,stroke-width:2px,color:#231A15
+    classDef dev fill:#F6EAD0,stroke:#B5862C,stroke-width:2px,stroke-dasharray:6 4,color:#231A15
+    classDef ext fill:#EFE5D7,stroke:#97887C,stroke-width:1.5px,color:#231A15
+    class R,WA ext
+    class O,T,P,W live
+    class API core
+    class NO ext

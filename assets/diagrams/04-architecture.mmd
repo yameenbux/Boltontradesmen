@@ -1,0 +1,37 @@
+flowchart TB
+    USER["<b>A phone or a laptop</b><br/>the browser, or the<br/>Home Screen app (PWA)"]
+    DNS["<b>boltonvouched.ysbdesigns.uk</b><br/>a CNAME to Railway"]
+
+    subgraph RAIL["Railway: service web, deployed from main"]
+        direction TB
+        NEXT["<b>Next.js 16</b><br/>the showcase at /, the<br/>directory at /platform, /admin"]
+        CONTACT["<b>/api/contact</b><br/>logs the tap, then<br/>redirects to tel: or wa.me"]
+    end
+
+    subgraph SUPA["Supabase, London: its own project"]
+        direction TB
+        VIEW["<b>provider_public</b><br/>the only public door:<br/>no phone, billing or documents"]
+        PRIV["<b>private.*</b><br/>SECURITY DEFINER wrappers<br/>anon can't call by name"]
+        ADMIN["<b>admin_* functions</b><br/>check the admin role,<br/>write the audit log"]
+        DB[("<b>Postgres with RLS</b><br/>providers, checks,<br/>contact events, audit log")]
+        AUTH["<b>Supabase Auth</b><br/>admin only,<br/>sign-ups off"]
+    end
+
+    GHA["<b>GitHub Actions</b><br/>lint, types, unit, pgTAP<br/>and browser tests"]
+
+    USER --> DNS --> NEXT
+    NEXT -->|"anon key"| VIEW
+    VIEW --> PRIV --> DB
+    NEXT --> CONTACT
+    CONTACT -->|"service key,<br/>server only"| DB
+    NEXT -->|"signed-in admin"| ADMIN --> DB
+    NEXT --- AUTH
+    GHA -.->|"checks every<br/>push and PR"| RAIL
+
+    classDef core fill:#9C3A25,stroke:#B5862C,stroke-width:3px,color:#FFF5E9
+    classDef live fill:#DDE9DA,stroke:#46684A,stroke-width:2px,color:#231A15
+    classDef dev fill:#F6EAD0,stroke:#B5862C,stroke-width:2px,stroke-dasharray:6 4,color:#231A15
+    classDef ext fill:#EFE5D7,stroke:#97887C,stroke-width:1.5px,color:#231A15
+    class NEXT,CONTACT,VIEW,PRIV,ADMIN,DB core
+    class AUTH,GHA live
+    class USER,DNS ext
