@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/Button";
 import { setGroupCode } from "@/app/platform/account/actions";
 import type { FormState } from "@/lib/admin-shared";
 
+// The code is a short word shared in the group. The server only checks it isn't blank and matches; this just stops
+// a pasted paragraph.
+const GROUP_CODE_MAX = 40;
+
 export function GroupCodeForm() {
   const [state, action, pending] = useActionState(setGroupCode, {} as FormState);
   const err = state.errors?.group_code;
@@ -21,10 +25,17 @@ export function GroupCodeForm() {
           className="input"
           autoComplete="off"
           autoCapitalize="characters"
+          required
+          maxLength={GROUP_CODE_MAX}
           defaultValue={typeof state.values?.group_code === "string" ? state.values.group_code : ""}
           aria-invalid={err ? true : undefined}
+          aria-describedby={err ? "group-code-err" : undefined}
         />
-        {err && <span className="field-err">{err}</span>}
+        {err && (
+          <span id="group-code-err" className="field-err">
+            {err}
+          </span>
+        )}
       </label>
       {state.message && !state.ok && (
         <p role="alert" className="form-alert">

@@ -98,17 +98,24 @@ export function ReplyForm({
         name="body"
         className="input textarea"
         rows={3}
+        required
+        minLength={2}
         maxLength={REPLY_MAX}
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder={`Thank ${reviewerName.split(" ")[0]}, or give your side politely.`}
         aria-invalid={err ? true : undefined}
+        aria-describedby={err ? `${fieldId}-err` : undefined}
         autoFocus
       />
       <span className="counter" data-near={body.length > REPLY_MAX - 40 || undefined}>
         {body.length}/{REPLY_MAX}
       </span>
-      {err && <span className="field-err">{err}</span>}
+      {err && (
+        <span id={`${fieldId}-err`} className="field-err">
+          {err}
+        </span>
+      )}
       {state.message && !state.ok && (
         <p role="alert" className="form-alert">
           <AlertIcon />

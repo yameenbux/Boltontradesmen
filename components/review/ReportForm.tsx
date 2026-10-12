@@ -48,12 +48,19 @@ export function ReportForm({
           name="note"
           className="input textarea"
           rows={4}
+          required
+          minLength={5}
           maxLength={500}
           defaultValue={note}
           key={note}
           aria-invalid={err ? true : undefined}
+          aria-describedby={err ? "report-note-err" : undefined}
         />
-        {err && <span className="field-err">{err}</span>}
+        {err && (
+          <span id="report-note-err" className="field-err">
+            {err}
+          </span>
+        )}
       </label>
       {state.message && (
         <p role="alert" className="form-alert">
