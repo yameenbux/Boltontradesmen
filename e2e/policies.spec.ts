@@ -145,3 +145,14 @@ test("the privacy notice is plain about sign-in records and unused accounts", as
   await expect(main).toContainText("deleted after 24 hours");
   await expect(main).not.toContainText("35 days");
 });
+
+// Final review M4, M5: no overclaims about surnames, Google's role or the fingerprint.
+test("the privacy notice is accurate about surnames, Google and the sign-in fingerprint", async ({ page }) => {
+  await page.goto("/privacy");
+  const main = page.getByRole("main");
+  await expect(main).not.toContainText("we do not keep your full surname");
+  await expect(main).toContainText("our sign-in provider holds the name Google shares");
+  await expect(main).toContainText("Google is an independent controller for your Google account");
+  await expect(main).not.toContainText("can't be turned back into them");
+  await expect(main).toContainText("made with a secret key, and used only to recognise the same sign-in");
+});

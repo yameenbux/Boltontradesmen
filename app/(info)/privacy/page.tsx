@@ -48,7 +48,7 @@ export default function PrivacyPage() {
         items={[
           "Your email address, and if you use Google, your Google account ID and the name and email Google shares with us. Our sign-in provider holds them. We use them to sign you in and to limit sign-in attempts. They are never shown on the site.",
           "If you signed in with a mobile number before October 2026, we keep that number in the same way.",
-          "The name you show, like \"Sarah K.\" (your first name and the first letter of your surname; we do not keep your full surname), and your postcode district, which is never shown publicly.",
+          "The name you show, like \"Sarah K.\" (your first name and the first letter of your surname), and your postcode district, which is never shown publicly. We don't save the full surname you type in. If you use Google, our sign-in provider holds the name Google shares; we don't show or use it.",
           "Whether you are in the Bolton Tradesmen WhatsApp group, if you add the group code.",
           "Your reviews and replies, which are published with your shown name.",
           "Proof files you choose to add to a review (a photo of an invoice or the finished work). They are kept private, we remove the photo's hidden details (such as location) before storing it, and only the admin sees them. Proof files are deleted 12 months after we check them; a review keeps its Verified job label.",
@@ -71,9 +71,9 @@ export default function PrivacyPage() {
 
       <H2>Where it is stored</H2>
       <p>
-        Data is stored in the UK, in a Supabase database hosted in London. Supabase also runs our sign-in. Google confirms
-        who you are if you choose Continue with Google. Resend sends our sign-in emails. Each acts for us as a processor
-        (Google as an independent sign-in provider under its own terms).
+        Data is stored in the UK, in a Supabase database hosted in London. Supabase also runs our sign-in. Resend sends our
+        sign-in emails. Supabase and Resend act for us as processors. If you choose Continue with Google, Google is an
+        independent controller for your Google account, under its own terms, and only tells us who you are.
       </p>
 
       <H2>How long we keep it</H2>
@@ -89,7 +89,8 @@ export default function PrivacyPage() {
       <p>
         You can delete your account from your account page at any time. Your reviews and replies are taken down and your
         shown name is removed. We keep a scrambled fingerprint of your sign-in (worked out from your email address, Google
-        account or mobile number; it can&apos;t be turned back into them) for 12 months, so someone whose review was
+        account or mobile number, made with a secret key, and used only to recognise the same sign-in) for 12 months, so
+        someone whose review was
         removed for breaking the rules can&apos;t sign up again to review that provider. If you signed in with a mobile
         number, we also keep that number privately for 12 months in case of legal claims. Then we delete them.
       </p>
