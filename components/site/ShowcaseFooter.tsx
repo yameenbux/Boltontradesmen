@@ -18,6 +18,8 @@ export function ShowcaseFooter() {
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
           <Link href="/how-ratings-work">How ratings work</Link>
+          <Link href="/review-policy">Review policy</Link>
+          <Link href="/fake-reviews-policy">Fake reviews</Link>
           <Link href={PLATFORM}>Open the platform</Link>
         </nav>
         <p>{COMPANY_LINE}</p>

@@ -11,15 +11,24 @@ export default function TermsPage() {
     <PolicyPage title="Terms of use">
       <H2>What this site is</H2>
       <p>
-        Bolton Vouched is a local directory of recommended local pros in Bolton, where residents will be able to leave
-        reviews about the people they have used. It is an information service, not a trade body or a marketplace.
+        Bolton Vouched is a local directory of recommended local pros in Bolton, where residents leave reviews about the
+        people they have used. It is an information service, not a trade body or a marketplace.
       </p>
       <p>{COMPANY_LINE}</p>
 
       <H2>Reviews are opinions</H2>
       <p>
-        Reviews, when they are published, are the opinions of the residents who wrote them. They are not statements by Bolton Vouched, and we do not
+        Reviews are the opinions of the residents who wrote them. They are not statements by Bolton Vouched, and we do not
         guarantee that any review is complete or accurate.
+      </p>
+
+      <H2>Leaving a review</H2>
+      <p>
+        To leave a review you sign in with your own UK mobile number. You agree to follow the{" "}
+        <a href="/review-policy">review policy</a>: write about a job you had done yourself, be honest, and leave out phone
+        numbers and other personal details. Fake reviews are not allowed; the{" "}
+        <a href="/fake-reviews-policy">fake reviews policy</a> says how we look for them. Providers can reply to reviews
+        of their own listing.
       </p>
 
       <H2>Providers are independent</H2>
@@ -39,7 +48,10 @@ export default function TermsPage() {
       </p>
 
       <H2>Reporting content</H2>
-      <p>If you think something on the site is wrong, unfair or unlawful, tell us at {contact} and say which page it is on.</p>
+      <p>
+        If you think a review is wrong, unfair or unlawful, tap Report on that review. For anything else on the site, tell
+        us at {contact} and say which page it is on.
+      </p>
       <List items={["We will review the reports we receive."]} />
     </PolicyPage>
   );

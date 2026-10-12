@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "How ratings work | Bolton Vouched" }
 export default function HowRatingsWorkPage() {
   return (
     <PolicyPage title="How ratings work">
-      <p>Once residents&apos; reviews are published, profiles show figures worked out from them. Here is what they will mean.</p>
+      <p>Profiles show figures worked out from residents&apos; reviews. Here is what they mean.</p>
 
       <H2>The headline figures</H2>
       <List
@@ -20,7 +20,7 @@ export default function HowRatingsWorkPage() {
 
       <H2>The quality score</H2>
       <p>
-        Reviewers will also give a quality score out of 5. A provider with only a few reviews could look brilliant or terrible
+        Reviewers also give a quality score out of 5. A provider with only a few reviews could look brilliant or terrible
         by luck, so we pull each score part of the way towards the average for all providers on the register. With more
         reviews the pull gets weaker, and the provider&apos;s own reviews decide the score. This is called shrinking towards
         the average, and it keeps one lucky or unlucky review from deciding where someone ranks.
@@ -31,6 +31,14 @@ export default function HowRatingsWorkPage() {
 
       <H2>Newer reviews count more</H2>
       <p>Recent work is the best guide, so a review&apos;s influence halves every two years.</p>
+
+      <H2>Which reviews count</H2>
+      <p>
+        Every review comes from someone who signed in with a UK mobile number. Published reviews count, and so do reviews
+        marked &ldquo;Under check&rdquo; while we look at them. A review the admin removes stops counting. The{" "}
+        <a href="/review-policy">review policy</a> and <a href="/fake-reviews-policy">fake reviews policy</a> explain the
+        rules.
+      </p>
 
       <H2>Payment</H2>
       <p>Payment never affects ranking.</p>

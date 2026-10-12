@@ -71,7 +71,7 @@ test("provider consents via their link, then the admin sets them live", async ({
   await expect(consent.getByText("This link is no longer valid").first()).toBeVisible();
   await ctx.close();
 
-  expect(sql(`select consent_evidence->>'text_version' from public.providers where business_name = '${name}'`)).toBe("2026-10-11d");
+  expect(sql(`select consent_evidence->>'text_version' from public.providers where business_name = '${name}'`)).toBe("2026-10-12");
   // Review Focus 5: the stored hash is the hash of exactly the paragraphs the provider saw.
   const shown = createHash("sha256").update(paragraphs.join("\n\n")).digest("hex");
   expect(sql(`select consent_evidence->>'text_sha256' from public.providers where business_name = '${name}'`)).toBe(shown);

@@ -4,6 +4,8 @@ const policies = [
   { path: "/privacy", heading: /privacy/i },
   { path: "/terms", heading: /terms/i },
   { path: "/how-ratings-work", heading: /ratings work/i },
+  { path: "/review-policy", heading: /^Review policy$/ },
+  { path: "/fake-reviews-policy", heading: /^Fake reviews policy$/ },
 ];
 
 for (const { path, heading } of policies) {
@@ -15,7 +17,7 @@ for (const { path, heading } of policies) {
   });
 }
 
-for (const start of ["/platform", "/privacy", "/terms", "/how-ratings-work", "/admin/login"]) {
+for (const start of ["/", "/platform", "/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy", "/admin/login"]) {
   test(`footer on ${start} links to the policy pages`, async ({ page }) => {
     await page.goto(start);
     const footer = page.getByRole("contentinfo");
@@ -25,8 +27,40 @@ for (const start of ["/platform", "/privacy", "/terms", "/how-ratings-work", "/a
       "href",
       "/how-ratings-work",
     );
+    await expect(footer.getByRole("link", { name: "Review policy" })).toHaveAttribute("href", "/review-policy");
+    await expect(footer.getByRole("link", { name: "Fake reviews" })).toHaveAttribute("href", "/fake-reviews-policy");
   });
 }
+
+test("the fake reviews policy names the law and carries a dated risk assessment", async ({ page }) => {
+  await page.goto("/fake-reviews-policy");
+  const main = page.locator("main");
+  await expect(main).toContainText("Digital Markets, Competition and Consumers Act 2024");
+  await expect(main).toContainText("Risk assessment: 12 October 2026");
+});
+
+test("the review policy explains the quick check and Verified job", async ({ page }) => {
+  await page.goto("/review-policy");
+  const main = page.locator("main");
+  await expect(main).toContainText("Published, under a quick check");
+  await expect(main).toContainText("Verified job");
+});
+
+test("the privacy notice covers signed-in people: Twilio and the 12 months", async ({ page }) => {
+  await page.goto("/privacy");
+  const main = page.locator("main");
+  await expect(main).toContainText("Twilio");
+  await expect(main).toContainText("12 months");
+  await expect(main).not.toContainText("Cookies are used only for the admin login");
+});
+
+test("terms and how ratings work speak in the present tense", async ({ page }) => {
+  await page.goto("/terms");
+  await expect(page.locator("main")).toContainText("where residents leave reviews");
+  await page.goto("/how-ratings-work");
+  await expect(page.locator("main")).toContainText("Profiles show figures worked out from residents' reviews.");
+  await expect(page.locator("main")).not.toContainText(/once|will mean|will also/i);
+});
 
 test("privacy notice covers controller, rights and the ICO", async ({ page }) => {
   await page.goto("/privacy");
