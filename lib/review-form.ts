@@ -5,6 +5,7 @@ import type { OnPrice, OnTime, UseAgain, ValueBand } from "@/lib/review-text";
 // actions share it. The database (submit_review / edit_review) applies the same rules again and is the authority.
 
 export const COMMENT_MAX = 400;
+export const REPLY_MAX = 400;
 
 // Proof of the job (checked again on the server from the file's bytes: lib/proofs.ts).
 export const MAX_PROOF_BYTES = 10 * 1024 * 1024;

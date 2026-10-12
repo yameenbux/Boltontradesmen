@@ -491,6 +491,28 @@ h1,h2,h3{text-wrap:balance}
   .my-comment{margin:0; font-size:16.5px; white-space:pre-line; overflow-wrap:anywhere}
   .closed{display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin:0; font-size:15px; color:var(--ink-2)}
 
+  /* ---------- provider area (replies) and the Report page ---------- */
+  .provider-area{display:grid; gap:16px}
+  .provider-area .reviews{margin-top:0}
+  .listing-icon svg{width:30px; height:30px}
+  .reply-box{display:grid; gap:10px}
+  .reply-box .reply{margin-top:2px; border-left:3px solid var(--brick-tint); padding:4px 0 4px 12px; font-size:15px; color:var(--ink-2)}
+  .reply-box .reply b{display:block; color:var(--ink); font-size:14px; margin-bottom:2px}
+  .reply-box .reply p{margin:0; overflow-wrap:anywhere; white-space:pre-line}
+  .reply-edit-row{display:flex; flex-wrap:wrap; align-items:center; gap:2px 12px}
+  .reply-edit-row .text-btn{padding:0; min-height:44px}
+  .reply-edit-row small{font-size:14px; color:var(--ink-3)}
+  .reply-form{display:grid; gap:8px; margin-top:4px; padding:14px; border-radius:var(--r-md); background:var(--surface-2)}
+  .reply-form .field{font-size:16px}
+  .reply-form .textarea{min-height:96px; font-size:17px; background:var(--surface)}
+  .reply-actions{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px}
+  .reply-actions .btn{flex:1 1 160px}
+  .report-quote{margin:0; display:grid; gap:8px; padding:14px 16px; border-radius:var(--r-md); background:var(--surface-2)}
+  .report-quote figcaption{display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; font-size:14.5px; color:var(--ink-2)}
+  .report-quote figcaption b{color:var(--ink)}
+  .report-quote blockquote{margin:0; font-size:16.5px; white-space:pre-line; overflow-wrap:anywhere}
+  .report-quote .no-comment{margin:0; font-size:15px; color:var(--ink-3)}
+
   /* ---------- 404 ---------- */
   .lost{display:grid; justify-items:start; gap:14px; padding:28px 0 8px}
   .lost .eyebrow{font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--brick)}

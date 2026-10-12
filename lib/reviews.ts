@@ -41,3 +41,10 @@ export async function listProviderReviews(providerId: string): Promise<PublicRev
   if (error) throw new Error(`listProviderReviews: ${error.message}`);
   return (data ?? []).map(toReview);
 }
+
+/** One public review by id (for the Report page), with its provider's slug; null when it isn't public. */
+export async function getPublicReview(id: string): Promise<{ review: PublicReview; providerSlug: string } | null> {
+  const { data, error } = await createPublicClient().from("review_public").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(`getPublicReview: ${error.message}`);
+  return data ? { review: toReview(data), providerSlug: data.provider_slug } : null;
+}
