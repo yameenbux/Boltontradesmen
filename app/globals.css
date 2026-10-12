@@ -161,7 +161,7 @@ h1,h2,h3{text-wrap:balance}
   .mod-who,.mod-meta{margin:0; font-size:15px; color:var(--ink-2)}
   .mod-how{margin:-6px 0 0; font-size:14.5px; font-weight:700; color:var(--ink-2)}
   .a-section{display:grid; gap:14px}
-  .a-section > h2{font-family:var(--display); font-weight:400; font-size:clamp(26px,6.5vw,30px); line-height:1.1; margin:0}
+  .a-section h2{font-family:var(--display); font-weight:400; font-size:clamp(26px,6.5vw,30px); line-height:1.1; margin:0}
   .mod-who b{color:var(--ink); font-size:16.5px}
   .mod-comment{margin:0; padding:10px 14px; border-left:3px solid var(--line); font-size:16px; white-space:pre-line; overflow-wrap:anywhere}
   .mod-flags{display:grid; gap:6px; margin:0; padding:0; list-style:none}

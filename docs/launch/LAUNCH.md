@@ -80,6 +80,14 @@ Sign-in codes cost money per text. The app limits how many it asks for, but only
 - [ ] **Supabase → Authentication → Hooks → Send SMS hook → HTTPS:** URL `https://boltonvouched.ysbdesigns.uk/api/auth/sms-hook`, generate the secret, paste it into Railway as `SUPABASE_SMS_HOOK_SECRET`, wait for Railway to redeploy, then **enable** the hook. From then on Supabase can't text anyone the sign-in page didn't approve, so every text counts towards the app's £20 monthly cap.
 - [ ] Test: sign in on your own phone at `/platform/sign-in`. If the code doesn't arrive, turn the hook off again and check Railway's logs for `sms-hook:`.
 
+## Step 3c — Free sign-in (Plan 2b: Google + email code) — settings that must stay as set
+
+The full setup (Resend, Google Cloud, Supabase providers and templates) is in *Owner actions* of
+`docs/superpowers/plans/2026-10-12-plan-2b-free-sign-in.md`; Task 11 folds it into Step 3b here. Whatever else you change:
+
+- [ ] **Supabase → Authentication → Sign In / Providers → Email → "Confirm email" → ON.** Never turn it off. With it off, Supabase confirms new email accounts itself, after the database has checked them, so an email account could be made without the 6-digit code. The app's guard relies on every new email account arriving unconfirmed.
+- [ ] **Email OTP length 6**, **Email OTP expiration 900** seconds (15 minutes, matching the app's sign-in window).
+
 ## Step 4 — Sign in and add traders
 
 - Go to `/admin` on the site (e.g. https://boltonvouched.ysbdesigns.uk/admin).
