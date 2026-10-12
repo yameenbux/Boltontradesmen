@@ -136,6 +136,9 @@ select is((select reviewer_id from public.reviews where id = (select (v ->> 'id'
   '00000000-0000-0000-0000-0000000008a1'::uuid, 'the reviewer is the caller');
 
 -- ---------------------------------------------------------------- new accounts: one review in the first 24 hours
+-- (earlier reviews of rw-plumb moved out of the 48-hour window so the burst rule stays out of this test)
+update public.reviews set created_at = now() - interval '3 days'
+where provider_id = '00000000-0000-0000-0000-0000000008b1' and status <> 'removed';
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a3","role":"authenticated"}';
 select is((public.submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h-nia')) ->> 'status',
