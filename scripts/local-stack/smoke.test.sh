@@ -4,6 +4,8 @@
 set -uo pipefail
 
 API_URL="${NEXT_PUBLIC_SUPABASE_URL:-http://127.0.0.1:54321}"
+# Local inbox: Mailpit's API (real `supabase start`) or scripts/local-stack/mail-sink.mjs (same subset).
+INBOX_URL="${INBOX_URL:-http://127.0.0.1:54324}"
 DB_URL="${SUPABASE_DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}"
 ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0}"
 SERVICE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU}"
@@ -26,9 +28,13 @@ code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $ANON_KEY" -H "Authori
 # Phone sign-up is gated by the database (otp_requests approvals; admin emails allow-listed).
 APPROVED_PHONE=447700900409
 UNAPPROVED_PHONE=447700900408
+SMOKE_EMAIL=smoke@residents.example.test
+SMOKE_PW_EMAIL=pw@residents.example.test
 smoke_cleanup() {
   sql "delete from auth.users where phone in ('$APPROVED_PHONE', '$UNAPPROVED_PHONE');
        delete from public.otp_requests where ip_hash = 'smoke';
+       delete from auth.users where email in ('$SMOKE_EMAIL', '$SMOKE_PW_EMAIL');
+       delete from public.email_requests where ip_hash = 'smoke';
        update public.settings set value = coalesce((select jsonb_agg(e) from jsonb_array_elements(value) e
          where e #>> '{}' not like 'smoke-%@example.test'), '[]'::jsonb) where key = 'admin_emails';" >/dev/null
 }
@@ -176,6 +182,60 @@ case "$code" in
 esac
 out=$(sql "select count(*) from auth.users where phone = '$APPROVED_PHONE'")
 [ "$out" = 0 ] && ok "no account from the replayed nonce" || nok "no account from the replayed nonce" "$out"
+
+# 16. Email code sign-in (Plan 2b). Without the app's nonce GoTrue cannot create the account.
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/auth/v1/otp" \
+  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -d "{\"email\":\"$SMOKE_EMAIL\",\"create_user\":true}")
+[ "$code" != 200 ] && ok "POST /auth/v1/otp (email, no nonce) is rejected ($code)" || nok "POST /auth/v1/otp (email, no nonce) is rejected" "got $code"
+out=$(sql "select count(*) from auth.users where email = '$SMOKE_EMAIL'")
+[ "$out" = 0 ] && ok "no auth.users row for the email without a nonce" || nok "no auth.users row for the email without a nonce" "$out"
+
+# 17. The app's flow: an approved email_requests row bound to the nonce → 200, a code arrives, verify signs in.
+SMOKE_NONCE="smoke-nonce-$RANDOM$RANDOM"
+sql "insert into public.email_requests (email_norm, ip_hash, outcome, nonce_hash)
+     values ('$SMOKE_EMAIL', 'smoke', 'approved', encode(sha256(convert_to('$SMOKE_NONCE', 'UTF8')), 'hex'))" >/dev/null
+sent_after=$(node -e 'process.stdout.write(new Date(Date.now() - 1000).toISOString())')
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/auth/v1/otp" \
+  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -d "{\"email\":\"$SMOKE_EMAIL\",\"create_user\":true,\"data\":{\"bv_nonce\":\"$SMOKE_NONCE\"}}")
+[ "$code" = 200 ] && ok "POST /auth/v1/otp (email, app flow with nonce) -> 200" || nok "POST /auth/v1/otp (email, app flow with nonce) -> 200" "got $code"
+email_code=""
+message_id=""
+for _ in $(seq 1 40); do
+  message_id=$(curl -s "$INBOX_URL/api/v1/search?query=$(node -e 'process.stdout.write(encodeURIComponent(`to:"${process.argv[1]}"`))' "$SMOKE_EMAIL")" \
+    | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const m=(JSON.parse(s).messages||[]).find(x=>new Date(x.Created)>new Date(process.argv[1]));process.stdout.write(m?m.ID:"")}catch{}})' "$sent_after")
+  [ -n "$message_id" ] && break
+  sleep 0.25
+done
+if [ -n "$message_id" ]; then
+  msg=$(curl -s "$INBOX_URL/api/v1/message/$message_id")
+  email_code=$(node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const m=JSON.parse(s);const c=/\b\d{6}\b/.exec(m.Text||"");process.stdout.write((c?c[0]:"")+"|"+m.Subject)})' <<<"$msg")
+fi
+[ -n "${email_code%%|*}" ] && [ "${email_code#*|}" = "Your Bolton Vouched sign-in code" ] \
+  && ok "the sign-in code email reaches the inbox within 10 s" || nok "the sign-in code email reaches the inbox within 10 s" "id=$message_id $email_code"
+email_code="${email_code%%|*}"
+resp=$(curl -s -X POST "$API_URL/auth/v1/verify" -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -d "{\"type\":\"email\",\"email\":\"$SMOKE_EMAIL\",\"token\":\"$email_code\"}")
+[ -n "$(json access_token <<<"$resp")" ] && ok "POST /auth/v1/verify (type email) returns access_token" || nok "POST /auth/v1/verify (type email) returns access_token" "$resp"
+if [ -n "$message_id" ]; then
+  curl -s -o /dev/null -X DELETE "$INBOX_URL/api/v1/messages" -H 'Content-Type: application/json' -d "{\"IDs\":[\"$message_id\"]}"
+fi
+
+# 18. An email + password sign-up is refused
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/auth/v1/signup" \
+  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -d "{\"email\":\"$SMOKE_PW_EMAIL\",\"password\":\"xxxxxxxx\"}")
+[ "$code" != 200 ] && ok "POST /auth/v1/signup ($SMOKE_PW_EMAIL + password) is rejected ($code)" || nok "POST /auth/v1/signup ($SMOKE_PW_EMAIL + password) is rejected" "got $code"
+
+# 19. Continue with Google starts at Google with the local dummy client
+location=$(curl -s -o /dev/null -w '%{redirect_url}' -H "apikey: $ANON_KEY" "$API_URL/auth/v1/authorize?provider=google")
+code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $ANON_KEY" "$API_URL/auth/v1/authorize?provider=google")
+case "$location" in
+  https://accounts.google.com/*client_id=local-dummy*) [ "$code" = 302 ] && ok "GET /auth/v1/authorize?provider=google -> 302 to Google (dummy client)" \
+      || nok "GET /auth/v1/authorize?provider=google -> 302" "got $code" ;;
+  *) nok "GET /auth/v1/authorize?provider=google -> 302 to Google (dummy client)" "got $code $location" ;;
+esac
 
 # Cleanup
 smoke_cleanup

@@ -15,6 +15,8 @@ PG_PORT=54322
 PROXY_PORT=54321
 POSTGREST_PORT=54330
 AUTH_PORT=54331
+MAIL_HTTP_PORT=54324
+MAIL_SMTP_PORT=54325
 JWT_SECRET="super-secret-jwt-token-with-at-least-32-characters-long"
 API_URL="http://127.0.0.1:$PROXY_PORT"
 DB_URL="postgresql://postgres:postgres@127.0.0.1:$PG_PORT/postgres"
@@ -145,7 +147,22 @@ start_auth() {
     GOTRUE_JWT_ADMIN_ROLES=service_role \
     GOTRUE_JWT_ISSUER="$API_URL/auth/v1" \
     GOTRUE_EXTERNAL_EMAIL_ENABLED=true \
-    GOTRUE_MAILER_AUTOCONFIRM=true \
+    GOTRUE_MAILER_AUTOCONFIRM=false \
+    GOTRUE_SMTP_HOST=127.0.0.1 \
+    GOTRUE_SMTP_PORT=54325 \
+    GOTRUE_SMTP_ADMIN_EMAIL=noreply@ysbdesigns.uk \
+    GOTRUE_SMTP_SENDER_NAME="Bolton Vouched" \
+    GOTRUE_SMTP_MAX_FREQUENCY=1s \
+    GOTRUE_MAILER_OTP_LENGTH=6 \
+    GOTRUE_MAILER_OTP_EXP=900 \
+    GOTRUE_MAILER_TEMPLATES_CONFIRMATION=http://127.0.0.1:54324/templates/sign-in-code.html \
+    GOTRUE_MAILER_TEMPLATES_MAGIC_LINK=http://127.0.0.1:54324/templates/sign-in-code.html \
+    GOTRUE_MAILER_SUBJECTS_CONFIRMATION="Your Bolton Vouched sign-in code" \
+    GOTRUE_MAILER_SUBJECTS_MAGIC_LINK="Your Bolton Vouched sign-in code" \
+    GOTRUE_EXTERNAL_GOOGLE_ENABLED=true \
+    GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID=local-dummy.apps.googleusercontent.com \
+    GOTRUE_EXTERNAL_GOOGLE_SECRET=local-dummy-not-a-secret \
+    GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI=http://127.0.0.1:54321/auth/v1/callback \
     GOTRUE_EXTERNAL_PHONE_ENABLED=true \
     GOTRUE_SMS_AUTOCONFIRM=false \
     GOTRUE_SMS_PROVIDER=twilio \
@@ -163,6 +180,15 @@ start_auth() {
     GOTRUE_LOG_LEVEL=info \
     "$BIN/auth"
   wait_for auth "http://127.0.0.1:$AUTH_PORT/health"
+}
+
+# Local inbox (scripts/local-stack/mail-sink.mjs): Auth sends sign-in code emails to its SMTP port; tests read
+# them through the same HTTP API subset a real `supabase start` serves with Mailpit. It also serves the email
+# template Auth fetches by URL (GOTRUE_MAILER_TEMPLATES_* above), so it starts before Auth.
+start_mail_sink() {
+  launch mail-sink env MAIL_SINK_HTTP_PORT="$MAIL_HTTP_PORT" MAIL_SINK_SMTP_PORT="$MAIL_SMTP_PORT" \
+    node "$HERE/mail-sink.mjs"
+  wait_for mail-sink "http://127.0.0.1:$MAIL_HTTP_PORT/api/v1/messages"
 }
 
 start_postgrest() {
@@ -201,6 +227,7 @@ verify_auth_functions() {
 
 download_binaries
 start_postgres
+start_mail_sink
 start_auth
 verify_auth_functions
 start_postgrest
@@ -214,5 +241,6 @@ Local Supabase-compatible stack is running.
       JWT secret: $JWT_SECRET
         anon key: $ANON_KEY
 service_role key: $SERVICE_ROLE_KEY
+           inbox: http://127.0.0.1:$MAIL_HTTP_PORT (Mailpit API subset; SMTP on $MAIL_SMTP_PORT)
             logs: $LOGS
 INFO

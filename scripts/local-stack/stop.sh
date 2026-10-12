@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Stop the proxy, PostgREST and Supabase Auth started by start.sh.
+# Stop the proxy, PostgREST, Supabase Auth and the mail sink started by start.sh.
 # Postgres (cluster 16/supa) is left running; stop it with
 #   pg_ctlcluster 16 supa stop
 set -euo pipefail
 RUN="$(cd "$(dirname "$0")" && pwd)/run"
 
-for name in proxy postgrest auth; do
+for name in proxy postgrest auth mail-sink; do
   pidfile="$RUN/$name.pid"
   if [ -f "$pidfile" ]; then
     pid="$(cat "$pidfile")"

@@ -74,3 +74,6 @@ select 'review', id, 'auto', 'burst_48h' from public.reviews where provider_id =
 update public.settings set value = '{"number_15m":50,"number_24h":200,"ip_1h":1000,"ip_24h":5000}'::jsonb where key = 'otp_limits';
 -- The same for the wrong-code limiter (final review 2, I4).
 update public.settings set value = '{"number_15m":50,"ip_1h":1000}'::jsonb where key = 'otp_verify_limits';
+-- Email codes (Plan 2b): every E2E sign-in comes from one address and connection.
+update public.settings set value = '{"address_15m":50,"address_24h":200,"ip_1h":1000,"ip_24h":5000,"daily_cap":5000,"monthly_cap":50000}'::jsonb
+where key = 'email_limits';

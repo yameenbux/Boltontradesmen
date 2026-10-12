@@ -20,14 +20,15 @@ fi
 
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
-echo "[db-reset] dropping schema private, recreating schema public, removing phone sign-in users"
+echo "[db-reset] dropping schema private, recreating schema public, removing phone and E2E email sign-in users"
 "${PSQL[@]}" <<'SQL'
 drop schema if exists private cascade;
 drop schema if exists public cascade;
--- auth.users survives this reset (unlike `supabase db reset`); phone accounts left by E2E runs would
--- otherwise keep their numbers and clash with the database tests' fixture users. Admin email users stay.
--- After dropping public, so their reviews' foreign keys are gone.
-delete from auth.users where coalesce(phone, '') <> '';
+-- auth.users survives this reset (unlike `supabase db reset`); phone and email-code accounts left by E2E
+-- runs would otherwise keep their numbers and addresses and clash with later runs and the database tests'
+-- fixture users. Admin email users stay. After dropping public, so their reviews' foreign keys are gone.
+-- E2E email addresses use @residents.example.test (E2E_EMAIL_DOMAIN in e2e/helpers/mailbox.ts).
+delete from auth.users where coalesce(phone, '') <> '' or email like '%@residents.example.test';
 create schema public authorization postgres;
 comment on schema public is 'standard public schema';
 grant usage on schema public to public;
