@@ -204,6 +204,28 @@ describe("completeOnboarding", () => {
     auth.getUser.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
   });
 
+  it("flags a wrong group code answered as data (the wrong try stays recorded)", async () => {
+    rpc.mockResolvedValue({ data: { error: "bad_group_code" }, error: null });
+    const res = await completeOnboarding(
+      {},
+      form({ first_name: "sarah", surname: "Khan", district: "BL3", group_code: "nope", next: "/platform/account" }),
+    );
+    expect(res.errors?.group_code).toBe("That group code isn't right. Leave it blank if you don't have one.");
+    expect(res.values).toMatchObject({ group_code: "nope" });
+  });
+
+  it("says plainly when the day's wrong group-code tries are used up", async () => {
+    rpc.mockResolvedValue({ data: { error: "group_code_limit" }, error: null });
+    const res = await completeOnboarding(
+      {},
+      form({ first_name: "sarah", surname: "Khan", district: "BL3", group_code: "Bolton", next: "/platform/account" }),
+    );
+    expect(res.errors?.group_code).toBe(
+      "Too many wrong group codes today. Leave it blank for now and add it from your account page tomorrow.",
+    );
+    expect(res.values).toMatchObject({ first_name: "sarah", group_code: "Bolton" });
+  });
+
   it("keeps the form filled and flags a wrong group code", async () => {
     rpc.mockResolvedValue({ data: null, error: { message: "bad_group_code", code: "P0001" } });
     const res = await completeOnboarding(

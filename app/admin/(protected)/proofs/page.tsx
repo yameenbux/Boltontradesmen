@@ -1,4 +1,4 @@
-import { ProofActions } from "@/components/admin/ModerationForms";
+import { DeleteDueProofFilesForm, ProofActions } from "@/components/admin/ModerationForms";
 import { ModerationReview, type AdminReview } from "@/components/admin/ModerationReview";
 import { requireAdmin } from "@/lib/admin";
 import { dayMonthYear } from "@/lib/checks";
@@ -70,6 +70,14 @@ export default async function Proofs() {
           })}
         </div>
       )}
+      <section className="a-card" aria-labelledby="old-proofs-title">
+        <h2 id="old-proofs-title">Old proof files</h2>
+        <p className="a-lede">
+          Proof files are deleted 12 months after you check them, as the privacy notice says. The Verified job label
+          stays. There is no automatic run yet, so press this now and then.
+        </p>
+        <DeleteDueProofFilesForm />
+      </section>
     </main>
   );
 }

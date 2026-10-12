@@ -51,6 +51,7 @@ test("the privacy notice covers signed-in people: Twilio and the 12 months", asy
   const main = page.locator("main");
   await expect(main).toContainText("Twilio");
   await expect(main).toContainText("12 months");
+  await expect(main).toContainText("Proof files are deleted 12 months after we check them.");
   await expect(main).not.toContainText("Cookies are used only for the admin login");
 });
 

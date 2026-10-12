@@ -4,7 +4,7 @@ import path from "node:path";
 
 // The test phone numbers (code 123456, no SMS sent) must be identical in the Supabase CLI config (CI)
 // and the local stack (sandboxes), and must all sit in Ofcom's 07700 900xxx drama range.
-const EXPECTED = ["447700900301", ...Array.from({ length: 9 }, (_, i) => `44770090040${i + 1}`)];
+const EXPECTED = ["447700900301", ...Array.from({ length: 9 }, (_, i) => `44770090040${i + 1}`), "447700900411"];
 const root = path.resolve(__dirname, "../..");
 
 function configTestOtps(): Record<string, string> {

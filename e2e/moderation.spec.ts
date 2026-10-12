@@ -61,3 +61,12 @@ test("the admin home shows the moderation counts and the nav", async ({ page }) 
   await nav.getByRole("link", { name: /^Proofs/ }).click();
   await expect(page.getByRole("heading", { name: "Proofs to check" })).toBeVisible();
 });
+
+test("the admin can delete proof files checked over 12 months ago (none are due here)", async ({ page }) => {
+  await adminSignIn(page);
+  await page.goto("/admin/proofs");
+  const old = page.getByRole("region", { name: "Old proof files" });
+  await expect(old).toContainText("Proof files are deleted 12 months after you check them");
+  await old.getByRole("button", { name: "Delete proof files due now" }).click();
+  await expect(old.getByRole("status")).toHaveText("No proof files are due for deletion.");
+});

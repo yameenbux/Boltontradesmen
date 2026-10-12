@@ -7,7 +7,7 @@ import {
   DELETE_FAILED_MESSAGE,
   DELETE_RETRY_MESSAGE,
 } from "@/lib/account-text";
-import { GROUP_CODE_ERROR, requireMember, requireSignedIn } from "@/lib/auth";
+import { GROUP_CODE_ERROR, GROUP_CODE_LIMIT_ACCOUNT, requireMember, requireSignedIn } from "@/lib/auth";
 import type { FormState } from "@/lib/admin-shared";
 import { platformPath } from "@/lib/paths";
 import { revalidatePublicPages } from "@/lib/revalidate-public";
@@ -22,6 +22,9 @@ export async function setGroupCode(_prev: FormState, fd: FormData): Promise<Form
   if (!code.trim()) return { errors: { group_code: "Enter the group code." }, values: { group_code: code } };
   const { data, error } = await supabase.rpc("set_group_code", { p_code: code });
   if (error) {
+    if (error.message === "group_code_limit") {
+      return { errors: { group_code: GROUP_CODE_LIMIT_ACCOUNT }, values: { group_code: code } };
+    }
     console.error("account: set_group_code failed:", error.message);
     return { message: "Something went wrong. Please try again.", values: { group_code: code } };
   }

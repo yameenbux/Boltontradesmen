@@ -8,12 +8,16 @@ vi.mock("next/navigation", () => ({
     throw new Error(`REDIRECT ${url}`);
   },
 }));
+const storageRemove = vi.fn();
+const storageFrom = vi.fn(() => ({ remove: storageRemove }));
+vi.mock("@/lib/supabase/service", () => ({ createServiceClient: () => ({ storage: { from: storageFrom } }) }));
 const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath: (...a: unknown[]) => revalidatePath(...a) }));
 
 import {
   checkProof,
   clearReview,
+  deleteDueProofFiles,
   removeReply,
   removeReview,
   resolveFlag,
@@ -148,5 +152,66 @@ describe("resolveFlag, checkProof, removeReply", () => {
     const res = await removeReply({}, form({ reply_id: REPLY, reason: "Abusive" }));
     expect(res.ok).toBe(true);
     expect(rpc).toHaveBeenCalledWith("admin_remove_reply", { p_reply: REPLY, p_reason: "Abusive" });
+  });
+});
+
+describe("deleteDueProofFiles (proof files deleted 12 months after the check)", () => {
+  function admin(due: { id: string; storage_path: string }[], marked = due.length) {
+    auth.getUser.mockResolvedValue({ data: { user: { id: "admin" } } });
+    let listed = false;
+    rpc.mockImplementation(async (name: string) => {
+      if (name === "is_admin") return { data: true, error: null };
+      if (name === "proof_files_due") {
+        const rows = listed ? [] : due;
+        listed = true;
+        return { data: rows, error: null };
+      }
+      if (name === "mark_proof_files_deleted") return { data: marked, error: null };
+      return { data: null, error: null };
+    });
+  }
+
+  beforeEach(() => {
+    storageRemove.mockReset().mockResolvedValue({ data: [], error: null });
+    storageFrom.mockClear();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  it("says so when nothing is due, without touching Storage", async () => {
+    admin([]);
+    const res = await deleteDueProofFiles({}, new FormData());
+    expect(res).toEqual({ ok: true, message: "No proof files are due for deletion." });
+    expect(storageRemove).not.toHaveBeenCalled();
+  });
+
+  it("deletes the due files from the private bucket, then marks them", async () => {
+    admin([
+      { id: PROOF, storage_path: `${REVIEW}/a.jpg` },
+      { id: FLAG, storage_path: `${REVIEW}/b.pdf` },
+    ]);
+    const res = await deleteDueProofFiles({}, new FormData());
+    expect(storageFrom).toHaveBeenCalledWith("review-proofs");
+    expect(storageRemove).toHaveBeenCalledWith([`${REVIEW}/a.jpg`, `${REVIEW}/b.pdf`]);
+    expect(rpc).toHaveBeenCalledWith("mark_proof_files_deleted", { p_ids: [PROOF, FLAG] });
+    expect(res).toEqual({ ok: true, message: "Deleted 2 proof files checked over 12 months ago." });
+  });
+
+  it("uses the singular for one file", async () => {
+    admin([{ id: PROOF, storage_path: `${REVIEW}/a.jpg` }]);
+    expect((await deleteDueProofFiles({}, new FormData())).message).toBe("Deleted 1 proof file checked over 12 months ago.");
+  });
+
+  it("gives a plain message when Storage refuses, and marks nothing", async () => {
+    admin([{ id: PROOF, storage_path: `${REVIEW}/a.jpg` }]);
+    storageRemove.mockResolvedValue({ data: null, error: { message: "boom" } });
+    const res = await deleteDueProofFiles({}, new FormData());
+    expect(res).toEqual({ message: "Something went wrong. Please try again." });
+    expect(rpc).not.toHaveBeenCalledWith("mark_proof_files_deleted", expect.anything());
+  });
+
+  it("is for the admin only", async () => {
+    auth.getUser.mockResolvedValue({ data: { user: null } });
+    await expect(deleteDueProofFiles({}, new FormData())).rejects.toThrow("REDIRECT /admin/login");
+    expect(storageRemove).not.toHaveBeenCalled();
   });
 });

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import {
   checkProof,
   clearReview,
+  deleteDueProofFiles,
   removeReply,
   removeReview,
   resolveFlag,
@@ -119,6 +120,21 @@ export function ProofActions({ proofId }: { proofId: string }) {
         </Button>
         <Button type="submit" name="outcome" value="rejected" variant="secondary" disabled={pending}>
           Reject
+        </Button>
+      </div>
+      <Result state={state} />
+    </form>
+  );
+}
+
+/** Deletes proof files checked over 12 months ago (until Plan 5 runs this on a schedule). */
+export function DeleteDueProofFilesForm() {
+  const [state, action, pending] = useActionState(deleteDueProofFiles, {} as FormState);
+  return (
+    <form action={action} className="a-form">
+      <div className="a-actions">
+        <Button type="submit" variant="secondary" disabled={pending}>
+          {pending ? "Deleting…" : "Delete proof files due now"}
         </Button>
       </div>
       <Result state={state} />

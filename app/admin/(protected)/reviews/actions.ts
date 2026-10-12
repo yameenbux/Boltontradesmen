@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
 import type { FormState } from "@/lib/admin-shared";
+import { deleteExpiredProofFiles, PROOF_RETENTION_MONTHS } from "@/lib/proof-retention";
 import { ID_PATTERN } from "@/lib/review-form";
 import { revalidatePublicPages } from "@/lib/revalidate-public";
+import { createServiceClient } from "@/lib/supabase/service";
 
 // Moderation: every action checks the admin itself, the database checks again (is_admin) and writes the audit row.
 
@@ -110,6 +112,37 @@ export async function checkProof(_prev: FormState, fd: FormData): Promise<FormSt
   return {
     ok: true,
     message: outcome.data === "accepted" ? "Accepted. The review shows Verified job." : "Proof rejected.",
+  };
+}
+
+/** Deletes proof files checked over 12 months ago (the privacy notice's promise). Verified jobs stay verified. */
+// useActionState passes (state, formData); this action needs neither.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function deleteDueProofFiles(_prev: FormState, _fd: FormData): Promise<FormState> {
+  const { supabase } = await requireAdmin();
+  let n: number;
+  try {
+    n = await deleteExpiredProofFiles({
+      due: async (limit) => {
+        const { data, error } = await supabase.rpc("proof_files_due", { p_limit: limit });
+        if (error) throw new Error(`proof_files_due failed: ${error.message}`);
+        return (data ?? []) as { id: string; storage_path: string }[];
+      },
+      remove: async (paths) => createServiceClient().storage.from("review-proofs").remove(paths),
+      mark: async (ids) => {
+        const { data, error } = await supabase.rpc("mark_proof_files_deleted", { p_ids: ids });
+        if (error) throw new Error(`mark_proof_files_deleted failed: ${error.message}`);
+        return typeof data === "number" ? data : 0;
+      },
+    });
+  } catch (err) {
+    console.error("admin: deleting old proof files failed:", err);
+    return { message: "Something went wrong. Please try again." };
+  }
+  if (n === 0) return { ok: true, message: "No proof files are due for deletion." };
+  return {
+    ok: true,
+    message: `Deleted ${n} proof ${n === 1 ? "file" : "files"} checked over ${PROOF_RETENTION_MONTHS} months ago.`,
   };
 }
 

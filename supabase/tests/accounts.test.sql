@@ -27,7 +27,8 @@ select is((select count(*)::int from ipv where verdict = 'ok'), 10, 'IP: 10 requ
 select is((select verdict from public.otp_gate('+447700900520', 'ip-b')), 'ip_limited', 'IP: 11th request in an hour is limited');
 reset role;
 
--- monthly SMS cap: £20 at £0.10 per sent code
+-- monthly SMS cap: £20 at £0.10 per sent code (Lookups priced at 0 here; owner_decisions.test.sql covers them)
+update public.settings set value = '0'::jsonb where key = 'lookup_cost_gbp';
 insert into public.otp_requests (phone_e164, ip_hash, outcome)
 select '+4477009006' || lpad((n % 100)::text, 2, '0'), 'bulk', 'sent' from generate_series(1, 199) n;
 insert into public.otp_requests (phone_e164, ip_hash, outcome, created_at)
@@ -118,7 +119,7 @@ insert into public.profiles (user_id, role) values ('00000000-0000-0000-0000-000
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007b1","role":"authenticated"}';
 select is(public.my_account(), null, 'my_account is null before onboarding');
-select throws_ok($$select public.complete_onboarding('Sarah K.', 'BL3', 'nope')$$, null, 'bad_group_code', 'a wrong group code is refused');
+select is(public.complete_onboarding('Sarah K.', 'BL3', 'nope') ->> 'error', 'bad_group_code', 'a wrong group code is refused');
 select throws_ok($$select public.complete_onboarding('Sarah', 'BL3', '')$$, '23514', null, 'a name without an initial is refused');
 select throws_ok($$select public.complete_onboarding('Sarah K.', 'Bolton', '')$$, '23514', null, 'a district that is not a postcode district is refused');
 select is(public.complete_onboarding('Sarah K.', 'BL3', 'bolton ') ->> 'display_name', 'Sarah K.', 'onboarding returns my_account');

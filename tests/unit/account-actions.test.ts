@@ -16,7 +16,7 @@ vi.mock("next/navigation", () => ({
 const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath: (...a: unknown[]) => revalidatePath(...a) }));
 
-import { deleteAccount } from "@/app/platform/account/actions";
+import { deleteAccount, setGroupCode } from "@/app/platform/account/actions";
 import { DELETE_RETRY_MESSAGE } from "@/lib/account-text";
 
 function form(entries: Record<string, string>) {
@@ -89,5 +89,36 @@ describe("deleteAccount", () => {
     await expect(deleteAccount({}, form({ confirm: "on" }))).rejects.toThrow(
       "REDIRECT /platform/sign-in?next=%2Fplatform%2Faccount",
     );
+  });
+});
+
+describe("setGroupCode (owner decision: 5 wrong tries a day)", () => {
+  function member(setGroupCodeResult: { data: unknown; error: unknown }) {
+    rpc.mockImplementation(async (name: string) => {
+      if (name === "my_account") {
+        return { data: { user_id: "u1", display_name: "Sarah K.", role: "resident", deleted: false, providers: [] }, error: null };
+      }
+      return setGroupCodeResult;
+    });
+  }
+
+  it("says plainly when the day's wrong tries are used up", async () => {
+    member({ data: null, error: { message: "group_code_limit", code: "P0001" } });
+    const res = await setGroupCode({}, form({ group_code: "nope" }));
+    expect(res.errors?.group_code).toBe("Too many wrong group codes today. Please try again tomorrow.");
+    expect(res.values).toEqual({ group_code: "nope" });
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  it("still flags a wrong code", async () => {
+    member({ data: false, error: null });
+    const res = await setGroupCode({}, form({ group_code: "nope" }));
+    expect(res.errors?.group_code).toBe("That group code isn't right. Leave it blank if you don't have one.");
+  });
+
+  it("adds the badge with the right code", async () => {
+    member({ data: true, error: null });
+    const res = await setGroupCode({}, form({ group_code: "Bolton" }));
+    expect(res).toEqual({ ok: true, message: "You're now shown as a Group member." });
   });
 });
