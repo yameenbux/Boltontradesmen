@@ -72,6 +72,11 @@ listing number in the E2E fixture) and `447700900401`–`447700900409` (resident
 still needs an approved `otp_requests` row (the app's sign-in gate writes one) in the last 15 minutes
 before Auth can create its account. After changing Auth settings run `npm run stack:stop && npm run stack:start`.
 
+Phone sign-in is off unless the app runs with `SIGN_IN_PHONE=on`. The E2E `phone` project serves the app with
+it on at `http://localhost:3001`, so Auth's Send SMS hook points there
+(`http://localhost:3001/api/auth/sms-hook`; set `SMS_HOOK_URL` before `stack:start` to point it elsewhere, for
+example at `npm run dev` on :3000 with `SIGN_IN_PHONE=on`).
+
 ## Email codes and Google (Plan 2b)
 
 **Which inbox CI has: Mailpit.** Supabase CLI 2.x (CI pins 2.120.0) runs Mailpit, not Inbucket, as the

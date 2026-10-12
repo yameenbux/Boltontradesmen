@@ -67,7 +67,8 @@ describe("Send SMS hook (local stack)", () => {
 
   it("is enabled and points at the app's hook route", () => {
     expect(sh).toMatch(/GOTRUE_HOOK_SEND_SMS_ENABLED=true/);
-    expect(sh).toMatch(/GOTRUE_HOOK_SEND_SMS_URI=http:\/\/localhost:3000\/api\/auth\/sms-hook/);
+    // The phone E2E project serves the app with SIGN_IN_PHONE=on at :3001 (playwright.config.ts).
+    expect(sh).toContain('GOTRUE_HOOK_SEND_SMS_URI="${SMS_HOOK_URL:-http://localhost:3001/api/auth/sms-hook}"');
   });
 
   it("signs with the same secret the app reads from .env.example", () => {

@@ -50,17 +50,18 @@ test("a throwaway address is refused before any code is sent", async ({ page }) 
   await expect(page.getByLabel("6-digit code")).toHaveCount(0);
 });
 
-test("the sign-in page puts the email form under the 'or use your email' divider, then phone when it's on", async ({ page }) => {
+test("the sign-in page offers Google, then email under the 'or use your email' divider, and no phone", async ({ page }) => {
   await page.goto("/platform/sign-in");
   const card = page.locator(".auth-card");
-  const divider = card.locator(".or-divider").first();
+  const divider = card.locator(".or-divider");
+  await expect(divider).toHaveCount(1);
   await expect(divider).toHaveText("or use your email");
+  const google = page.getByRole("button", { name: "Continue with Google" });
   const email = page.getByLabel("Your email address");
-  const phone = page.getByLabel("Your mobile number");
-  // The E2E server still runs with SIGN_IN_PHONE=on until Plan 2b Task 10.
-  await expect(phone).toBeVisible();
-  const [d, e, p] = await Promise.all([divider.boundingBox(), email.boundingBox(), phone.boundingBox()]);
+  const [g, d, e] = await Promise.all([google.boundingBox(), divider.boundingBox(), email.boundingBox()]);
+  expect(g!.y).toBeLessThan(d!.y);
   expect(d!.y).toBeLessThan(e!.y);
-  expect(e!.y).toBeLessThan(p!.y);
+  // Production's setting (SIGN_IN_PHONE off): no mobile number field.
+  await expect(page.getByLabel("Your mobile number")).toHaveCount(0);
   await expect(page.getByText("Your email address is only used to sign you in. It's never shown on the site.")).toBeVisible();
 });
