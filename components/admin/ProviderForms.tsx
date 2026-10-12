@@ -2,7 +2,15 @@
 
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { newConsentLink, recordCheck, reinviteProvider, saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
+import {
+  newConsentLink,
+  newTraderLink,
+  recordCheck,
+  reinviteProvider,
+  saveProvider,
+  setStatus,
+  unlinkProviderAccount,
+} from "@/app/admin/(protected)/providers/actions";
 import { CHECK_KINDS, type FormState } from "@/lib/admin-shared";
 
 const initial: FormState = {};
@@ -244,6 +252,104 @@ export function ReinviteForm({ providerId, removed }: { providerId: string; remo
         </Button>
       </div>
       <p className="a-hint">They go back to invited with a new consent link, and must agree again before going live.</p>
+    </form>
+  );
+}
+
+// Trader sign-in link: a single-use link the trader opens while signed in to link their account to the listing.
+export function TraderLinkButton({ providerId, expires }: { providerId: string; expires?: string | null }) {
+  const [link, setLink] = useState<string | null>(null);
+  const [expiresOn, setExpiresOn] = useState<string | null>(expires ?? null);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function copy(url: string, fresh: boolean) {
+    const after = fresh ? " Any earlier link no longer works." : "";
+    try {
+      await navigator.clipboard.writeText(url);
+      setMessage({ ok: true, text: `Link copied.${after}` });
+    } catch {
+      setMessage({ ok: true, text: `Copy the link below.${after}` });
+    }
+  }
+
+  async function onClick() {
+    setBusy(true);
+    setMessage(null);
+    const res = await newTraderLink(providerId);
+    setBusy(false);
+    if (!res.url) {
+      setMessage({ ok: false, text: res.error ?? "Could not create a trader link. Try again." });
+      return;
+    }
+    setLink(res.url);
+    if (res.expires) setExpiresOn(res.expires);
+    await copy(res.url, true);
+  }
+
+  return (
+    <div className="grid gap-3">
+      {link ? (
+        <Button type="button" onClick={() => copy(link, false)}>
+          Copy link
+        </Button>
+      ) : (
+        <Button type="button" onClick={onClick} disabled={busy}>
+          Trader sign-in link
+        </Button>
+      )}
+      {message && (
+        <p role={message.ok ? "status" : "alert"} className={message.ok ? "a-ok" : "a-err"}>
+          {message.text}
+        </p>
+      )}
+      {link && (
+        <input
+          readOnly
+          aria-label="Trader sign-in link"
+          value={link}
+          onFocus={(e) => e.currentTarget.select()}
+          className={`${input} w-full`}
+        />
+      )}
+      {link && expiresOn ? (
+        <p className="a-hint">Expires on {expiresOn}. Works once.</p>
+      ) : expiresOn ? (
+        <p className="a-hint">A link sent earlier works until {expiresOn}. Making a new one stops it working.</p>
+      ) : (
+        <p className="a-hint">
+          Makes a link and copies it, ready to paste into WhatsApp. The trader opens it, signs in with Google or their
+          email, and their account is linked to this listing.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Unlinks the account from the listing, with a reason kept in the audit log.
+export function UnlinkForm({ providerId }: { providerId: string }) {
+  const [state, action, pending] = useActionState(unlinkProviderAccount, initial);
+  if (state.ok) return <Status state={state} />;
+  return (
+    <form action={action} className="a-form">
+      <input type="hidden" name="provider_id" value={providerId} />
+      <label className="a-field">
+        Reason for unlinking (kept in the audit log)
+        <textarea
+          name="reason"
+          rows={2}
+          className={input}
+          defaultValue={typeof state.values?.reason === "string" ? state.values.reason : ""}
+        />
+        <FieldError id="reason" state={state} />
+      </label>
+      <Status state={state} />
+      <div className="a-actions">
+        <Button type="submit" variant="secondary" disabled={pending}>
+          Unlink
+        </Button>
+      </div>
+      <p className="a-hint">Use this if the wrong person opened the link. You can then make a new one.</p>
     </form>
   );
 }

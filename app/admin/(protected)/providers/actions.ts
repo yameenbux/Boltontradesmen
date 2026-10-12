@@ -233,3 +233,52 @@ export async function reinviteProvider(_prev: FormState, fd: FormData): Promise<
     values: { consent_url: consentUrl(data as string), ...(expires ? { consent_expires: expires } : {}) },
   };
 }
+
+// ---- trader sign-in links (Plan 2b): a single-use link that links the signed-in account opening it to the listing.
+// z.guid(): any 8-4-4-4-12 hex id (the E2E fixtures' ids are not RFC version-4 uuids).
+
+const TRADER_LINK_ADMIN_ERRORS: Record<string, string> = {
+  listing_already_linked: "This listing is already linked to an account. Unlink it first.",
+  "provider not linkable": "A trader link is only available once the provider has agreed to be listed.",
+};
+
+function traderLinkUrl(token: string): string {
+  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+  return `${base}${platformPath("link", token)}`;
+}
+
+// Makes a new trader sign-in link (any earlier unused one stops working) and returns it with its expiry.
+export async function newTraderLink(providerId: string): Promise<{ url?: string; expires?: string; error?: string }> {
+  const { supabase } = await requireAdmin();
+  if (!z.guid().safeParse(providerId).success) return { error: "Unknown provider" };
+  const { data, error } = await supabase.rpc("admin_new_trader_link", { p_provider: providerId });
+  if (error) {
+    const known = Object.entries(TRADER_LINK_ADMIN_ERRORS).find(([k]) => error.message.includes(k));
+    if (!known) console.error("admin: admin_new_trader_link failed:", error.message);
+    return { error: known?.[1] ?? "Could not create a trader link. Try again." };
+  }
+  const link = data as { token: string; expires_at: string };
+  revalidatePath(`/admin/providers/${providerId}`);
+  return { url: traderLinkUrl(link.token), expires: dayMonthYear(link.expires_at) ?? undefined };
+}
+
+const unlinkSchema = z.object({
+  provider_id: z.guid(),
+  reason: z.string().min(1, "Enter a reason. It's kept in the audit log.").max(500),
+});
+
+// Unlinks the account from the listing (for example when the wrong person opened a forwarded link).
+export async function unlinkProviderAccount(_prev: FormState, fd: FormData): Promise<FormState> {
+  const { supabase } = await requireAdmin();
+  const parsed = unlinkSchema.safeParse({ provider_id: text(fd.get("provider_id")), reason: text(fd.get("reason")) });
+  if (!parsed.success) return { errors: fieldErrors(parsed.error), values: { reason: text(fd.get("reason")) } };
+  const v = parsed.data;
+  const { error } = await supabase.rpc("admin_unlink_provider", { p_provider: v.provider_id, p_reason: v.reason });
+  if (error) {
+    if (error.message.includes("provider not linked")) return { message: "This listing isn't linked to an account." };
+    console.error("admin: admin_unlink_provider failed:", error.message);
+    return { message: "Could not unlink the account. Try again.", values: { reason: v.reason } };
+  }
+  revalidatePath(`/admin/providers/${v.provider_id}`);
+  return { ok: true, message: "Unlinked. You can now make a new trader sign-in link." };
+}

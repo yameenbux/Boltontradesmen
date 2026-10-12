@@ -14,6 +14,7 @@ function heading(next: string) {
   if (/^\/platform\/p\/[^/]+\/review/.test(next)) return "Sign in to leave a review";
   if (next.startsWith("/platform/report/")) return "Sign in to report a review";
   if (next.startsWith("/platform/provider")) return "Sign in to reply to reviews";
+  if (next.startsWith("/platform/link/")) return "Sign in to link your listing";
   return "Sign in to Bolton Vouched";
 }
 

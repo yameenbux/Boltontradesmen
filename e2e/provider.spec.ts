@@ -1,39 +1,14 @@
 import { expect, test } from "@playwright/test";
-import { signInWithPhone } from "./helpers/phone";
+import { signInWithEmail } from "./helpers/email";
+import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
 
-test("a provider signs in with their listing's number, replies to a review, and can't review a rival", async ({
-  page,
-}) => {
-  await signInWithPhone(page, "07700 900301", { first: "Alan", surname: "Ace" });
-  await expect(page).toHaveURL(/\/platform\/account$/);
-  await page.getByRole("link", { name: /Your listing/ }).click();
-  await expect(page).toHaveURL(/\/platform\/provider$/);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Ace Plumbing");
-  for (const name of ["Pat P.", "Jo B.", "Sam T.", "Ali R."]) {
-    await expect(page.getByRole("article", { name: `Review by ${name}` })).toBeVisible();
-  }
-
-  const pat = page.getByRole("article", { name: "Review by Pat P." });
-  await pat.getByRole("button", { name: "Reply to Pat" }).click();
-  await pat.getByLabel("Your reply").fill("Thanks Pat, glad the boiler's behaving.");
-  await expect(pat.getByText("39/400")).toBeVisible();
-  await pat.getByRole("button", { name: "Post reply" }).click();
-  await expect(pat.getByText("Reply posted")).toBeVisible();
-  await expect(pat.getByRole("button", { name: "Edit reply" })).toBeVisible();
-
-  await page.goto("/platform/p/e2e-ace-plumbing");
-  const onProfile = page.getByRole("article", { name: "Review by Pat P." });
-  await expect(onProfile.getByText("Reply from Ace Plumbing")).toBeVisible();
-  await expect(onProfile).toContainText("Thanks Pat, glad the boiler's behaving.");
-
-  await page.goto("/platform/p/e2e-fresh-pipes/review");
-  await expect(page.getByText("You can't review someone who works in the same trade as you.")).toBeVisible();
-  await expect(page.getByRole("form", { name: "Your review" })).toHaveCount(0);
-});
+// Linking a listing and replying is in trader-link.spec.ts (a listing can only be linked once per run).
 
 test("someone with no listing sees how to find theirs", async ({ page }) => {
-  await signInWithPhone(page, "07700 900409", { first: "Val", surname: "Moor", next: "/platform/provider" });
-  await expect(page.getByText(/We couldn't find a listing with this number/)).toBeVisible();
+  await signInWithEmail(page, `val@${E2E_EMAIL_DOMAIN}`, { first: "Val", surname: "Moor", next: "/platform/provider" });
+  await expect(
+    page.getByText("We couldn't find a listing linked to your account. If you're listed, ask us for your trader sign-in link."),
+  ).toBeVisible();
 });
 
 test("a resident reports a review; the admin sees it under Flags", async ({ page }) => {
@@ -42,7 +17,7 @@ test("a resident reports a review; the admin sees it under Flags", async ({ page
   await expect(page).toHaveURL(/\/platform\/sign-in\?next=%2Fplatform%2Freport%2F/);
   await expect(page.getByRole("heading", { name: "Sign in to report a review" })).toBeVisible();
   const next = new URL(page.url()).searchParams.get("next")!;
-  await signInWithPhone(page, "07700 900406", { first: "Gail", surname: "Ross", next });
+  await signInWithEmail(page, `gail@${E2E_EMAIL_DOMAIN}`, { first: "Gail", surname: "Ross", next });
   await expect(page).toHaveURL(new RegExp(`${next}$`));
 
   await expect(page.getByText("New radiator in the back bedroom. Tidy, polite and quick.")).toBeVisible();
