@@ -14,7 +14,7 @@ test("robots.txt allows the site, blocks private paths and names the sitemap", a
   const body = await res.text();
   expect(body).toMatch(/User-Agent: \*/i);
   expect(body).toContain("Allow: /");
-  for (const path of ["/admin", "/api/", "/platform/consent/"]) expect(body).toContain(`Disallow: ${path}`);
+  for (const path of ["/admin", "/api/", "/platform/consent/", "/platform/link/"]) expect(body).toContain(`Disallow: ${path}`);
   expect(body).toContain(`Sitemap: ${ORIGIN}/sitemap.xml`);
 });
 
@@ -63,19 +63,35 @@ test("provider profile: title, description, canonical, OG and LocalBusiness JSON
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", `${ORIGIN}/social.png`);
 
   const scripts = await jsonLd(page);
-  expect(scripts).toHaveLength(1);
-  expect(scripts[0]).not.toMatch(PHONE_DIGITS);
-  const ld = JSON.parse(scripts[0]);
+  expect(scripts).toHaveLength(2);
+  for (const s of scripts) expect(s).not.toMatch(PHONE_DIGITS);
+  const [ld, crumbs] = scripts.map((s) => JSON.parse(s));
   expect(ld).toMatchObject({ "@type": "LocalBusiness", name: "Ace Plumbing", url: `${ORIGIN}/platform/p/e2e-ace-plumbing` });
   for (const k of ["telephone", "address", "aggregateRating", "review"]) expect(ld).not.toHaveProperty(k);
+  expect(crumbs["@type"]).toBe("BreadcrumbList");
+  expect(crumbs.itemListElement).toEqual([
+    { "@type": "ListItem", position: 1, name: "Trades", item: `${ORIGIN}/platform` },
+    { "@type": "ListItem", position: 2, name: "Plumber", item: `${ORIGIN}/platform/c/plumber` },
+    { "@type": "ListItem", position: 3, name: "Ace Plumbing", item: `${ORIGIN}/platform/p/e2e-ace-plumbing` },
+  ]);
 });
 
-test("category page has its own title, description and canonical", async ({ page }) => {
+test("category page has its own title, description, canonical and breadcrumb JSON-LD", async ({ page }) => {
   await page.goto("/platform/c/plumber");
   await expect(page).toHaveTitle("Plumber in Bolton | Bolton Vouched");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /BL1 to BL7/);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${ORIGIN}/platform/c/plumber`);
   await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+  const scripts = await jsonLd(page);
+  expect(scripts).toHaveLength(1);
+  expect(JSON.parse(scripts[0])).toEqual({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Trades", item: `${ORIGIN}/platform` },
+      { "@type": "ListItem", position: 2, name: "Plumber", item: `${ORIGIN}/platform/c/plumber` },
+    ],
+  });
 });
 
 test("admin and consent pages are noindex", async ({ page }) => {

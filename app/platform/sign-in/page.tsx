@@ -9,7 +9,11 @@ import { phoneSignInEnabled } from "@/lib/sign-in-methods";
 import { turnstileSiteKey } from "@/lib/turnstile";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Sign in | Bolton Vouched", robots: { index: false } };
+export const metadata: Metadata = {
+  title: "Sign in | Bolton Vouched",
+  description: "Sign in to Bolton Vouched to leave a review or manage your account.",
+  robots: { index: false },
+};
 
 function heading(next: string) {
   if (/^\/platform\/p\/[^/]+\/review/.test(next)) return "Sign in to leave a review";

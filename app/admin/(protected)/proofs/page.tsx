@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { DeleteDueProofFilesForm, ProofActions } from "@/components/admin/ModerationForms";
 import { ModerationReview, type AdminReview } from "@/components/admin/ModerationReview";
 import { requireAdmin } from "@/lib/admin";
@@ -5,6 +6,10 @@ import { dayMonthYear } from "@/lib/checks";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Proofs | Admin | Bolton Vouched",
+  description: "Proof-of-job files sent with reviews, waiting to be accepted or turned down.",
+};
 
 type Row = { id: string; mime_type: string; created_at: string; review: AdminReview };
 

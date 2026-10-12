@@ -58,12 +58,15 @@ test("public pages set no cookies after toggling the theme", async ({ page, cont
   expect(await context.cookies()).toEqual([]);
 });
 
-test("unknown route shows the branded 404 with a link home", async ({ page }) => {
+test("unknown route shows the branded 404 with links to the trades, home and support", async ({ page }) => {
   const res = await page.goto("/no-such-page-at-all");
   expect(res?.status()).toBe(404);
+  await expect(page).toHaveTitle("Page not found | Bolton Vouched");
   const main = page.getByRole("main");
   await expect(main.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(main.getByRole("link", { name: /home/i })).toHaveAttribute("href", "/platform");
+  await expect(main.getByRole("link", { name: "Browse trades" })).toHaveAttribute("href", "/platform");
+  await expect(main.getByRole("link", { name: "Bolton Vouched home" })).toHaveAttribute("href", "/");
+  await expect(main.getByRole("link", { name: "support@ysbdesigns.uk" })).toHaveAttribute("href", /^mailto:support@ysbdesigns\.uk\?/);
   await expect(page.getByRole("banner")).toContainText("Bolton Vouched");
   await expect(page.getByRole("contentinfo")).toContainText("YSB Designs platform");
 });

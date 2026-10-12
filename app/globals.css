@@ -269,6 +269,17 @@ h1,h2,h3{text-wrap:balance}
   /* ---------- category ---------- */
   .back{display:inline-flex; align-items:center; gap:6px; min-height:48px; font-weight:600; color:var(--ink-2); text-decoration:none}
   .back svg{width:18px; height:18px}
+  /* Breadcrumbs: the back link's look, one line. Crumbs after the first shrink with an ellipsis (on the text span, so
+     nothing clips the focus ring); 48px tall links, like .back. */
+  .crumbs ol{display:flex; align-items:center; min-width:0; margin:0; padding:0; list-style:none; font-weight:600; color:var(--ink-2)}
+  .crumbs li{display:flex; align-items:center; min-width:0}
+  .crumbs li:first-child{flex-shrink:0}
+  .crumbs a,.crumbs .here{display:flex; align-items:center; gap:6px; min-width:0; min-height:48px; color:inherit; text-decoration:none}
+  .crumbs a:hover span{text-decoration:underline; text-underline-offset:3px}
+  .crumbs span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .crumbs .here{font-weight:400}
+  .crumbs svg{width:18px; height:18px; flex-shrink:0}
+  .crumbs .sep{width:16px; height:16px; margin:0 4px; color:var(--ink-3)}
   .page-title{font-family:var(--display); font-weight:400; font-size:42px; line-height:1; margin:8px 0 6px; overflow-wrap:anywhere}
   .page-sub{color:var(--ink-2); margin:0 0 16px}
   /* Chips scroll sideways inside the column; the negative margin lets them run to the screen edge. */
@@ -564,11 +575,13 @@ h1,h2,h3{text-wrap:balance}
   .report-quote blockquote{margin:0; font-size:16.5px; white-space:pre-line; overflow-wrap:anywhere}
   .report-quote .no-comment{margin:0; font-size:15px; color:var(--ink-3)}
 
-  /* ---------- 404 ---------- */
+  /* ---------- 404 and error pages ---------- */
   .lost{display:grid; justify-items:start; gap:14px; padding:28px 0 8px}
   .lost .eyebrow{font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--brick)}
   .lost h1{font-size:42px; line-height:1.02; letter-spacing:-.015em}
   .lost p{margin:0; color:var(--ink-2); max-width:32ch}
+  .lost p a{color:var(--brick); font-weight:600; text-underline-offset:3px; overflow-wrap:anywhere}
+  .lost-actions{display:flex; flex-wrap:wrap; gap:10px}
 }
 
 :root[data-theme="dark"] .avatar{color:var(--brick)}

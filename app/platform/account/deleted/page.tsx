@@ -4,7 +4,11 @@ import { SIGN_IN_RETENTION_TEXT } from "@/lib/account-text";
 import { platformPath } from "@/lib/paths";
 
 // Where Delete account lands. It reads no session (the person is already signed out) and says what happened.
-export const metadata: Metadata = { title: "Account deleted | Bolton Vouched", robots: { index: false } };
+export const metadata: Metadata = {
+  title: "Account deleted | Bolton Vouched",
+  description: "Your Bolton Vouched account has been deleted.",
+  robots: { index: false },
+};
 
 export default function AccountDeletedPage() {
   return (

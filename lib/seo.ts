@@ -22,8 +22,8 @@ export function absoluteUrl(path: string, base: string = siteUrl()): string {
   return new URL(path, `${base}/`).toString();
 }
 
-/** Paths crawlers must not visit. The consent links are private tokens; admin and the API are not content. */
-export const DISALLOWED_PATHS = ["/admin", "/api/", "/platform/consent/"] as const;
+/** Paths crawlers must not visit. Consent and link URLs carry private tokens; admin and the API are not content. */
+export const DISALLOWED_PATHS = ["/admin", "/api/", "/platform/consent/", "/platform/link/"] as const;
 
 export const POLICY_PATHS = ["/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy"] as const;
 
@@ -232,5 +232,21 @@ export function providerJsonLd(
     areaServed: p.areas.length
       ? p.areas.map((a) => ({ "@type": "Place", name: `${a}, Bolton` }))
       : [{ "@type": "City", name: "Bolton" }],
+  };
+}
+
+export type Crumb = { name: string; path: string };
+
+/** BreadcrumbList for the trail shown at the top of a page (components/Breadcrumbs.tsx), with absolute URLs. */
+export function breadcrumbJsonLd(crumbs: Crumb[], base: string = siteUrl()) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: c.name,
+      item: absoluteUrl(c.path, base),
+    })),
   };
 }

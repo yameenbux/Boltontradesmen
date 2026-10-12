@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pill } from "@/components/ui/Pill";
@@ -17,6 +18,10 @@ import { phoneSignInEnabled } from "@/lib/sign-in-methods";
 const STATUS_TONE = { invited: "gold", consented: "outline", live: "sage", paused: "muted", removed: "muted" } as const;
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Provider | Admin | Bolton Vouched",
+  description: "Edit a provider's listing, checks, status and consent link.",
+};
 
 type Check = { id: string; kind: string; reference: string | null; expires_on: string | null; checked_at: string };
 type Detail = {

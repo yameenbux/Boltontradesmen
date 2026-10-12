@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
@@ -5,6 +6,10 @@ import { TidySignInRecordsForm } from "@/components/admin/ModerationForms";
 import { requireAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Providers | Admin | Bolton Vouched",
+  description: "Every listed provider, their status and trades, with links to edit or invite them.",
+};
 
 const STATUS_TONE = { invited: "gold", consented: "outline", live: "sage", paused: "muted", removed: "muted" } as const;
 

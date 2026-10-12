@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  breadcrumbJsonLd,
   buildRobots,
   buildSitemap,
   categoryMetadata,
@@ -23,9 +24,9 @@ describe("siteUrl", () => {
 });
 
 describe("buildRobots", () => {
-  it("allows everything except admin, the API and consent links, and points at the sitemap", () => {
+  it("allows everything except admin, the API and private token links, and points at the sitemap", () => {
     expect(buildRobots(BASE)).toEqual({
-      rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/api/", "/platform/consent/"] },
+      rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/api/", "/platform/consent/", "/platform/link/"] },
       sitemap: `${BASE}/sitemap.xml`,
     });
   });
@@ -184,6 +185,29 @@ describe("JSON-LD", () => {
     ]);
     const keys = Object.keys(ld);
     for (const k of ["telephone", "address", "aggregateRating", "review"]) expect(keys).not.toContain(k);
+    expect(serializeJsonLd(ld)).not.toContain("</script");
+  });
+});
+
+describe("breadcrumbJsonLd", () => {
+  it("numbers the trail from 1 with absolute URLs, and serializes safely", () => {
+    const ld = breadcrumbJsonLd(
+      [
+        { name: "Trades", path: "/platform" },
+        { name: "Plumber", path: "/platform/c/plumber" },
+        { name: "Ace </script>", path: "/platform/p/ace" },
+      ],
+      BASE,
+    );
+    expect(ld).toEqual({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Trades", item: `${BASE}/platform` },
+        { "@type": "ListItem", position: 2, name: "Plumber", item: `${BASE}/platform/c/plumber` },
+        { "@type": "ListItem", position: 3, name: "Ace </script>", item: `${BASE}/platform/p/ace` },
+      ],
+    });
     expect(serializeJsonLd(ld)).not.toContain("</script");
   });
 });

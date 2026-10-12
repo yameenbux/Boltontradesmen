@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { AreaFilter } from "@/components/category/AreaFilter";
 import { localPros } from "@/components/home/CategoryTile";
 import { listCategoryGroups, listProvidersInCategory } from "@/lib/directory";
 import { platformPath } from "@/lib/paths";
-import { categoryMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbJsonLd, categoryMetadata } from "@/lib/seo";
 
 // Static and cookie-free: the area filter runs client-side, so no searchParams.
 export const revalidate = 300;
@@ -29,12 +31,6 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
   return found ? categoryMetadata(found.category) : {};
 }
 
-const Chevron = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="m15 18-6-6 6-6" />
-  </svg>
-);
-
 const Info = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <circle cx="12" cy="12" r="9" />
@@ -49,13 +45,15 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
   const { name, guidanceNote } = found.category;
   const { ranked, newcomers } = await listProvidersInCategory(slug);
   const total = new Set([...ranked, ...newcomers].map((p) => p.id)).size;
+  const trail = [
+    { name: "Trades", path: platformPath() },
+    { name, path: platformPath("c", slug) },
+  ];
 
   return (
     <main>
-      <Link href={platformPath()} className="back press">
-        <Chevron />
-        All trades
-      </Link>
+      <JsonLd data={breadcrumbJsonLd(trail)} />
+      <Breadcrumbs trail={trail} />
       <h1 className="page-title">{name}</h1>
       {total > 0 && <p className="page-sub">{localPros(total)} · ranked by reviews</p>}
 
