@@ -3,6 +3,7 @@ import { Brand } from "@/components/site/Brand";
 import {
   COMPANY_LINE,
   CONTACT_EMAIL,
+  GET_LISTED,
   MAILTO,
   PLATFORM,
   SUPPORT_WHATSAPP_DISPLAY,
@@ -20,6 +21,7 @@ export function ShowcaseFooter() {
           <Link href="/how-ratings-work">How ratings work</Link>
           <Link href="/review-policy">Review policy</Link>
           <Link href="/fake-reviews-policy">Fake reviews</Link>
+          <Link href={GET_LISTED}>Get listed</Link>
           <Link href={PLATFORM}>Open the platform</Link>
         </nav>
         <p>{COMPANY_LINE}</p>

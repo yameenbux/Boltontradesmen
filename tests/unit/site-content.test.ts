@@ -5,6 +5,7 @@ import {
   COMPANY_LINE,
   DECK,
   FAQ,
+  GET_LISTED,
   faqText,
   LISTING_WHATSAPP,
   matchesFaq,
@@ -69,13 +70,22 @@ describe("support routes", () => {
 
   it("offers both email and WhatsApp wherever the FAQ offers a ticket", () => {
     for (const q of ["How do I get listed?", "How do I come off it?", "How do I report a problem or a review?"]) {
-      const links = byQ(q).a.flat().filter((s) => typeof s !== "string");
+      const links = byQ(q)
+        .a.flat()
+        .filter((s) => typeof s !== "string")
+        .filter((l) => l.href !== GET_LISTED);
       expect(links.map((l) => l.label), q).toEqual(["support@ysbdesigns.uk", "07466 487591"]);
       expect(links[0].href, q).toMatch(/^mailto:support@ysbdesigns\.uk\?subject=/);
       expect(links[1].href, q).toMatch(/^https:\/\/wa\.me\/447466487591\?text=/);
       expect(links[1].external, q).toBe(true);
     }
   });
+});
+
+it("points traders at the Get listed form first", () => {
+  const first = byQ("How do I get listed?").a[0];
+  expect(first).toContainEqual({ href: "/get-listed", label: "Get listed form" });
+  expect(GET_LISTED).toBe("/get-listed");
 });
 
 describe("operator", () => {

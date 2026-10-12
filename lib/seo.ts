@@ -48,7 +48,7 @@ const latest = (dates: (string | null | undefined)[]): Date | undefined => {
 
 const providerUpdated = (p: SitemapProvider) => latest([p.createdAt, p.lastReviewAt]);
 
-/** "/", "/platform", categories with live providers, every live provider, then the policy pages. */
+/** "/", "/get-listed", "/platform", categories with live providers, every live provider, then the policy pages. */
 export function buildSitemap(
   { categories, providers }: { categories: SitemapCategory[]; providers: SitemapProvider[] },
   base: string = siteUrl(),
@@ -60,6 +60,7 @@ export function buildSitemap(
   const allUpdated = latest(providers.map((p) => providerUpdated(p)?.toISOString()));
   const entries: MetadataRoute.Sitemap = [
     { url: url("/"), changeFrequency: "monthly", priority: 1 },
+    { url: url("/get-listed"), changeFrequency: "yearly", priority: 0.5 },
     withDate({ url: url(platformPath()), changeFrequency: "daily", priority: 0.9 }, allUpdated),
   ];
 
