@@ -353,8 +353,8 @@ In Supabase:
    single-use code the sign-in page hands to Supabase (`otp_approve` /
    `bv_nonce`), and phone-only accounts can never use a password, so Supabase's
    own `/signup` endpoint can't be used to create or pre-claim an account.
-2. **Authentication → Rate Limits**: SMS sent per hour **30** (keep it modest: it is
-   project-wide and the only Supabase-side ceiling on texts); sign-ups and sign-ins,
+2. **Authentication → Rate Limits**: SMS sent per hour **30** (the owner's choice, launch
+   day included: it is project-wide and the only Supabase-side ceiling on texts); sign-ups and sign-ins,
    and token verifications, 150 per 5 minutes. These are "per IP", but every request
    comes from Railway, so they are one bucket for the whole site. The app's own
    wrong-code limit (5 per number per 15 minutes, 20 per connection per hour,
@@ -377,7 +377,9 @@ In Supabase:
 The app's limits (3 codes per number per 15 minutes, 10 per connection per hour,
 counting an IPv6 connection's whole /64 as one,
 and the monthly cap in `settings.sms_monthly_cap_gbp`, £20 by default) only see
-texts that go through the sign-in page. Supabase's own API can also text an
+texts that go through the sign-in page. The cap counts Twilio Lookups too: every
+request that gets past the limits costs a Lookup (`settings.lookup_cost_gbp`, £0.01)
+as well as a text if one goes (`settings.sms_cost_per_send_gbp`, £0.10). Supabase's own API can also text an
 existing account directly with the public key. Two things close that:
 
 - **The Send SMS hook (step 3 above).** With it on, Supabase hands every text to
@@ -396,7 +398,19 @@ existing account directly with the public key. Two things close that:
   - a **usage alert** (Console → Monitor → Usage triggers) at £10 and £20 a month
     on SMS and Lookup, emailing the owner;
   - **Geo permissions: United Kingdom only** for SMS;
-  - keep Supabase's **SMS sent per hour** modest (30).
+  - keep Supabase's **SMS sent per hour** at 30.
+
+#### Group code and proof files
+
+- The group code (Group member badge) allows **5 wrong tries per person in 24
+  hours**, enforced in the database (`settings.group_code_limits`); after that the
+  person sees a plain message and can try again the next day.
+- **Proof files are deleted 12 months after the admin checks them** (the privacy
+  notice says so; `settings.proof_retention_months`). `proof_files_due` and
+  `mark_proof_files_deleted` (admin or service role) find and mark them;
+  `lib/proof-retention.ts` deletes the Storage files in between. The review keeps
+  its Verified job label. For now the admin runs it from **Proofs → Old proof
+  files** once a month; a scheduled job belongs to Plan 5.
 
 **Never run `supabase config push`**: `supabase/config.toml` holds dummy Twilio
 settings and test phone numbers for local use and CI only.
@@ -521,6 +535,8 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
       record it as a check.
 - [ ] **Build the 12-month purge of contact events.** The privacy notice states
       12-month retention; the job isn't built yet.
+- [ ] **Delete old proof files monthly** (admin → Proofs → Old proof files) until
+      Plan 5 schedules it.
 - [ ] Run `docs/launch/finish-admin-function.sql` before sending the first consent
       link.
 - [ ] **Twilio for phone sign-in**: upgrade from trial, **prepaid credit with

@@ -61,8 +61,9 @@ The reviews and phone sign-in release needs these database changes in production
 13. `20261012000014_removal_survives_resignup.sql` — a removal for cause survives deleting the account and signing up again.
 14. `20261012000015_otp_verify_limits.sql` — limits on wrong sign-in codes.
 15. `20261012000016_review2_minors.sql` — confirmed-mobile check, report limit, the admin can't delete itself.
+16. `20261012000017_owner_decisions.sql` — 5 wrong group codes per person a day; Twilio Lookups count towards the £20 monthly cap (`lookup_cost_gbp`, £0.01); proof files can be deleted 12 months after they're checked.
 
-Check afterwards: `select proname from pg_proc where proname in ('otp_approve','sms_hook_gate','submit_review','delete_my_account','otp_verify_gate');` returns five rows, and `select pg_get_function_identity_arguments('public.submit_review'::regproc);` shows `p_uid uuid, p jsonb, p_device_hash text`.
+Check afterwards: `select proname from pg_proc where proname in ('otp_approve','sms_hook_gate','submit_review','delete_my_account','otp_verify_gate','proof_files_due');` returns six rows, and `select pg_get_function_identity_arguments('public.submit_review'::regproc);` shows `p_uid uuid, p jsonb, p_device_hash text`.
 
 Then set a private group code (the one members type on Welcome to get the Group member badge; the default is easy to guess): `update public.settings set value = '"<your code>"'::jsonb where key = 'group_code';`
 
@@ -74,7 +75,8 @@ Sign-in codes cost money per text. The app limits how many it asks for, but only
 - [ ] **Twilio → Monitor → Usage triggers:** a **usage alert** emailing you at **£10** and **£20** a month for SMS and for Lookup. (An alert only emails; it doesn't stop anything.)
 - [ ] **Twilio → Messaging → Settings → Geo permissions:** **United Kingdom only**.
 - [ ] **Twilio → Messaging → Services:** create a Messaging Service (sender: alphanumeric **BoltonVouch**), turn on **SMS Pumping Protection**, copy its **MG…** SID into Railway as `TWILIO_MESSAGING_SERVICE_SID`.
-- [ ] **Supabase → Authentication → Rate Limits:** **SMS sent per hour → 30**. This is site-wide, so on the day you post in the group (717 members) more than 30 people may try to sign in within an hour and some will see "couldn't send a text". Once the Send SMS hook below is on, the app's monthly cap bounds the spend, so you may raise it (e.g. to 100) for launch day and lower it again after.
+- [ ] **Supabase → Authentication → Rate Limits:** **SMS sent per hour → 30** (your decision; keep it at 30, launch day included). This is site-wide, so on the day you post in the group (717 members) more than 30 people may try to sign in within an hour and some will see "couldn't send a text"; they can try again later in the hour.
+- [ ] The app's £20 monthly cap counts **Lookups as well as texts**: each sign-in request that gets past the limits costs a Lookup (`lookup_cost_gbp`, £0.01 by default) whether or not a text goes. If Twilio's Lookup price changes, update it: `update public.settings set value = '0.01'::jsonb where key = 'lookup_cost_gbp';`
 - [ ] **Supabase → Authentication → Hooks → Send SMS hook → HTTPS:** URL `https://boltonvouched.ysbdesigns.uk/api/auth/sms-hook`, generate the secret, paste it into Railway as `SUPABASE_SMS_HOOK_SECRET`, wait for Railway to redeploy, then **enable** the hook. From then on Supabase can't text anyone the sign-in page didn't approve, so every text counts towards the app's £20 monthly cap.
 - [ ] Test: sign in on your own phone at `/platform/sign-in`. If the code doesn't arrive, turn the hook off again and check Railway's logs for `sms-hook:`.
 
@@ -139,3 +141,7 @@ Send C only once at least a handful of traders are live, so the first visit does
 - **Live:** directory, categories, provider profiles, Call/WhatsApp (counted as enquiries), consent links, admin, phone sign-in, reviews with replies and proof checks, review moderation.
 - **Coming:** community questions (Plan 3); trader dashboard and the optional Verified tier (Plan 4); complaints process and monitoring (Plan 5).
 - Before wider promotion: solicitor review of the draft policy pages (they show "Draft — pending legal review"), and ICO registration for YSB Ventures Ltd.
+
+## Every month — delete old proof files (until Plan 5)
+
+The privacy notice says proof files are deleted 12 months after they're checked. Until Plan 5 adds scheduled jobs, do it by hand once a month: **admin → Proofs → Old proof files → Delete proof files due now**. It deletes the files from Storage and keeps each review's Verified job label. (Plan 5: run this on a schedule, along with the other retention purges.)
