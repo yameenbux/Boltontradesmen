@@ -13,7 +13,7 @@ export type MyReviewRow = {
   id: string;
   provider_slug: string;
   business_name: string;
-  status: "published" | "under_check" | "under_notice" | "removed";
+  status: "pending" | "published" | "under_check" | "under_notice" | "removed";
   removal_reason: string | null;
   created_at: string;
   editable_until: string;

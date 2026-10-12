@@ -17,6 +17,7 @@ describe("statusLabel", () => {
   it("uses the exact result wording", () => {
     expect(statusLabel("published")).toBe("Published");
     expect(statusLabel("under_check")).toBe("Published, under a quick check");
+    expect(statusLabel("pending")).toBe("Waiting for a quick check — it'll appear once approved");
   });
 });
 

@@ -34,7 +34,7 @@ type Existing = {
   tidy: boolean | null;
   use_again: UseAgain;
   comment: string | null;
-  status: "published" | "under_check";
+  status: "pending" | "published" | "under_check";
   editable_until: string;
   has_active_proof: boolean;
 };

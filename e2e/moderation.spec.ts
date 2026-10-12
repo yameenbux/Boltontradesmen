@@ -1,5 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
+import { signInWithEmail } from "./helpers/email";
+import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
+import { answer } from "./helpers/review";
 
 const DB_URL = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 const sql = (query: string) =>
@@ -69,4 +72,59 @@ test("the admin can delete proof files checked over 12 months ago (none are due 
   await expect(old).toContainText("Proof files are deleted 12 months after you check them");
   await old.getByRole("button", { name: "Delete proof files due now" }).click();
   await expect(old.getByRole("status")).toHaveText("No proof files are due for deletion.");
+});
+
+test("held reviews: the admin approves one (it appears on the profile) and removes another with a reason", async ({
+  page,
+  browser,
+}, testInfo) => {
+  const HELD = "Waiting for a quick check — it'll appear once approved";
+  const baseURL = testInfo.project.use.baseURL;
+  // Two residents who signed in with an email code, on different devices (so the shared-device rule stays quiet).
+  const residents = [
+    { email: `held-oak-1@${E2E_EMAIL_DOMAIN}`, first: "Ann", comment: "Made us a solid oak gate that fits perfectly." },
+    { email: `held-oak-2@${E2E_EMAIL_DOMAIN}`, first: "Ben", comment: "Buy cheap watches at my online shop today." },
+  ];
+  const pages = [];
+  for (const [i, r] of residents.entries()) {
+    const context = await browser.newContext({ baseURL, userAgent: `E2E held reviewer ${i + 1}` });
+    const p = await context.newPage();
+    await signInWithEmail(p, r.email, { first: r.first, surname: "Held", next: "/platform/p/e2e-oak-joinery/review" });
+    await answer(p, { quality: "4", comment: r.comment });
+    await p.getByRole("button", { name: "Post review" }).click();
+    await expect(p.getByRole("heading", { name: HELD })).toBeVisible();
+    pages.push(p);
+  }
+
+  await adminSignIn(page);
+  await page
+    .getByRole("navigation", { name: "Admin" })
+    .getByRole("link", { name: /^Reviews/ })
+    .click();
+  await expect(page.getByRole("heading", { name: "Reviews awaiting approval" })).toBeVisible();
+
+  const good = page.getByRole("article").filter({ hasText: residents[0].comment });
+  await expect(good).toContainText("Oak Joinery");
+  await expect(good).toContainText("Signed in with an email code");
+  await good.getByRole("button", { name: "Approve", exact: true }).click();
+  // The queue refreshes: an approved review leaves it.
+  await expect(good).toHaveCount(0);
+
+  const spam = page.getByRole("article").filter({ hasText: residents[1].comment });
+  await spam.getByLabel("Reason for removing").fill("Spam");
+  await spam.getByRole("button", { name: "Remove", exact: true }).click();
+  await expect(spam).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole("article").filter({ hasText: residents[0].comment })).toHaveCount(0);
+  await expect(page.getByRole("article").filter({ hasText: residents[1].comment })).toHaveCount(0);
+  expect(sql(`select count(*) from audit_log where action = 'approve_review'`)).not.toBe("0");
+  expect(sql(`select count(*) from audit_log where action = 'remove_review' and reason = 'Spam'`)).toBe("1");
+
+  await page.goto("/platform/p/e2e-oak-joinery");
+  await expect(page.getByText(residents[0].comment)).toBeVisible();
+  await expect(page.getByText(residents[1].comment)).toHaveCount(0);
+
+  await pages[1].goto("/platform/account");
+  await expect(pages[1].getByRole("region", { name: /^My reviews/ })).toContainText("Removed: Spam");
+  for (const p of pages) await p.context().close();
 });

@@ -149,7 +149,7 @@ async function posted(
   revalidatePath(platformPath("account"));
   return {
     ok: true,
-    status: row.status === "under_check" ? "under_check" : "published",
+    status: row.status === "under_check" || row.status === "pending" ? row.status : "published",
     reviewId: row.id,
     ...(proofError ? { proofError } : {}),
   };

@@ -15,13 +15,19 @@ insert into public.providers (id, slug, business_name, contact_name, phone_e164,
   ('00000000-0000-0000-0000-00000000e205', 'e2e-neat-sparks', 'Neat Sparks', 'Nat Neat', '+447700900305', '+447700900305',
     array['BL3','BL4'], 'Sockets, lighting and fuse boards.', 'live', now(), '{"source":"e2e"}'::jsonb, null),
   ('00000000-0000-0000-0000-00000000e206', 'e2e-tidy-vans', 'Tidy Vans', 'Tia Tidy', '+447700900306', null,
-    array['BL1','BL5'], 'House moves and single items.', 'live', now(), '{"source":"e2e"}'::jsonb, null);
+    array['BL1','BL5'], 'House moves and single items.', 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  -- Two more joiners (Plan 2b, held reviews): Oak Joinery for the approval queue, Birch Joinery for a Google
+  -- reviewer's published review. Joiners, so the home page's trade counts don't change.
+  ('00000000-0000-0000-0000-00000000e207', 'e2e-oak-joinery', 'Oak Joinery', 'Owen Oak', '+447700900307', null,
+    array['BL1'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  ('00000000-0000-0000-0000-00000000e208', 'e2e-birch-joinery', 'Birch Joinery', 'Bea Birch', '+447700900308', null,
+    array['BL2'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null);
 
 insert into public.provider_categories (provider_id, category_id)
 select p.id, c.id
 from public.providers p cross join public.categories c
 where (p.slug in ('e2e-ace-plumbing', 'e2e-fresh-pipes', 'e2e-half-way') and c.slug = 'plumber')
-   or (p.slug = 'e2e-calm-carpentry' and c.slug = 'joiner')
+   or (p.slug in ('e2e-calm-carpentry', 'e2e-oak-joinery', 'e2e-birch-joinery') and c.slug = 'joiner')
    or (p.slug = 'e2e-neat-sparks' and c.slug = 'electrician')
    or (p.slug = 'e2e-tidy-vans' and c.slug = 'man-and-van');
 

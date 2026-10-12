@@ -132,17 +132,23 @@ function Form({
 
   if (state.ok && state.status) {
     const checking = state.status === "under_check";
+    const held = state.status === "pending";
     return (
       <section className="auth-card" aria-live="polite">
-        <div className={checking ? "done done-check" : "done"}>
+        <div className={checking || held ? "done done-check" : "done"}>
           <svg viewBox="0 0 100 100" aria-hidden="true">
             <circle cx="50" cy="50" r="46" />
-            {checking ? <path d="M50 28v24l14 9" /> : <path d="M30 52 44 65 71 37" />}
+            {checking || held ? <path d="M50 28v24l14 9" /> : <path d="M30 52 44 65 71 37" />}
           </svg>
           <h1 className="display" ref={resultRef} tabIndex={-1}>
             {statusLabel(state.status)}
           </h1>
-          {checking ? (
+          {held ? (
+            <p>
+              Thank you. Because you signed in with an email code, we read your review before it goes on the{" "}
+              {businessName} page. You can see it in your account in the meantime.
+            </p>
+          ) : checking ? (
             <p>
               Your review is live now, with an &ldquo;Under check&rdquo; label while we take a quick look. It still
               counts. Our automatic checks pick out lots of reviews, good and bad, so it isn&apos;t a judgement on you.

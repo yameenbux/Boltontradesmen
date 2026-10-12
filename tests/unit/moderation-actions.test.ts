@@ -15,6 +15,7 @@ const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath: (...a: unknown[]) => revalidatePath(...a) }));
 
 import {
+  approveReview,
   checkProof,
   clearReview,
   deleteDueProofFiles,
@@ -80,6 +81,34 @@ describe("removeReview", () => {
   it("shows a plain message when the database refuses", async () => {
     asAdmin({ error: { message: "transition not allowed" } });
     const res = await removeReview({}, form({ review_id: REVIEW, reason: "x" }));
+    expect(res.message).toBe("That review has already been dealt with. Refresh the page.");
+  });
+});
+
+describe("approveReview", () => {
+  it("approves a held review and revalidates the provider's page", async () => {
+    asAdmin({ data: "ace" });
+    const res = await approveReview({}, form({ review_id: REVIEW }));
+    expect(res.ok).toBe(true);
+    expect(rpc).toHaveBeenCalledWith("admin_set_review_status", {
+      p_review: REVIEW,
+      p_status: "published",
+      p_reason: null,
+    });
+    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
+    expect(revalidatePath).toHaveBeenCalledWith("/admin/reviews");
+  });
+
+  it("refuses a bad id without calling the database", async () => {
+    asAdmin();
+    const res = await approveReview({}, form({ review_id: "nope" }));
+    expect(res.ok).toBeFalsy();
+    expect(rpc).not.toHaveBeenCalledWith("admin_set_review_status", expect.anything());
+  });
+
+  it("says plainly when it was already dealt with", async () => {
+    asAdmin({ error: { message: "transition not allowed" } });
+    const res = await approveReview({}, form({ review_id: REVIEW }));
     expect(res.message).toBe("That review has already been dealt with. Refresh the page.");
   });
 });

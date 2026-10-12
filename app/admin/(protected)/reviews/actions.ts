@@ -57,6 +57,14 @@ async function setStatus(
   return { ok: true, message: done };
 }
 
+/**
+ * A held review (an email-only account's) → published, or under check while an automatic flag is open (the
+ * database decides).
+ */
+export async function approveReview(_prev: FormState, fd: FormData): Promise<FormState> {
+  return setStatus(fd, "published", null, "Approved. It's on the provider's page now.");
+}
+
 /** Under check → published: the automatic flags are resolved; any report stays for its own answer. */
 export async function clearReview(_prev: FormState, fd: FormData): Promise<FormState> {
   return setStatus(fd, "published", text(fd, "reason") || null, "Check cleared. The review no longer shows the label.");

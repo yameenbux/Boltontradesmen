@@ -80,6 +80,12 @@ beforeEach(() => {
 });
 
 describe("submitReview", () => {
+  it("passes a held review's pending status through (email-only accounts, Plan 2b)", async () => {
+    signedIn({ data: { id: REVIEW, status: "pending" } });
+    const res = await submitReview({}, form(answers));
+    expect(res).toMatchObject({ ok: true, status: "pending", reviewId: REVIEW });
+  });
+
   it("posts through submit_review as the server, with the session's user id and the device hash", async () => {
     signedIn({ data: { id: REVIEW, status: "under_check" } });
     const res = await submitReview({}, form(answers));
