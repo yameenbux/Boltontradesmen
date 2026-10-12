@@ -16,6 +16,20 @@ export const AlertIcon = () => (
   </svg>
 );
 
+export const InfoIcon = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5.5M12 7.5v.01" />
+  </svg>
+);
+
+export const ClockIcon = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </svg>
+);
+
 export const TickIcon = () => (
   <svg {...base} strokeWidth={2.6}>
     <path d="M20 6 9 17l-5-5" />

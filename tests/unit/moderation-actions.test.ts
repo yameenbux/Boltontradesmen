@@ -108,6 +108,25 @@ describe("resolveFlag, checkProof, removeReply", () => {
     expect(bad.ok).toBeFalsy();
   });
 
+  it("resolves every flag on one review in one go (one card per review)", async () => {
+    asAdmin();
+    const FLAG2 = "77777777-7777-4777-8777-777777777777";
+    const fd = form({ outcome: "resolved", note: "Checked: real customers" });
+    fd.append("flag_id", FLAG);
+    fd.append("flag_id", FLAG2);
+    const res = await resolveFlag({}, fd);
+    expect(res).toMatchObject({ ok: true, message: "2 flags resolved." });
+    expect(rpc).toHaveBeenCalledWith("admin_resolve_flag", { p_flag: FLAG, p_outcome: "resolved", p_note: "Checked: real customers" });
+    expect(rpc).toHaveBeenCalledWith("admin_resolve_flag", { p_flag: FLAG2, p_outcome: "resolved", p_note: "Checked: real customers" });
+    const bad = new FormData();
+    bad.append("flag_id", FLAG);
+    bad.append("flag_id", "nope");
+    bad.append("outcome", "resolved");
+    rpc.mockClear();
+    expect((await resolveFlag({}, bad)).ok).toBeFalsy();
+    expect(rpc).not.toHaveBeenCalledWith("admin_resolve_flag", expect.anything());
+  });
+
   it("accepts a proof and refreshes the profile (Verified job)", async () => {
     asAdmin({ data: "ace" });
     const res = await checkProof({}, form({ proof_id: PROOF, outcome: "accepted" }));

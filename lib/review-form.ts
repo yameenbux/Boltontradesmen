@@ -81,12 +81,13 @@ export const ON_PRICE_OPTIONS: Option<OnPrice>[] = [
   { value: "slightly_over_explained", label: "A bit over, but explained" },
   { value: "significantly_over", label: "Well over" },
 ];
+// One short word under each number, so all five fit on one line at phone width.
 export const QUALITY_OPTIONS: Option<"1" | "2" | "3" | "4" | "5">[] = [
   { value: "1", label: "Poor" },
   { value: "2", label: "Fair" },
   { value: "3", label: "Good" },
-  { value: "4", label: "Very good" },
-  { value: "5", label: "Excellent" },
+  { value: "4", label: "Great" },
+  { value: "5", label: "Superb" },
 ];
 export const TIDY_OPTIONS: Option<"yes" | "no">[] = [
   { value: "yes", label: "Yes" },

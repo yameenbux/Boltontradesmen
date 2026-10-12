@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AlertIcon } from "@/components/auth/icons";
+import { AlertIcon, ClockIcon } from "@/components/auth/icons";
 import { ReviewForm, type ReviewValues } from "@/components/review/ReviewForm";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
@@ -101,10 +101,18 @@ export default async function ReviewPage({ params }: { params: Promise<{ slug: s
             <p className="eyebrow">Leave a review</p>
             <h1 id="review-title">{name}</h1>
           </div>
-          <p role="alert" className="form-alert">
-            <AlertIcon />
-            {(REVIEW_ERRORS as Record<string, string>)[ctx.blocked] ?? REVIEW_FALLBACK_ERROR}
-          </p>
+          {ctx.blocked === "new_account_limit" ? (
+            // Not an error: a short wait for brand-new accounts, so it reads as information.
+            <p role="status" className="form-note">
+              <ClockIcon />
+              {REVIEW_ERRORS.new_account_limit}
+            </p>
+          ) : (
+            <p role="alert" className="form-alert">
+              <AlertIcon />
+              {(REVIEW_ERRORS as Record<string, string>)[ctx.blocked] ?? REVIEW_FALLBACK_ERROR}
+            </p>
+          )}
           <Button href={profile} variant="secondary">
             Back to {name}
           </Button>

@@ -70,19 +70,24 @@ export async function removeReview(_prev: FormState, fd: FormData): Promise<Form
   return setStatus(fd, "removed", reason, "Review removed. The reason is in the audit log.");
 }
 
+/** Resolves or dismisses one flag, or every open flag on one review (the Flags page shows one card per review). */
 export async function resolveFlag(_prev: FormState, fd: FormData): Promise<FormState> {
   const { supabase } = await requireAdmin();
-  const flag = id.safeParse(text(fd, "flag_id"));
+  const flags = z.array(id).min(1).safeParse(fd.getAll("flag_id"));
   const outcome = z.enum(["resolved", "dismissed"]).safeParse(text(fd, "outcome"));
-  if (!flag.success || !outcome.success) return { message: "Something went wrong. Please try again." };
-  const { error } = await supabase.rpc("admin_resolve_flag", {
-    p_flag: flag.data,
-    p_outcome: outcome.data,
-    p_note: text(fd, "note") || null,
-  });
-  if (error) return refused("admin_resolve_flag", error);
+  if (!flags.success || !outcome.success) return { message: "Something went wrong. Please try again." };
+  for (const flag of flags.data) {
+    const { error } = await supabase.rpc("admin_resolve_flag", {
+      p_flag: flag,
+      p_outcome: outcome.data,
+      p_note: text(fd, "note") || null,
+    });
+    if (error) return refused("admin_resolve_flag", error);
+  }
   for (const p of QUEUES) revalidatePath(p);
-  return { ok: true, message: outcome.data === "resolved" ? "Flag resolved." : "Flag dismissed." };
+  const n = flags.data.length;
+  const verb = outcome.data === "resolved" ? "resolved" : "dismissed";
+  return { ok: true, message: n === 1 ? `Flag ${verb}.` : `${n} flags ${verb}.` };
 }
 
 /** Accepting a proof makes the review show "Verified job"; rejecting needs a note. */

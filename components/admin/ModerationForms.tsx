@@ -66,11 +66,14 @@ export function ReviewActions({ reviewId, underCheck }: { reviewId: string; unde
   );
 }
 
-export function FlagActions({ flagId }: { flagId: string }) {
+export function FlagActions({ flagIds }: { flagIds: string[] }) {
   const [state, action, pending] = useActionState(resolveFlag, {} as FormState);
+  const all = flagIds.length > 1 ? " all" : "";
   return (
     <form action={action} className="a-form">
-      <input type="hidden" name="flag_id" value={flagId} />
+      {flagIds.map((f) => (
+        <input key={f} type="hidden" name="flag_id" value={f} />
+      ))}
       <label className="a-field">
         <span>
           Note <span className="a-hint">(optional)</span>
@@ -79,10 +82,10 @@ export function FlagActions({ flagId }: { flagId: string }) {
       </label>
       <div className="a-actions">
         <Button type="submit" name="outcome" value="resolved" disabled={pending}>
-          Resolve
+          Resolve{all}
         </Button>
         <Button type="submit" name="outcome" value="dismissed" variant="secondary" disabled={pending}>
-          Dismiss
+          Dismiss{all}
         </Button>
       </div>
       <Result state={state} />
