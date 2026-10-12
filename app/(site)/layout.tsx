@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./site.css";
+import { Analytics } from "@/components/Analytics";
 import { MenuClose } from "@/components/site/MenuClose";
 import { Reveal } from "@/components/site/Reveal";
 import { ShowcaseFooter } from "@/components/site/ShowcaseFooter";
@@ -53,6 +54,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <ShowcaseFooter />
       <Reveal />
       <MenuClose />
+      <Analytics />
     </div>
   );
 }
