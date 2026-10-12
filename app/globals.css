@@ -441,6 +441,28 @@ h1,h2,h3{text-wrap:balance}
   .account-link small{display:block; margin-top:2px; font-size:14px; color:var(--ink-2); overflow-wrap:anywhere}
   .account-link > svg{width:20px; height:20px; color:var(--ink-3)}
 
+  .who-card .area{margin:6px 0 0; font-size:15px; color:var(--ink-2)}
+  .auth-card h2 .count{font-style:normal; font-family:var(--body); font-size:15px; font-weight:700; color:var(--ink-3); margin-left:4px; vertical-align:middle}
+  .my-reviews{list-style:none; margin:0; padding:0; display:grid}
+  .my-reviews li{display:grid; gap:8px; padding:14px 0; border-top:1px solid var(--line)}
+  .my-reviews li:first-child{border-top:0; padding-top:0}
+  .my-reviews li:last-child{padding-bottom:0}
+  .mr-head{display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:2px 12px}
+  .mr-head a{color:inherit; text-decoration:none}
+  .mr-head a b{text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px}
+  .mr-head b{font-size:18px; overflow-wrap:anywhere}
+  .mr-head small{font-size:14px; color:var(--ink-3)}
+  .mr-status{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0; font-size:15px; color:var(--ink-2)}
+  .is-removed .mr-head b{color:var(--ink-2)}
+  .mr-edit{display:inline-flex; align-items:baseline; gap:8px; justify-self:start; min-height:44px; align-items:center; font-size:16px; font-weight:700; color:var(--brick); text-underline-offset:3px}
+  .mr-edit small{font-weight:500; font-size:14px; color:var(--ink-3); text-decoration:none}
+  .danger-zone summary{display:flex; align-items:center; min-height:48px; font-size:16px; font-weight:700; color:var(--brick); cursor:pointer; text-decoration:underline; text-underline-offset:3px}
+  .danger-zone[open] summary{margin-bottom:12px}
+  .confirm-box{display:grid; grid-template-columns:28px minmax(0,1fr); gap:12px; align-items:center; min-height:56px; padding:12px 14px; border:1.5px solid var(--line); border-radius:14px; background:var(--bg); font-size:16.5px; font-weight:600; cursor:pointer}
+  .confirm-box.has-err{border-color:var(--brick)}
+  .confirm-box input{width:24px; height:24px; margin:0; accent-color:var(--brick)}
+  .btn-danger{color:var(--brick); border-color:var(--brick)}
+
   /* ---------- review form: one screen, every answer a big tap ---------- */
   .review-form{display:grid; gap:16px}
   .q-card{gap:26px}

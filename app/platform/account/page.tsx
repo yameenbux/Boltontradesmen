@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { ChevronRight, ShopIcon, TickIcon } from "@/components/auth/icons";
+import { DeleteAccountForm } from "@/components/account/DeleteAccountForm";
+import { MyReviews } from "@/components/account/MyReviews";
 import { GroupCodeForm } from "@/components/auth/GroupCodeForm";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
+import type { MyReviewRow } from "@/lib/account-text";
 import { requireMember } from "@/lib/auth";
+import { OTHER_DISTRICT } from "@/lib/districts";
 import { platformPath } from "@/lib/paths";
 import { signOutResident } from "./actions";
 
@@ -16,8 +20,12 @@ function initialsOf(name: string): string {
 }
 
 export default async function AccountPage() {
-  const { account } = await requireMember("/platform/account");
+  const { supabase, account } = await requireMember("/platform/account");
   const name = account.displayName ?? "";
+  const { data, error } = await supabase.rpc("my_reviews");
+  if (error) throw new Error(`my_reviews failed: ${error.message}`);
+  const reviews = (data ?? []) as MyReviewRow[];
+  const area = account.district === OTHER_DISTRICT ? "Outside Bolton" : account.district;
   const listings = account.providers;
 
   return (
@@ -32,6 +40,7 @@ export default async function AccountPage() {
             <h1 id="account-title" className="name">
               <span className="signed">Signed in as</span> {name}
             </h1>
+            {area && <p className="area">Area: {area}</p>}
             {account.groupMember && (
               <Pill tone="sage">
                 <TickIcon />
@@ -55,6 +64,8 @@ export default async function AccountPage() {
         </a>
       )}
 
+      <MyReviews reviews={reviews} />
+
       {!account.groupMember && (
         <section className="auth-card" aria-labelledby="group-title">
           <div>
@@ -70,6 +81,21 @@ export default async function AccountPage() {
           Sign out
         </Button>
       </form>
+
+      <section className="auth-card" aria-labelledby="delete-title">
+        <div>
+          <h2 id="delete-title">Delete account</h2>
+          <p className="lede">
+            Your reviews and replies are taken down and your name is removed. We keep your mobile number privately
+            for 12 months in case of legal claims, as the <a href="/privacy">privacy notice</a> says, then delete it.
+            Any listing of yours stays up.
+          </p>
+        </div>
+        <details className="danger-zone">
+          <summary>I want to delete my account</summary>
+          <DeleteAccountForm />
+        </details>
+      </section>
     </main>
   );
 }

@@ -41,4 +41,9 @@ test("a resident attaches a photo of the invoice; it is stored privately and the
   await page.goto("/platform/p/e2e-tidy-vans/review");
   await expect(page.getByText("Proof sent")).toBeVisible();
   await expect(page.getByLabel(/Proof of the job/)).toHaveCount(0);
+
+  // The account page lists the review with its proof state.
+  await page.goto("/platform/account");
+  const item = page.getByRole("region", { name: "My reviews" }).getByRole("listitem").filter({ hasText: "Tidy Vans" });
+  await expect(item).toContainText("Proof sent for checking");
 });
