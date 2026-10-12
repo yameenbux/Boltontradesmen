@@ -340,6 +340,7 @@ Railway service variables:
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | Phone sign-in only. Server only. Twilio Lookup, which refuses internet and virtual numbers before a code is sent. `TWILIO_LOOKUP_STUB` must **not** be set in production |
 | `SUPABASE_SMS_HOOK_SECRET` | Phone sign-in only. Server only. The signing secret Supabase shows for the **Send SMS hook** (`v1,whsec_…`). Without it the hook refuses every text (fail closed) |
 | `TWILIO_MESSAGING_SERVICE_SID` | Phone sign-in only. Server only. The Twilio Messaging Service (`MG…`) the Send SMS hook texts codes through. `TWILIO_SMS_STUB` must **not** be set in production |
+| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile (free) on "Email me a code" and the admin sign-in. The site key is public (shown to the browser), the secret is server only. Both unset: no check (local, CI). Only one set: every email-code request is refused (fail closed). Supabase's CAPTCHA uses the same secret (LAUNCH.md Step 3d) |
 | `DEVICE_HASH_SECRET` | Server only. A long random secret (`openssl rand -hex 32`), never `change-me` |
 | `TRUSTED_PROXY_HOPS` | Optional, default `1`. How many trusted proxies append to `X-Forwarded-For` in front of the app. Railway's edge appends the real client IP as the last entry, so the app reads the entry this many places from the right and ignores anything a visitor puts on the left. Only change it if another proxy (a CDN) is put in front of Railway |
 | `OWNER_LEGAL_NAME` | `YSB Ventures Ltd`, matching Companies House character for character |
@@ -356,7 +357,8 @@ In Supabase:
    `docs/superpowers/plans/2026-10-12-plan-2b-free-sign-in.md` (Resend as custom SMTP with
    sender `noreply@ysbdesigns.uk`; the **Confirm signup** and **Magic Link** templates from
    `supabase/templates/sign-in-code.html`; Email provider with **Confirm email on, always**,
-   OTP length 6, expiry 900 seconds; emails sent per hour 30; the Google provider with the
+   OTP length 6, expiry 900 seconds; emails sent per hour 30; CAPTCHA with Cloudflare Turnstile
+   (`docs/launch/LAUNCH.md` Step 3d); the Google provider with the
    client from Google Cloud; Site URL and Redirect URLs on `https://boltonvouched.ysbdesigns.uk`).
    **"Allow new users to sign up" → on**: the database refuses password sign-ups and any
    email account the sign-in page didn't approve (`email_approve` / `bv_nonce`).

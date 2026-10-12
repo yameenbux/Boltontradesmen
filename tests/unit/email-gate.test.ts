@@ -29,6 +29,8 @@ describe("EMAIL_SIGN_IN_ERRORS", () => {
         "There's already an account for this address. Use the exact address you signed up with, or continue with Google.",
       admin_address: "This address can't sign in here.",
       too_soon: "Please wait a minute before asking for another code.",
+      busy: "A lot of people are signing in right now. Please try again in an hour, or use Continue with Google.",
+      captcha: "Please complete the security check, then try again.",
       send_failed: "We couldn't send the email just now. Please try again in a minute.",
       gate_failed: "We couldn't start sign-in just now. Please try again in a minute.",
       bad_code: "That code didn't work. Check the email and try again, or send a new code.",
@@ -131,12 +133,33 @@ describe("requestEmailSignInCode", () => {
 
   // Review Focus 2: "Send a new code" within a minute — GoTrue answers 429.
   it("says to wait a minute when Supabase answers 429, recording send_failed", async () => {
-    const d = deps({ send: vi.fn(async () => ({ error: { status: 429, message: "For security purposes…" } })) });
+    const d = deps({ send: vi.fn(async () => ({ error: { status: 429, message: "For security purposes, you can only request this after 59 seconds." } })) });
     expect(await requestEmailSignInCode("sarah@example.com", "1.2.3.4", d)).toEqual({
       ok: false,
       error: EMAIL_SIGN_IN_ERRORS.too_soon,
     });
     expect(d.record).toHaveBeenCalledWith(11, "send_failed");
+  });
+
+  // Final review M1: Supabase's site-wide email limit also answers 429, without "after N seconds".
+  it("says lots of people are signing in when Supabase's site-wide limit answers 429", async () => {
+    for (const message of ["Email rate limit exceeded", "Request rate limit reached"]) {
+      const d = deps({ send: vi.fn(async () => ({ error: { status: 429, message } })) });
+      expect(await requestEmailSignInCode("sarah@example.com", "1.2.3.4", d)).toEqual({
+        ok: false,
+        error: EMAIL_SIGN_IN_ERRORS.busy,
+      });
+      expect(d.record).toHaveBeenCalledWith(11, "send_failed");
+    }
+    const once = deps({
+      send: vi.fn(async () => ({
+        error: { status: 429, message: "For security purposes, you can only request this after 42 seconds." },
+      })),
+    });
+    expect((await requestEmailSignInCode("sarah@example.com", "1.2.3.4", once)) as { error: string }).toEqual({
+      ok: false,
+      error: EMAIL_SIGN_IN_ERRORS.too_soon,
+    });
   });
 
   it("shows send_failed for any other send error, or a send that throws", async () => {

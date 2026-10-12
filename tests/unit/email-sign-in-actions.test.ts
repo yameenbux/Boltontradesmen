@@ -1,11 +1,18 @@
 import { createHash } from "node:crypto";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const auth = { verifyOtp: vi.fn(), signInWithOtp: vi.fn() };
 const rpc = vi.fn();
-vi.mock("@/lib/supabase/server", () => ({ createServerAuthClient: async () => ({ auth, rpc }) }));
+// The code is sent from the service client (Supabase's CAPTCHA lets the secret key through; this server checks
+// Turnstile itself). The cookie client must never send one.
+const cookieSignInWithOtp = vi.fn();
+vi.mock("@/lib/supabase/server", () => ({
+  createServerAuthClient: async () => ({ auth: { ...auth, signInWithOtp: cookieSignInWithOtp }, rpc }),
+}));
 const serviceRpc = vi.fn();
-vi.mock("@/lib/supabase/service", () => ({ createServiceClient: () => ({ rpc: serviceRpc }) }));
+vi.mock("@/lib/supabase/service", () => ({
+  createServiceClient: () => ({ rpc: serviceRpc, auth: { signInWithOtp: auth.signInWithOtp } }),
+}));
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ "x-forwarded-for": "9.9.9.9, 10.0.0.1" }) }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
@@ -39,6 +46,7 @@ const ACCOUNT = {
 beforeEach(() => {
   process.env.DEVICE_HASH_SECRET = "test-secret";
   for (const f of Object.values(auth)) f.mockReset();
+  cookieSignInWithOtp.mockReset();
   rpc.mockReset();
   serviceRpc.mockReset();
   vi.spyOn(console, "error").mockImplementation(() => {});
@@ -66,6 +74,7 @@ describe("requestEmailCode", () => {
       p_nonce_hash: createHash("sha256").update(nonce).digest("hex"),
     });
     expect(serviceRpc).toHaveBeenCalledWith("email_record", { p_request_id: 4, p_outcome: "sent" });
+    expect(cookieSignInWithOtp).not.toHaveBeenCalled();
   });
 
   it("stays on the email step with the copy and keeps what was typed", async () => {
@@ -160,5 +169,70 @@ describe("verifyEmailCode", () => {
     await expect(verifyEmailCode(base, form({ email: base.email, code: "123456", next: base.next }))).rejects.toThrow(
       "REDIRECT /platform/welcome",
     );
+  });
+});
+
+// Plan 2b final review I2: Cloudflare Turnstile, checked before anything touches the database or sends an email.
+describe("requestEmailCode with Turnstile", () => {
+  const fetchMock = vi.fn();
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+    serviceRpc.mockImplementation(async (name: string) =>
+      name === "email_gate" ? { data: [{ request_id: 4, verdict: "ok" }], error: null } : { data: null, error: null },
+    );
+    auth.signInWithOtp.mockResolvedValue({ data: {}, error: null });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+  const ask = (extra: Record<string, string> = {}) =>
+    requestEmailCode({ step: "email", next: "/platform/account" }, form({ email: "sarah@example.com", next: "/platform/account", ...extra }));
+
+  it("is skipped when the keys are unset (local and CI)", async () => {
+    vi.stubEnv("TURNSTILE_SITE_KEY", "");
+    vi.stubEnv("TURNSTILE_SECRET_KEY", "");
+    expect((await ask()).step).toBe("code");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses a request without a token, before the gate", async () => {
+    vi.stubEnv("TURNSTILE_SITE_KEY", "site");
+    vi.stubEnv("TURNSTILE_SECRET_KEY", "secret");
+    expect(await ask()).toEqual({
+      step: "email",
+      email: "sarah@example.com",
+      next: "/platform/account",
+      error: EMAIL_SIGN_IN_ERRORS.captcha,
+    });
+    expect(serviceRpc).not.toHaveBeenCalled();
+    expect(auth.signInWithOtp).not.toHaveBeenCalled();
+  });
+
+  it("refuses a token Cloudflare rejects, before the gate", async () => {
+    vi.stubEnv("TURNSTILE_SITE_KEY", "site");
+    vi.stubEnv("TURNSTILE_SECRET_KEY", "secret");
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ success: false }), { status: 200 }));
+    expect((await ask({ "cf-turnstile-response": "bad" })).error).toBe(EMAIL_SIGN_IN_ERRORS.captcha);
+    expect(serviceRpc).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when only the site key is set", async () => {
+    vi.stubEnv("TURNSTILE_SITE_KEY", "site");
+    vi.stubEnv("TURNSTILE_SECRET_KEY", "");
+    expect((await ask({ "cf-turnstile-response": "tok" })).error).toBe(EMAIL_SIGN_IN_ERRORS.gate_failed);
+    expect(serviceRpc).not.toHaveBeenCalled();
+  });
+
+  it("sends the code once Cloudflare confirms the token, passing the client IP", async () => {
+    vi.stubEnv("TURNSTILE_SITE_KEY", "site");
+    vi.stubEnv("TURNSTILE_SECRET_KEY", "secret");
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ success: true }), { status: 200 }));
+    expect((await ask({ "cf-turnstile-response": "good" })).step).toBe("code");
+    const body = new URLSearchParams(String(fetchMock.mock.calls[0][1].body));
+    expect(body.get("response")).toBe("good");
+    expect(body.get("remoteip")).toBe("10.0.0.1");
+    expect(auth.signInWithOtp).toHaveBeenCalled();
   });
 });

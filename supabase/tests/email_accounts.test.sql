@@ -92,12 +92,12 @@ select is((select outcome from public.email_requests order by id desc limit 1), 
 
 -- Resend free-tier caps (London day and month)
 insert into public.email_requests (email_norm, ip_hash, outcome)
-select 'cap' || g || '@example.org', 'ip-cap', 'sent' from generate_series(1, 90) g;
-select is(pg_temp.gate('fresh1@example.org', 'ip-6'), 'cap_reached', '90 sent today → cap_reached');
+select 'cap' || g || '@example.org', 'ip-cap', 'sent' from generate_series(1, 80) g;
+select is(pg_temp.gate('fresh1@example.org', 'ip-6'), 'cap_reached', '80 sent today → cap_reached');
 select is((select outcome from public.email_requests order by id desc limit 1), 'cap_reached', 'recorded as cap_reached');
 delete from public.email_requests where ip_hash = 'ip-cap';
 insert into public.email_requests (email_norm, ip_hash, outcome)
-select 'cap' || g || '@example.org', 'ip-cap', 'sent' from generate_series(1, 89) g;
+select 'cap' || g || '@example.org', 'ip-cap', 'sent' from generate_series(1, 79) g;
 -- 2,000 earlier this month (or, on the 1st, last month: the assertion then holds trivially)
 insert into public.email_requests (email_norm, ip_hash, outcome, created_at)
 select 'old' || g || '@example.org', 'ip-cap', 'sent',
@@ -105,7 +105,7 @@ select 'old' || g || '@example.org', 'ip-cap', 'sent',
        - case when date_trunc('day', now() at time zone 'Europe/London') = date_trunc('month', now() at time zone 'Europe/London')
               then interval '2 days' else interval '0 days' end
 from generate_series(1, 2000) g;
-select is(pg_temp.gate('fresh2@example.org', 'ip-6'), 'ok', '89 today plus 2,000 earlier this month → ok');
+select is(pg_temp.gate('fresh2@example.org', 'ip-6'), 'ok', '79 today plus 2,000 earlier this month → ok');
 update public.settings set value = value || '{"daily_cap":1000000}'::jsonb where key = 'email_limits';
 insert into public.email_requests (email_norm, ip_hash, outcome)
 select 'more' || g || '@example.org', 'ip-cap', 'sent'
@@ -113,7 +113,7 @@ from generate_series(1, 2900 - (select count(*)::int from public.email_requests 
   and created_at >= date_trunc('month', now() at time zone 'Europe/London') at time zone 'Europe/London')) g;
 select is(pg_temp.gate('fresh3@example.org', 'ip-6'), 'cap_reached', '2,900 sent this London month → cap_reached');
 delete from public.email_requests where ip_hash = 'ip-cap';
-update public.settings set value = '{"address_15m":3,"address_24h":6,"ip_1h":10,"ip_24h":20,"daily_cap":90,"monthly_cap":2900}'::jsonb
+update public.settings set value = '{"address_15m":3,"address_24h":6,"ip_1h":10,"ip_24h":20,"daily_cap":80,"monthly_cap":2900}'::jsonb
 where key = 'email_limits';
 
 -- old rows go
@@ -124,8 +124,8 @@ select is((select count(*)::int from public.email_requests where email_norm = 'a
   'rows older than 30 days are deleted');
 
 select is((select value from public.settings where key = 'email_limits'),
-  '{"address_15m":3,"address_24h":6,"ip_1h":10,"ip_24h":20,"daily_cap":90,"monthly_cap":2900}'::jsonb,
-  'the email_limits setting');
+  '{"address_15m":3,"address_24h":6,"ip_1h":10,"ip_24h":20,"daily_cap":80,"monthly_cap":2900}'::jsonb,
+  'the email_limits setting (daily cap 80, under Resend''s free 100)');
 
 -- ======================================================================== email_approve / email_record
 select throws_ok($$select public.email_approve((select max(id) from public.email_requests where email_norm = 'fresh4@example.org'), 'not-a-hash')$$,

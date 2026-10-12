@@ -8,9 +8,16 @@ const auth = {
   signOut: vi.fn(),
 };
 const rpc = vi.fn();
-vi.mock("@/lib/supabase/server", () => ({ createServerAuthClient: async () => ({ auth, rpc }) }));
+// The code is sent from the service client (Supabase's CAPTCHA lets the secret key through; this server checks
+// Turnstile itself). The cookie client must never send one.
+const cookieSignInWithOtp = vi.fn();
+vi.mock("@/lib/supabase/server", () => ({
+  createServerAuthClient: async () => ({ auth: { ...auth, signInWithOtp: cookieSignInWithOtp }, rpc }),
+}));
 const serviceRpc = vi.fn();
-vi.mock("@/lib/supabase/service", () => ({ createServiceClient: () => ({ rpc: serviceRpc }) }));
+vi.mock("@/lib/supabase/service", () => ({
+  createServiceClient: () => ({ rpc: serviceRpc, auth: { signInWithOtp: auth.signInWithOtp } }),
+}));
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ "x-forwarded-for": "9.9.9.9, 10.0.0.1" }) }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
@@ -46,6 +53,7 @@ beforeEach(() => {
   process.env.DEVICE_HASH_SECRET = "test-secret";
   process.env.TWILIO_LOOKUP_STUB = "1";
   for (const f of Object.values(auth)) f.mockReset();
+  cookieSignInWithOtp.mockReset();
   rpc.mockReset();
   serviceRpc.mockReset();
   vi.spyOn(console, "error").mockImplementation(() => {});

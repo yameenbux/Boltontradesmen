@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, type ReactNode } from "react";
 import { AlertIcon, TickIcon } from "@/components/auth/icons";
+import { Turnstile } from "@/components/auth/Turnstile";
 import { Button } from "@/components/ui/Button";
 import { requestEmailCode, verifyEmailCode, type EmailSignInState } from "@/app/platform/sign-in/actions";
 
@@ -29,7 +30,18 @@ async function step(prev: State, fd: FormData): Promise<State> {
  * The email-code sign-in, owning the card's heading. `before` (Continue with Google and the divider) shows
  * only on the first step.
  */
-export function EmailCodeForm({ next, title, before }: { next: string; title: string; before?: ReactNode }) {
+export function EmailCodeForm({
+  next,
+  title,
+  before,
+  captchaSiteKey = null,
+}: {
+  next: string;
+  title: string;
+  before?: ReactNode;
+  /** Cloudflare Turnstile's site key, or null when it's off. Needed for "Email me a code" and "Send a new code". */
+  captchaSiteKey?: string | null;
+}) {
   const [state, action, pending] = useActionState(step, { step: "email", next });
   const code = useRef<HTMLInputElement>(null);
   const onCode = state.step === "code";
@@ -112,6 +124,8 @@ export function EmailCodeForm({ next, title, before }: { next: string; title: st
             {state.notice}
           </p>
         )}
+
+        <Turnstile siteKey={captchaSiteKey} resetKey={state} />
 
         <Button type="submit" disabled={pending} aria-busy={pending}>
           {onCode ? (pending ? "Checking…" : "Sign in") : pending ? "Sending…" : "Email me a code"}

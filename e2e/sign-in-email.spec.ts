@@ -65,3 +65,12 @@ test("the sign-in page offers Google, then email under the 'or use your email' d
   await expect(page.getByLabel("Your mobile number")).toHaveCount(0);
   await expect(page.getByText("Your email address is only used to sign you in. It's never shown on the site.")).toBeVisible();
 });
+
+// Final review I2: Turnstile is off when its keys are unset (local and CI): no widget, no Cloudflare script, and
+// the code is still sent (the first test above). Production sets both keys (docs/launch/LAUNCH.md Step 3d).
+test("without Turnstile keys there is no widget or Cloudflare script on the sign-in page", async ({ page }) => {
+  await page.goto("/platform/sign-in");
+  await expect(page.getByRole("button", { name: "Email me a code" })).toBeVisible();
+  await expect(page.getByTestId("turnstile")).toHaveCount(0);
+  await expect(page.locator('script[src*="challenges.cloudflare.com"]')).toHaveCount(0);
+});

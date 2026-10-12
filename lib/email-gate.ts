@@ -13,6 +13,8 @@ export const EMAIL_SIGN_IN_ERRORS = {
     "There's already an account for this address. Use the exact address you signed up with, or continue with Google.",
   admin_address: "This address can't sign in here.",
   too_soon: "Please wait a minute before asking for another code.",
+  busy: "A lot of people are signing in right now. Please try again in an hour, or use Continue with Google.",
+  captcha: "Please complete the security check, then try again.",
   send_failed: "We couldn't send the email just now. Please try again in a minute.",
   gate_failed: "We couldn't start sign-in just now. Please try again in a minute.",
   bad_code: "That code didn't work. Check the email and try again, or send a new code.",
@@ -84,8 +86,14 @@ export async function requestEmailSignInCode(input: string, ip: string, deps: Em
     console.error("sign-in: could not record the email send outcome:", err);
   }
   if (sendError) {
-    // GoTrue answers 429 when a code was sent to this address under a minute ago; that code still works.
-    if (sendError.status === 429) return { ok: false, error: EMAIL_SIGN_IN_ERRORS.too_soon };
+    if (sendError.status === 429) {
+      // GoTrue answers 429 "…only request this after N seconds" when a code went to this address under a minute
+      // ago (that code still works). Any other 429 is a site-wide limit (emails per hour, or requests from this
+      // server's one address), so waiting a minute won't help.
+      if (/second/i.test(sendError.message ?? "")) return { ok: false, error: EMAIL_SIGN_IN_ERRORS.too_soon };
+      console.error("sign-in: Supabase's site-wide limit:", sendError.message);
+      return { ok: false, error: EMAIL_SIGN_IN_ERRORS.busy };
+    }
     console.error("sign-in: email not sent:", sendError);
     return { ok: false, error: EMAIL_SIGN_IN_ERRORS.send_failed };
   }

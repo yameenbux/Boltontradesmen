@@ -86,7 +86,19 @@ Texted codes are switched off (no SMS bill). People sign in with **Continue with
 
 - [ ] **Supabase → Authentication → Sign In / Providers → Email → "Confirm email" → ON.** Never turn it off. With it off, Supabase confirms new email accounts itself, after the database has checked them, so an email account could be made without the 6-digit code. The app's guard relies on every new email account arriving unconfirmed.
 - [ ] **Email OTP length 6**, **Email OTP expiration 900** seconds (15 minutes, matching the app's sign-in window).
-- [ ] Resend's free tier allows 100 emails a day; the app stops at 90 a day and 2,900 a month and tells people to try tomorrow or use Google. To change the limits: `select value from public.settings where key = 'email_limits';`
+- [ ] Resend's free tier allows 100 emails a day; the app stops at 80 a day and 2,900 a month and tells people to try tomorrow or use Google. To change the limits: `select value from public.settings where key = 'email_limits';`. The cap is soft: Supabase's 30-an-hour limit doesn't stop a script asking Supabase directly all day, so keep Step 3d's CAPTCHA on and watch Resend's daily count for the first days.
+- [ ] **No other sign-in providers** (only Google and Email; Anonymous sign-ins off), and on Google **"Allow users without an email" off**. The database lets an account with neither an email nor a phone through (only test fixtures make those), and it would count as signed in.
+
+## Step 3d — Cloudflare Turnstile: stop scripts using up the free emails (free, about 15 minutes)
+
+Without this, a script can ask for sign-in codes all day and use up Resend's 100 free emails, so nobody can sign in by email until tomorrow (Google still works).
+
+- [ ] **Cloudflare** (a free account is enough; the domain doesn't have to be on Cloudflare): **Turnstile → Add widget**. Name `Bolton Vouched`, hostname `boltonvouched.ysbdesigns.uk` (add `web-production-0ec9b.up.railway.app` too if you still use that address), widget mode **Managed**. Copy the **Site key** and the **Secret key**.
+- [ ] **Railway → web → Variables:** `TURNSTILE_SITE_KEY` = the site key, `TURNSTILE_SECRET_KEY` = the secret key. Set **both** together: with only one set, email sign-in refuses everyone. (Left unset, there's no check.)
+- [ ] **Supabase → Authentication → Attack Protection (Bot and Abuse Protection) → Enable CAPTCHA protection → ON**, provider **Turnstile by Cloudflare**, secret = the **same secret key**. This makes Supabase refuse code requests made straight to its API (which skip the app's limits). The app's own requests use the secret Supabase key, which Supabase lets through after the app has checked Turnstile itself; the admin sign-in at `/admin/login` shows the widget and passes its token on.
+- [ ] Do the Railway variables first and wait for the redeploy, then switch on Supabase's CAPTCHA (the other way round, the admin sign-in fails until the deploy lands).
+- [ ] Test: sign in with an email code on your phone (most people see no puzzle; some get a checkbox), and sign in to `/admin`. If email codes stop arriving after turning on Supabase's CAPTCHA, check that `SUPABASE_SERVICE_ROLE_KEY` on Railway is the **service_role** key (Step 1).
+- **Content Security Policy:** the site doesn't send one today. If one is added later, it must allow `https://challenges.cloudflare.com` in `script-src` and `frame-src` (and `connect-src`), or the widget won't load and email sign-in will refuse everyone.
 
 ## Step 4 — Sign in and add traders
 

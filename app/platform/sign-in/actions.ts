@@ -14,6 +14,7 @@ import { safeNext } from "@/lib/safe-next";
 import { phoneSignInEnabled } from "@/lib/sign-in-methods";
 import { createServerAuthClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { TURNSTILE_FIELD, verifyTurnstile } from "@/lib/turnstile";
 
 export type SignInState = { step: "phone" | "code"; phone?: string; next: string; error?: string };
 export type EmailSignInState = { step: "email" | "code"; email?: string; next: string; error?: string };
@@ -34,7 +35,6 @@ export async function requestCode(_prev: SignInState, fd: FormData): Promise<Sig
   if (!phoneSignInEnabled()) return { step: "phone", next, error: SIGN_IN_ERRORS.phone_off };
   const input = field(fd, "phone");
   const service = createServiceClient();
-  const supabase = await createServerAuthClient();
 
   const result = await requestSignInCode(input, await clientIp(), {
     gate: async (phone, ipHash) => {
@@ -63,8 +63,9 @@ export async function requestCode(_prev: SignInState, fd: FormData): Promise<Sig
     lookup: (phone) => checkLineType(phone),
     send: async (phone, nonce) => {
       // bv_nonce reaches auth.users.raw_user_meta_data on a new account, where the database guard checks
-      // it against the approved request and strips it. Existing accounts ignore it.
-      const { error } = await supabase.auth.signInWithOtp({
+      // it against the approved request and strips it. Existing accounts ignore it. Sent with the service key,
+      // which Supabase's CAPTCHA lets through (this server does its own checks first).
+      const { error } = await service.auth.signInWithOtp({
         phone,
         options: { shouldCreateUser: true, data: { bv_nonce: nonce } },
       });
@@ -141,8 +142,17 @@ export async function verifyCode(prev: SignInState, fd: FormData): Promise<SignI
 export async function requestEmailCode(_prev: EmailSignInState, fd: FormData): Promise<EmailSignInState> {
   const next = safeNext(field(fd, "next"));
   const input = field(fd, "email");
+  const ip = await clientIp();
 
-  const result = await requestEmailSignInCode(input, await clientIp(), {
+  // Cloudflare Turnstile first (skipped when not configured), so scripts can't use up the daily email allowance.
+  const human = await verifyTurnstile(field(fd, TURNSTILE_FIELD), ip);
+  if (!human.ok) {
+    const error =
+      human.reason === "missing" || human.reason === "rejected" ? EMAIL_SIGN_IN_ERRORS.captcha : EMAIL_SIGN_IN_ERRORS.gate_failed;
+    return { step: "email", email: input, next, error };
+  }
+
+  const result = await requestEmailSignInCode(input, ip, {
     gate: async (email, ipHash) => {
       const { data, error } = await createServiceClient().rpc("email_gate", { p_email: email, p_ip_hash: ipHash });
       if (error) throw new Error(`email_gate: ${error.message}`);
@@ -160,9 +170,9 @@ export async function requestEmailCode(_prev: EmailSignInState, fd: FormData): P
     },
     send: async (email, nonce) => {
       // bv_nonce reaches auth.users.raw_user_meta_data on a new account, where the database guard checks it
-      // against the approved request and strips it. Existing accounts ignore it.
-      const supabase = await createServerAuthClient();
-      const { error } = await supabase.auth.signInWithOtp({
+      // against the approved request and strips it. Existing accounts ignore it. Sent with the service key: Supabase's
+      // CAPTCHA (on in production, for direct calls to its API) lets it through, as Turnstile was checked above.
+      const { error } = await createServiceClient().auth.signInWithOtp({
         email,
         options: { shouldCreateUser: true, data: { bv_nonce: nonce } },
       });

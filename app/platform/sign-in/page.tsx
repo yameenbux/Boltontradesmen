@@ -6,6 +6,7 @@ import { SignInForm } from "@/components/auth/SignInForm";
 import { GOOGLE_SIGN_IN_ERROR } from "@/lib/google-callback";
 import { safeNext } from "@/lib/safe-next";
 import { phoneSignInEnabled } from "@/lib/sign-in-methods";
+import { turnstileSiteKey } from "@/lib/turnstile";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Sign in | Bolton Vouched", robots: { index: false } };
@@ -39,6 +40,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       <section className="auth-card" aria-labelledby="signin-title">
         <EmailCodeForm
           next={next}
+          captchaSiteKey={turnstileSiteKey()}
           title={heading(next)}
           before={
             <>
