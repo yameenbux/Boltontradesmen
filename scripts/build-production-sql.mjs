@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 // Builds the one-paste production script for a range of migrations (Plan 2b Task 12):
 //
-//   node scripts/build-production-sql.mjs --from 20261012000018 --to <newest> --out docs/launch/plan-2b-production.sql
+//   node scripts/build-production-sql.mjs --from 20261012000018 --to 20261012000025 --out docs/launch/plan-2b-production.sql
+//   node scripts/build-production-sql.mjs --preset launch-checklist --from 20261012000026 --to <newest> \
+//     --out docs/launch/launch-checklist-production.sql
 //
+// --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
+// so pasting the scripts in the wrong order changes nothing) and the verification block.
 // The output is one transaction: begin; each migration under a "-- ==== <filename>" banner followed by its
 // supabase_migrations.schema_migrations row; a verification block that raises (rolling everything back) if a piece
 // is missing; commit; then a select that says it worked. Deterministic: same migrations, same file.
@@ -13,9 +17,9 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-function arg(name) {
+function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
-  const v = i >= 0 ? process.argv[i + 1] : undefined;
+  const v = i >= 0 ? process.argv[i + 1] : fallback;
   if (!v) {
     console.error(`usage: build-production-sql.mjs --from <version> --to <version> --out <file> (missing --${name})`);
     process.exit(2);
@@ -40,7 +44,7 @@ if (files.length === 0) {
 const sqlString = (s) => `'${s.replace(/'/g, "''")}'`;
 
 // Checks that fail the whole paste if something didn't land. Runs inside the transaction, before commit.
-const VERIFY = `-- ==================================================================== verification
+const VERIFY_2B = `-- ==================================================================== verification
 -- Fails (and so rolls back everything above) if any piece is missing.
 do $verify$
 declare
@@ -73,10 +77,62 @@ end
 $verify$;
 `;
 
+// Launch checklist (migration 000026 onwards): "Get listed" requests.
+const VERIFY_LAUNCH = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+declare
+  f text;
+begin
+  foreach f in array array['submit_listing_request', 'admin_list_listing_requests', 'admin_set_listing_request_status'] loop
+    if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                   where n.nspname = 'public' and p.proname = f) then
+      raise exception 'Launch checklist check failed: function public.% is missing', f;
+    end if;
+  end loop;
+  if position('tidy_listing_requests' in pg_get_functiondef('private.tidy_sign_in_records()'::regprocedure)) = 0 then
+    raise exception 'Launch checklist check failed: the sign-in tidy does not delete old listing requests';
+  end if;
+  if position('listing_requests' in pg_get_functiondef('public.admin_counts()'::regprocedure)) = 0 then
+    raise exception 'Launch checklist check failed: admin_counts does not count listing requests';
+  end if;
+  if not (select relrowsecurity from pg_class where oid = 'public.listing_requests'::regclass) then
+    raise exception 'Launch checklist check failed: row level security is off on public.listing_requests';
+  end if;
+  if has_table_privilege('anon', 'public.listing_requests', 'select')
+     or has_table_privilege('authenticated', 'public.listing_requests', 'select')
+     or has_function_privilege('anon', 'public.submit_listing_request(text, text, text, text, text, text, text, text)', 'execute') then
+    raise exception 'Launch checklist check failed: listing requests are reachable without the server';
+  end if;
+end
+$verify$;
+`;
+
+const PRESETS = {
+  "plan-2b": {
+    title: "Plan 2b database changes (free sign-in: Google and email codes)",
+    done: "Plan 2b database changes applied",
+    requires: null,
+    verify: VERIFY_2B,
+  },
+  "launch-checklist": {
+    title: "launch checklist database changes (Get listed requests)",
+    done: "Launch checklist database changes applied",
+    // It re-creates private.tidy_sign_in_records, which needs Plan 2b's pieces.
+    requires: { version: "20261012000025", what: "the Plan 2b script (docs/launch/plan-2b-production.sql)" },
+    verify: VERIFY_LAUNCH,
+  },
+};
+const preset = PRESETS[arg("preset", "plan-2b")];
+if (!preset) {
+  console.error(`unknown --preset; use one of: ${Object.keys(PRESETS).join(", ")}`);
+  process.exit(2);
+}
+
 const versions = files.map((f) => sqlString(f.slice(0, 14))).join(", ");
 
 const parts = [
-  `-- Bolton Vouched: Plan 2b database changes (free sign-in: Google and email codes) for the LIVE Supabase project
+  `-- Bolton Vouched: ${preset.title} for the LIVE Supabase project
 -- (mmarznvndvbwyhhtbfjy).
 -- Paste ALL of this into Supabase -> SQL Editor -> New query -> Run, once. It is one transaction: if anything
 -- fails, nothing is changed. Confirm the 'destructive operation' warning (it comes from 'create or replace' and
@@ -86,6 +142,19 @@ const parts = [
 begin;
 `,
 ];
+
+if (preset.requires) {
+  const { version, what } = preset.requires;
+  parts.push(`-- Run ${what} first: this stops (changing nothing) if it hasn't been.
+do $requires$
+begin
+  if not exists (select 1 from supabase_migrations.schema_migrations where version = ${sqlString(version)}) then
+    raise exception ${sqlString(`Run ${what} first: migration ${version} is not recorded`)};
+  end if;
+end
+$requires$;
+`);
+}
 
 for (const f of files) {
   const body = readFileSync(path.join(dir, f), "utf8").replace(/\s+$/, "");
@@ -98,10 +167,10 @@ insert into supabase_migrations.schema_migrations (version, name) values (${sqlS
 `);
 }
 
-parts.push(VERIFY);
+parts.push(preset.verify);
 parts.push(`commit;
 
-select 'Plan 2b database changes applied' as result,
+select ${sqlString(preset.done)} as result,
        (select count(*) from supabase_migrations.schema_migrations where version in (${versions})) as migrations_recorded;
 `);
 
