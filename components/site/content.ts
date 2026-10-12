@@ -1,8 +1,12 @@
 // Words and data for the showcase site at "/". Kept in one place so the owner can change wording without touching layout.
 import { platformPath } from "@/lib/paths";
 
-export const CONTACT_EMAIL = "yameen@ysbdesigns.uk";
-export const MAILTO = `mailto:${CONTACT_EMAIL}`;
+// Every question goes to the support inbox as a ticket, with a subject line so tickets can be sorted.
+export const CONTACT_EMAIL = "support@ysbdesigns.uk";
+export const ticket = (subject: string) =>
+  `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Bolton Vouched: ${subject}`)}`;
+export const MAILTO = ticket("support request");
+export const LISTING_TICKET = ticket("please list me");
 export const COMPANY_LINE =
   "Bolton Vouched is operated by YSB Ventures Ltd, registered in England and Wales, company number 16022339.";
 export const PLATFORM = platformPath();
@@ -119,7 +123,11 @@ export const FAQ: Faq[] = [
   {
     q: "How do I get listed?",
     a: [
-      ["Message Yameen in the group, or email ", { href: MAILTO, label: CONTACT_EMAIL }, "."],
+      [
+        "Raise a support ticket by emailing ",
+        { href: LISTING_TICKET, label: CONTACT_EMAIL },
+        " with your name, trade and the areas you cover.",
+      ],
       [
         "You'll get a link showing exactly how your listing will look. Nothing goes live until you've read it and tapped to agree.",
       ],
@@ -129,9 +137,9 @@ export const FAQ: Faq[] = [
     q: "How do I come off it?",
     a: [
       [
-        "Tell us and you're removed within one working day, no reason needed. Message Yameen or email ",
-        { href: MAILTO, label: CONTACT_EMAIL },
-        ".",
+        "Raise a support ticket at ",
+        { href: ticket("remove my listing"), label: CONTACT_EMAIL },
+        " and you're removed within one working day, no reason needed.",
       ],
     ],
   },
@@ -155,9 +163,9 @@ export const FAQ: Faq[] = [
     q: "How do I report a problem or a review?",
     a: [
       [
-        "Email ",
-        { href: MAILTO, label: CONTACT_EMAIL },
-        " and say which page it's on and what's wrong. Every report is looked at.",
+        "Raise a support ticket at ",
+        { href: ticket("report a problem"), label: CONTACT_EMAIL },
+        " and say which page it's on and what's wrong. Every ticket is looked at.",
       ],
     ],
   },

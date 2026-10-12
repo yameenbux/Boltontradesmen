@@ -88,11 +88,12 @@ test("install steps cover iPhone and Android", async ({ page }) => {
 test("traders can see how to get listed", async ({ page }) => {
   await page.goto("/");
   const traders = page.locator("#traders");
-  await expect(traders).toContainText("yameen@ysbdesigns.uk");
-  await expect(traders.getByRole("link", { name: /yameen@ysbdesigns\.uk|Email Yameen/ }).first()).toHaveAttribute(
+  await expect(traders).toContainText("support@ysbdesigns.uk");
+  await expect(traders.getByRole("link", { name: "Raise a ticket" })).toHaveAttribute(
     "href",
-    "mailto:yameen@ysbdesigns.uk",
+    "mailto:support@ysbdesigns.uk?subject=Bolton%20Vouched%3A%20please%20list%20me",
   );
+  await expect(traders).not.toContainText("yameen@");
 });
 
 test("FAQ search filters questions and says when nothing matches", async ({ page }) => {
@@ -110,7 +111,7 @@ test("FAQ search filters questions and says when nothing matches", async ({ page
 
   await search.fill("zzqxj");
   await expect(support.locator("details.faq-item:visible")).toHaveCount(0);
-  await expect(support).toContainText("No questions match that. Try another word, or email us below.");
+  await expect(support).toContainText("No questions match that. Try another word, or raise a support ticket below.");
 
   await search.fill("");
   await expect(support.locator("details.faq-item:visible")).toHaveCount(total);
@@ -122,9 +123,9 @@ test("footer names the company and links the policies", async ({ page }) => {
   await expect(footer).toContainText(
     "Bolton Vouched is operated by YSB Ventures Ltd, registered in England and Wales, company number 16022339.",
   );
-  await expect(footer.getByRole("link", { name: "yameen@ysbdesigns.uk" })).toHaveAttribute(
+  await expect(footer.getByRole("link", { name: "support@ysbdesigns.uk" })).toHaveAttribute(
     "href",
-    "mailto:yameen@ysbdesigns.uk",
+    "mailto:support@ysbdesigns.uk?subject=Bolton%20Vouched%3A%20support%20request",
   );
   for (const [name, href] of [
     ["Privacy", "/privacy"],

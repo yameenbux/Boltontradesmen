@@ -90,7 +90,7 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 > • Reviews from people in Bolton are coming soon
 > • Tip: tap "Add it to your phone" on the page and it works like an app
 >
-> **Traders in the group:** if you'd like to be added (it's free), just drop me a message with your name, trade and the areas you cover and I'll get you on.
+> **Traders in the group:** if you'd like to be added (it's free), raise a support ticket by emailing **support@ysbdesigns.uk** with your name, trade and the areas you cover (or tap "Raise a ticket" on the site) and I'll get you on.
 >
 > It's brand new, so tell me what you think. Still ask in here as normal, I'll keep adding the people you recommend.
 

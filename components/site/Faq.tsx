@@ -55,7 +55,7 @@ export function Faq({ items }: { items: FaqItem[] }) {
       </div>
 
       <div aria-live="polite">
-        {none && <p className="s-nomatch">No questions match that. Try another word, or email us below.</p>}
+        {none && <p className="s-nomatch">No questions match that. Try another word, or raise a support ticket below.</p>}
       </div>
     </div>
   );

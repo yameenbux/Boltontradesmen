@@ -49,7 +49,7 @@ function loadEnvDefaults() {
   // The real operator in the footer and on the consent page, then the local defaults from .env.example
   // (same as playwright.config.ts); variables already set win.
   process.env.OWNER_LEGAL_NAME ??= "YSB Ventures Ltd";
-  process.env.CONTACT_EMAIL ??= "yameen@ysbdesigns.uk";
+  process.env.CONTACT_EMAIL ??= "support@ysbdesigns.uk";
   for (const line of readFileSync(join(ROOT, ".env.example"), "utf8").split("\n")) {
     const m = /^([A-Z0-9_]+)=(.*)$/.exec(line.trim());
     if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2];
