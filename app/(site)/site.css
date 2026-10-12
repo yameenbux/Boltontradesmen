@@ -51,7 +51,7 @@ body:has(.site){background:#150F0C}
 .s-mono{width:38px; height:38px; border-radius:11px; background:var(--s-brick-deep); color:var(--s-ink); display:grid; place-items:center;
   font-family:var(--display); font-size:18px; position:relative; overflow:hidden; box-shadow:inset 0 -2px 0 rgba(0,0,0,.2),0 6px 18px -6px rgba(217,112,79,.55)}
 .s-mono::after{content:""; position:absolute; inset:0; background:linear-gradient(transparent 46%,rgba(0,0,0,.16) 46% 54%,transparent 54%)}
-.s-mono b{position:relative; z-index:1; font-weight:400}
+.s-mono svg{position:relative; z-index:1; width:26px; height:26px}
 .s-word{font-family:var(--display); font-size:21px; line-height:1}
 .s-links{display:none; align-items:center; gap:4px; margin:0; padding:0; list-style:none}
 .s-links a{display:inline-flex; align-items:center; min-height:44px; padding:0 12px; border-radius:999px; font-size:15px; font-weight:600; color:var(--s-ink-2); text-decoration:none; transition:color .2s, background-color .2s}
@@ -92,7 +92,7 @@ body:has(.site){background:#150F0C}
   .s-nav-in{gap:10px}
   .s-nav-end{gap:6px}
 }
-@media (max-width:379px){ .s-nav .s-word{font-size:18px} .s-nav .s-mono{width:34px; height:34px; font-size:16px} .s-nav .s-brand{gap:8px} }
+@media (max-width:379px){ .s-nav .s-word{font-size:18px} .s-nav .s-mono{width:34px; height:34px} .s-nav .s-mono svg{width:23px; height:23px} .s-nav .s-brand{gap:8px} }
 
 /* ---------- hero ---------- */
 .s-hero{padding:56px 0 24px; text-align:center}

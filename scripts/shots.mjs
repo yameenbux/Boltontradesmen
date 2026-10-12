@@ -11,6 +11,7 @@ import { execFileSync, spawn } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { brandMarkSvg } from "../lib/brand-mark.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "public", "shots");
@@ -156,7 +157,8 @@ async function renderSocial(browser) {
   body::before{content:"";position:absolute;inset:0;background:radial-gradient(rgba(255,245,233,.10) 1.2px,transparent 1.4px) 0 0/24px 24px}
   .copy{position:absolute;left:68px;top:0;bottom:0;width:560px;display:flex;flex-direction:column;justify-content:center;gap:22px}
   .brand{display:flex;align-items:center;gap:14px;font:400 30px/1 Gloock,serif}
-  .mono{width:54px;height:54px;border-radius:15px;background:#9C3A25;display:grid;place-items:center;font:400 26px/1 Gloock,serif;position:relative;overflow:hidden}
+  .mono{width:54px;height:54px;border-radius:15px;background:#9C3A25;display:grid;place-items:center;position:relative;overflow:hidden}
+  .mono svg{position:relative;z-index:1;display:block}
   .mono::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 46%,rgba(0,0,0,.14) 46% 54%,transparent 54%)}
   h1{margin:0;font:400 60px/1.03 Gloock,serif;letter-spacing:-.015em}
   h1 span{display:block;background:linear-gradient(90deg,#E07A55,#D7A94C);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -170,7 +172,7 @@ async function renderSocial(browser) {
   .a{left:672px;top:128px;transform:rotate(-8deg)} .c{left:908px;top:128px;transform:rotate(8deg)} .b{left:790px;top:64px;z-index:2}
 </style></head><body>
   <div class="copy">
-    <div class="brand"><div class="mono">BV</div>Bolton Vouched</div>
+    <div class="brand"><div class="mono">${brandMarkSvg("#FFF5E9", 36)}</div>Bolton Vouched</div>
     <h1>Anyone know a good…?<span>Bolton already does.</span></h1>
     <p>The local trades and services the group recommends, all in one place.</p>
     <div class="meta">Free · No sign-up · Made in Bolton</div>
