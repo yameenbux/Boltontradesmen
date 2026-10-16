@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { PublicProvider } from "@/lib/directory";
 import { initials } from "@/lib/initials";
 import { CountUp } from "@/components/CountUp";
+import { RatingBadge } from "@/components/RatingBadge";
 import { Pill } from "@/components/ui/Pill";
+import { ratingBadge } from "@/lib/badges";
 import { platformPath } from "@/lib/paths";
 
 const Tick = () => (
@@ -30,11 +32,12 @@ const verifiedJobs = (n: number) =>
   ) : null;
 
 /**
- * Category-page card: initials avatar, name, Verified pill, areas, and the score with the review count and how many
- * of those are verified jobs (or how many reviews so far).
+ * Category-page card: initials avatar, name, Verified pill and any earned rating badge, areas, and the score with the
+ * review count and how many of those are verified jobs (or how many reviews so far).
  */
 export function ProviderCard({ provider: p }: { provider: PublicProvider }) {
   const scored = p.score !== null && p.useAgainPct !== null;
+  const badge = ratingBadge(p);
   return (
     <Link href={platformPath("p", p.slug)} className="pcard press lift">
       <span className="avatar" aria-hidden="true">
@@ -42,11 +45,16 @@ export function ProviderCard({ provider: p }: { provider: PublicProvider }) {
       </span>
       <span className="info">
         <span className="name">{p.businessName}</span>
-        {p.isVerified && (
-          <Pill tone="sage">
-            <Tick />
-            Verified
-          </Pill>
+        {(p.isVerified || badge) && (
+          <span className="pills">
+            {p.isVerified && (
+              <Pill tone="sage">
+                <Tick />
+                Verified
+              </Pill>
+            )}
+            {badge && <RatingBadge badge={badge} />}
+          </span>
         )}
         {p.areas.length > 0 && <span className="meta">{p.areas.join(" · ")}</span>}
       </span>
