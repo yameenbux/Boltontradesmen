@@ -72,7 +72,7 @@ describe("is_pro's rules (the same as private.is_pro)", () => {
     expect(isProStatus("active", null, now)).toBe(true);
     expect(isProStatus("trialing", daysAgo(-3), now)).toBe(true);
   });
-  it("past due is Pro for 14 days after the period ended, then not", () => {
+  it("past due is Pro for 14 days from when it first became past due, then not", () => {
     expect(isProStatus("past_due", daysAgo(13), now)).toBe(true);
     expect(isProStatus("past_due", daysAgo(15), now)).toBe(false);
     expect(isProStatus("past_due", null, now)).toBe(false);

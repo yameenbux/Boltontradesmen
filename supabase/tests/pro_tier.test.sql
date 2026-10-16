@@ -2,7 +2,7 @@
 -- trader's ID documents and work photos (only while Pro, photos removable any time); the admin's decisions, audited;
 -- and the public view showing only "ID checked" and the photos, and only while Pro is on.
 begin;
-select plan(87);
+select plan(96);
 
 update public.settings set value = '["pt-admin@example.com"]'::jsonb where key = 'admin_emails';
 
@@ -51,7 +51,8 @@ select ok(not has_function_privilege('anon', 'public.stripe_apply_event(text, te
 select ok(not has_function_privilege('authenticated', 'public.stripe_reconcile_subscription(jsonb)', 'execute')
           and not has_function_privilege('authenticated', 'public.stripe_list_subscriptions()', 'execute')
           and not has_function_privilege('authenticated', 'public.stripe_customer_for(uuid)', 'execute')
-          and not has_function_privilege('authenticated', 'public.stripe_event_seen(text)', 'execute'),
+          and not has_function_privilege('authenticated', 'public.stripe_event_seen(text)', 'execute')
+          and not has_function_privilege('authenticated', 'public.stripe_live_subscriptions(uuid)', 'execute'),
   'the other Stripe functions: service role only');
 select ok(not has_function_privilege('anon', 'public.my_pro_status(uuid)', 'execute')
           and not has_function_privilege('anon', 'public.add_my_work_photo(uuid, text, int, int)', 'execute')
@@ -77,12 +78,14 @@ reset role;
 select ok(private.is_pro('00000000-0000-0000-0000-0000000094b3'), 'active is Pro');
 update public.subscriptions set status = 'trialing' where stripe_subscription_id = 'sub_ptlone';
 select ok(private.is_pro('00000000-0000-0000-0000-0000000094b3'), 'trialing is Pro');
-update public.subscriptions set status = 'past_due', current_period_end = now() - interval '13 days' where stripe_subscription_id = 'sub_ptlone';
-select ok(private.is_pro('00000000-0000-0000-0000-0000000094b3'), 'past due within 14 days of the period end is Pro');
-update public.subscriptions set current_period_end = now() - interval '15 days' where stripe_subscription_id = 'sub_ptlone';
-select ok(not private.is_pro('00000000-0000-0000-0000-0000000094b3'), 'past due longer than that is not');
-update public.subscriptions set status = 'past_due', current_period_end = null where stripe_subscription_id = 'sub_ptlone';
-select ok(not private.is_pro('00000000-0000-0000-0000-0000000094b3'), 'past due with no period end is not');
+update public.subscriptions set status = 'past_due', past_due_since = now() - interval '13 days',
+  current_period_end = now() + interval '300 days' where stripe_subscription_id = 'sub_ptlone';
+select ok(private.is_pro('00000000-0000-0000-0000-0000000094b3'), 'past due for under 14 days is Pro');
+update public.subscriptions set past_due_since = now() - interval '15 days' where stripe_subscription_id = 'sub_ptlone';
+select ok(not private.is_pro('00000000-0000-0000-0000-0000000094b3'),
+  'past due for over 14 days is not, however far off the period end (Stripe left it past due)');
+update public.subscriptions set past_due_since = null where stripe_subscription_id = 'sub_ptlone';
+select ok(not private.is_pro('00000000-0000-0000-0000-0000000094b3'), 'past due with no start date is not');
 update public.subscriptions set status = 'canceled', current_period_end = now() + interval '5 days' where stripe_subscription_id = 'sub_ptlone';
 select ok(not private.is_pro('00000000-0000-0000-0000-0000000094b3'), 'canceled is not Pro');
 update public.subscriptions set status = 'incomplete' where stripe_subscription_id = 'sub_ptlone';
@@ -109,17 +112,38 @@ select is(public.pt_sub('evt_pt_ghost', '00000000-0000-0000-0000-0000000094ff', 
 select is(public.stripe_apply_event('evt_pt_other', 'invoice.paid', null) ->> 'outcome', 'recorded',
   'an event with nothing to apply is just recorded');
 select is(public.stripe_customer_for('00000000-0000-0000-0000-0000000094b1'), 'cus_pt0000', 'the customer for the billing portal');
+select is(public.stripe_live_subscriptions('00000000-0000-0000-0000-0000000094b1'), array['sub_ptpro'],
+  'the running subscriptions, to cancel when the listing is withdrawn');
+select is(public.stripe_live_subscriptions('00000000-0000-0000-0000-0000000094b3'), '{}'::text[], 'none for an unpaid one');
+-- The grace clock: set the first time it's past due, kept while it stays so, cleared when it's paid.
+select is(public.pt_sub('evt_pt_l2', '00000000-0000-0000-0000-0000000094b3', 'sub_ptlone', 'past_due', now() + interval '30 days',
+  now() + interval '1 second') ->> 'outcome', 'applied', 'a payment fails');
 select is(jsonb_array_length(public.stripe_list_subscriptions()), 2, 'the reconciliation list has both subscriptions');
 select is(public.stripe_reconcile_subscription(jsonb_build_object('customer', 'cus_pt0000', 'subscription', 'sub_ptpro',
   'plan', 'annual', 'status', 'active', 'current_period_end', now() + interval '365 days', 'cancel_at_period_end', true)) ->> 'outcome',
   'applied', 'reconciliation fixes drift (no provider needed for a known subscription)');
 reset role;
+select is((select past_due_since from public.subscriptions where stripe_subscription_id = 'sub_ptlone'), now() + interval '1 second',
+  'past due since that event');
+set local role service_role;
+select is(public.pt_sub('evt_pt_l3', '00000000-0000-0000-0000-0000000094b3', 'sub_ptlone', 'past_due', now() + interval '31 days',
+  now() + interval '2 seconds') ->> 'outcome', 'applied', 'still past due a retry later');
+reset role;
+select is((select past_due_since from public.subscriptions where stripe_subscription_id = 'sub_ptlone'), now() + interval '1 second',
+  'the clock keeps its start');
+select ok(private.is_pro('00000000-0000-0000-0000-0000000094b3'), 'and it is Pro for now');
+set local role service_role;
+select is(public.pt_sub('evt_pt_l4', '00000000-0000-0000-0000-0000000094b3', 'sub_ptlone', 'active', now() + interval '31 days',
+  now() + interval '3 seconds') ->> 'outcome', 'applied', 'paid');
+reset role;
+select is((select past_due_since from public.subscriptions where stripe_subscription_id = 'sub_ptlone'), null::timestamptz,
+  'paid clears the clock');
 select is((select plan || '/' || cancel_at_period_end from public.subscriptions where stripe_subscription_id = 'sub_ptpro'),
   'annual/true', 'the reconciled values are stored');
 select is((select count(*)::int from public.audit_log where action = 'stripe_subscription'
            and target_id = '00000000-0000-0000-0000-0000000094b1'), 1, 'each applied change is audited once');
 select is((select count(*)::int from public.audit_log where action = 'stripe_reconcile'), 1, 'and so is reconciliation');
-select is((select count(*)::int from public.stripe_events where id like 'evt_pt_%'), 7, 'every event id is kept');
+select is((select count(*)::int from public.stripe_events where id like 'evt_pt_%'), 10, 'every event id is kept');
 select throws_ok($$select public.stripe_apply_event('evt_pt_bad', 'x', '{"subscription":"sub_x"}'::jsonb)$$, 'P0001',
   'bad_subscription', 'an incomplete subscription is refused');
 
@@ -198,8 +222,9 @@ select public.pt_as('00000000-0000-0000-0000-0000000094a0');
 set local role authenticated;
 select is((public.admin_counts() ->> 'pending_pro_documents')::int, 2, 'admin_counts: 2 documents waiting');
 select is(jsonb_array_length(public.admin_pro_overview() -> 'pending'), 2, 'the Pro page lists them');
-select is((select t ->> 'business_name' from jsonb_array_elements(public.admin_pro_overview() -> 'traders') t limit 1),
-  'PT Pro', 'and the Pro traders, Pro first');
+select is((select string_agg((t ->> 'business_name') || ':' || (t ->> 'is_pro'), ',')
+           from jsonb_array_elements(public.admin_pro_overview() -> 'traders') t),
+  'PT Lone:true,PT Pro:true', 'and the Pro traders');
 select is(public.admin_pro_document_path((select id from pt_doc)), '00000000-0000-0000-0000-0000000094b1/id.jpg',
   'the admin gets the file''s path for a short-lived link');
 select throws_ok($$select public.admin_decide_pro_document((select id from pt_doc), 'rejected', '  ')$$, 'P0001',

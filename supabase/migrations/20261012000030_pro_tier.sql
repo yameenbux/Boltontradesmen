@@ -9,9 +9,12 @@
 --   role functions below). One row per Stripe subscription; a trader who cancels and comes back gets a second row.
 --   No anon, authenticated or service role table access: everything goes through functions.
 -- * public.stripe_events: webhook event ids already handled, so a redelivered event changes nothing. Kept 90 days.
--- * private.is_pro(p_provider): status active or trialing, or past_due for up to 14 days after the paid period ended
---   (Stripe's Smart Retries run for about two weeks). Cancelling keeps Pro to the end of the paid period: Stripe keeps
---   the status active until then.
+-- * private.is_pro(p_provider): status active or trialing, or past_due for up to 14 days after it first became
+--   past_due (subscriptions.past_due_since, set when a subscription turns past_due and cleared when it's active or
+--   trialing again). It doesn't depend on what Stripe is set to do after its retries. Cancelling keeps Pro to the end
+--   of the paid period: Stripe keeps the status active until then.
+-- * public.stripe_live_subscriptions(p_provider): the listing's subscriptions that are still running, so withdrawing
+--   or removing a listing can set them to cancel at the end of the paid period (service role only).
 -- * public.pro_documents: the trader's photo ID (required) and optional insurance or accreditation documents, in the
 --   private 'pro-id' bucket. The admin approves or rejects each (rejecting needs a reason; a rejected photo ID means a
 --   full refund, made by hand in Stripe). Files are deleted 30 days after the decision (pro_id_files_due and
@@ -58,11 +61,14 @@ create table if not exists public.subscriptions (
   status text not null check (status ~ '^[a-z_]{1,40}$'),
   current_period_end timestamptz,
   cancel_at_period_end boolean not null default false,
+  -- When it first became past_due (cleared once it's active or trialing again): Pro's 14 days of grace run from here.
+  past_due_since timestamptz,
   -- When Stripe's data in this row was true (the event's time, or when it was fetched). Older data never overwrites it.
   stripe_as_of timestamptz not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+alter table public.subscriptions add column if not exists past_due_since timestamptz;
 create index if not exists subscriptions_provider_idx on public.subscriptions (provider_id, updated_at desc);
 alter table public.subscriptions enable row level security;
 revoke all on public.subscriptions from public, anon, authenticated, service_role;
@@ -120,8 +126,8 @@ as $$
     select 1 from public.subscriptions s
     where s.provider_id = p_provider
       and (s.status in ('active', 'trialing')
-           or (s.status = 'past_due' and s.current_period_end is not null
-               and now() < s.current_period_end + interval '14 days'))
+           or (s.status = 'past_due' and s.past_due_since is not null
+               and now() < s.past_due_since + interval '14 days'))
   );
 $$;
 revoke execute on function private.is_pro(uuid) from public;
@@ -212,6 +218,7 @@ declare
   v_end timestamptz := nullif(p_sub ->> 'current_period_end', '')::timestamptz;
   v_cancel boolean := coalesce((p_sub ->> 'cancel_at_period_end')::boolean, false);
   v_as_of timestamptz := coalesce(nullif(p_sub ->> 'as_of', '')::timestamptz, now());
+  v_past_due_since timestamptz;
   v_provider uuid;
   v_slug text;
 begin
@@ -232,6 +239,13 @@ begin
   if v_old.id is not null and v_old.stripe_as_of > v_as_of then
     return jsonb_build_object('outcome', 'stale', 'slug', v_slug);
   end if;
+  -- The grace clock starts the first time it's past_due and keeps running while it stays so; anything else stops it
+  -- (canceled and unpaid end Pro anyway).
+  v_past_due_since := case
+    when v_status <> 'past_due' then null
+    when v_old.status = 'past_due' and v_old.past_due_since is not null then v_old.past_due_since
+    else v_as_of
+  end;
   if v_old.id is not null and v_old.status = v_status and v_old.plan = v_plan
      and v_old.current_period_end is not distinct from v_end and v_old.cancel_at_period_end = v_cancel
      and v_old.stripe_customer_id = v_customer then
@@ -240,14 +254,15 @@ begin
   end if;
 
   insert into public.subscriptions (provider_id, stripe_customer_id, stripe_subscription_id, plan, status,
-                                    current_period_end, cancel_at_period_end, stripe_as_of)
-  values (v_provider, v_customer, v_sub, v_plan, v_status, v_end, v_cancel, v_as_of)
+                                    current_period_end, cancel_at_period_end, past_due_since, stripe_as_of)
+  values (v_provider, v_customer, v_sub, v_plan, v_status, v_end, v_cancel, v_past_due_since, v_as_of)
   on conflict (stripe_subscription_id) do update set
     stripe_customer_id = excluded.stripe_customer_id,
     plan = excluded.plan,
     status = excluded.status,
     current_period_end = excluded.current_period_end,
     cancel_at_period_end = excluded.cancel_at_period_end,
+    past_due_since = excluded.past_due_since,
     stripe_as_of = excluded.stripe_as_of,
     updated_at = now();
   insert into public.audit_log (actor_id, action, target_type, target_id, reason)
@@ -318,6 +333,16 @@ as $$
   where s.provider_id = p_provider order by s.updated_at desc, s.created_at desc limit 1;
 $$;
 
+-- The listing's subscriptions still running (active, trialing or past due), to cancel at the period end when the
+-- listing is withdrawn or removed.
+create or replace function public.stripe_live_subscriptions(p_provider uuid) returns text[]
+language sql stable security definer set search_path = ''
+as $$
+  select coalesce(array_agg(s.stripe_subscription_id order by s.created_at), '{}')
+  from public.subscriptions s
+  where s.provider_id = p_provider and s.status in ('active', 'trialing', 'past_due');
+$$;
+
 -- ---------------------------------------------------------------- the trader's own Pro
 -- {is_pro, subscription: {plan, status, current_period_end, cancel_at_period_end, grace_until} or null (the latest),
 --  id_check: {status 'none'|'pending'|'approved'|'rejected', reason, decided_at}, documents: [...], photos: [...]}.
@@ -342,7 +367,7 @@ begin
     'subscription', case when v_sub.id is null then null else jsonb_build_object(
       'plan', v_sub.plan, 'status', v_sub.status, 'current_period_end', v_sub.current_period_end,
       'cancel_at_period_end', v_sub.cancel_at_period_end,
-      'grace_until', case when v_sub.status = 'past_due' then v_sub.current_period_end + interval '14 days' end) end,
+      'grace_until', case when v_sub.status = 'past_due' then v_sub.past_due_since + interval '14 days' end) end,
     'id_check', jsonb_build_object('status', coalesce(v_id.status, 'none'),
       'reason', v_id.reason, 'decided_at', v_id.decided_at),
     'documents', coalesce((
@@ -707,7 +732,8 @@ begin
     'public.stripe_apply_event(text, text, jsonb)',
     'public.stripe_reconcile_subscription(jsonb)',
     'public.stripe_list_subscriptions()',
-    'public.stripe_customer_for(uuid)'
+    'public.stripe_customer_for(uuid)',
+    'public.stripe_live_subscriptions(uuid)'
   ] loop
     execute format('revoke execute on function %s from public, anon, authenticated', f);
     execute format('grant execute on function %s to service_role', f);

@@ -52,15 +52,18 @@ export function planForPrice(priceId: string | null | undefined, interval: strin
   return null;
 }
 
-/** How long a failed payment keeps Pro on after the paid period (Stripe retries for about two weeks). */
+/** How long a failed payment keeps Pro on, from when it first became past due (Stripe retries for about two weeks). */
 export const PAST_DUE_GRACE_DAYS = 14;
 
-/** The same rule as private.is_pro (migration 000030). */
-export function isProStatus(status: string, currentPeriodEnd: string | null, now: Date = new Date()): boolean {
+/**
+ * The same rule as private.is_pro (migration 000030): active or trialing, or past due for under 14 days from when it
+ * first became past due (subscriptions.past_due_since). It doesn't rely on Stripe cancelling after its retries.
+ */
+export function isProStatus(status: string, pastDueSince: string | null, now: Date = new Date()): boolean {
   if (status === "active" || status === "trialing") return true;
-  if (status !== "past_due" || !currentPeriodEnd) return false;
-  const end = new Date(currentPeriodEnd).getTime();
-  return Number.isFinite(end) && now.getTime() < end + PAST_DUE_GRACE_DAYS * 86_400_000;
+  if (status !== "past_due" || !pastDueSince) return false;
+  const since = new Date(pastDueSince).getTime();
+  return Number.isFinite(since) && now.getTime() < since + PAST_DUE_GRACE_DAYS * 86_400_000;
 }
 
 export const MAX_WORK_PHOTOS = 6;
