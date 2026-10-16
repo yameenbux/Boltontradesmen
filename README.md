@@ -124,6 +124,14 @@ One site, free for residents and free for traders.
   a question page go through `/api/contact`, so they count as enquiries. Recommendations never
   touch ranking, scores or badges. Report on every question and answer; the admin's queue is
   `/admin/questions`.
+- **Price guides** at `/platform/prices` ("How much does a man and van cost in Bolton?"):
+  only from reviews, a trade at a time, once it has 10 counted reviews (published or under
+  a check; `price_guide_min_reviews` can raise it, never lower it). Each shows how many
+  reviewers picked each of the four price bands for the whole job, the most common band
+  (both, in a tie) and how many said the final price matched the quote. No averages,
+  hourly rates or national figures, nothing per area or per trader, and no structured
+  data. Under the threshold the page is a 404 and isn't in the sitemap; a trade's page
+  links to its guide ("What locals paid") once there is one.
 - **Report** on every review, and **My reviews** and **Delete account** at
   `/platform/account` (reviews, questions and answers come down; the number is kept privately for 12 months).
 - **Admin** at `/admin`, for the owner only: add and edit providers, record
@@ -312,9 +320,9 @@ npm run db:check-prod # the one-paste production scripts apply, in order, on a 0
 The production pastes are generated from the migrations: `docs/launch/plan-2b-production.sql` (000018 to 000025),
 `docs/launch/launch-checklist-production.sql` (000026), `docs/launch/review-source-production.sql` (000027),
 `docs/launch/availability-production.sql` (000028), `docs/launch/trader-dashboard-production.sql` (000029),
-`docs/launch/pro-tier-production.sql` (000030) and `docs/launch/community-questions-production.sql` (000031 on). After
-adding or changing a migration from 000031 on, regenerate with
-`node scripts/build-production-sql.mjs --preset community-questions --from 20261012000031 --to <newest> --out docs/launch/community-questions-production.sql`
+`docs/launch/pro-tier-production.sql` (000030), `docs/launch/community-questions-production.sql` (000031) and
+`docs/launch/price-guides-production.sql` (000032 on). After adding or changing a migration from 000032 on, regenerate with
+`node scripts/build-production-sql.mjs --preset price-guides --from 20261012000032 --to <newest> --out docs/launch/price-guides-production.sql`
 (`tests/unit/production-sql.test.ts` fails until you do).
 
 Run `npm run test:db` straight after a reset: the scoring tests expect an empty

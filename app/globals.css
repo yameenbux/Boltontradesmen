@@ -857,6 +857,35 @@ h1,h2,h3{text-wrap:balance}
   .picker-empty{margin:0; padding:14px; border:1.5px dashed var(--line); border-radius:14px; font-size:15px; color:var(--ink-2); text-align:center}
   .textarea.short{min-height:84px}
 
+  /* ---------- price guides (what locals paid) ---------- */
+  .guide-title{font-family:var(--display); font-weight:400; font-size:clamp(32px,8.6vw,40px); line-height:1.06; margin:8px 0 10px; overflow-wrap:anywhere}
+  .guide-card{margin-top:4px; display:grid; gap:20px; padding:20px; background:var(--surface); border:1px solid var(--line); border-radius:26px; box-shadow:var(--shadow)}
+  .guide-facts{display:grid; gap:10px}
+  .guide-facts p{margin:0; display:grid; gap:4px; padding:12px 14px; border-radius:var(--r-md); background:var(--surface-2)}
+  .guide-facts small{font-size:14px; font-weight:600; line-height:1.3; color:var(--ink-2)}
+  .guide-facts b{font-family:var(--display); font-weight:400; font-size:24px; line-height:1.15; color:var(--brick); font-variant-numeric:tabular-nums}
+  .guide .nw{white-space:nowrap}
+  /* "70% said the final price matched the quote": the number, then what it means, on one line where it fits. */
+  .guide-facts p[data-testid="guide-on-price"]{grid-template-columns:auto 1fr; align-items:center; column-gap:12px}
+  .guide-facts p[data-testid="guide-on-price"] b{font-size:34px; line-height:1}
+  .pbands{margin:0; display:grid; gap:14px; padding-top:18px; border-top:1px solid var(--line)}
+  .pbands figcaption{font-size:16px; font-weight:700}
+  .pbands ul{margin:0; padding:0; list-style:none; display:grid; gap:14px}
+  .pband{display:grid; gap:7px}
+  .pband .top{display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:16px}
+  .pband .val{flex:none; font-variant-numeric:tabular-nums}
+  .pband .val small{font-size:14px; color:var(--ink-2)}
+  .pband .track{height:12px}
+  .guide .note{margin-top:16px}
+  .guide-small{margin:0; font-size:14.5px; color:var(--ink-2)}
+  .guide-actions{display:grid; margin-top:20px}
+  .guide-more{margin-top:14px; font-size:15px}
+  .pguide,.price-link{display:grid; grid-template-columns:44px minmax(0,1fr); gap:14px; align-items:center; padding:14px 16px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow); color:inherit; text-decoration:none}
+  .pguide b,.price-link b{display:block; font-size:17px; line-height:1.25; color:var(--ink); overflow-wrap:anywhere}
+  .pguide small,.price-link small{display:block; margin-top:2px; font-size:14.5px; color:var(--ink-2)}
+  .price-link{margin:4px 0 6px; box-shadow:none}
+  .price-link b{color:var(--brick)}
+
   /* ---------- 404 and error pages ---------- */
   .lost{display:grid; justify-items:start; gap:14px; padding:28px 0 8px}
   .lost .eyebrow{font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--brick)}
