@@ -6,7 +6,7 @@
  * set on <html> by app/layout.tsx), because next/font self-hosts the fonts under generated family names.
  */
 :root{
-  --bg:#F5EEE3; --surface:#FFFBF5; --surface-2:#EFE5D7; --ink:#231A15; --ink-2:#6B5D53; --ink-3:#97887C; --line:#E4D6C5;
+  --bg:#F5EEE3; --surface:#FFFBF5; --surface-2:#EFE5D7; --ink:#231A15; --ink-2:#6B5D53; --ink-3:#73655A; --line:#E4D6C5;
   --brick:#9C3A25; --brick-deep:#6E2616; --brick-tint:#F2DCD2; --hero:#8C3220; --on-brick:#FFF5E9;
   --sage:#46684A; --sage-tint:#DDE9DA; --gold:#B5862C;
   --shadow:0 1px 2px rgba(60,30,15,.06),0 8px 24px -10px rgba(60,30,15,.18);
@@ -16,12 +16,12 @@
   --ease:cubic-bezier(.2,.8,.2,1);
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#161009; --surface:#211812; --surface-2:#2A1F18; --ink:#F3E9DC; --ink-2:#BBA998; --ink-3:#8D7C6E; --line:#3A2B22;
+  --bg:#161009; --surface:#211812; --surface-2:#2A1F18; --ink:#F3E9DC; --ink-2:#BBA998; --ink-3:#9C8B7D; --line:#3A2B22;
   --brick:#D9704F; --brick-deep:#A9452C; --brick-tint:#3B2018; --hero:#6E2818; --on-brick:#FFF2E4;
   --sage:#93BC95; --sage-tint:#20301F; --gold:#D7A94C;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark }}
 :root[data-theme="dark"]{
-  --bg:#161009; --surface:#211812; --surface-2:#2A1F18; --ink:#F3E9DC; --ink-2:#BBA998; --ink-3:#8D7C6E; --line:#3A2B22;
+  --bg:#161009; --surface:#211812; --surface-2:#2A1F18; --ink:#F3E9DC; --ink-2:#BBA998; --ink-3:#9C8B7D; --line:#3A2B22;
   --brick:#D9704F; --brick-deep:#A9452C; --brick-tint:#3B2018; --hero:#6E2818; --on-brick:#FFF2E4;
   --sage:#93BC95; --sage-tint:#20301F; --gold:#D7A94C;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark }
@@ -109,8 +109,14 @@ h1,h2,h3{text-wrap:balance}
   .policy h1{font-family:var(--display); font-weight:400; font-size:clamp(32px,9vw,40px); line-height:1.08; margin:4px 0 16px}
   .policy h2{font-family:var(--display); font-weight:400; font-size:23px; line-height:1.15; padding-top:10px}
   .policy-body{display:grid; gap:14px; line-height:1.6; color:var(--ink); overflow-wrap:anywhere}
-  .policy-body a{color:var(--brick); text-underline-offset:3px}
+  .policy-body a{color:var(--brick); text-decoration:underline; text-underline-offset:3px}
   .policy-body ul{margin:0; padding-left:22px; list-style:disc; display:grid; gap:6px}
+  .policy-body code{font-size:.88em; padding:1px 5px; border-radius:6px; background:var(--surface-2); overflow-wrap:anywhere}
+  .policy-table{overflow-x:auto; border:1px solid var(--line); border-radius:14px}
+  .policy-table table{width:100%; min-width:520px; border-collapse:collapse; font-size:15px; line-height:1.45}
+  .policy-table th,.policy-table td{padding:10px 12px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line)}
+  .policy-table tr:last-child td{border-bottom:0}
+  .policy-table th{font-weight:700; background:var(--surface-2)}
   .draft-note{margin:6px 0 14px; padding:12px 14px; border-radius:var(--r-sm); font-size:15px; font-weight:700;
     background:color-mix(in srgb,var(--gold) 16%,var(--surface)); color:color-mix(in srgb,var(--gold) 62%,var(--ink));
     border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line))}
@@ -154,6 +160,9 @@ h1,h2,h3{text-wrap:balance}
   .a-counts a{display:inline-flex; align-items:center; min-height:44px; padding:0 14px; border-radius:12px; background:var(--surface-2); color:var(--ink-2); font-size:15px; font-weight:700; text-decoration:none}
   .a-counts a[data-some]{background:var(--brick-tint); color:color-mix(in srgb,var(--brick) 72%,var(--ink))}
   .mod-list{display:grid; gap:16px}
+  .a-dl{display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 14px; margin:0; font-size:16px}
+  .a-dl dt{font-weight:700; color:var(--ink-2)}
+  .a-dl dd{margin:0; overflow-wrap:anywhere}
   .mod-card{gap:16px}
   .mod-review{display:grid; gap:8px}
   .mod-head{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px}
@@ -269,6 +278,17 @@ h1,h2,h3{text-wrap:balance}
   /* ---------- category ---------- */
   .back{display:inline-flex; align-items:center; gap:6px; min-height:48px; font-weight:600; color:var(--ink-2); text-decoration:none}
   .back svg{width:18px; height:18px}
+  /* Breadcrumbs: the back link's look, one line. Crumbs after the first shrink with an ellipsis (on the text span, so
+     nothing clips the focus ring); 48px tall links, like .back. */
+  .crumbs ol{display:flex; align-items:center; min-width:0; margin:0; padding:0; list-style:none; font-weight:600; color:var(--ink-2)}
+  .crumbs li{display:flex; align-items:center; min-width:0}
+  .crumbs li:first-child{flex-shrink:0}
+  .crumbs a,.crumbs .here{display:flex; align-items:center; gap:6px; min-width:0; min-height:48px; color:inherit; text-decoration:none}
+  .crumbs a:hover span{text-decoration:underline; text-underline-offset:3px}
+  .crumbs span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .crumbs .here{font-weight:400}
+  .crumbs svg{width:18px; height:18px; flex-shrink:0}
+  .crumbs .sep{width:16px; height:16px; margin:0 4px; color:var(--ink-3)}
   .page-title{font-family:var(--display); font-weight:400; font-size:42px; line-height:1; margin:8px 0 6px; overflow-wrap:anywhere}
   .page-sub{color:var(--ink-2); margin:0 0 16px}
   /* Chips scroll sideways inside the column; the negative margin lets them run to the screen edge. */
@@ -294,7 +314,7 @@ h1,h2,h3{text-wrap:balance}
   .score .pending{font-size:13px; font-weight:600; color:var(--ink-2); max-width:11ch; line-height:1.3}
   .subhead{display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:28px 0 4px}
   .subhead h2{font-family:var(--display); font-weight:400; font-size:22px}
-  .subhead .tag{font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); border:1px solid color-mix(in srgb,var(--gold) 50%,transparent); border-radius:999px; padding:3px 8px}
+  .subhead .tag{font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:color-mix(in srgb,var(--gold) 55%,var(--ink)); border:1px solid color-mix(in srgb,var(--gold) 50%,transparent); border-radius:999px; padding:3px 8px}
   .muted{color:var(--ink-2); font-size:16px; margin:0}
   .cat-empty{display:grid; justify-items:center; gap:6px; margin-top:12px}
   .cat-empty p{margin:0}
@@ -554,6 +574,7 @@ h1,h2,h3{text-wrap:balance}
   .reply-form .textarea{min-height:96px; font-size:17px; background:var(--surface)}
   .reply-actions{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px}
   .reply-actions .btn{flex:1 1 160px}
+  .thanks-list{margin:0; padding-left:22px; list-style:disc; display:grid; gap:8px; color:var(--ink-2); line-height:1.5}
   .report-done{display:grid; gap:14px}
   .report-done .done{padding:8px 4px 0}
   .report-done .done h2{font-size:32px; line-height:1.1}
@@ -564,11 +585,13 @@ h1,h2,h3{text-wrap:balance}
   .report-quote blockquote{margin:0; font-size:16.5px; white-space:pre-line; overflow-wrap:anywhere}
   .report-quote .no-comment{margin:0; font-size:15px; color:var(--ink-3)}
 
-  /* ---------- 404 ---------- */
+  /* ---------- 404 and error pages ---------- */
   .lost{display:grid; justify-items:start; gap:14px; padding:28px 0 8px}
   .lost .eyebrow{font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--brick)}
   .lost h1{font-size:42px; line-height:1.02; letter-spacing:-.015em}
   .lost p{margin:0; color:var(--ink-2); max-width:32ch}
+  .lost p a{color:var(--brick); font-weight:600; text-underline-offset:3px; overflow-wrap:anywhere}
+  .lost-actions{display:flex; flex-wrap:wrap; gap:10px}
 }
 
 :root[data-theme="dark"] .avatar{color:var(--brick)}

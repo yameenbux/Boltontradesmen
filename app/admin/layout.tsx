@@ -5,5 +5,6 @@ import { PlatformChrome } from "@/components/PlatformChrome";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default function AdminShellLayout({ children }: { children: React.ReactNode }) {
-  return <PlatformChrome>{children}</PlatformChrome>;
+  // No page analytics in the admin area.
+  return <PlatformChrome analytics={false}>{children}</PlatformChrome>;
 }

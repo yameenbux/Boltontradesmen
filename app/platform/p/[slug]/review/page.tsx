@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { AlertIcon, ClockIcon } from "@/components/auth/icons";
 import { ReviewForm, type ReviewValues } from "@/components/review/ReviewForm";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { requireMember } from "@/lib/auth";
 import { dayMonthYear } from "@/lib/checks";
+import { listCategoryGroups } from "@/lib/directory";
 import { platformPath } from "@/lib/paths";
 import { recentMonths, REVIEW_ERRORS, REVIEW_FALLBACK_ERROR, statusLabel, stillOpen } from "@/lib/review-form";
 import {
@@ -21,7 +23,11 @@ import {
 } from "@/lib/review-text";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Leave a review | Bolton Vouched", robots: { index: false } };
+export const metadata: Metadata = {
+  title: "Leave a review | Bolton Vouched",
+  description: "Tell Bolton how the job went: a few quick taps and a line or two.",
+  robots: { index: false },
+};
 
 type Existing = {
   id: string;
@@ -44,20 +50,6 @@ type Context = {
   existing: Existing | null;
   blocked: string | null;
 };
-
-const Chevron = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="m15 18-6-6 6-6" />
-  </svg>
-);
 
 function toValues(e: Existing): ReviewValues {
   return {
@@ -85,11 +77,21 @@ export default async function ReviewPage({ params }: { params: Promise<{ slug: s
   const profile = platformPath("p", ctx.provider.slug);
   const e = ctx.existing;
   const editable = e ? stillOpen(e.editable_until) : false;
+  // Trades › trade › business › Leave a review, as on the profile. Plain links: leaving the form is a full page load.
+  const slugs = new Map(
+    (await listCategoryGroups()).flatMap(({ categories }) => categories.map((c) => [c.id, c.slug] as const)),
+  );
+  const trade = ctx.categories.find((c) => slugs.has(c.id));
   const back = (
-    <a href={profile} className="back press">
-      <Chevron />
-      {name}
-    </a>
+    <Breadcrumbs
+      plain
+      trail={[
+        { name: "Trades", path: platformPath() },
+        ...(trade ? [{ name: trade.name, path: platformPath("c", slugs.get(trade.id)!) }] : []),
+        { name, path: profile },
+        { name: e ? "Your review" : "Leave a review", path: platformPath("p", ctx.provider.slug, "review") },
+      ]}
+    />
   );
 
   if (!e && ctx.blocked) {

@@ -7,12 +7,12 @@ import { platformPath } from "@/lib/paths";
 export function BrandBar() {
   return (
     <header className="bar">
-      <Link href={platformPath()} className="brand press" aria-label="Bolton Vouched home">
+      <Link href={platformPath()} className="brand press">
         <span className="mono" aria-hidden="true">
           <BrandMark />
         </span>
         <span className="word">
-          Bolton Vouched<small>Local trades &amp; services</small>
+          Bolton Vouched <small>Local trades &amp; services</small>
         </span>
       </Link>
       <div className="bar-actions">

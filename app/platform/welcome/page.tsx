@@ -5,7 +5,11 @@ import { requireSignedIn } from "@/lib/auth";
 import { safeNext } from "@/lib/safe-next";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Welcome | Bolton Vouched", robots: { index: false } };
+export const metadata: Metadata = {
+  title: "Welcome | Bolton Vouched",
+  description: "Choose the name shown with your reviews on Bolton Vouched.",
+  robots: { index: false },
+};
 
 export default async function WelcomePage({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
   const raw = (await searchParams).next;

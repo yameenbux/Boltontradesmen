@@ -22,10 +22,10 @@ export function absoluteUrl(path: string, base: string = siteUrl()): string {
   return new URL(path, `${base}/`).toString();
 }
 
-/** Paths crawlers must not visit. The consent links are private tokens; admin and the API are not content. */
-export const DISALLOWED_PATHS = ["/admin", "/api/", "/platform/consent/"] as const;
+/** Paths crawlers must not visit. Consent and link URLs carry private tokens; admin and the API are not content. */
+export const DISALLOWED_PATHS = ["/admin", "/api/", "/platform/consent/", "/platform/link/"] as const;
 
-export const POLICY_PATHS = ["/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy"] as const;
+export const POLICY_PATHS = ["/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy", "/cookies"] as const;
 
 export function buildRobots(base: string = siteUrl()): MetadataRoute.Robots {
   return {
@@ -48,7 +48,7 @@ const latest = (dates: (string | null | undefined)[]): Date | undefined => {
 
 const providerUpdated = (p: SitemapProvider) => latest([p.createdAt, p.lastReviewAt]);
 
-/** "/", "/platform", categories with live providers, every live provider, then the policy pages. */
+/** "/", "/get-listed", "/platform", categories with live providers, every live provider, then the policy pages. */
 export function buildSitemap(
   { categories, providers }: { categories: SitemapCategory[]; providers: SitemapProvider[] },
   base: string = siteUrl(),
@@ -60,6 +60,7 @@ export function buildSitemap(
   const allUpdated = latest(providers.map((p) => providerUpdated(p)?.toISOString()));
   const entries: MetadataRoute.Sitemap = [
     { url: url("/"), changeFrequency: "monthly", priority: 1 },
+    { url: url("/get-listed"), changeFrequency: "yearly", priority: 0.5 },
     withDate({ url: url(platformPath()), changeFrequency: "daily", priority: 0.9 }, allUpdated),
   ];
 
@@ -232,5 +233,21 @@ export function providerJsonLd(
     areaServed: p.areas.length
       ? p.areas.map((a) => ({ "@type": "Place", name: `${a}, Bolton` }))
       : [{ "@type": "City", name: "Bolton" }],
+  };
+}
+
+export type Crumb = { name: string; path: string };
+
+/** BreadcrumbList for the trail shown at the top of a page (components/Breadcrumbs.tsx), with absolute URLs. */
+export function breadcrumbJsonLd(crumbs: Crumb[], base: string = siteUrl()) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: c.name,
+      item: absoluteUrl(c.path, base),
+    })),
   };
 }

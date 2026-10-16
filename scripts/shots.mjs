@@ -5,8 +5,9 @@
 //
 // Data: supabase/tests/fixtures/e2e.sql (via scripts/e2e-prepare.sh, which refuses non-local databases) plus the made-up
 // sample listings in scripts/shots-demo.sql. No real people or numbers appear. Phones are 390x844 at 2x, light theme.
-// Output: public/shots/*.webp (encoded by Chromium itself, so no image libraries) and public/social.png (1200x630).
+// Output: public/shots/*.webp (encoded by Chromium itself) and public/social.png (1200x630, re-encoded by sharp).
 import { chromium } from "@playwright/test";
+import sharp from "sharp";
 import { execFileSync, spawn } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -187,7 +188,12 @@ async function renderSocial(browser) {
   if (!(await page.evaluate(() => document.fonts.check('16px "Gloock"')))) {
     throw new Error("Gloock did not load; check network access to fonts.googleapis.com");
   }
-  await page.screenshot({ path: join(ROOT, "public", "social.png"), type: "png" });
+  // Chromium's full-colour PNG is about 360 KB; a dithered 256-colour PNG at top quality looks the same and is about
+  // 110 KB, so WhatsApp and friends fetch the preview fast (a lossless re-encode only reaches about 340 KB).
+  const png = await page.screenshot({ type: "png" });
+  await sharp(png)
+    .png({ palette: true, quality: 100, effort: 10, compressionLevel: 9 })
+    .toFile(join(ROOT, "public", "social.png"));
   await page.close();
   console.log(`wrote public/social.png (${Math.round(statSync(join(ROOT, "public", "social.png")).size / 1024)} KB)`);
 }

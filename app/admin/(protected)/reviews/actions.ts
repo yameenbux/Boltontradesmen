@@ -17,7 +17,7 @@ const text = (fd: FormData, k: string) => {
 };
 const id = z.string().regex(ID_PATTERN);
 const REASON = "Enter a reason. It's kept in the audit log.";
-const QUEUES = ["/admin", "/admin/reviews", "/admin/flags", "/admin/proofs"];
+const QUEUES = ["/admin", "/admin/reviews", "/admin/flags", "/admin/proofs", "/admin/requests"];
 
 const FRIENDLY: Record<string, string> = {
   "transition not allowed": "That review has already been dealt with. Refresh the page.",
@@ -169,14 +169,18 @@ export async function tidySignInRecords(_prev: FormState, _fd: FormData): Promis
   };
   const records = n("email_requests") + n("phone_requests") + n("code_attempts");
   const accounts = n("unused_accounts");
-  if (records === 0 && accounts === 0) {
+  const requests = n("listing_requests");
+  if (records === 0 && accounts === 0 && requests === 0) {
     return { ok: true, message: "Nothing to tidy: no sign-in records are due for deletion." };
   }
+  const listing = requests
+    ? ` Also deleted ${requests} listing ${requests === 1 ? "request" : "requests"} over 90 days old.`
+    : "";
   return {
     ok: true,
     message:
       `Deleted ${records} sign-in ${records === 1 ? "record" : "records"} over 30 days old and ` +
-      `${accounts} unused ${accounts === 1 ? "account" : "accounts"} over 24 hours old.`,
+      `${accounts} unused ${accounts === 1 ? "account" : "accounts"} over 24 hours old.${listing}`,
   };
 }
 

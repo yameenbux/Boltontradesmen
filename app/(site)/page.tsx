@@ -5,6 +5,7 @@ import {
   CONTACT_EMAIL,
   DECK,
   FAQ,
+  GET_LISTED,
   LISTING_TICKET,
   LISTING_WHATSAPP,
   MAILTO,
@@ -203,17 +204,17 @@ export default function ShowcasePage() {
 
           <ul className="s-trio">
             <li className="reveal">
-              <h3>Find by trade</h3>
+              <h2>Find by trade</h2>
               <p>From plumbers and sparkies to cakes and bouncy castles, sorted for your part of Bolton.</p>
             </li>
             <li className="reveal" style={d(0.1)}>
-              <h3>Would they use them again?</h3>
+              <h2>Would they use them again?</h2>
               <p>
                 One honest number from people who&apos;ve had the work done, not a wall of stars.
               </p>
             </li>
             <li className="reveal" style={d(0.2)}>
-              <h3>Call or WhatsApp</h3>
+              <h2>Call or WhatsApp</h2>
               <p>Straight from their page, in one tap. No account, no forms, nobody in the middle.</p>
             </li>
           </ul>
@@ -359,14 +360,22 @@ export default function ShowcasePage() {
               <div className="s-listme reveal">
                 <h3>Want to be listed?</h3>
                 <p>
-                  Raise a support ticket by emailing <a href={LISTING_TICKET}>{CONTACT_EMAIL}</a> or on WhatsApp at{" "}
+                  Fill in a short form and we&apos;ll WhatsApp or call you within 2 working days. You&apos;ll see your
+                  listing before anyone else does.
+                </p>
+                <p>
+                  Prefer to message? Raise a support ticket by emailing <a href={LISTING_TICKET}>{CONTACT_EMAIL}</a> or
+                  on WhatsApp at{" "}
                   <a href={LISTING_WHATSAPP} target="_blank" rel="noopener noreferrer">
                     {SUPPORT_WHATSAPP_DISPLAY}
                   </a>{" "}
-                  with your name, trade and the areas you cover. You&apos;ll see your listing before anyone else does.
+                  with your name, trade and the areas you cover.
                 </p>
                 <div className="s-listme-ctas">
-                  <a href={LISTING_WHATSAPP} target="_blank" rel="noopener noreferrer" className="s-btn s-btn-primary">
+                  <Link href={GET_LISTED} className="s-btn s-btn-primary">
+                    <Icon name="check" /> Request a listing
+                  </Link>
+                  <a href={LISTING_WHATSAPP} target="_blank" rel="noopener noreferrer" className="s-btn s-btn-ghost">
                     <Icon name="whatsapp" /> WhatsApp us
                   </a>
                   <a href={LISTING_TICKET} className="s-btn s-btn-ghost">

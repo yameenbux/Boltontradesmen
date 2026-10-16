@@ -31,7 +31,7 @@ At whoever hosts the DNS for **ysbdesigns.uk**:
 | CNAME | `boltonvouched` | `31j7frao.up.railway.app` |
 | TXT | `_railway-verify.boltonvouched` | `railway-verify=422d1dc66d31559fd80b00c45c4061796d753e0032be83d1b4bd996db048b9ef` |
 
-The CNAME currently points at `yameenbux.github.io` (GitHub Pages) — **replace** it. Then in GitHub → repo **Settings → Pages**, remove the custom domain / turn Pages off (the app can't run on Pages).
+The CNAME currently points at the old GitHub Pages address (`….github.io`) — **replace** it. Then in GitHub → repo **Settings → Pages**, remove the custom domain / turn Pages off (the app can't run on Pages).
 
 When Railway shows the domain as active (usually minutes, up to an hour), change one Railway variable:
 `NEXT_PUBLIC_SITE_URL` → `https://boltonvouched.ysbdesigns.uk`
@@ -63,6 +63,7 @@ The reviews and phone sign-in release needs these database changes in production
 15. `20261012000016_review2_minors.sql` — confirmed-mobile check, report limit, the admin can't delete itself.
 16. `20261012000017_owner_decisions.sql` — 5 wrong group codes per person a day; number Lookups count towards the £20 monthly cap (`lookup_cost_gbp`, £0.01); proof files can be deleted 12 months after they're checked.
 17. **Plan 2b (free sign-in):** paste the whole of `docs/launch/plan-2b-production.sql` **once** and **Run** (it's migrations 000018 onwards in one transaction, ending with a check that fails loudly if anything is missing; it should say `Plan 2b database changes applied` with the number of migrations in it). Do this before Plan 2b is merged to `main`, after Step 3b's settings.
+18. **Launch checklist (Get listed form):** after step 17, paste the whole of `docs/launch/launch-checklist-production.sql` **once** and **Run** (migration 000026 onwards in one transaction; it refuses to run, changing nothing, if step 17 hasn't been done). It should say `Launch checklist database changes applied` with the number of migrations in it. Do this before the launch checklist branch is merged to `main`: the /get-listed form needs it.
 
 Check afterwards: `select proname from pg_proc where proname in ('otp_approve','sms_hook_gate','submit_review','delete_my_account','otp_verify_gate','proof_files_due');` returns six rows, and `select pg_get_function_identity_arguments('public.submit_review'::regproc);` shows `p_uid uuid, p jsonb, p_device_hash text`.
 
@@ -103,7 +104,7 @@ Without this, a script can ask for sign-in codes all day and use up Resend's 100
 ## Step 4 — Sign in and add traders
 
 - Go to `/admin` on the site (e.g. https://boltonvouched.ysbdesigns.uk/admin).
-- Email: **yameen@ysbdesigns.uk** · Password: sent to you in the chat (not stored in this repo).
+- Email and password: the admin account you were given in the chat (neither is stored in this repo).
 - **Add provider** → name, business, trade(s), areas, mobile, WhatsApp → Save. They start as **invited**.
 - Gas & boilers needs a Gas Safe check recorded first (number + expiry); driving instructors need a DVSA ADI check.
 - **Copy consent link** → send it with message A below.
@@ -114,16 +115,16 @@ Without this, a script can ask for sign-in codes all day and use up Resend's 100
 
 ### A. To each trader, one-to-one (consent first)
 
-> Alright [Name], it's Yameen from the Bolton Tradesmen group.
+> Alright [Name], it's the Bolton Vouched team, from the Bolton Tradesmen group.
 >
-> I've launched Bolton Vouched, a free directory for the group so people can find you and contact you straight away. I'd like to list you.
+> We've launched Bolton Vouched, a free directory for the group so people can find you and contact you straight away. We'd like to list you.
 >
 > This link shows exactly how you'll appear (name, trade, areas and Call/WhatsApp buttons; your number isn't shown on the page). If you're happy, tap "I agree":
 > [CONSENT LINK]
 >
-> Fair warning: people who've used you can leave reviews, and I won't remove one just because it's unflattering, only if it's fake or abusive. You can reply to any review: I'll send you a private sign-in link for your listing. And you can come off any time.
+> Fair warning: people who've used you can leave reviews, and we won't remove one just because it's unflattering, only if it's fake or abusive. You can reply to any review: we'll send you a private sign-in link for your listing. And you can come off any time.
 >
-> Your basic listing is free, no catch. Any questions just message me.
+> Your basic listing is free, no catch. Any questions, message us on this number or email support@ysbdesigns.uk.
 
 ### B. To each trader once they're live
 
@@ -131,9 +132,9 @@ Without this, a script can ask for sign-in codes all day and use up Resend's 100
 >
 > Your page: [PROFILE LINK — e.g. https://boltonvouched.ysbdesigns.uk/platform/p/ace-plumbing]
 >
-> People can now find you and ring or WhatsApp you straight from it. Your place in the list comes from what reviewers say about the quality of your work; nobody can pay to jump ahead. Reviews are open, so share your link with happy customers and ask them to leave one. Ask me for your sign-in link to reply to reviews.
+> People can now find you and ring or WhatsApp you straight from it. Your place in the list comes from what reviewers say about the quality of your work; nobody can pay to jump ahead. Reviews are open, so share your link with happy customers and ask them to leave one. Ask us for your sign-in link to reply to reviews.
 >
-> If anything on your listing needs changing, just drop me a message.
+> If anything on your listing needs changing, just drop us a message here or email support@ysbdesigns.uk.
 
 ### C. To the WhatsApp group
 
@@ -149,7 +150,7 @@ Without this, a script can ask for sign-in codes all day and use up Resend's 100
 > • Leave a review for someone you've used: sign in with Google or your email, takes a minute
 > • Tip: tap "Add it to your phone" on the page and it works like an app
 >
-> **Traders in the group:** if you'd like to be added (a basic listing is free), raise a support ticket by emailing **support@ysbdesigns.uk** or on WhatsApp at **07466 487591** with your name, trade and the areas you cover (or tap "WhatsApp us" or "Email a ticket" on the site) and the Bolton Vouched team will get you on.
+> **Traders in the group:** if you'd like to be added (a basic listing is free), raise a support ticket by emailing **support@ysbdesigns.uk** or on WhatsApp at **07466 487591** with your name, trade and the areas you cover (or fill in the form at https://boltonvouched.ysbdesigns.uk/get-listed) and the Bolton Vouched team will get you on.
 >
 > It's brand new, so let us know what you think. Still ask in here as normal; we'll keep adding the people you recommend.
 

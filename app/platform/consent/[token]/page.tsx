@@ -15,6 +15,7 @@ import { InvalidLink } from "./InvalidLink";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Your Bolton Vouched listing",
+  description: "Check the details of your Bolton Vouched listing and say yes to going live.",
   robots: { index: false, follow: false },
 };
 

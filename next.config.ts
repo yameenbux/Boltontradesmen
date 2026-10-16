@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { securityHeaders } from "./lib/security-headers";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -14,6 +15,10 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  async headers() {
+    // HSTS, CSP and the other hardening headers on every route; see lib/security-headers.ts.
+    return securityHeaders();
   },
   async redirects() {
     return [

@@ -4,70 +4,102 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-// Plan 2b Task 12: the one-paste production script is generated from the migrations and must stay in step with them.
+// Plan 2b Task 12: the one-paste production scripts are generated from the migrations and must stay in step with them.
+// Plan 2b is 000018..000025 (closed); the launch checklist is 000026 onwards, so a new migration can't be left out.
 const root = process.cwd();
-const committed = path.join(root, "docs/launch/plan-2b-production.sql");
-const FROM = "20261012000018";
-
-// Every migration on this branch from 000018 on, so a new migration can't be left out of the paste.
-const migrations = readdirSync(path.join(root, "supabase/migrations"))
-  .filter((f) => f.endsWith(".sql") && f.slice(0, 14) >= FROM)
+const all = readdirSync(path.join(root, "supabase/migrations"))
+  .filter((f) => f.endsWith(".sql"))
   .sort();
-const TO = migrations[migrations.length - 1].slice(0, 14);
+const NEWEST = all[all.length - 1].slice(0, 14);
 
-function generate(): string {
-  const out = path.join(mkdtempSync(path.join(tmpdir(), "bv-prod-sql-")), "out.sql");
-  execFileSync("node", ["scripts/build-production-sql.mjs", "--from", FROM, "--to", TO, "--out", out], { cwd: root });
-  return readFileSync(out, "utf8");
+const SCRIPTS = [
+  {
+    file: "docs/launch/plan-2b-production.sql",
+    preset: "plan-2b",
+    from: "20261012000018",
+    to: "20261012000025",
+    functions: ["email_gate", "email_verify_gate", "claim_trader_link", "admin_list_reviews_pending", "tidy_sign_in_records"],
+    requires: null,
+  },
+  {
+    file: "docs/launch/launch-checklist-production.sql",
+    preset: "launch-checklist",
+    from: "20261012000026",
+    to: NEWEST,
+    functions: ["submit_listing_request", "admin_list_listing_requests", "admin_set_listing_request_status"],
+    requires: "20261012000025",
+  },
+];
+
+for (const s of SCRIPTS) {
+  const migrations = all.filter((f) => f.slice(0, 14) >= s.from && f.slice(0, 14) <= s.to);
+
+  function generate(): string {
+    const out = path.join(mkdtempSync(path.join(tmpdir(), "bv-prod-sql-")), "out.sql");
+    execFileSync(
+      "node",
+      ["scripts/build-production-sql.mjs", "--preset", s.preset, "--from", s.from, "--to", s.to, "--out", out],
+      { cwd: root },
+    );
+    return readFileSync(out, "utf8");
+  }
+
+  describe(s.file, () => {
+    const sql = readFileSync(path.join(root, s.file), "utf8");
+    const statements = sql
+      .split("\n")
+      .filter((l) => l.trim() && !l.trim().startsWith("--"));
+
+    it("covers at least one migration", () => {
+      expect(migrations.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("is exactly what the generator writes from the migrations (regenerate it after changing one)", () => {
+      expect(generate()).toBe(sql);
+    });
+
+    it("is one transaction: its SQL starts with begin; and commits before the closing check", () => {
+      expect(statements[0]).toBe("begin;");
+      const commit = statements.lastIndexOf("commit;");
+      expect(commit).toBeGreaterThan(0);
+      expect(statements.slice(commit + 1).join("\n")).toMatch(/^select /);
+      expect(statements.filter((l) => /^\s*(begin|commit|rollback)\s*;/i.test(l))).toEqual(["begin;", "commit;"]);
+    });
+
+    it("contains every migration's banner, in order, and records each in schema_migrations", () => {
+      let at = -1;
+      for (const f of migrations) {
+        const banner = sql.indexOf(`-- ==== ${f}`);
+        expect(banner, f).toBeGreaterThan(at);
+        at = banner;
+        const version = f.slice(0, 14);
+        const name = f.slice(15, -4);
+        expect(sql).toContain(
+          `insert into supabase_migrations.schema_migrations (version, name) values ('${version}', '${name}') on conflict do nothing;`,
+        );
+      }
+    });
+
+    it("has the verification block before commit", () => {
+      const verify = sql.indexOf("do $verify$");
+      expect(verify).toBeGreaterThan(sql.lastIndexOf("-- ==== "));
+      expect(verify).toBeLessThan(sql.lastIndexOf("commit;"));
+      for (const name of s.functions) expect(sql.slice(verify)).toContain(`'${name}'`);
+    });
+
+    it("refuses to run before the script it builds on", () => {
+      const requires = sql.indexOf("do $requires$");
+      if (!s.requires) {
+        expect(requires).toBe(-1);
+        return;
+      }
+      expect(requires).toBeGreaterThan(sql.indexOf("begin;"));
+      expect(requires).toBeLessThan(sql.indexOf("-- ==== "));
+      expect(sql).toContain(`where version = '${s.requires}'`);
+    });
+
+    it("never drops or creates a trigger on auth.users", () => {
+      expect(sql).not.toMatch(/(drop|create)\s+trigger[^;]*on\s+auth\.users/i);
+    });
+  });
 }
-
-describe("docs/launch/plan-2b-production.sql", () => {
-  const sql = readFileSync(committed, "utf8");
-  const statements = sql
-    .split("\n")
-    .filter((l) => l.trim() && !l.trim().startsWith("--"));
-
-  it("covers 000018 to 000023 at least", () => {
-    expect(migrations.length).toBeGreaterThanOrEqual(6);
-    expect(TO >= "20261012000023").toBe(true);
-  });
-
-  it("is exactly what the generator writes from the migrations (regenerate it after changing one)", () => {
-    expect(generate()).toBe(sql);
-  });
-
-  it("is one transaction: its SQL starts with begin; and commits before the closing check", () => {
-    expect(statements[0]).toBe("begin;");
-    const commit = statements.lastIndexOf("commit;");
-    expect(commit).toBeGreaterThan(0);
-    expect(statements.slice(commit + 1).join("\n")).toMatch(/^select /);
-    expect(statements.filter((l) => /^\s*(begin|commit|rollback)\s*;/i.test(l))).toEqual(["begin;", "commit;"]);
-  });
-
-  it("contains every migration's banner, in order, and records each in schema_migrations", () => {
-    let at = -1;
-    for (const f of migrations) {
-      const banner = sql.indexOf(`-- ==== ${f}`);
-      expect(banner, f).toBeGreaterThan(at);
-      at = banner;
-      const version = f.slice(0, 14);
-      const name = f.slice(15, -4);
-      expect(sql).toContain(
-        `insert into supabase_migrations.schema_migrations (version, name) values ('${version}', '${name}') on conflict do nothing;`,
-      );
-    }
-  });
-
-  it("has the verification block before commit", () => {
-    const verify = sql.indexOf("do $verify$");
-    expect(verify).toBeGreaterThan(sql.lastIndexOf("-- ==== "));
-    expect(verify).toBeLessThan(sql.lastIndexOf("commit;"));
-    for (const name of ["email_gate", "email_verify_gate", "claim_trader_link", "admin_list_reviews_pending", "tidy_sign_in_records"]) {
-      expect(sql.slice(verify)).toContain(`'${name}'`);
-    }
-  });
-
-  it("never drops or creates a trigger on auth.users", () => {
-    expect(sql).not.toMatch(/(drop|create)\s+trigger[^;]*on\s+auth\.users/i);
-  });
-});

@@ -12,7 +12,11 @@ import { platformPath } from "@/lib/paths";
 import { signOutResident } from "./actions";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Your account | Bolton Vouched", robots: { index: false } };
+export const metadata: Metadata = {
+  title: "Your account | Bolton Vouched",
+  description: "Your name, your reviews and your account settings on Bolton Vouched.",
+  robots: { index: false },
+};
 
 function initialsOf(name: string): string {
   const [first, last] = name.split(" ");

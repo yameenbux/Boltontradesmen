@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Proves docs/launch/plan-2b-production.sql applies in one go to a database in production's state (all migrations
-# up to 20261012000017, with production-like rows), then runs every pgTAP test on the result. Local databases only.
+# up to 20261012000017, with production-like rows), then docs/launch/launch-checklist-production.sql after it (and
+# that the latter refuses to run first), each twice, then runs every pgTAP test on the result. Local databases only.
 #   npm run db:check-prod
 # On the local stack (psql reset, postgres is a superuser) and on the Supabase CLI stack (SUPABASE_CLI_STACK=1, as
 # in CI, where postgres doesn't own auth.users, as in production).
@@ -12,6 +13,8 @@ assert_local_db
 
 SCRIPT=docs/launch/plan-2b-production.sql
 UNTIL=20261012000017
+SCRIPT2=docs/launch/launch-checklist-production.sql
+UNTIL2=20261012000025
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
 echo "[check-prod] database at $UNTIL"
@@ -36,11 +39,16 @@ insert into public.providers (slug, business_name, phone_e164, status, consent_a
 values ('prod-check-travel', 'Prod Check Travel', '+447700900990', 'consented', now(), '{"source":"check"}'::jsonb);
 SQL
 
+echo "[check-prod] the launch checklist script refuses to run before the Plan 2b one"
+if "${PSQL[@]}" -f "$SCRIPT2" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT2 ran before $SCRIPT"; exit 1; fi
+"${PSQL[@]}" -A -t -c "select to_regclass('public.listing_requests') is null" | grep -qx t \
+  || { echo "[check-prod] the refused launch checklist script left something behind"; exit 1; }
+
 echo "[check-prod] applying $SCRIPT"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT")"
 echo "$out" | tail -1
-# Every migration after $UNTIL is in the script (tests/unit/production-sql.test.ts checks the file matches them).
-expected="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+# Every migration from $UNTIL to $UNTIL2 is in the script (tests/unit/production-sql.test.ts checks the file matches them).
+expected="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; v="${b%%_*}"; if [[ "$v" > "$UNTIL" && ! "$v" > "$UNTIL2" ]]; then echo "$b"; fi; done | wc -l | tr -d ' ')"
 echo "$out" | grep -q "^Plan 2b database changes applied|$expected\$" || { echo "[check-prod] the closing check did not report $expected migrations"; exit 1; }
 
 echo "[check-prod] applying it a second time (a re-run must not fail or change the pepper)"
@@ -48,6 +56,14 @@ pepper_before="$("${PSQL[@]}" -A -t -c "select encode(value, 'hex') from private
 "${PSQL[@]}" -A -t -f "$SCRIPT" | tail -1
 pepper_after="$("${PSQL[@]}" -A -t -c "select encode(value, 'hex') from private.secrets where key = 'identity_pepper'")"
 [ "$pepper_before" = "$pepper_after" ] || { echo "[check-prod] the pepper changed on a re-run"; exit 1; }
+
+echo "[check-prod] applying $SCRIPT2"
+out="$("${PSQL[@]}" -A -t -f "$SCRIPT2")"
+echo "$out" | tail -1
+expected2="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL2" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^Launch checklist database changes applied|$expected2\$" || { echo "[check-prod] the closing check did not report $expected2 migrations"; exit 1; }
+echo "[check-prod] applying it a second time (a re-run must not fail)"
+"${PSQL[@]}" -A -t -f "$SCRIPT2" | tail -1
 
 # The pgTAP tests expect only their own fixtures.
 "${PSQL[@]}" -c "delete from public.providers where slug = 'prod-check-travel';

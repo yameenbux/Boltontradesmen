@@ -257,6 +257,16 @@ describe("tidySignInRecords (privacy notice: sign-in records 30 days, unused acc
     });
   });
 
+  it("mentions listing requests over 90 days old when it deleted some", async () => {
+    asAdmin({ data: { email_requests: 0, phone_requests: 0, code_attempts: 0, unused_accounts: 0, listing_requests: 2 } });
+    const res = await tidySignInRecords({}, form({}));
+    expect(res).toEqual({
+      ok: true,
+      message:
+        "Deleted 0 sign-in records over 30 days old and 0 unused accounts over 24 hours old. Also deleted 2 listing requests over 90 days old.",
+    });
+  });
+
   it("says so when there was nothing to delete", async () => {
     asAdmin({ data: { email_requests: 0, phone_requests: 0, code_attempts: 0, unused_accounts: 0 } });
     const res = await tidySignInRecords({}, form({}));
