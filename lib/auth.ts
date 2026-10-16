@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { safeNext } from "@/lib/safe-next";
 import { createServerAuthClient } from "@/lib/supabase/server";
 
-// Signed-in residents and providers (phone accounts). Only the dynamic signed-in routes use these:
+// Signed-in residents and providers (Google, email-code or phone accounts). Only the dynamic signed-in routes use these:
 // they read the session cookie, which public pages must never do.
 
 export const GROUP_CODE_ERROR = "That group code isn't right. Leave it blank if you don't have one.";
@@ -21,6 +21,9 @@ export type Account = {
   deleted: boolean;
   createdAt: string;
   providers: { id: string; slug: string; businessName: string; status: string }[];
+  /** How the account signs in (private.sign_in_kind); null for an unconfirmed account. */
+  signInKind: "google" | "email" | "phone" | "admin" | null;
+  email: string | null;
 };
 
 type AccountRow = {
@@ -32,6 +35,8 @@ type AccountRow = {
   deleted: boolean;
   created_at: string;
   providers: { id: string; slug: string; business_name: string; status: string }[] | null;
+  sign_in_kind?: Account["signInKind"];
+  email?: string | null;
 };
 
 export function toAccount(row: AccountRow | null | undefined): Account | null {
@@ -50,6 +55,8 @@ export function toAccount(row: AccountRow | null | undefined): Account | null {
       businessName: p.business_name,
       status: p.status,
     })),
+    signInKind: row.sign_in_kind ?? null,
+    email: row.email ?? null,
   };
 }
 

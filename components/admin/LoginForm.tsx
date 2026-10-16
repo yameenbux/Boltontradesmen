@@ -1,13 +1,15 @@
 "use client";
 
 import { useActionState } from "react";
+import { Turnstile } from "@/components/auth/Turnstile";
 import { Button } from "@/components/ui/Button";
 import { signIn } from "@/app/admin/login/actions";
 import type { FormState } from "@/lib/admin-shared";
 
 const initial: FormState = {};
 
-export function LoginForm() {
+/** `captchaSiteKey`: Cloudflare Turnstile, needed once Supabase's CAPTCHA is on (it checks password sign-ins). */
+export function LoginForm({ captchaSiteKey = null }: { captchaSiteKey?: string | null }) {
   const [state, action, pending] = useActionState(signIn, initial);
   return (
     <form action={action} className="a-form">
@@ -24,6 +26,7 @@ export function LoginForm() {
           {state.message}
         </p>
       )}
+      <Turnstile siteKey={captchaSiteKey} resetKey={state} />
       <Button type="submit" disabled={pending}>
         {pending ? "Signing in…" : "Sign in"}
       </Button>

@@ -15,12 +15,14 @@ const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath: (...a: unknown[]) => revalidatePath(...a) }));
 
 import {
+  approveReview,
   checkProof,
   clearReview,
   deleteDueProofFiles,
   removeReply,
   removeReview,
   resolveFlag,
+  tidySignInRecords,
 } from "@/app/admin/(protected)/reviews/actions";
 
 const REVIEW = "33333333-3333-4333-8333-333333333333";
@@ -80,6 +82,34 @@ describe("removeReview", () => {
   it("shows a plain message when the database refuses", async () => {
     asAdmin({ error: { message: "transition not allowed" } });
     const res = await removeReview({}, form({ review_id: REVIEW, reason: "x" }));
+    expect(res.message).toBe("That review has already been dealt with. Refresh the page.");
+  });
+});
+
+describe("approveReview", () => {
+  it("approves a held review and revalidates the provider's page", async () => {
+    asAdmin({ data: "ace" });
+    const res = await approveReview({}, form({ review_id: REVIEW }));
+    expect(res.ok).toBe(true);
+    expect(rpc).toHaveBeenCalledWith("admin_set_review_status", {
+      p_review: REVIEW,
+      p_status: "published",
+      p_reason: null,
+    });
+    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
+    expect(revalidatePath).toHaveBeenCalledWith("/admin/reviews");
+  });
+
+  it("refuses a bad id without calling the database", async () => {
+    asAdmin();
+    const res = await approveReview({}, form({ review_id: "nope" }));
+    expect(res.ok).toBeFalsy();
+    expect(rpc).not.toHaveBeenCalledWith("admin_set_review_status", expect.anything());
+  });
+
+  it("says plainly when it was already dealt with", async () => {
+    asAdmin({ error: { message: "transition not allowed" } });
+    const res = await approveReview({}, form({ review_id: REVIEW }));
     expect(res.message).toBe("That review has already been dealt with. Refresh the page.");
   });
 });
@@ -213,5 +243,29 @@ describe("deleteDueProofFiles (proof files deleted 12 months after the check)", 
     auth.getUser.mockResolvedValue({ data: { user: null } });
     await expect(deleteDueProofFiles({}, new FormData())).rejects.toThrow("REDIRECT /admin/login");
     expect(storageRemove).not.toHaveBeenCalled();
+  });
+});
+
+describe("tidySignInRecords (privacy notice: sign-in records 30 days, unused accounts 24 hours)", () => {
+  it("runs the database tidy and says what went", async () => {
+    asAdmin({ data: { email_requests: 3, phone_requests: 0, code_attempts: 2, unused_accounts: 1 } });
+    const res = await tidySignInRecords({}, form({}));
+    expect(rpc).toHaveBeenCalledWith("tidy_sign_in_records");
+    expect(res).toEqual({
+      ok: true,
+      message: "Deleted 5 sign-in records over 30 days old and 1 unused account over 24 hours old.",
+    });
+  });
+
+  it("says so when there was nothing to delete", async () => {
+    asAdmin({ data: { email_requests: 0, phone_requests: 0, code_attempts: 0, unused_accounts: 0 } });
+    const res = await tidySignInRecords({}, form({}));
+    expect(res).toEqual({ ok: true, message: "Nothing to tidy: no sign-in records are due for deletion." });
+  });
+
+  it("shows a general error when the database refuses", async () => {
+    asAdmin({ error: { message: "boom" } });
+    const res = await tidySignInRecords({}, form({}));
+    expect(res).toEqual({ message: "Something went wrong. Please try again." });
   });
 });

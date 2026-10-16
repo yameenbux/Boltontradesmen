@@ -46,10 +46,11 @@ test("the review policy explains the quick check and Verified job", async ({ pag
   await expect(main).toContainText("Verified job");
 });
 
-test("the privacy notice covers signed-in people: Twilio and the 12 months", async ({ page }) => {
+test("the privacy notice covers signed-in people: Google, Resend and the 12 months", async ({ page }) => {
   await page.goto("/privacy");
   const main = page.locator("main");
-  await expect(main).toContainText("Twilio");
+  await expect(main).toContainText("Resend sends our sign-in emails.");
+  await expect(main).toContainText("scrambled fingerprint of your sign-in");
   await expect(main).toContainText("12 months");
   await expect(main).toContainText("Proof files are deleted 12 months after we check them.");
   await expect(main).not.toContainText("Cookies are used only for the admin login");
@@ -107,14 +108,51 @@ for (const path of ["/privacy", "/admin/login"]) {
 }
 
 // Final review 2 minors: the policies say only what the site really does.
-test("policies are precise about same-trade reviews, the mobile number and reporting", async ({ page }) => {
+test("policies are precise about same-trade reviews, sign-in details and reporting", async ({ page }) => {
   await page.goto("/fake-reviews-policy");
   await expect(page.getByRole("main")).toContainText(
-    "Providers can't review their own listing, or anyone who works in the same trade, when they sign in with the number on their listing.",
+    "Providers can't review their own listing, or anyone who works in the same trade, once they're linked to their listing.",
   );
   await page.goto("/privacy");
   await expect(page.getByRole("main")).not.toContainText("used only to send your sign-in codes");
-  await expect(page.getByRole("main")).toContainText("to link you to your listing");
+  await expect(page.getByRole("main")).toContainText("We use them to sign you in and to limit sign-in attempts.");
   await page.goto("/terms");
   await expect(page.getByRole("main")).toContainText("tap Report on that review (you need to be signed in), or email");
+});
+
+// Plan 2b: sign-in moved to Google and email codes; the privacy notice names the new processors.
+test("the privacy notice names Google and Resend, and not Twilio", async ({ page }) => {
+  await page.goto("/privacy");
+  const main = page.getByRole("main");
+  await expect(main).toContainText("Resend");
+  await expect(main).toContainText("Google account ID");
+  await expect(main).not.toContainText("Twilio");
+});
+
+test("the fake reviews policy says email-only reviews are checked first", async ({ page }) => {
+  await page.goto("/fake-reviews-policy");
+  await expect(page.getByRole("main")).toContainText("checked by us before they appear");
+  await expect(page.getByRole("main")).toContainText("sign-in moved from mobile numbers to Google and email codes");
+});
+
+// Plan 2b final review I1: the notice says sign-in records hold the address or number as typed, and how long.
+test("the privacy notice is plain about sign-in records and unused accounts", async ({ page }) => {
+  await page.goto("/privacy");
+  const main = page.getByRole("main");
+  await expect(main).not.toContainText("a scrambled form of your email address");
+  await expect(main).toContainText("the email address or mobile number that was entered");
+  await expect(main).toContainText("kept for up to 30 days");
+  await expect(main).toContainText("deleted after 24 hours");
+  await expect(main).not.toContainText("35 days");
+});
+
+// Final review M4, M5: no overclaims about surnames, Google's role or the fingerprint.
+test("the privacy notice is accurate about surnames, Google and the sign-in fingerprint", async ({ page }) => {
+  await page.goto("/privacy");
+  const main = page.getByRole("main");
+  await expect(main).not.toContainText("we do not keep your full surname");
+  await expect(main).toContainText("our sign-in provider holds the name Google shares");
+  await expect(main).toContainText("Google is an independent controller for your Google account");
+  await expect(main).not.toContainText("can't be turned back into them");
+  await expect(main).toContainText("made with a secret key, and used only to recognise the same sign-in");
 });

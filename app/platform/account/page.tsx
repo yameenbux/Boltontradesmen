@@ -5,7 +5,7 @@ import { MyReviews } from "@/components/account/MyReviews";
 import { GroupCodeForm } from "@/components/auth/GroupCodeForm";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
-import type { MyReviewRow } from "@/lib/account-text";
+import { type MyReviewRow, SIGN_IN_RETENTION_TEXT } from "@/lib/account-text";
 import { requireMember } from "@/lib/auth";
 import { OTHER_DISTRICT } from "@/lib/districts";
 import { platformPath } from "@/lib/paths";
@@ -86,9 +86,8 @@ export default async function AccountPage() {
         <div>
           <h2 id="delete-title">Delete account</h2>
           <p className="lede">
-            Your reviews and replies are taken down and your name is removed. We keep your mobile number privately
-            for 12 months in case of legal claims, as the <a href="/privacy">privacy notice</a> says, then delete it.
-            Any listing of yours stays up.
+            Your reviews and replies are taken down and your name is removed. {SIGN_IN_RETENTION_TEXT} The{" "}
+            <a href="/privacy">privacy notice</a> has the detail. Any listing of yours stays up.
           </p>
         </div>
         <details className="danger-zone">

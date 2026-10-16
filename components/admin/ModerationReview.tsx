@@ -60,6 +60,7 @@ export function ModerationReview({
           {r.business_name}
         </a>
         {r.status === "under_check" && <Pill tone="gold">Under check</Pill>}
+        {r.status === "pending" && <Pill tone="gold">Waiting for approval</Pill>}
       </div>
       <p className="mod-who">
         <b>{r.reviewer_name}</b> · {accountAge(r.account_created_at, ageNow)} · {r.reviewer_review_count} review

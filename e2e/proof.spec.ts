@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { signInWithPhone } from "./helpers/phone";
+import { signInAsGoogle } from "./helpers/email";
+import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
 
 // Proof upload needs Supabase Storage, which only the CLI stack (CI) has. The local stack has no Storage, so this
 // spec is skipped there; the stripping itself is unit-tested (tests/unit/proofs.test.ts).
@@ -8,7 +9,7 @@ test.skip(process.env.SUPABASE_CLI_STACK !== "1", "needs Supabase Storage (CI's 
 test("a resident attaches a photo of the invoice; it is stored privately and the form shows it was sent", async ({
   page,
 }) => {
-  await signInWithPhone(page, "07700 900405", {
+  await signInAsGoogle(page, `jan@${E2E_EMAIL_DOMAIN}`, {
     first: "Jan",
     surname: "Price",
     next: "/platform/p/e2e-tidy-vans/review",

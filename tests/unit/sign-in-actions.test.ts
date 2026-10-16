@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const auth = {
   verifyOtp: vi.fn(),
@@ -8,9 +8,16 @@ const auth = {
   signOut: vi.fn(),
 };
 const rpc = vi.fn();
-vi.mock("@/lib/supabase/server", () => ({ createServerAuthClient: async () => ({ auth, rpc }) }));
+// The code is sent from the service client (Supabase's CAPTCHA lets the secret key through; this server checks
+// Turnstile itself). The cookie client must never send one.
+const cookieSignInWithOtp = vi.fn();
+vi.mock("@/lib/supabase/server", () => ({
+  createServerAuthClient: async () => ({ auth: { ...auth, signInWithOtp: cookieSignInWithOtp }, rpc }),
+}));
 const serviceRpc = vi.fn();
-vi.mock("@/lib/supabase/service", () => ({ createServiceClient: () => ({ rpc: serviceRpc }) }));
+vi.mock("@/lib/supabase/service", () => ({
+  createServiceClient: () => ({ rpc: serviceRpc, auth: { signInWithOtp: auth.signInWithOtp } }),
+}));
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ "x-forwarded-for": "9.9.9.9, 10.0.0.1" }) }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
@@ -41,12 +48,52 @@ const ACCOUNT = {
 };
 
 beforeEach(() => {
+  // The phone path's tests run with the switch on; "phone sign-in switched off" below stubs it off.
+  vi.stubEnv("SIGN_IN_PHONE", "on");
   process.env.DEVICE_HASH_SECRET = "test-secret";
   process.env.TWILIO_LOOKUP_STUB = "1";
   for (const f of Object.values(auth)) f.mockReset();
+  cookieSignInWithOtp.mockReset();
   rpc.mockReset();
   serviceRpc.mockReset();
   vi.spyOn(console, "error").mockImplementation(() => {});
+});
+
+afterEach(() => vi.unstubAllEnvs());
+
+describe("phone sign-in switched off", () => {
+  beforeEach(() => vi.stubEnv("SIGN_IN_PHONE", "off"));
+
+  it("requestCode refuses with the phone_off copy without calling Supabase or the gate", async () => {
+    const res = await requestCode(
+      { step: "phone", next: "/platform/account" },
+      form({ phone: "07700 900401", next: "/platform/account" }),
+    );
+    expect(res).toEqual({ step: "phone", next: "/platform/account", error: SIGN_IN_ERRORS.phone_off });
+    expect(SIGN_IN_ERRORS.phone_off).toBe(
+      "Sign-in by text is switched off. Please continue with Google or use an email code.",
+    );
+    expect(auth.signInWithOtp).not.toHaveBeenCalled();
+    expect(serviceRpc).not.toHaveBeenCalled();
+  });
+
+  it("verifyCode refuses with the phone_off copy without calling Supabase or the limiter", async () => {
+    const res = await verifyCode(
+      { step: "code", phone: "+447700900401", next: "/platform/p/ace/review" },
+      form({ phone: "+447700900401", code: "123456", next: "//evil.example" }),
+    );
+    expect(res).toEqual({ step: "phone", next: "/platform/account", error: SIGN_IN_ERRORS.phone_off });
+    expect(auth.verifyOtp).not.toHaveBeenCalled();
+    expect(serviceRpc).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("treats an unset switch as off", async () => {
+    vi.stubEnv("SIGN_IN_PHONE", undefined);
+    const res = await requestCode({ step: "phone", next: "/platform/account" }, form({ phone: "07700 900401" }));
+    expect(res.error).toBe(SIGN_IN_ERRORS.phone_off);
+    expect(serviceRpc).not.toHaveBeenCalled();
+  });
 });
 
 describe("verifyCode", () => {

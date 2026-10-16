@@ -21,9 +21,9 @@ export default function ReviewPolicyPage() {
       <H2>Who can leave a review</H2>
       <List
         items={[
-          "Anyone who has had work done by a provider on the site, and signs in with their own UK mobile number. Internet and virtual numbers can't sign in.",
+          "Anyone who has had work done by a provider on the site and signs in with Google or a code sent to their email. If you sign in with an email code, we check your review before it appears.",
           "One review per provider per person. You can edit it instead of posting another.",
-          "Providers can't review their own listing, or anyone who works in the same trade as them, when they sign in with the number on their listing.",
+          "Providers can't review their own listing, or anyone who works in the same trade as them, once they're linked to their listing.",
           "A new account can post one review in its first 24 hours.",
         ]}
       />

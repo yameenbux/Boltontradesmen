@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { phoneSignInEnabled } from "@/lib/sign-in-methods";
 import { handleSendSmsHook, sendSms } from "@/lib/sms-hook";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -7,6 +8,13 @@ import { createServiceClient } from "@/lib/supabase/service";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  // Phone sign-in switched off (SIGN_IN_PHONE): refuse before the signature check and before any RPC.
+  if (!phoneSignInEnabled()) {
+    return NextResponse.json(
+      { error: { http_code: 403, message: "Phone sign-in is switched off" } },
+      { status: 403, headers: { "Cache-Control": "no-store" } },
+    );
+  }
   const raw = await request.text();
   const res = await handleSendSmsHook(request.headers, raw, {
     secret: process.env.SUPABASE_SMS_HOOK_SECRET,

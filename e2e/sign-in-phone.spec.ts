@@ -1,5 +1,20 @@
 import { expect, test } from "@playwright/test";
+
+// Runs in the "phone" Playwright project: the app on :3001 with SIGN_IN_PHONE=on.
 import { signInWithPhone } from "./helpers/phone";
+
+test("with phone sign-in on, the page offers Google, an email code and a mobile number", async ({ page }) => {
+  await page.goto("/platform/sign-in");
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
+  await expect(page.getByLabel("Your email address")).toBeVisible();
+  await expect(page.getByLabel("Your mobile number")).toBeVisible();
+  const [e, p] = await Promise.all([
+    page.getByLabel("Your email address").boundingBox(),
+    page.getByLabel("Your mobile number").boundingBox(),
+  ]);
+  expect(e!.y).toBeLessThan(p!.y);
+  await expect(page.getByText("or use your mobile")).toBeVisible();
+});
 
 test("a new resident signs in with a code and sets up their name", async ({ page }) => {
   await page.goto("/platform/sign-in");
@@ -48,7 +63,7 @@ for (const [number, copy] of [
 
 test("a crafted next never leaves the platform", async ({ page }) => {
   await signInWithPhone(page, "07700 900403", { next: "//evil.example" });
-  await expect(page).toHaveURL(/^http:\/\/localhost:3000\/platform\/account$/);
+  await expect(page).toHaveURL(/^http:\/\/localhost:3001\/platform\/account$/);
 });
 
 test("signed-out visitors to the account page are sent to sign in", async ({ page }) => {

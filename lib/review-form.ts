@@ -15,7 +15,10 @@ export const PROOF_TOO_BIG = "Files must be 10 MB or smaller.";
 // Ten or more digits, however they are spaced or punctuated, is a phone number (same pattern as the database).
 const PHONE_IN_TEXT = /([0-9][ ().-]*){10,}/;
 
-export type ReviewStatus = "published" | "under_check";
+export type ReviewStatus = "pending" | "published" | "under_check";
+
+/** A review by an email-only account waits for the admin (status pending): the reviewer's words, verbatim. */
+export const HELD_REVIEW_LABEL = "Waiting for a quick check — it'll appear once approved";
 
 export type ReviewErrorCode =
   | "own_listing"
@@ -58,7 +61,10 @@ export const ERROR_FIELD: Partial<Record<ReviewErrorCode, string>> = {
   tidy_required: "tidy",
 };
 
-export function statusLabel(status: ReviewStatus): "Published" | "Published, under a quick check" {
+export function statusLabel(
+  status: ReviewStatus,
+): "Published" | "Published, under a quick check" | typeof HELD_REVIEW_LABEL {
+  if (status === "pending") return HELD_REVIEW_LABEL;
   return status === "under_check" ? "Published, under a quick check" : "Published";
 }
 

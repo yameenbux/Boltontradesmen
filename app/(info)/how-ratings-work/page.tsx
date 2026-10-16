@@ -51,7 +51,8 @@ export default function HowRatingsWorkPage() {
 
       <H2>Which reviews count</H2>
       <p>
-        Every review comes from someone who signed in with a UK mobile number. Published reviews count, and so do reviews
+        Every review comes from someone who signed in with Google or an email code. Reviews from email-code sign-ins count only
+        after we&apos;ve checked them. Published reviews count, and so do reviews
         marked &ldquo;Under check&rdquo; while we look at them. A review the admin removes stops counting. The{" "}
         <a href="/review-policy">review policy</a> and <a href="/fake-reviews-policy">fake reviews policy</a> explain the
         rules.

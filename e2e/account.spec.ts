@@ -1,11 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { signInWithPhone, TEST_OTP } from "./helpers/phone";
+import { signInAsGoogle, signInWithEmail } from "./helpers/email";
+import { E2E_EMAIL_DOMAIN, latestCode } from "./helpers/mailbox";
 import { answer } from "./helpers/review";
 
 test("a resident sees their review under My reviews, deletes their account, and the review comes down", async ({
   page,
 }) => {
-  await signInWithPhone(page, "07700 900404", {
+  await signInAsGoogle(page, `del@${E2E_EMAIL_DOMAIN}`, {
     first: "Del",
     surname: "Morris",
     next: "/platform/p/e2e-neat-sparks/review",
@@ -38,18 +39,19 @@ test("a resident sees their review under My reviews, deletes their account, and 
   await page.goto("/platform/p/e2e-neat-sparks");
   await expect(page.getByText("Swapped two sockets. Fine, a bit slow.")).toHaveCount(0);
 
-  // Signed out: the account page asks for sign-in, and the same number starts a fresh account.
+  // Signed out: the account page asks for sign-in, and the same address starts a fresh account.
   await page.goto("/platform/account");
   await expect(page).toHaveURL(/\/platform\/sign-in/);
-  await page.getByLabel("Your mobile number").fill("07700 900404");
-  await page.getByRole("button", { name: "Send me a code" }).click();
-  await page.getByLabel("6-digit code").fill(TEST_OTP);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByLabel("Your email address").fill(`del@${E2E_EMAIL_DOMAIN}`);
+  const sentAfter = new Date(Date.now() - 1000);
+  await page.getByRole("button", { name: "Email me a code" }).click();
+  await page.getByLabel("6-digit code").fill(await latestCode(`del@${E2E_EMAIL_DOMAIN}`, sentAfter));
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/platform\/welcome/);
 });
 
 test("after 5 wrong group codes in a day, the account page says so plainly", async ({ page }) => {
-  await signInWithPhone(page, "07700 900411", { first: "Gil", surname: "Hart" });
+  await signInWithEmail(page, `gil@${E2E_EMAIL_DOMAIN}`, { first: "Gil", surname: "Hart" });
   await expect(page).toHaveURL(/\/platform\/account$/);
   const group = page.getByRole("region", { name: "In the WhatsApp group?" });
   for (let i = 1; i <= 5; i++) {

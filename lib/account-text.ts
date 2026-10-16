@@ -6,6 +6,9 @@ export const DELETE_RETRY_MESSAGE =
   "Your reviews are down, but we couldn't finish deleting your account. Please try again.";
 export const DELETE_FAILED_MESSAGE = "Something went wrong. Nothing was deleted. Please try again.";
 export const DELETE_CONFIRM_ERROR = "Tick the box to confirm.";
+/** What we keep after an account is deleted (the privacy notice has the long form). */
+export const SIGN_IN_RETENTION_TEXT =
+  "We keep a scrambled fingerprint of your sign-in for 12 months, then delete it. If you signed in with a mobile number, we also keep that number privately for 12 months.";
 export const DELETE_ADMIN_MESSAGE = "The admin account can't be deleted from here. Nothing was deleted.";
 
 export type ProofState = "pending" | "accepted" | "rejected";
@@ -13,7 +16,7 @@ export type MyReviewRow = {
   id: string;
   provider_slug: string;
   business_name: string;
-  status: "published" | "under_check" | "under_notice" | "removed";
+  status: "pending" | "published" | "under_check" | "under_notice" | "removed";
   removal_reason: string | null;
   created_at: string;
   editable_until: string;

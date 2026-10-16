@@ -46,12 +46,14 @@ export default function PrivacyPage() {
       <p>People who sign in (to leave a review, or to reply as a provider):</p>
       <List
         items={[
-          "Your mobile number. It is held by our sign-in provider. We use it to send your sign-in codes, to link you to your listing if you are a provider who signs in with your listing's number, and to limit sign-in attempts. Before we send a code we check the number with Twilio, to block internet and virtual numbers. It is never shown on the site. If you delete your account we keep it privately for 12 months (see below).",
-          "The name you show, like \"Sarah K.\" (your first name and the first letter of your surname; we do not keep your full surname), and your postcode district, which is never shown publicly.",
+          "Your email address, and if you use Google, your Google account ID and the name and email Google shares with us. Our sign-in provider holds them. We use them to sign you in and to limit sign-in attempts. They are never shown on the site.",
+          "If you signed in with a mobile number before October 2026, we keep that number in the same way.",
+          "The name you show, like \"Sarah K.\" (your first name and the first letter of your surname), and your postcode district, which is never shown publicly. We don't save the full surname you type in. If you use Google, our sign-in provider holds the name Google shares; we don't show or use it.",
           "Whether you are in the Bolton Tradesmen WhatsApp group, if you add the group code.",
           "Your reviews and replies, which are published with your shown name.",
           "Proof files you choose to add to a review (a photo of an invoice or the finished work). They are kept private, we remove the photo's hidden details (such as location) before storing it, and only the admin sees them. Proof files are deleted 12 months after we check them; a review keeps its Verified job label.",
-          "Records of sign-in attempts: the number and a scrambled signature of your connection, kept for 30 days to stop abuse.",
+          "Records of sign-in attempts: the email address or mobile number that was entered, and a scrambled signature of your connection, kept for up to 30 days to stop abuse.",
+          "If a sign-in code is asked for but never used, the unfinished account holding that email address is deleted after 24 hours.",
           "A hashed device signature saved with each review, so we can spot fake reviews posted from one device.",
           "Sign-in cookies, which keep you signed in. They are only set once you sign in.",
         ]}
@@ -63,29 +65,34 @@ export default function PrivacyPage() {
           "Publishing a provider's listing: consent. You can withdraw it at any time.",
           "Counting enquiries and keeping the site secure and free of abuse: legitimate interests. We keep this to what is needed and it does not identify visitors by name.",
           "Your account, your reviews and your replies: contract (providing the service you signed up for).",
-          "Checking numbers, sign-in attempt records, device signatures and proof files: legitimate interests in preventing fraud and fake reviews.",
+          "Sign-in attempt records, the sign-in fingerprint we keep after deletion, device signatures and proof files: legitimate interests in preventing fraud and fake reviews.",
         ]}
       />
 
       <H2>Where it is stored</H2>
       <p>
-        Data is stored in the UK, in a Supabase database hosted in London. Supabase also runs our sign-in. Twilio sends
-        sign-in codes and checks the type of a mobile number. Both act for us as processors.
+        Data is stored in the UK, in a Supabase database hosted in London. Supabase also runs our sign-in. Resend sends our
+        sign-in emails. Supabase and Resend act for us as processors. If you choose Continue with Google, Google is an
+        independent controller for your Google account, under its own terms, and only tells us who you are.
       </p>
 
       <H2>How long we keep it</H2>
       <p>
         Retention policy (draft, subject to legal review): listing data is kept until the provider withdraws, after which the
         listing is hidden. Contact-event records (the hashed device signature and provider tapped) are kept for up to 12
-        months. Sign-in attempt records are kept for 30 days, and wrong group code tries for 2 days. Proof files are deleted 12 months after we check them.
+        months. Sign-in attempt records (with the email address or number entered) are kept for up to 30 days, an unfinished
+        account (a code asked for but never used) is deleted after 24 hours, and wrong group code tries are kept for 2
+        days. Proof files are deleted 12 months after we check them.
       </p>
 
       <H2>Deleting your account</H2>
       <p>
         You can delete your account from your account page at any time. Your reviews and replies are taken down and your
-        shown name is removed. We keep your mobile number privately for 12 months in case of legal claims about your
-        reviews, and so that someone whose review was removed for breaking the rules can&apos;t sign up again with the
-        same number to review that provider again. Then we delete it.
+        shown name is removed. We keep a scrambled fingerprint of your sign-in (worked out from your email address, Google
+        account or mobile number, made with a secret key, and used only to recognise the same sign-in) for 12 months, so
+        someone whose review was
+        removed for breaking the rules can&apos;t sign up again to review that provider. If you signed in with a mobile
+        number, we also keep that number privately for 12 months in case of legal claims. Then we delete them.
       </p>
 
       <H2>Your rights</H2>

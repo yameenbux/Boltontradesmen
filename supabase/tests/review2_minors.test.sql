@@ -1,12 +1,13 @@
 -- Final review 2 minors:
 --   M1  only accounts that signed in with a confirmed mobile may review, report or reply (not the email admin,
 --       not an anonymous Supabase session, not a phone account whose number was never confirmed);
+--       Plan 2b: an email-code account (confirmed by its code) may now review too; the admin still may not;
 --   M4  phone_retention rows past purge_after are purged regularly (on every code check), not only when
 --       someone deletes an account;
 --   M8  the admin account can't be deleted from the account page (it would lock the only admin out);
 --   M14 one person can file at most 10 reports a day.
 begin;
-select plan(13);
+select plan(14);
 
 create function public.t_submit_review(p jsonb, h text) returns jsonb
 language sql security definer set search_path = '' as $$ select public.submit_review(auth.uid(), p, h) $$;
@@ -35,12 +36,19 @@ insert into auth.users (id, created_at, phone, raw_user_meta_data) values
   ('00000000-0000-0000-0000-00000000ca04', now() - interval '3 days', '447700900701', '{"bv_nonce":"mn-701"}'),
   ('00000000-0000-0000-0000-00000000ca05', now() - interval '3 days 1 hour', '447700900702', '{"bv_nonce":"mn-702"}');
 update auth.users set phone_confirmed_at = now() where id = '00000000-0000-0000-0000-00000000ca05';
+-- An email-code account (Plan 2b): approved request + nonce, then confirmed by its code.
+insert into public.email_requests (email_norm, ip_hash, outcome, nonce_hash)
+values ('mn-eve@example.org', 'pgtap', 'approved', encode(sha256(convert_to('mn-eve', 'UTF8')), 'hex'));
+insert into auth.users (id, created_at, email, raw_user_meta_data, raw_app_meta_data)
+values ('00000000-0000-0000-0000-00000000ca06', now() - interval '3 days 2 hours', 'mn-eve@example.org', '{"bv_nonce":"mn-eve"}', '{"provider":"email"}');
+update auth.users set email_confirmed_at = now() where id = '00000000-0000-0000-0000-00000000ca06';
 insert into public.profiles (user_id, role, display_name) values
   ('00000000-0000-0000-0000-00000000ca01', 'admin', null),
   ('00000000-0000-0000-0000-00000000ca02', 'provider', 'Mel M.'),
   ('00000000-0000-0000-0000-00000000ca03', 'resident', 'Ann A.'),
   ('00000000-0000-0000-0000-00000000ca04', 'resident', 'Una U.'),
-  ('00000000-0000-0000-0000-00000000ca05', 'resident', 'Con C.');
+  ('00000000-0000-0000-0000-00000000ca05', 'resident', 'Con C.'),
+  ('00000000-0000-0000-0000-00000000ca06', 'resident', 'Eve E.');
 
 insert into public.providers (id, slug, business_name, phone_e164, status, consent_at, consent_evidence, user_id) values
   ('00000000-0000-0000-0000-00000000cb01', 'mn-plumb', 'MN Plumb', '+447700900711', 'live', now(), '{}'::jsonb, null),
@@ -75,6 +83,8 @@ select throws_ok($$select public.t_submit_review(public.mn_p(), 'h')$$, 'P0001',
   'a phone account whose number was never confirmed cannot review');
 select public.mn_as('00000000-0000-0000-0000-00000000ca05');
 select is(public.t_submit_review(public.mn_p(), 'h-con') ->> 'status', 'published', 'a confirmed phone account can');
+select public.mn_as('00000000-0000-0000-0000-00000000ca06');
+select ok(public.t_submit_review(public.mn_p(), 'h-eve') ->> 'status' is not null, 'an email-code account can (Plan 2b)');
 
 -- M14
 select is((select count(*)::int from (

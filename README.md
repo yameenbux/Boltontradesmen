@@ -8,7 +8,7 @@
 
 The tradespeople Bolton's WhatsApp group recommends, in one place, with the checks we've made.
 Pick a trade and an area, then call or WhatsApp them in one tap. No sign-up, no cookies to look
-or call; sign in with a UK mobile to leave a review.
+or call; sign in with Google or a code sent to your email to leave a review.
 
 Made by YSB Designs, a trading name of YSB Ventures Ltd.
 
@@ -69,7 +69,7 @@ to call or WhatsApp them. Every trader on it has agreed to be listed.
 
 One site, free for residents and free for traders.
 
-<img src="assets/diagrams/02-live-and-coming.svg" alt="What is live today (the showcase site, the directory, seven groups of trades, profiles with checks, Call and WhatsApp, consent links, phone sign-in and reviews, and admin) and what is coming and not built (community questions, trader dashboards, the optional Verified tier)" width="100%">
+<img src="assets/diagrams/02-live-and-coming.svg" alt="What is live today (the showcase site, the directory, seven groups of trades, profiles with checks, Call and WhatsApp, consent links, free Google and email sign-in and reviews, and admin) and what is coming and not built (community questions, trader dashboards, the optional Verified tier)" width="100%">
 
 **Live today**
 
@@ -88,16 +88,20 @@ One site, free for residents and free for traders.
   are never in the page's HTML.**
 - **Consent links**: a trader is listed only after they open their link, read
   exactly how they'll appear, and agree. What they agreed to is kept as evidence.
-- **Phone sign-in** at `/platform/sign-in`: UK mobiles only, checked with Twilio
-  Lookup so internet and virtual numbers are refused, rate-limited per number and
-  per connection, with a monthly text budget.
+- **Sign-in** at `/platform/sign-in`: **Continue with Google** (PKCE, back through
+  `/platform/auth/callback`) or a **6-digit code sent by email** (works inside the
+  home-screen app). Throwaway email domains are refused, codes are rate-limited per
+  address and per connection and capped under Resend's free tier, and reviews from
+  email-only accounts wait for the admin's approval. Texted codes are still in the
+  code but switched off (`SIGN_IN_PHONE`, see *Phone sign-in* below).
 - **Reviews** at `/platform/p/<slug>/review`: one screen of taps, live at once
   ("Published", or "Published, under a quick check" when an anti-fake rule trips),
   editable for 14 days, with an optional private proof photo or PDF (location data
   stripped). Profiles list them with Verified job and Group member filters, and the
   category list ranks anyone with three or more by their quality score.
-- **Provider replies** at `/platform/provider`: a trader signs in with the number on
-  their listing and replies once to each review.
+- **Provider replies** at `/platform/provider`: the admin sends a trader a
+  single-use **trader sign-in link** (`/platform/link/<token>`, 14 days); they open it
+  signed in and their account is linked to the listing. Then they reply once to each review.
 - **Report** on every review, and **My reviews** and **Delete account** at
   `/platform/account` (reviews come down; the number is kept privately for 12 months).
 - **Admin** at `/admin`, for the owner only: add and edit providers, record
@@ -152,7 +156,7 @@ server, and the server only ever reads providers through one view.**
 | **`private.*`** | `SECURITY DEFINER` wrappers the view calls, in a schema the public role can't even name |
 | **`admin_*` functions** | Every admin write: checks the caller is an admin, then writes one `audit_log` row |
 | **Postgres with RLS** | Row-level security on every table; the public roles have every default grant stripped |
-| **Supabase Auth** | Phone codes (texted by the app's Send SMS hook through Twilio) for residents and traders; email and password for the admin. A trigger on `auth.users` refuses any phone the app didn't approve and any email not on the admin list |
+| **Supabase Auth** | Google sign-in and 6-digit email codes (sent through Resend's SMTP) for residents and traders; email and password for the admin. A trigger on `auth.users` refuses password sign-ups and any email account the app's sign-in gate didn't approve (except the admin list). Texted codes are kept but off |
 | **GitHub Actions** | Lint, types, unit tests, pgTAP database tests and browser tests on every push and pull request |
 
 ### Why the public view, and why numbers never reach the page
@@ -194,7 +198,7 @@ Only where it has to.
 | Someone looks around | Nothing. No cookies, no account, no analytics | Nowhere |
 | Someone taps Call or WhatsApp | A salted hash of the device (HMAC with `DEVICE_HASH_SECRET`) and which trader. Not the IP, not their number | `contact_events`, readable only by the service role |
 | A trader agrees to be listed | The IP, the consent text version and a SHA-256 of the exact text they were shown | The provider's consent evidence |
-| Someone signs in | Their mobile number (in Supabase Auth), the name they show ("Sarah K."), their postcode district (never public); sign-in attempts with a hashed connection signature for 30 days | `auth.users`, `profiles`, `otp_requests` |
+| Someone signs in | Their email address, and their Google account ID if they use Google (in Supabase Auth), the name they show ("Sarah K."), their postcode district (never public); sign-in attempts (the address or number entered, in plain text, with a hashed connection signature) for up to 30 days; an unconfirmed email account (code asked for, never used) for up to 24 hours; after deleting their account, only a peppered hash of their sign-in for 12 months | `auth.users`, `profiles`, `email_requests`, `identity_retention` |
 | Someone posts a review | The answers, a salted device hash to catch fake reviews, and an optional proof file with its metadata stripped, seen only by the admin | `reviews`, `review_proofs`, the private `review-proofs` bucket |
 | Someone deletes their account | Their reviews and replies come down; their number is kept for 12 months for legal claims, readable only by the database owner | `phone_retention` |
 | The admin changes anything | Who, what, when and the reason | `audit_log` |
@@ -215,7 +219,7 @@ hands the visitor off to.
 | **Tailwind 4** | The Bolton Brick palette as tokens in `app/globals.css`, light and dark |
 | **Gloock** and **Figtree** | Through `next/font`, served from our own domain, so no request goes to Google |
 | **Supabase Postgres** + RLS | Schema, view, functions and policies in `supabase/migrations/`, tested with pgTAP in `supabase/tests/` |
-| **Supabase Auth** | Phone sign-in (codes texted through the app's Send SMS hook; test codes locally) and the admin's email sign-in |
+| **Supabase Auth** | Google and email-code sign-in (codes go to a local inbox in development and CI), phone sign-in behind `SIGN_IN_PHONE`, and the admin's email sign-in |
 | **zod**, **libphonenumber-js** | Every admin form is validated; numbers are stored as E.164 |
 | **Railway** | Service `web`, from `main` |
 | **GitHub Actions** | `.github/workflows/ci.yml`: the checks above on every push and pull request |
@@ -281,8 +285,13 @@ npm run typecheck
 npm test              # Vitest unit tests
 npm run db:reset && npm run test:db   # pgTAP: needs an empty register, so reset first
 npm run test:stack    # the local stack's own guard and smoke tests
-PW_CHROMIUM_PATH=/path/to/chrome npm run test:e2e   # Playwright; builds and serves the app
+PW_CHROMIUM_PATH=/path/to/chrome npm run test:e2e   # Playwright; builds and serves the app (:3000, and :3001 with phone sign-in on)
+npm run db:check-prod # the one-paste production script applies on a 000017-state database
 ```
+
+After changing a migration from 000018 on, regenerate the production paste with
+`node scripts/build-production-sql.mjs --from 20261012000018 --to <newest> --out docs/launch/plan-2b-production.sql`
+(`tests/unit/production-sql.test.ts` fails until you do).
 
 Run `npm run test:db` straight after a reset: the scoring tests expect an empty
 register, without the E2E fixtures. `npm run test:e2e` loads its own fixtures and
@@ -327,9 +336,11 @@ Railway service variables:
 | `NEXT_PUBLIC_SUPABASE_URL` | The Supabase project's API URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | The anon (public) key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only. Needed by Call/WhatsApp, the consent page, sign-in, proof uploads and account deletion. Never put it anywhere else |
-| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | Server only. Twilio Lookup, which refuses internet and virtual numbers before a code is sent. `TWILIO_LOOKUP_STUB` must **not** be set in production |
-| `SUPABASE_SMS_HOOK_SECRET` | Server only. The signing secret Supabase shows for the **Send SMS hook** (`v1,whsec_…`). Without it the hook refuses every text (fail closed) |
-| `TWILIO_MESSAGING_SERVICE_SID` | Server only. The Twilio Messaging Service (`MG…`) the Send SMS hook texts codes through. `TWILIO_SMS_STUB` must **not** be set in production |
+| `SIGN_IN_PHONE` | `off` (or unset). Only the exact value `on` shows sign-in by text and lets the Send SMS hook send; it needs the three Twilio variables and the hook secret below, which can otherwise be left out |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | Phone sign-in only. Server only. Twilio Lookup, which refuses internet and virtual numbers before a code is sent. `TWILIO_LOOKUP_STUB` must **not** be set in production |
+| `SUPABASE_SMS_HOOK_SECRET` | Phone sign-in only. Server only. The signing secret Supabase shows for the **Send SMS hook** (`v1,whsec_…`). Without it the hook refuses every text (fail closed) |
+| `TWILIO_MESSAGING_SERVICE_SID` | Phone sign-in only. Server only. The Twilio Messaging Service (`MG…`) the Send SMS hook texts codes through. `TWILIO_SMS_STUB` must **not** be set in production |
+| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile (free) on "Email me a code" and the admin sign-in. The site key is public (shown to the browser), the secret is server only. Both unset: no check (local, CI). Only one set: every email-code request is refused (fail closed). Supabase's CAPTCHA uses the same secret (LAUNCH.md Step 3d) |
 | `DEVICE_HASH_SECRET` | Server only. A long random secret (`openssl rand -hex 32`), never `change-me` |
 | `TRUSTED_PROXY_HOPS` | Optional, default `1`. How many trusted proxies append to `X-Forwarded-For` in front of the app. Railway's edge appends the real client IP as the last entry, so the app reads the entry this many places from the right and ignores anything a visitor puts on the left. Only change it if another proxy (a CDN) is put in front of Railway |
 | `OWNER_LEGAL_NAME` | `YSB Ventures Ltd`, matching Companies House character for character |
@@ -342,11 +353,41 @@ prerendered with them. Redeploy after changing either. **Never give a secret a
 
 In Supabase:
 
+1. **Free sign-in (Google and email codes)**: follow *Owner actions* in
+   `docs/superpowers/plans/2026-10-12-plan-2b-free-sign-in.md` (Resend as custom SMTP with
+   sender `noreply@ysbdesigns.uk`; the **Confirm signup** and **Magic Link** templates from
+   `supabase/templates/sign-in-code.html`; Email provider with **Confirm email on, always**,
+   OTP length 6, expiry 900 seconds; emails sent per hour 30; CAPTCHA with Cloudflare Turnstile
+   (`docs/launch/LAUNCH.md` Step 3d); the Google provider with the
+   client from Google Cloud; Site URL and Redirect URLs on `https://boltonvouched.ysbdesigns.uk`).
+   **"Allow new users to sign up" → on**: the database refuses password sign-ups and any
+   email account the sign-in page didn't approve (`email_approve` / `bv_nonce`).
+2. **Phone provider off, and the Send SMS hook off**, unless phone sign-in is switched
+   on (see *Phone sign-in* below).
+3. **Authentication → Rate Limits**: sign-ups and sign-ins, and token verifications, 150
+   per 5 minutes. These are "per IP", but every request comes from Railway, so they are
+   one bucket for the whole site. The app's own limits (`settings.email_limits`,
+   `settings.otp_verify_limits`) stop one visitor from using them all up.
+4. **Storage**: bucket `review-proofs` exists, is **private**, 10 MB, JPEG/PNG/WebP/PDF,
+   no policies (the migration creates it when Storage is there).
+5. **Apply migrations through the SQL editor**: paste each new file from
+   `supabase/migrations/` in order and run it (`docs/launch/LAUNCH.md` → Step 3a
+   lists them, with the checks to run). On launch day also run
+   `docs/launch/finish-admin-function.sql`, before the first consent link goes out.
+6. Create the admin as in *Admin sign-in*.
+
+#### Phone sign-in (off by default)
+
+Texted codes cost money, so they are switched off: `SIGN_IN_PHONE` unset or `off` hides
+the phone form, the sign-in actions refuse and `/api/auth/sms-hook` answers 403. The
+code, tables and tests stay (the E2E `phone` project runs them with the switch on).
+To switch it back on, set the Twilio variables and the hook secret, `SIGN_IN_PHONE=on`, and in Supabase:
+
 1. **Authentication → Sign In / Providers → Phone**: on. Fill in the SMS provider
    (Twilio Verify is fine): Supabase needs one configured, but once the Send SMS
    hook (step 3) is on, the hook sends every text instead. No test numbers in
    production. **"Allow new users to sign up" → on** (phone sign-up needs it; the
-   database refuses email sign-ups). **Phone confirmations ("Confirm phone") →
+   database refuses unapproved email sign-ups). **Phone confirmations ("Confirm phone") →
    on, always**: the database refuses a phone account that arrives already
    confirmed, so with it off nobody can sign up. Leave the **Email** provider on,
    or the admin can't sign in. A new phone account is only accepted with the
@@ -364,13 +405,6 @@ In Supabase:
    put it in Railway as `SUPABASE_SMS_HOOK_SECRET`; set `TWILIO_MESSAGING_SERVICE_SID`
    (see *Texts and the SMS bill* below). Turn the hook on **after** Railway has
    redeployed with both variables.
-4. **Storage**: bucket `review-proofs` exists, is **private**, 10 MB, JPEG/PNG/WebP/PDF,
-   no policies (the migration creates it when Storage is there).
-5. **Apply migrations through the SQL editor**: paste each new file from
-   `supabase/migrations/` in order and run it (`docs/launch/LAUNCH.md` → Step 3a
-   lists them, with the checks to run). On launch day also run
-   `docs/launch/finish-admin-function.sql`, before the first consent link goes out.
-6. Create the admin as in *Admin sign-in*.
 
 #### Texts and the SMS bill
 
@@ -441,7 +475,11 @@ settings and test phone numbers for local use and CI only.
 | The device hash | `lib/device-hash.ts` |
 | The consent wording and its version | `lib/consent-text.ts` |
 | The consent page | `app/platform/consent/[token]/` |
-| Phone sign-in, the number check and Welcome | `app/platform/sign-in/`, `app/platform/welcome/`, `lib/otp-gate.ts`, `lib/line-type.ts` |
+| Sign-in (Google, email code, phone) and Welcome | `app/platform/sign-in/`, `app/platform/welcome/`, `lib/email-gate.ts`, `lib/email.ts`, `lib/sign-in-methods.ts`, `lib/otp-gate.ts`, `lib/line-type.ts` |
+| The Google sign-in callback | `app/platform/auth/callback/route.ts`, `lib/google-callback.ts` |
+| Trader sign-in links (linking a trader to their listing) | `app/platform/link/[token]/`, `lib/trader-link.ts`, `supabase/migrations/20261012000022_trader_links.sql` |
+| The sign-in code email | `supabase/templates/sign-in-code.html` (pasted into Supabase's templates) |
+| Throwaway email domains | `lib/disposable-email-domains.json`, `scripts/disposable-domains-sql.mjs` |
 | The account page, My reviews, Delete account | `app/platform/account/`, `components/account/` |
 | The review form and proof uploads | `app/platform/p/[slug]/review/`, `components/review/`, `lib/review-form.ts`, `lib/proofs.ts` |
 | Reviews on profiles | `components/profile/ReviewList.tsx`, `lib/reviews.ts` |
@@ -539,14 +577,13 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
       Plan 5 schedules it.
 - [ ] Run `docs/launch/finish-admin-function.sql` before sending the first consent
       link.
-- [ ] **Twilio for phone sign-in**: upgrade from trial, **prepaid credit with
-      auto-recharge OFF** (the only hard spending stop), UK-only geo permissions,
-      a **usage alert** at £10 and £20 a month on SMS and Lookup, a Messaging
-      Service for the Send SMS hook (SMS Pumping Protection on), and Lookup Line
-      Type Intelligence enabled. Then the Supabase steps in *Deploying*: phone
-      confirmations on, **SMS sent per hour 30**, and the **Send SMS hook** with
-      `SUPABASE_SMS_HOOK_SECRET` and `TWILIO_MESSAGING_SERVICE_SID` set. See
-      *Texts and the SMS bill*.
+- [ ] **Free sign-in**: Resend verified for `ysbdesigns.uk`, Supabase SMTP and templates,
+      Google OAuth client published, Google and Email providers set, Phone provider and
+      the Send SMS hook off, `SIGN_IN_PHONE=off` on Railway, and
+      `docs/launch/plan-2b-production.sql` pasted once before Plan 2b reaches `main`
+      (*Owner actions* in `docs/superpowers/plans/2026-10-12-plan-2b-free-sign-in.md`;
+      `docs/launch/LAUNCH.md` → Step 3b). Phone sign-in later needs the Twilio steps
+      in *Texts and the SMS bill*.
 
 ---
 
@@ -556,7 +593,8 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
 > **Never claim community questions, dashboards or Verified exist before they
 > do.** Not on the site, not in a message to a trader, not in the WhatsApp group.
 > They're *coming*. The same goes for every other feature in the sand boxes above.
-> Reviews, replies and phone sign-in are live, so say so plainly.
+> Reviews, replies, and Google and email sign-in are live, so say so plainly. Sign-in by
+> text is switched off: don't tell anyone to sign in with their mobile.
 
 Four more that catch people out:
 

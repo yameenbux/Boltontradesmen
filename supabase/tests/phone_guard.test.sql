@@ -145,7 +145,7 @@ where id = '00000000-0000-0000-0000-00000000e009';
 select is(pg_temp.password_works('00000000-0000-0000-0000-00000000e009', 'admin-pass-456'), true,
   'an admin email account keeps its password');
 select throws_ok($$insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000e00a', 'nobody@example.com')$$,
-  null, 'email sign-ups are disabled', 'an email-only account not on the allow-list is still refused');
+  null, 'email sign-up not approved', 'an email-only account not on the allow-list, without the app''s nonce, is still refused');
 select lives_ok($$insert into auth.users (id) values ('00000000-0000-0000-0000-00000000e00b')$$,
   'a bare id (test fixtures) is still accepted');
 

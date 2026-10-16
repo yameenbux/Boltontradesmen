@@ -118,8 +118,8 @@ export default async function ProviderArea() {
             <p className="eyebrow">Your listing</p>
             <h1 id="provider-title">No listing found</h1>
             <p className="lede">
-              We couldn&apos;t find a listing with this number. If you&apos;re listed, sign in with the mobile number on
-              your listing, or contact us.
+              We couldn&apos;t find a listing linked to your account. If you&apos;re listed, ask us for your trader
+              sign-in link.
             </p>
           </div>
           <Button href={platformPath("account")} variant="secondary">

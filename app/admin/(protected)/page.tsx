@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
+import { TidySignInRecordsForm } from "@/components/admin/ModerationForms";
 import { requireAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
@@ -15,12 +16,18 @@ export default async function AdminHome() {
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as Row[];
   const { data: c } = await supabase.rpc("admin_counts");
-  const counts = (c ?? { under_check: 0, open_flags: 0, pending_proofs: 0 }) as {
+  const counts = (c ?? { pending: 0, under_check: 0, open_flags: 0, pending_proofs: 0 }) as {
+    pending: number;
     under_check: number;
     open_flags: number;
     pending_proofs: number;
   };
   const waiting = [
+    {
+      href: "/admin/reviews",
+      n: counts.pending ?? 0,
+      text: `${counts.pending ?? 0} awaiting approval`,
+    },
     { href: "/admin/reviews", n: counts.under_check, text: `${counts.under_check} under check` },
     {
       href: "/admin/flags",
@@ -37,7 +44,7 @@ export default async function AdminHome() {
     <main className="flex flex-col gap-5">
       <ul className="a-counts" aria-label="Waiting for you">
         {waiting.map((w) => (
-          <li key={w.href}>
+          <li key={w.text}>
             <Link href={w.href} className="press" data-some={w.n > 0 || undefined}>
               {w.text}
             </Link>
@@ -67,6 +74,14 @@ export default async function AdminHome() {
           ))}
         </ul>
       )}
+      <section className="a-card" aria-labelledby="tidy-title">
+        <h2 id="tidy-title">Sign-in records</h2>
+        <p className="a-lede">
+          Sign-in records are deleted after 30 days, and accounts where a code was asked for but never used after 24
+          hours, as the privacy notice says. Email-code requests do this every hour; press this to do it now.
+        </p>
+        <TidySignInRecordsForm />
+      </section>
     </main>
   );
 }

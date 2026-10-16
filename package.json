@@ -14,7 +14,8 @@
     "test:e2e": "playwright test",
     "stack:start": "bash scripts/local-stack/start.sh",
     "stack:stop": "bash scripts/local-stack/stop.sh",
-    "db:reset": "bash scripts/db-reset.sh"
+    "db:reset": "bash scripts/db-reset.sh",
+    "db:check-prod": "bash scripts/check-production-sql.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

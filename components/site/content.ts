@@ -97,7 +97,7 @@ export const DECK: DeckCard[] = [
     crop: "top",
     tone: "sage",
     title: "Real reviews, with replies",
-    text: "Every reviewer signed in with a UK mobile. Traders can reply, and a checked invoice earns a Verified job badge.",
+    text: "Every reviewer signed in with Google or their email. Traders can reply, and a checked invoice earns a Verified job badge.",
   },
   {
     shot: "profile-contact",
@@ -143,7 +143,7 @@ export const FAQ: Faq[] = [
     q: "Is it free?",
     a: [
       [
-        "Yes for residents: free to use, nothing to download, and no sign-up to look or call. You only sign in with your mobile to leave a review.",
+        "Yes for residents: free to use, nothing to download, and no sign-up to look or call. You only sign in, with Google or your email, to leave a review.",
       ],
       [
         "For traders, a basic listing is free and stays free. Later we'll offer an optional paid upgrade for extra features; you'll never be removed for not taking it, and it never moves anyone up the list.",
@@ -213,7 +213,7 @@ export const FAQ: Faq[] = [
         "If you're just looking: no account, and no cookies. When you tap Call or WhatsApp we count the tap against that trader with a scrambled signature of your device (a one-way hash), not your IP address or phone number.",
       ],
       [
-        "If you sign in to leave a review, we keep your mobile number, the name you show (like Sarah K.) and your reviews. The privacy notice has the detail.",
+        "If you sign in to leave a review, we keep your email address (and your Google account ID if you use Google), the name you show (like Sarah K.) and your reviews. The privacy notice has the detail.",
       ],
       [
         "Traders' phone numbers are kept private, behind the buttons. Our database is hosted in London, UK. The ",

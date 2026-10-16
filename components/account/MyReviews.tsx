@@ -1,5 +1,5 @@
 import { Pill } from "@/components/ui/Pill";
-import { TickIcon } from "@/components/auth/icons";
+import { ClockIcon, TickIcon } from "@/components/auth/icons";
 import { myReviewStatus, PROOF_TEXT, type MyReviewRow } from "@/lib/account-text";
 import { dayMonthYear } from "@/lib/checks";
 import { platformPath } from "@/lib/paths";
@@ -38,8 +38,12 @@ export function MyReviews({ reviews }: { reviews: MyReviewRow[] }) {
                   {removed ? (
                     <span>{myReviewStatus(r)}</span>
                   ) : (
-                    <Pill tone={r.status === "published" ? "sage" : "gold"}>
+                    <Pill
+                      tone={r.status === "published" ? "sage" : "gold"}
+                      className={r.status === "pending" ? "pill-wrap" : undefined}
+                    >
                       {r.status === "published" && <TickIcon />}
+                      {r.status === "pending" && <ClockIcon />}
                       {myReviewStatus(r)}
                     </Pill>
                   )}

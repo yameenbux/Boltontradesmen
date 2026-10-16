@@ -102,6 +102,8 @@ h1,h2,h3{text-wrap:balance}
   .pill-gold{background:color-mix(in srgb,var(--gold) 16%,var(--surface)); color:color-mix(in srgb,var(--gold) 62%,var(--ink))}
   .pill-outline{background:transparent; color:var(--sage); box-shadow:inset 0 0 0 1.5px var(--sage)}
   .pill-muted{background:var(--surface-2); color:var(--ink-2)}
+  .pill-wrap{width:auto; max-width:100%; border-radius:12px; padding:4px 10px 4px 8px; line-height:1.3}
+  .pill-wrap svg{flex:none}
 
   /* ---------- policy pages ---------- */
   .policy h1{font-family:var(--display); font-weight:400; font-size:clamp(32px,9vw,40px); line-height:1.08; margin:4px 0 16px}
@@ -157,6 +159,9 @@ h1,h2,h3{text-wrap:balance}
   .mod-head{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px}
   .mod-head .a-link{font-size:19px; min-height:40px}
   .mod-who,.mod-meta{margin:0; font-size:15px; color:var(--ink-2)}
+  .mod-how{margin:-6px 0 0; font-size:14.5px; font-weight:700; color:var(--ink-2)}
+  .a-section{display:grid; gap:14px}
+  .a-section h2{font-family:var(--display); font-weight:400; font-size:clamp(26px,6.5vw,30px); line-height:1.1; margin:0}
   .mod-who b{color:var(--ink); font-size:16.5px}
   .mod-comment{margin:0; padding:10px 14px; border-left:3px solid var(--line); font-size:16px; white-space:pre-line; overflow-wrap:anywhere}
   .mod-flags{display:grid; gap:6px; margin:0; padding:0; list-style:none}
@@ -402,6 +407,7 @@ h1,h2,h3{text-wrap:balance}
   .auth-card h1{font-family:var(--display); font-weight:400; font-size:clamp(30px,8.4vw,34px); line-height:1.08; margin:6px 0 0; overflow-wrap:anywhere}
   .auth-card h2{font-family:var(--display); font-weight:400; font-size:23px; line-height:1.15; margin:0}
   .auth-card .lede{margin:8px 0 0; color:var(--ink-2); font-size:16.5px}
+  .auth-card .lede a{color:var(--brick); font-weight:700; text-decoration:underline; text-underline-offset:3px}
   .auth-card .lede b{color:var(--ink); white-space:nowrap}
   .auth-form{display:grid; gap:18px}
   .field{display:grid; gap:7px; font-size:17px; font-weight:700; color:var(--ink)}
@@ -427,6 +433,17 @@ h1,h2,h3{text-wrap:balance}
   .text-btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 6px; border:0; background:none; font:inherit; font-size:16px; font-weight:700; color:var(--brick); text-decoration:underline; text-underline-offset:3px; cursor:pointer}
   .text-btn:disabled{opacity:.55; cursor:not-allowed}
   .text-row{display:flex; flex-direction:column; align-items:center; margin-top:-8px}
+  .auth-card .lede b.addr{white-space:normal; overflow-wrap:anywhere}
+  .or-divider{display:flex; align-items:center; gap:14px; margin:0; font-size:14.5px; font-weight:700; color:var(--ink-3)}
+  .or-divider::before,.or-divider::after{content:""; flex:1; height:1px; background:var(--line)}
+  /* Continue with Google: Google's neutral button (light #FFF / #747775 / #1F1F1F, dark #131314 / #8E918F / #E3E3E3,
+     official G mark), sized like our other big taps. Dark values are set with the theme rules at the end of this file. */
+  .google-form{display:grid; gap:10px}
+  .btn-google{display:flex; align-items:center; justify-content:center; gap:12px; width:100%; min-height:56px; padding:0 20px; border-radius:16px; border:1px solid #747775; background:#FFFFFF; color:#1F1F1F; font-family:"Roboto", var(--body); font-size:17px; font-weight:600; letter-spacing:.01em; cursor:pointer}
+  .btn-google svg{flex:none; width:20px; height:20px}
+  .btn-google:hover{box-shadow:0 1px 2px rgba(60,64,67,.3),0 1px 3px 1px rgba(60,64,67,.15)}
+  .standalone-only{display:none; margin:0; font-size:14.5px; color:var(--ink-2); text-align:center}
+  @media (display-mode: standalone){ .standalone-only{display:block} }
   .preview-name{display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; background:var(--surface-2); font-size:15px; color:var(--ink-2)}
   .preview-name .avatar{width:44px; height:44px; font-size:18px; flex:none}
   .preview-name b{display:block; font-size:18px; color:var(--ink)}
@@ -556,6 +573,8 @@ h1,h2,h3{text-wrap:balance}
 
 :root[data-theme="dark"] .avatar{color:var(--brick)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .avatar{color:var(--brick)}}
+:root[data-theme="dark"] .btn-google{background:#131314; border-color:#8E918F; color:#E3E3E3}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn-google{background:#131314; border-color:#8E918F; color:#E3E3E3}}
 
 /* ---------- keyframes ---------- */
 @keyframes rise{from{transform:translateY(14px) scale(.985); opacity:.35} to{transform:none; opacity:1}}
@@ -575,4 +594,9 @@ h1,h2,h3{text-wrap:balance}
   /* The consent tick is drawn by animating its dash offset; without the animation, show it complete. */
   .done circle,.done path{stroke-dashoffset:0!important}
   html{scroll-behavior:auto!important}
+}
+
+/* Cloudflare Turnstile ("interaction-only"): takes no room unless Cloudflare shows a checkbox. */
+.turnstile:empty {
+  display: none;
 }

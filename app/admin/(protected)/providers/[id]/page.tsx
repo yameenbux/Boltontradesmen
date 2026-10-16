@@ -1,9 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pill } from "@/components/ui/Pill";
-import { CheckForm, ConsentLinkButton, ProviderForm, ReinviteForm, StatusForm } from "@/components/admin/ProviderForms";
+import {
+  CheckForm,
+  ConsentLinkButton,
+  ProviderForm,
+  ReinviteForm,
+  StatusForm,
+  TraderLinkButton,
+  UnlinkForm,
+} from "@/components/admin/ProviderForms";
 import { requireAdmin } from "@/lib/admin";
 import { dayMonthYear } from "@/lib/checks";
+import { phoneSignInEnabled } from "@/lib/sign-in-methods";
 
 const STATUS_TONE = { invited: "gold", consented: "outline", live: "sage", paused: "muted", removed: "muted" } as const;
 
@@ -24,7 +33,11 @@ type Detail = {
   consent_token_expires_at: string | null;
   category_ids: string[];
   checks: Check[];
+  linked: boolean;
+  trader_link_expires_at: string | null;
 };
+
+const LINKABLE = ["consented", "live", "paused"];
 
 export default async function ProviderAdminPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -58,6 +71,29 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
         <ConsentLinkButton providerId={p.id} status={p.status} expires={dayMonthYear(p.consent_token_expires_at)} />
         {/* Always mounted, so the new link stays on screen after the page refreshes to "invited". */}
         <ReinviteForm providerId={p.id} removed={p.status === "removed"} />
+      </section>
+
+      <section aria-label="Trader sign-in" className="a-card a-consent">
+        <h2>Trader sign-in</h2>
+        {p.linked ? (
+          <>
+            <p className="a-ok" data-testid="provider-linked">
+              Linked to an account
+            </p>
+            <UnlinkForm providerId={p.id} />
+          </>
+        ) : LINKABLE.includes(p.status) ? (
+          <TraderLinkButton providerId={p.id} expires={dayMonthYear(p.trader_link_expires_at)} />
+        ) : (
+          <p className="text-ink-2">
+            {p.status === "removed"
+              ? "Not available for a removed provider."
+              : "Available once the provider has agreed to be listed."}
+          </p>
+        )}
+        {!p.linked && LINKABLE.includes(p.status) && phoneSignInEnabled() && (
+          <p className="a-hint">Sign-in by text is on, so they can also sign in with the number on this listing.</p>
+        )}
       </section>
 
       <section aria-label="Status" className="a-card">

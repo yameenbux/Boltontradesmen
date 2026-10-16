@@ -24,7 +24,8 @@ async function step(prev: State, fd: FormData): Promise<State> {
   return requestCode(prev, fd);
 }
 
-export function SignInForm({ next, title }: { next: string; title: string }) {
+/** `level={2}` when it sits under another sign-in method on the same page (one h1 per page). */
+export function SignInForm({ next, title, level = 1 }: { next: string; title: string; level?: 1 | 2 }) {
   const [state, action, pending] = useActionState(step, { step: "phone", next });
   const code = useRef<HTMLInputElement>(null);
   const onCode = state.step === "code";
@@ -37,8 +38,12 @@ export function SignInForm({ next, title }: { next: string; title: string }) {
   return (
     <>
       <div>
-        <p className="eyebrow">Bolton Vouched</p>
-        <h1 id="signin-title">{onCode ? "Check your texts" : title}</h1>
+        {level === 1 && <p className="eyebrow">Bolton Vouched</p>}
+        {level === 1 ? (
+          <h1 id="signin-title">{onCode ? "Check your texts" : title}</h1>
+        ) : (
+          <h2 id="signin-phone-title">{onCode ? "Check your texts" : title}</h2>
+        )}
         {onCode ? (
           <p className="lede" aria-live="polite">
             We&apos;ve sent a 6-digit code to <b>{nationalMobile(state.phone ?? "")}</b>

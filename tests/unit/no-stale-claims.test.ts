@@ -44,3 +44,30 @@ describe("no stale 'reviews are coming' claims", () => {
     expect(page).not.toMatch(/soon:\s*true/);
   });
 });
+
+// Plan 2b: sign-in is Google or an email code. Nothing public may still say people sign in with their mobile.
+// The phone path's own code (kept behind SIGN_IN_PHONE) is exempt.
+const PHONE_EXEMPT = new Set([
+  "lib/otp-gate.ts",
+  "lib/line-type.ts",
+  "lib/sms-hook.ts",
+  "components/auth/SignInForm.tsx",
+]);
+const PHONE_SIGN_IN = ["uk mobile", "sign in with your mobile", "signing in with your number", "with the number on your listing", "twilio"];
+
+describe("no claims that sign-in needs a mobile number", () => {
+  const all = [
+    ...["app", "components", "lib"].flatMap((r) => files(path.join(process.cwd(), r))),
+    path.join(process.cwd(), "docs/launch/LAUNCH.md"),
+  ].filter((f) => {
+    const rel = path.relative(process.cwd(), f);
+    return !PHONE_EXEMPT.has(rel) && !/^lib\/phone[^/]*\.ts$/.test(rel);
+  });
+
+  for (const phrase of PHONE_SIGN_IN) {
+    it(`nothing says "${phrase}"`, () => {
+      const hits = all.filter((f) => readFileSync(f, "utf8").replace(/’/g, "'").toLowerCase().includes(phrase));
+      expect(hits.map((f) => path.relative(process.cwd(), f))).toEqual([]);
+    });
+  }
+});

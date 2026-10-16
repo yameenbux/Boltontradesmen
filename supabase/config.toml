@@ -174,9 +174,10 @@ enable_refresh_token_rotation = true
 # Requires enable_refresh_token_rotation = true.
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
-# On: phone sign-up needs it. Who may sign up is decided by the database: the auth.users guard
-# (migration 20261012000003) refuses a phone the app's number check did not approve, and any
-# email-only account whose email is not in settings.admin_emails.
+# On: email-code and Google sign-up need it. Who may sign up is decided by the database: the auth.users
+# guard (migrations 20261012000003, 000011, 000019) refuses a phone or email sign-up that does not carry
+# the nonce of a request the app approved, and any password sign-up; Google sign-ups are accepted unless
+# their normalised email is already taken; admin emails are allow-listed (settings.admin_emails).
 enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
@@ -200,7 +201,8 @@ password_requirements = ""
 
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
-email_sent = 2
+# Local and CI only (E2E sends many sign-in codes). Production: 30 per hour (README -> Owner actions).
+email_sent = 1000
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
@@ -222,22 +224,26 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
-# This key maps to GOTRUE_EXTERNAL_EMAIL_ENABLED: it must stay true or the admin's email + password
-# sign-in breaks. Email sign-ups are refused by the auth.users guard instead (unless allow-listed).
+# This key maps to GOTRUE_EXTERNAL_EMAIL_ENABLED: it must stay true or both email-code sign-in and the
+# admin's email + password sign-in break. The auth.users guard decides which email sign-ups are allowed.
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# Must stay true (here, in scripts/local-stack/start.sh as GOTRUE_MAILER_AUTOCONFIRM=false, and in
+# production as "Confirm email ON"): a new email account always needs the code.
+# tests/unit/auth-email-config.test.ts keeps this file and start.sh in step.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
 max_frequency = "1s"
 # Number of characters used in the email OTP.
 otp_length = 6
-# Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
+# Number of seconds before the email OTP expires (defaults to 1 hour). 15 minutes, matching the
+# app's 15-minute nonce window.
+otp_expiry = 900
 
 # Use a production-ready SMTP server
 # [auth.email.smtp]
@@ -249,10 +255,15 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# The sign-in code email (new accounts get "confirmation", existing ones "magic_link"). The same file is
+# pasted into production's templates. It shows {{ .Token }} only: no link, so it works in the installed app.
+[auth.email.template.confirmation]
+subject = "Your Bolton Vouched sign-in code"
+content_path = "./supabase/templates/sign-in-code.html"
+
+[auth.email.template.magic_link]
+subject = "Your Bolton Vouched sign-in code"
+content_path = "./supabase/templates/sign-in-code.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
@@ -363,6 +374,18 @@ url = ""
 # If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
 skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
+email_optional = false
+
+# Continue with Google. Local and CI only: a dummy client, so the flow starts at Google (E2E stops it
+# there) and never completes. NEVER run `supabase config push`: production's Google client ID and secret
+# are set in the Supabase dashboard (README -> Owner actions).
+[auth.external.google]
+enabled = true
+client_id = "local-dummy.apps.googleusercontent.com"
+secret = "local-dummy-not-a-secret"
+redirect_uri = ""
+url = ""
+skip_nonce_check = false
 email_optional = false
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.

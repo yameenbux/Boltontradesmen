@@ -39,7 +39,7 @@ When Railway shows the domain as active (usually minutes, up to an hour), change
 
 ## Step 3 — Two clicks in Supabase
 
-1. **Authentication → Sign In / Providers → "Allow new users to sign up" → ON**, and under **Phone**, **"Confirm phone" → ON**. Phone sign-in needs both; the database itself refuses email sign-ups (except the admin allow-list) and any phone account that didn't come through the sign-in page.
+1. **Authentication → Sign In / Providers → "Allow new users to sign up" → ON**. Sign-in is Google or an email code (Step 3b sets them up); the database itself refuses password sign-ups and any email account that didn't come through the sign-in page (except the admin allow-list).
 2. **SQL Editor → New query →** paste the whole of `docs/launch/finish-admin-function.sql` → **Run**. Do this **before you send the first consent link**. It does two things: it lets admin *remove* a category from a provider (adding already works), and it makes the consent page greet the trader by name and show the WhatsApp button note. It shows a "destructive operation" warning because the function contains a `delete` — that's expected; confirm.
 
 ## Step 3a — Paste the database changes (before merging Plan 2 to `main`, 20 minutes)
@@ -61,24 +61,44 @@ The reviews and phone sign-in release needs these database changes in production
 13. `20261012000014_removal_survives_resignup.sql` — a removal for cause survives deleting the account and signing up again.
 14. `20261012000015_otp_verify_limits.sql` — limits on wrong sign-in codes.
 15. `20261012000016_review2_minors.sql` — confirmed-mobile check, report limit, the admin can't delete itself.
-16. `20261012000017_owner_decisions.sql` — 5 wrong group codes per person a day; Twilio Lookups count towards the £20 monthly cap (`lookup_cost_gbp`, £0.01); proof files can be deleted 12 months after they're checked.
+16. `20261012000017_owner_decisions.sql` — 5 wrong group codes per person a day; number Lookups count towards the £20 monthly cap (`lookup_cost_gbp`, £0.01); proof files can be deleted 12 months after they're checked.
+17. **Plan 2b (free sign-in):** paste the whole of `docs/launch/plan-2b-production.sql` **once** and **Run** (it's migrations 000018 onwards in one transaction, ending with a check that fails loudly if anything is missing; it should say `Plan 2b database changes applied` with the number of migrations in it). Do this before Plan 2b is merged to `main`, after Step 3b's settings.
 
 Check afterwards: `select proname from pg_proc where proname in ('otp_approve','sms_hook_gate','submit_review','delete_my_account','otp_verify_gate','proof_files_due');` returns six rows, and `select pg_get_function_identity_arguments('public.submit_review'::regproc);` shows `p_uid uuid, p jsonb, p_device_hash text`.
 
 Then set a private group code (the one members type on Welcome to get the Group member badge; the default is easy to guess): `update public.settings set value = '"<your code>"'::jsonb where key = 'group_code';`
 
-## Step 3b — Cap the SMS bill (Twilio and Supabase, 15 minutes)
+## Step 3b — Free sign-in setup (Google and email codes, about 45 minutes)
 
-Sign-in codes cost money per text. The app limits how many it asks for, but only Twilio can truly stop the spending. Before anyone signs in:
+Texted codes are switched off (no SMS bill). People sign in with **Continue with Google** or a **6-digit code sent to their email**. The full click-by-click steps are in *Owner actions* of `docs/superpowers/plans/2026-10-12-plan-2b-free-sign-in.md`; in short:
 
-- [ ] **Twilio → Billing:** pay as you go with **prepaid credit** (top up £20) and **auto-recharge OFF**. When the credit runs out, texts stop. This is the only hard stop.
-- [ ] **Twilio → Monitor → Usage triggers:** a **usage alert** emailing you at **£10** and **£20** a month for SMS and for Lookup. (An alert only emails; it doesn't stop anything.)
-- [ ] **Twilio → Messaging → Settings → Geo permissions:** **United Kingdom only**.
-- [ ] **Twilio → Messaging → Services:** create a Messaging Service (sender: alphanumeric **BoltonVouch**), turn on **SMS Pumping Protection**, copy its **MG…** SID into Railway as `TWILIO_MESSAGING_SERVICE_SID`.
-- [ ] **Supabase → Authentication → Rate Limits:** **SMS sent per hour → 30** (your decision; keep it at 30, launch day included). This is site-wide, so on the day you post in the group (717 members) more than 30 people may try to sign in within an hour and some will see "couldn't send a text"; they can try again later in the hour.
-- [ ] The app's £20 monthly cap counts **Lookups as well as texts**: each sign-in request that gets past the limits costs a Lookup (`lookup_cost_gbp`, £0.01 by default) whether or not a text goes. If Twilio's Lookup price changes, update it: `update public.settings set value = '0.01'::jsonb where key = 'lookup_cost_gbp';`
-- [ ] **Supabase → Authentication → Hooks → Send SMS hook → HTTPS:** URL `https://boltonvouched.ysbdesigns.uk/api/auth/sms-hook`, generate the secret, paste it into Railway as `SUPABASE_SMS_HOOK_SECRET`, wait for Railway to redeploy, then **enable** the hook. From then on Supabase can't text anyone the sign-in page didn't approve, so every text counts towards the app's £20 monthly cap.
-- [ ] Test: sign in on your own phone at `/platform/sign-in`. If the code doesn't arrive, turn the hook off again and check Railway's logs for `sms-hook:`.
+- [ ] **Resend** (free: 100 emails a day, 3,000 a month), region EU (Ireland): add the domain `ysbdesigns.uk`, add the DNS records it shows (they sit on the `send` subdomain), wait for **Verified**, create an API key with **Sending access**.
+- [ ] **Supabase → Authentication → Emails → SMTP Settings:** custom SMTP on; sender `noreply@ysbdesigns.uk`, name `Bolton Vouched`, host `smtp.resend.com`, port `465`, username `resend`, password the Resend API key, minimum interval 60 seconds. **Rate limits → emails sent per hour: 30.**
+- [ ] **Supabase → Authentication → Emails → Templates:** **Confirm signup** and **Magic Link** both get the subject `Your Bolton Vouched sign-in code` and the body from `supabase/templates/sign-in-code.html` (it shows the code and has no link).
+- [ ] **Supabase → Sign In / Providers → Email:** enabled, **Confirm email ON** (see Step 3c), **Email OTP length 6**, **Email OTP expiration 900**.
+- [ ] **Google Cloud Console:** project **Bolton Vouched**, OAuth consent screen (External, no logo, scopes `openid`, email, profile only, then **Publish app**), and an OAuth client (Web) with redirect URI `https://mmarznvndvbwyhhtbfjy.supabase.co/auth/v1/callback`.
+- [ ] **Supabase → Sign In / Providers → Google:** enabled with that client ID and secret; "Skip nonce check" off; "Allow users without an email" off. **URL Configuration:** Site URL `https://boltonvouched.ysbdesigns.uk`, Redirect URLs `https://boltonvouched.ysbdesigns.uk/**`.
+- [ ] **Supabase → Sign In / Providers → Phone: OFF**, and **Hooks → Send SMS hook: OFF**.
+- [ ] **Railway → web → Variables:** `SIGN_IN_PHONE=off`. The SMS provider variables and `SUPABASE_SMS_HOOK_SECRET` can be removed (keep them only if you plan to switch phone sign-in back on; README → Phone sign-in has the steps).
+- [ ] Test on your phone, in the browser and in the home-screen app: sign in with an email code (check the sender, and that it arrives within a minute), leave a test review → "Waiting for a quick check — it'll appear once approved" → approve it in `/admin` → it shows. Then **Continue with Google** with a different account → its review says "Published".
+
+## Step 3c — Free sign-in settings that must stay as set
+
+- [ ] **Supabase → Authentication → Sign In / Providers → Email → "Confirm email" → ON.** Never turn it off. With it off, Supabase confirms new email accounts itself, after the database has checked them, so an email account could be made without the 6-digit code. The app's guard relies on every new email account arriving unconfirmed.
+- [ ] **Email OTP length 6**, **Email OTP expiration 900** seconds (15 minutes, matching the app's sign-in window).
+- [ ] Resend's free tier allows 100 emails a day; the app stops at 80 a day and 2,900 a month and tells people to try tomorrow or use Google. To change the limits: `select value from public.settings where key = 'email_limits';`. The cap is soft: Supabase's 30-an-hour limit doesn't stop a script asking Supabase directly all day, so keep Step 3d's CAPTCHA on and watch Resend's daily count for the first days.
+- [ ] **No other sign-in providers** (only Google and Email; Anonymous sign-ins off), and on Google **"Allow users without an email" off**. The database lets an account with neither an email nor a phone through (only test fixtures make those), and it would count as signed in.
+
+## Step 3d — Cloudflare Turnstile: stop scripts using up the free emails (free, about 15 minutes)
+
+Without this, a script can ask for sign-in codes all day and use up Resend's 100 free emails, so nobody can sign in by email until tomorrow (Google still works).
+
+- [ ] **Cloudflare** (a free account is enough; the domain doesn't have to be on Cloudflare): **Turnstile → Add widget**. Name `Bolton Vouched`, hostname `boltonvouched.ysbdesigns.uk` (add `web-production-0ec9b.up.railway.app` too if you still use that address), widget mode **Managed**. Copy the **Site key** and the **Secret key**.
+- [ ] **Railway → web → Variables:** `TURNSTILE_SITE_KEY` = the site key, `TURNSTILE_SECRET_KEY` = the secret key. Set **both** together: with only one set, email sign-in refuses everyone. (Left unset, there's no check.)
+- [ ] **Supabase → Authentication → Attack Protection (Bot and Abuse Protection) → Enable CAPTCHA protection → ON**, provider **Turnstile by Cloudflare**, secret = the **same secret key**. This makes Supabase refuse code requests made straight to its API (which skip the app's limits). The app's own requests use the secret Supabase key, which Supabase lets through after the app has checked Turnstile itself; the admin sign-in at `/admin/login` shows the widget and passes its token on.
+- [ ] Do the Railway variables first and wait for the redeploy, then switch on Supabase's CAPTCHA (the other way round, the admin sign-in fails until the deploy lands).
+- [ ] Test: sign in with an email code on your phone (most people see no puzzle; some get a checkbox), and sign in to `/admin`. If email codes stop arriving after turning on Supabase's CAPTCHA, check that `SUPABASE_SERVICE_ROLE_KEY` on Railway is the **service_role** key (Step 1).
+- **Content Security Policy:** the site doesn't send one today. If one is added later, it must allow `https://challenges.cloudflare.com` in `script-src` and `frame-src` (and `connect-src`), or the widget won't load and email sign-in will refuse everyone.
 
 ## Step 4 — Sign in and add traders
 
@@ -88,6 +108,7 @@ Sign-in codes cost money per text. The app limits how many it asks for, but only
 - Gas & boilers needs a Gas Safe check recorded first (number + expiry); driving instructors need a DVSA ADI check.
 - **Copy consent link** → send it with message A below.
 - When they tap **"I agree, list me"**, their status becomes **consented** → open them in admin → **Set live**. They appear on the site straight away.
+- When a trader wants to reply to reviews: open them in admin → **Trader sign-in link** (it's copied for you; it works once and lasts 14 days) → send it to them on WhatsApp. They open it, sign in with Google or their email, and tap **"Yes, this is my business"**. If the wrong person opened it, **Unlink** with a reason and make a new link.
 
 ## Step 5 — Messages
 
@@ -100,7 +121,7 @@ Sign-in codes cost money per text. The app limits how many it asks for, but only
 > This link shows exactly how you'll appear (name, trade, areas and Call/WhatsApp buttons; your number isn't shown on the page). If you're happy, tap "I agree":
 > [CONSENT LINK]
 >
-> Fair warning: people who've used you can leave reviews, and I won't remove one just because it's unflattering, only if it's fake or abusive. You can reply to any review by signing in with your number, and you can come off any time.
+> Fair warning: people who've used you can leave reviews, and I won't remove one just because it's unflattering, only if it's fake or abusive. You can reply to any review: I'll send you a private sign-in link for your listing. And you can come off any time.
 >
 > Your basic listing is free, no catch. Any questions just message me.
 
@@ -110,7 +131,7 @@ Sign-in codes cost money per text. The app limits how many it asks for, but only
 >
 > Your page: [PROFILE LINK — e.g. https://boltonvouched.ysbdesigns.uk/platform/p/ace-plumbing]
 >
-> People can now find you and ring or WhatsApp you straight from it. Your place in the list comes from what reviewers say about the quality of your work; nobody can pay to jump ahead. Reviews are open, so share your link with happy customers and ask them to leave one. Sign in with this number to reply.
+> People can now find you and ring or WhatsApp you straight from it. Your place in the list comes from what reviewers say about the quality of your work; nobody can pay to jump ahead. Reviews are open, so share your link with happy customers and ask them to leave one. Ask me for your sign-in link to reply to reviews.
 >
 > If anything on your listing needs changing, just drop me a message.
 
@@ -125,7 +146,7 @@ Sign-in codes cost money per text. The app limits how many it asks for, but only
 > • Find plumbers, electricians, caterers, bouncy castles, man & van and more
 > • Tap Call or WhatsApp straight from their page, no sign-up
 > • Every pro on there has agreed to be listed, and nobody can pay to rank higher
-> • Leave a review for someone you've used: sign in with your mobile, takes a minute
+> • Leave a review for someone you've used: sign in with Google or your email, takes a minute
 > • Tip: tap "Add it to your phone" on the page and it works like an app
 >
 > **Traders in the group:** if you'd like to be added (a basic listing is free), raise a support ticket by emailing **support@ysbdesigns.uk** or on WhatsApp at **07466 487591** with your name, trade and the areas you cover (or tap "WhatsApp us" or "Email a ticket" on the site) and the Bolton Vouched team will get you on.
@@ -138,10 +159,14 @@ Send C only once at least a handful of traders are live, so the first visit does
 
 ## What's live vs coming
 
-- **Live:** directory, categories, provider profiles, Call/WhatsApp (counted as enquiries), consent links, admin, phone sign-in, reviews with replies and proof checks, review moderation.
+- **Live:** directory, categories, provider profiles, Call/WhatsApp (counted as enquiries), consent links, admin, Google and email sign-in, trader sign-in links, reviews with replies and proof checks, review moderation.
 - **Coming:** community questions (Plan 3); trader dashboard and the optional Verified tier (Plan 4); complaints process and monitoring (Plan 5).
 - Before wider promotion: solicitor review of the draft policy pages (they show "Draft — pending legal review"), and ICO registration for YSB Ventures Ltd.
 
 ## Every month — delete old proof files (until Plan 5)
 
 The privacy notice says proof files are deleted 12 months after they're checked. Until Plan 5 adds scheduled jobs, do it by hand once a month: **admin → Proofs → Old proof files → Delete proof files due now**. It deletes the files from Storage and keeps each review's Verified job label. (Plan 5: run this on a schedule, along with the other retention purges.)
+
+## Sign-in records (automatic, with a button)
+
+The privacy notice says sign-in records (which hold the email address or number that was entered) are kept for up to 30 days, and an account where a code was asked for but never used is deleted after 24 hours. Every "Email me a code" request does this tidy at most once an hour. If nobody has signed in for a while, press **admin → Sign-in records → Tidy sign-in records** (on the admin home page) now and then.
