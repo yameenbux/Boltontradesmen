@@ -7,6 +7,7 @@ import type { FormState } from "@/lib/admin-shared";
 import { AVAILABILITY_ERRORS, parseAvailabilityForm } from "@/lib/availability";
 import { LISTING_ERRORS, parseListingEdit } from "@/lib/listing-edit";
 import { platformPath } from "@/lib/paths";
+import { cancelProForListing } from "@/lib/pro-cancel";
 import { ID_PATTERN, REPLY_MAX } from "@/lib/review-form";
 import { revalidatePublicPages } from "@/lib/revalidate-public";
 
@@ -157,5 +158,7 @@ export async function withdrawMyListing(_prev: FormState, fd: FormData): Promise
   }
   const failed = await changeStatus(fd, "withdraw_my_listing");
   if (failed) return failed;
+  // Pro, if they have it, stops at the end of the period they've paid for (best effort; never blocks this).
+  await cancelProForListing(providerIdFrom(fd) as string);
   redirect(`${platformPath("provider")}?withdrawn=1`);
 }

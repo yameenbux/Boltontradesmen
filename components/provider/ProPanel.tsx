@@ -182,8 +182,8 @@ export function ProPanel({
       {billing && pro.subscription && <ManageBillingForm providerId={providerId} />}
       {pro.isPro && (
         <p className="pro-small">
-          Pro never changes where you&apos;re listed or your badges. Withdrawing your listing doesn&apos;t stop Pro:
-          cancel it in Manage billing first.
+          Pro never changes where you&apos;re listed or your badges. Withdrawing your listing cancels Pro at the end of
+          the period you&apos;ve paid for.
         </p>
       )}
       <IdCheck providerId={providerId} pro={pro} />

@@ -88,11 +88,11 @@ export default function TermsPage() {
         part-used periods, except that if we can&apos;t accept your photo ID we refund your Pro payment in full.
       </p>
       <p>
-        If a payment fails, Stripe tries again for about two weeks and Pro stays on for up to 14 days after the paid
-        period ends. If it still isn&apos;t paid, or Pro ends for any other reason, your photos and the ID checked mark
+        If a payment fails, Stripe tries again for about two weeks, and Pro stays on for up to 14 days from the failed
+        payment. If it still isn&apos;t paid, or Pro ends for any other reason, your photos and the ID checked mark
         stop showing. Your listing and its reviews stay as they were, and your photos come back if you restart Pro.
-        You can remove your photos at any time. Withdrawing your listing doesn&apos;t cancel Pro by itself, so cancel
-        it in Manage billing first.
+        You can remove your photos at any time. Withdrawing your listing (or our removing it) cancels Pro at the end of
+        the period you&apos;ve paid for.
       </p>
       <p>
         We can remove a photo, or end Pro and refund the period not yet used, if it is used to break these terms or the
