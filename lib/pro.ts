@@ -72,7 +72,7 @@ export const PHOTO_HEIC =
   "That's an iPhone HEIC photo, which we can't use yet. On your iPhone go to Settings, Camera, Formats and choose Most Compatible, or share the photo as a JPEG.";
 
 export const DOCUMENT_KINDS = [
-  ["photo_id", "Photo ID (passport or driving licence)"],
+  ["photo_id", "Photo ID"],
   ["insurance", "Insurance certificate"],
   ["accreditation", "Trade accreditation"],
 ] as const;

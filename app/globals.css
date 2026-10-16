@@ -651,17 +651,19 @@ h1,h2,h3{text-wrap:balance}
   .pro-card{display:grid; gap:6px; padding:12px 14px; border-radius:var(--r-sm); background:var(--sage-tint); color:var(--ink)}
   .pro-card p{margin:0; font-size:15px; color:var(--ink-2)}
   .pro-card .pro-title{font-size:16.5px; font-weight:700; color:color-mix(in srgb,var(--sage) 70%,var(--ink))}
-  .pro-list{display:grid; gap:4px; margin:0; padding-left:20px; font-size:15px; color:var(--ink-2)}
+  .pro-list{display:grid; gap:4px; margin:0; padding-left:20px; list-style:disc; font-size:15px; color:var(--ink-2)}
+  .pro-list li::marker{color:var(--sage)}
   .pro-card .pro-list{color:var(--ink)}
   .pro-offer{gap:10px}
   .pro-upgrade-form{gap:12px; margin-top:4px}
-  .plan-picks{border:0; margin:0; padding:0; min-width:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px}
+  .plan-picks{border:0; margin:0; padding:0; min-width:0; display:grid; gap:8px}
   .plan-picks legend{grid-column:1 / -1; padding:0; margin-bottom:8px; font-size:16px; font-weight:700; color:var(--ink)}
   .plan-picks .field-err{grid-column:1 / -1}
-  .plan-pick{display:flex; align-items:flex-start; gap:10px; min-height:56px; padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; background:var(--surface); cursor:pointer}
-  .plan-pick input{width:20px; height:20px; margin:2px 0 0; flex:none; accent-color:var(--brick)}
-  .plan-pick b{display:block; font-size:16px; color:var(--ink)}
-  .plan-pick small{display:block; font-size:13.5px; font-weight:600; color:var(--ink-2)}
+  .plan-pick{display:flex; align-items:center; gap:12px; min-height:56px; padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; background:var(--surface); cursor:pointer}
+  .plan-pick input{width:20px; height:20px; margin:0; flex:none; accent-color:var(--brick)}
+  .plan-pick span{display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px}
+  .plan-pick b{font-size:16.5px; color:var(--ink)}
+  .plan-pick small{font-size:14px; font-weight:600; color:var(--ink-2)}
   .plan-pick:has(input:checked){border-color:var(--brick); background:var(--brick-tint)}
   .plan-pick:has(input:focus-visible){outline:3px solid var(--brick); outline-offset:3px}
   .pro-small{margin:0; font-size:14.5px; color:var(--ink-2)}
