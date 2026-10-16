@@ -6,8 +6,8 @@ import { describe, expect, it } from "vitest";
 
 // Plan 2b Task 12: the one-paste production scripts are generated from the migrations and must stay in step with them.
 // Plan 2b is 000018..000025, the launch checklist 000026, the review card script 000027, availability 000028 and the
-// trader dashboard 000029 and Pro 000030 (all closed); the community questions script is 000031 onwards, so a new
-// migration can't be left out.
+// trader dashboard 000029, Pro 000030 and community questions 000031 (all closed); the price guides script is 000032
+// onwards, so a new migration can't be left out.
 const root = process.cwd();
 const all = readdirSync(path.join(root, "supabase/migrations"))
   .filter((f) => f.endsWith(".sql"))
@@ -67,9 +67,17 @@ const SCRIPTS = [
     file: "docs/launch/community-questions-production.sql",
     preset: "community-questions",
     from: "20261012000031",
-    to: NEWEST,
+    to: "20261012000031",
     functions: ["submit_question", "submit_question_answer", "admin_list_question_queue", "question_public", "question_reports"],
     requires: "20261012000030",
+  },
+  {
+    file: "docs/launch/price-guides-production.sql",
+    preset: "price-guides",
+    from: "20261012000032",
+    to: NEWEST,
+    functions: ["price_guide_min_reviews"],
+    requires: "20261012000031",
   },
 ];
 

@@ -12,8 +12,10 @@
 //     --out docs/launch/trader-dashboard-production.sql
 //   node scripts/build-production-sql.mjs --preset pro-tier --from 20261012000030 --to 20261012000030 \
 //     --out docs/launch/pro-tier-production.sql
-//   node scripts/build-production-sql.mjs --preset community-questions --from 20261012000031 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset community-questions --from 20261012000031 --to 20261012000031 \
 //     --out docs/launch/community-questions-production.sql
+//   node scripts/build-production-sql.mjs --preset price-guides --from 20261012000032 --to <newest> \
+//     --out docs/launch/price-guides-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -329,6 +331,35 @@ end
 $verify$;
 `;
 
+// Price guides (migration 000032 onwards): the threshold setting (10), its reader, and the public totals view, which
+// anon can read without being able to read a review.
+const VERIFY_PRICE_GUIDES = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if to_regclass('public.price_guide_public') is null then
+    raise exception 'Price guides check failed: view public.price_guide_public is missing';
+  end if;
+  if not exists (select 1 from public.settings where key = 'price_guide_min_reviews') then
+    raise exception 'Price guides check failed: setting price_guide_min_reviews is missing';
+  end if;
+  if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                 where n.nspname = 'private' and p.proname = 'price_guide_min_reviews') then
+    raise exception 'Price guides check failed: function private.price_guide_min_reviews is missing';
+  end if;
+  if private.price_guide_min_reviews() < 10 then
+    raise exception 'Price guides check failed: the threshold is below 10';
+  end if;
+  if not has_table_privilege('anon', 'public.price_guide_public', 'select') then
+    raise exception 'Price guides check failed: public.price_guide_public is not readable by anon';
+  end if;
+  if has_table_privilege('anon', 'public.reviews', 'select') or has_table_privilege('authenticated', 'public.reviews', 'select') then
+    raise exception 'Price guides check failed: public.reviews is readable directly';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -376,6 +407,13 @@ const PRESETS = {
     // It re-creates admin_counts (000030's body) and delete_my_account, after the Pro script.
     requires: { version: "20261012000030", what: "the Pro script (docs/launch/pro-tier-production.sql)" },
     verify: VERIFY_COMMUNITY_QUESTIONS,
+  },
+  "price-guides": {
+    title: "price guides database changes (what locals paid)",
+    done: "Price guides database changes applied",
+    // Only reads tables that were there long before; after the community questions script, to keep the order simple.
+    requires: { version: "20261012000031", what: "the community questions script (docs/launch/community-questions-production.sql)" },
+    verify: VERIFY_PRICE_GUIDES,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];
