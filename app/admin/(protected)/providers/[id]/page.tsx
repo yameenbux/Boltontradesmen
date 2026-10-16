@@ -14,10 +14,12 @@ import {
   UnlinkForm,
 } from "@/components/admin/ProviderForms";
 import { AvailabilityForm } from "@/components/provider/AvailabilityForm";
+import { EnquiryStats } from "@/components/provider/EnquiryStats";
 import { setProviderAvailability } from "@/app/admin/(protected)/providers/actions";
 import { requireAdmin } from "@/lib/admin";
 import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
 import { dayMonthYear } from "@/lib/checks";
+import { toEnquiryStats } from "@/lib/enquiries";
 import { reviewShare } from "@/lib/review-link";
 import { badgeShare } from "@/lib/share";
 import { phoneSignInEnabled } from "@/lib/sign-in-methods";
@@ -56,9 +58,10 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { supabase } = await requireAdmin();
-  const [{ data }, { data: categories }] = await Promise.all([
+  const [{ data }, { data: categories }, { data: enquiries }] = await Promise.all([
     supabase.rpc("admin_get_provider", { p_id: id }),
     supabase.from("categories").select("id, name").order("name"),
+    supabase.rpc("admin_enquiry_stats", { p_provider: id }),
   ]);
   const p = data as Detail | null;
   if (!p) notFound();
@@ -78,6 +81,13 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
           · {p.phone_e164}
         </p>
       </div>
+
+      {enquiries && (
+        <section aria-label="Enquiries" className="a-card">
+          <h2>Enquiries</h2>
+          <EnquiryStats stats={toEnquiryStats(enquiries)} id={`chart-${p.id}`} admin />
+        </section>
+      )}
 
       <section aria-label="Consent link" className="a-card a-consent">
         <h2>Consent</h2>
