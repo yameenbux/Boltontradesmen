@@ -17,12 +17,12 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#161009; --surface:#211812; --surface-2:#2A1F18; --ink:#F3E9DC; --ink-2:#BBA998; --ink-3:#9C8B7D; --line:#3A2B22;
-  --brick:#D9704F; --brick-deep:#A9452C; --brick-tint:#3B2018; --hero:#6E2818; --on-brick:#FFF2E4;
+  --brick:#D9704F; --brick-deep:#A9452C; --brick-tint:#3B2018; --hero:#6E2818; --on-brick:#1B0F0A;
   --sage:#93BC95; --sage-tint:#20301F; --gold:#D7A94C;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark }}
 :root[data-theme="dark"]{
   --bg:#161009; --surface:#211812; --surface-2:#2A1F18; --ink:#F3E9DC; --ink-2:#BBA998; --ink-3:#9C8B7D; --line:#3A2B22;
-  --brick:#D9704F; --brick-deep:#A9452C; --brick-tint:#3B2018; --hero:#6E2818; --on-brick:#FFF2E4;
+  --brick:#D9704F; --brick-deep:#A9452C; --brick-tint:#3B2018; --hero:#6E2818; --on-brick:#1B0F0A;
   --sage:#93BC95; --sage-tint:#20301F; --gold:#D7A94C;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark }
 
@@ -259,6 +259,10 @@ h1,h2,h3{text-wrap:balance}
   .tile b{font-size:16px; font-weight:700; line-height:1.2; overflow-wrap:anywhere}
   .tile .tx > span{font-size:13.5px; color:var(--ink-2)}
 
+  .launch{margin-top:30px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); padding:20px; display:grid; gap:10px; color:var(--ink-2); font-size:15.5px}
+  .launch h2{font-family:var(--display); font-weight:400; font-size:24px; line-height:1.15; color:var(--ink)}
+  .launch a{color:var(--brick); font-weight:700; text-decoration:underline; text-underline-offset:3px}
+
   .groups{display:flex; flex-direction:column; gap:10px}
   details.group{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden}
   details.group summary{list-style:none; display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:56px; padding:14px 18px; cursor:pointer; font-weight:700}
@@ -274,6 +278,18 @@ h1,h2,h3{text-wrap:balance}
   .howto li{display:grid; grid-template-columns:34px 1fr; gap:14px; align-items:start; font-size:15.5px; color:var(--ink-2)}
   .howto li::before{counter-increment:s; content:counter(s); width:34px; height:34px; border-radius:50%; background:var(--brick); color:var(--on-brick); display:grid; place-items:center; font-family:var(--display); font-size:17px}
   .howto li b{display:block; color:var(--ink); font-weight:700}
+
+  /* Desktop: the home page widens past the phone column (the rest of the platform stays phone-width). */
+  @media (min-width:900px){
+    .app:has(main.home){max-width:880px}
+    .home .hero h1{font-size:60px; max-width:14ch}
+    .home .hero > p{font-size:18px; max-width:44ch}
+    .home .search{max-width:640px}
+    .home .tiles{grid-template-columns:repeat(4,1fr)}
+    .home .groups{display:grid; grid-template-columns:1fr 1fr; align-items:start}
+    .home .howto ol{grid-template-columns:repeat(3,1fr); gap:24px}
+    .home .launch{max-width:640px}
+  }
 
   /* ---------- category ---------- */
   .back{display:inline-flex; align-items:center; gap:6px; min-height:48px; font-weight:600; color:var(--ink-2); text-decoration:none}

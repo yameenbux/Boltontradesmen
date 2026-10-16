@@ -11,6 +11,19 @@ type Cat = { slug: string; name: string };
 const TRIES = ["plumber", "bouncy castle", "birthday cake", "man and van", "boiler service", "driving lessons"];
 const ROTATE_MS = 2400;
 
+// Fire-and-forget: tell the server what was searched (cleaned and logged without any id; see lib/search-log.ts).
+function logSearch(q: string, category: string | null) {
+  try {
+    const body = JSON.stringify({ q, matched: category !== null, category });
+    // keepalive lets the request finish even though the page navigates straight away.
+    void fetch("/api/search-log", { method: "POST", body, keepalive: true, headers: { "Content-Type": "application/json" } }).catch(
+      () => {},
+    );
+  } catch {
+    // Logging must never get in the way of the search.
+  }
+}
+
 /**
  * Hero search. Submitting a full or partial trade name goes straight to its category page (client-side);
  * anything else shows an inline "No trade called …" message with a link down to the full list.
@@ -45,6 +58,7 @@ export function HomeSearch({ categories }: { categories: Cat[] }) {
       input.current?.focus();
       return;
     }
+    logSearch(q, match?.slug ?? null);
     if (match) {
       setNoMatch(null);
       router.push(platformPath("c", match.slug));

@@ -80,3 +80,14 @@ test("how it works invites a review", async ({ page }) => {
   await expect(page.getByText("Leave a review in a minute")).toBeVisible();
   await expect(page.getByText(/coming soon|once reviews open/i)).toHaveCount(0);
 });
+
+test("a search that finds nothing is logged, cleaned and without the person", async ({ page }) => {
+  await page.goto("/platform");
+  const beacon = page.waitForRequest((r) => r.url().endsWith("/api/search-log") && r.method() === "POST");
+  await page.getByRole("searchbox", { name: "What do you need?" }).fill("Zebra tuning 07466");
+  await page.getByRole("button", { name: "Find" }).click();
+  const body = JSON.parse((await beacon).postData() ?? "{}");
+  expect(body).toEqual({ q: "Zebra tuning 07466", matched: false, category: null });
+  const res = await page.request.post("/api/search-log", { data: body });
+  expect(res.status()).toBe(204);
+});
