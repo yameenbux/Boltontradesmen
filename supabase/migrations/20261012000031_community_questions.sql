@@ -1,0 +1,695 @@
+-- Community questions (Step 6): "Anyone know a good electrician in BL3?", answered with listed traders.
+--
+-- * public.questions: a signed-in resident asks in one trade and one district (lib/districts.ts BL_DISTRICTS), in 10 to
+--   280 characters with no phone numbers, web or email addresses. Email-only accounts (private.sign_in_kind = 'email')
+--   are held as 'pending' for the admin, as their reviews are; Google and phone accounts publish at once. At most 3
+--   questions per account in 24 hours, and one open question per account per trade.
+-- * A question is open for 14 days from when it went public (published_at), worked out when it's read; after that it
+--   stays visible, closed, and takes no new answers.
+-- * public.question_answers: one per account per question, always naming a live provider in the question's trade.
+--   kind 'recommend' (a resident or a trader recommending someone, never their own listing) or 'can_help' (a linked
+--   trader saying their own business can help, shown as the trader speaking for themselves). An optional note of up
+--   to 200 characters, with the same rules as the question.
+-- * public.question_reports: reports on a question or an answer (the review flags table only knows reviews and
+--   replies). The admin removes the item with a reason, or dismisses the reports.
+-- * No table access for anon, authenticated or the service role. The public reads question_public and
+--   question_answer_public (published items of live providers, shown names only); posting, answering and reporting
+--   go through service-role functions called by the app's server with the verified user id; admin_* functions check
+--   is_admin() and write audit_log.
+-- * Recommendations are not reviews: provider_stats, provider_public, ranking and badges don't read these tables.
+-- * delete_my_account (000020 body) also takes the account's questions and answers down.
+-- Re-runnable.
+
+-- ---------------------------------------------------------------- tables
+create table if not exists public.questions (
+  id uuid primary key default gen_random_uuid(),
+  asker_id uuid not null references auth.users (id) on delete restrict,
+  category_id uuid not null references public.categories (id) on delete restrict,
+  district text not null,
+  body text not null check (char_length(body) between 10 and 280),
+  status text not null default 'published' check (status in ('pending', 'published', 'removed')),
+  removal_reason text,
+  created_at timestamptz not null default now(),
+  -- When it went public (posted, or approved by the admin): the 14 days run from here.
+  published_at timestamptz,
+  constraint questions_removed_requires_reason
+    check (status <> 'removed' or nullif(btrim(removal_reason), '') is not null),
+  constraint questions_published_has_date check (status <> 'published' or published_at is not null)
+);
+create index if not exists questions_public_idx on public.questions (status, published_at desc);
+create index if not exists questions_asker_idx on public.questions (asker_id, created_at);
+
+create table if not exists public.question_answers (
+  id uuid primary key default gen_random_uuid(),
+  question_id uuid not null references public.questions (id) on delete cascade,
+  author_id uuid not null references auth.users (id) on delete restrict,
+  kind text not null check (kind in ('recommend', 'can_help')),
+  provider_id uuid not null references public.providers (id) on delete restrict,
+  note text check (note is null or char_length(note) between 1 and 200),
+  status text not null default 'published' check (status in ('published', 'removed')),
+  removal_reason text,
+  created_at timestamptz not null default now(),
+  constraint question_answers_removed_requires_reason
+    check (status <> 'removed' or nullif(btrim(removal_reason), '') is not null)
+);
+create unique index if not exists question_answers_one_per_author on public.question_answers (question_id, author_id);
+create index if not exists question_answers_author_idx on public.question_answers (author_id, created_at);
+
+create table if not exists public.question_reports (
+  id uuid primary key default gen_random_uuid(),
+  target_type text not null check (target_type in ('question', 'answer')),
+  target_id uuid not null,
+  question_id uuid not null references public.questions (id) on delete cascade,
+  reporter_id uuid references auth.users (id) on delete set null,
+  note text not null check (char_length(btrim(note)) between 1 and 500),
+  status text not null default 'open' check (status in ('open', 'resolved', 'dismissed')),
+  resolved_by uuid references auth.users (id) on delete set null,
+  resolved_at timestamptz,
+  resolution_note text,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists question_reports_one_open on public.question_reports (target_type, target_id, reporter_id)
+  where status = 'open';
+create index if not exists question_reports_open_idx on public.question_reports (status, created_at);
+create index if not exists question_reports_reporter_idx on public.question_reports (reporter_id, created_at);
+
+alter table public.questions enable row level security;
+alter table public.question_answers enable row level security;
+alter table public.question_reports enable row level security;
+revoke all on table public.questions, public.question_answers, public.question_reports
+  from public, anon, authenticated, service_role;
+
+-- ---------------------------------------------------------------- shared checks
+-- Why this account may not post (ask, answer or report), or null: a finished profile, signed in with Google, an email
+-- code or a phone, and not blocked (directly, or through a deleted account's kept sign-in fingerprint).
+create or replace function private.community_block_reason(p_uid uuid) returns text
+language plpgsql stable security definer set search_path = ''
+as $$
+declare
+  v_profile public.profiles;
+  v_keys text[];
+begin
+  if p_uid is null then
+    return 'not_member';
+  end if;
+  select * into v_profile from public.profiles where user_id = p_uid;
+  if v_profile.user_id is null or v_profile.deleted_at is not null or v_profile.display_name is null then
+    return 'not_member';
+  end if;
+  if not private.phone_signed_in(p_uid) then
+    return 'not_member';
+  end if;
+  if v_profile.blocked_at is not null then
+    return 'blocked';
+  end if;
+  v_keys := private.identity_keys(p_uid);
+  if cardinality(v_keys) > 0 and exists (
+    select 1 from public.identity_retention ir
+    join public.profiles op on op.user_id = ir.user_id
+    where ir.identity_key = any(v_keys) and ir.user_id <> p_uid and ir.purge_after > now() and op.blocked_at is not null
+  ) then
+    return 'blocked';
+  end if;
+  return null;
+end;
+$$;
+revoke execute on function private.community_block_reason(uuid) from public, anon, authenticated;
+
+-- Spaces and line breaks squashed to single spaces, trimmed (lib/questions.ts tidyText does the same).
+create or replace function private.community_tidy(p_text text) returns text
+language sql immutable set search_path = ''
+as $$
+  select btrim(regexp_replace(coalesce(p_text, ''), '\s+', ' ', 'g'));
+$$;
+revoke execute on function private.community_tidy(text) from public, anon, authenticated;
+
+-- 'phone' (ten or more digits, however spaced: as for reviews), 'link' (a web or email address: as for a trader's
+-- description, lib/listing-edit.ts LINK_IN_TEXT) or null.
+create or replace function private.community_text_problem(p_text text) returns text
+language sql immutable set search_path = ''
+as $$
+  select case
+    when p_text ~ '([0-9][ ().-]*){10,}' then 'phone'
+    when p_text ~* '(https?://|www\.|@|[a-z0-9-]\.(co\.uk|org\.uk|com|uk|net|org|info|biz|io|me)\y)' then 'link'
+  end;
+$$;
+revoke execute on function private.community_text_problem(text) from public, anon, authenticated;
+
+-- ---------------------------------------------------------------- public reads
+-- Answers that show: published, on a published question, naming a live provider, by an account that isn't deleted.
+-- A resident's recommendation carries their shown name; "I can help" is the trader speaking, so it carries none.
+create or replace view public.question_answer_public
+with (security_barrier = true) as
+select
+  a.id,
+  a.question_id,
+  a.kind,
+  p.id as provider_id,
+  p.slug as provider_slug,
+  p.business_name,
+  (p.whatsapp_e164 is not null) as has_whatsapp,
+  case when a.kind = 'recommend' then coalesce(pr.display_name, 'Bolton resident') end as author_name,
+  a.note,
+  a.created_at
+from public.question_answers a
+join public.questions q on q.id = a.question_id and q.status = 'published'
+join public.providers p on p.id = a.provider_id and p.status = 'live'
+left join public.profiles pr on pr.user_id = a.author_id
+where a.status = 'published'
+  and pr.deleted_at is null;
+
+alter view public.question_answer_public owner to postgres;
+revoke all on public.question_answer_public from public, anon, authenticated;
+grant select on public.question_answer_public to anon, authenticated;
+
+-- Questions that show: published, asker not deleted. status is 'open' for 14 days from published_at, then 'closed'.
+create or replace view public.question_public
+with (security_barrier = true) as
+select
+  q.id,
+  c.slug as category_slug,
+  c.name as category_name,
+  q.district,
+  q.body,
+  coalesce(pr.display_name, 'Bolton resident') as asker_name,
+  q.published_at as created_at,
+  q.published_at + interval '14 days' as closes_at,
+  case when now() < q.published_at + interval '14 days' then 'open' else 'closed' end as status,
+  (select count(*)::int from public.question_answer_public a where a.question_id = q.id and a.kind = 'recommend')
+    as recommendation_count,
+  (select count(*)::int from public.question_answer_public a where a.question_id = q.id and a.kind = 'can_help')
+    as can_help_count
+from public.questions q
+join public.categories c on c.id = q.category_id
+left join public.profiles pr on pr.user_id = q.asker_id
+where q.status = 'published'
+  and pr.deleted_at is null;
+
+alter view public.question_public owner to postgres;
+revoke all on public.question_public from public, anon, authenticated;
+grant select on public.question_public to anon, authenticated;
+
+-- ---------------------------------------------------------------- asking
+-- Raises not_member, blocked, bad_category, bad_district, body_too_short, body_too_long, body_has_phone,
+-- body_has_link, question_limit or open_question_exists. Returns {id, status}: 'pending' for an email-only account.
+create or replace function public.submit_question(p_uid uuid, p_category uuid, p_district text, p_body text)
+returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_block text := private.community_block_reason(p_uid);
+  v_district text := upper(btrim(coalesce(p_district, '')));
+  v_body text := private.community_tidy(p_body);
+  v_problem text;
+  v_status text;
+  v_id uuid;
+begin
+  if v_block is not null then
+    raise exception '%', v_block;
+  end if;
+  -- One posting at a time per person, so a double tap can't slip past the limits.
+  perform pg_advisory_xact_lock(hashtext('submit_question:' || p_uid::text));
+
+  if p_category is null or not exists (select 1 from public.categories where id = p_category and active) then
+    raise exception 'bad_category';
+  end if;
+  if not (v_district = any (private.trader_districts())) then
+    raise exception 'bad_district';
+  end if;
+  if char_length(v_body) < 10 then
+    raise exception 'body_too_short';
+  end if;
+  if char_length(v_body) > 280 then
+    raise exception 'body_too_long';
+  end if;
+  v_problem := private.community_text_problem(v_body);
+  if v_problem is not null then
+    raise exception 'body_has_%', v_problem;
+  end if;
+  if (select count(*) from public.questions where asker_id = p_uid and created_at > now() - interval '24 hours') >= 3 then
+    raise exception 'question_limit';
+  end if;
+  if exists (
+    select 1 from public.questions
+    where asker_id = p_uid and category_id = p_category
+      and (status = 'pending' or (status = 'published' and published_at > now() - interval '14 days'))
+  ) then
+    raise exception 'open_question_exists';
+  end if;
+
+  -- Email-only accounts (the weaker check) wait for the admin, as their reviews do.
+  v_status := case when private.sign_in_kind(p_uid) = 'email' then 'pending' else 'published' end;
+  insert into public.questions (asker_id, category_id, district, body, status, published_at)
+  values (p_uid, p_category, v_district, v_body, v_status, case when v_status = 'published' then now() end)
+  returning id into v_id;
+  return jsonb_build_object('id', v_id, 'status', v_status);
+end;
+$$;
+
+-- ---------------------------------------------------------------- answering
+-- What the answer page needs for this account: the question (null unless it's public), whether they've answered,
+-- why they can't post (or null), their own live listings in the trade ("I can help") and the trade's live listings.
+create or replace function public.question_answer_context(p_uid uuid, p_question uuid) returns jsonb
+language plpgsql stable security definer set search_path = ''
+as $$
+declare
+  q public.questions;
+  v_q jsonb;
+begin
+  select * into q from public.questions where id = p_question and status = 'published';
+  if q.id is null then
+    return null;
+  end if;
+  select to_jsonb(x) into v_q from public.question_public x where x.id = q.id;
+  if v_q is null then
+    return null;
+  end if;
+  return jsonb_build_object(
+    'question', v_q || jsonb_build_object('own', q.asker_id = p_uid),
+    'answered', exists (select 1 from public.question_answers where question_id = q.id and author_id = p_uid),
+    'blocked', private.community_block_reason(p_uid),
+    'my_providers', coalesce((
+      select jsonb_agg(jsonb_build_object('id', p.id, 'slug', p.slug, 'business_name', p.business_name)
+                       order by p.business_name)
+      from public.providers p
+      join public.provider_categories pc on pc.provider_id = p.id and pc.category_id = q.category_id
+      where p.user_id = p_uid and p.status = 'live' and private.category_visible(p.id, q.category_id)
+    ), '[]'::jsonb),
+    'providers', coalesce((
+      select jsonb_agg(jsonb_build_object('id', p.id, 'slug', p.slug, 'business_name', p.business_name,
+                                          'areas', p.areas, 'own', p.user_id is not distinct from p_uid)
+                       order by lower(p.business_name), p.id)
+      from public.providers p
+      join public.provider_categories pc on pc.provider_id = p.id and pc.category_id = q.category_id
+      where p.status = 'live' and private.category_visible(p.id, q.category_id)
+    ), '[]'::jsonb)
+  );
+end;
+$$;
+
+-- Raises not_member, blocked, question_not_found, question_closed, own_question, already_answered, bad_input,
+-- bad_provider, own_listing, not_your_listing, note_too_long, note_has_phone, note_has_link or answer_limit.
+-- Returns {id, question_id}.
+create or replace function public.submit_question_answer(p_uid uuid, p_question uuid, p_kind text, p_provider uuid,
+                                                         p_note text)
+returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_block text := private.community_block_reason(p_uid);
+  q public.questions;
+  v_owner uuid;
+  v_note text := nullif(private.community_tidy(p_note), '');
+  v_problem text;
+  v_id uuid;
+begin
+  if v_block is not null then
+    raise exception '%', v_block;
+  end if;
+  perform pg_advisory_xact_lock(hashtext('submit_question_answer:' || p_uid::text));
+
+  select * into q from public.questions where id = p_question and status = 'published';
+  if q.id is null then
+    raise exception 'question_not_found';
+  end if;
+  if q.published_at <= now() - interval '14 days' then
+    raise exception 'question_closed';
+  end if;
+  if q.asker_id = p_uid then
+    raise exception 'own_question';
+  end if;
+  if exists (select 1 from public.question_answers where question_id = q.id and author_id = p_uid) then
+    raise exception 'already_answered';
+  end if;
+  if p_kind is null or p_kind not in ('recommend', 'can_help') then
+    raise exception 'bad_input';
+  end if;
+
+  -- A live provider listed in the question's trade.
+  select p.user_id into v_owner
+  from public.providers p
+  join public.provider_categories pc on pc.provider_id = p.id and pc.category_id = q.category_id
+  where p.id = p_provider and p.status = 'live' and private.category_visible(p.id, q.category_id);
+  if not found then
+    raise exception 'bad_provider';
+  end if;
+  -- A trader never recommends their own business; they say "I can help" instead, and only for their own.
+  if p_kind = 'recommend' and v_owner = p_uid then
+    raise exception 'own_listing';
+  end if;
+  if p_kind = 'can_help' and v_owner is distinct from p_uid then
+    raise exception 'not_your_listing';
+  end if;
+
+  if char_length(v_note) > 200 then
+    raise exception 'note_too_long';
+  end if;
+  v_problem := private.community_text_problem(v_note);
+  if v_problem is not null then
+    raise exception 'note_has_%', v_problem;
+  end if;
+  if (select count(*) from public.question_answers where author_id = p_uid and created_at > now() - interval '24 hours') >= 20 then
+    raise exception 'answer_limit';
+  end if;
+
+  begin
+    insert into public.question_answers (question_id, author_id, kind, provider_id, note)
+    values (q.id, p_uid, p_kind, p_provider, v_note)
+    returning id into v_id;
+  exception when unique_violation then
+    raise exception 'already_answered';
+  end;
+  return jsonb_build_object('id', v_id, 'question_id', q.id);
+end;
+$$;
+
+-- ---------------------------------------------------------------- reporting
+-- A report on a public question or answer, for the admin; it never changes the item on its own. Raises not_member,
+-- blocked, report_note_required, not_found, report_limit (10 a day, as for reviews) or already_reported.
+-- Returns the question id.
+create or replace function public.report_question_content(p_uid uuid, p_target_type text, p_target_id uuid, p_note text)
+returns uuid
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_block text := private.community_block_reason(p_uid);
+  v_note text := btrim(coalesce(p_note, ''));
+  v_question uuid;
+begin
+  if v_block is not null then
+    raise exception '%', v_block;
+  end if;
+  if char_length(v_note) not between 1 and 500 then
+    raise exception 'report_note_required';
+  end if;
+  if p_target_type = 'question' then
+    select id into v_question from public.question_public where id = p_target_id;
+  elsif p_target_type = 'answer' then
+    select question_id into v_question from public.question_answer_public where id = p_target_id;
+  end if;
+  if v_question is null then
+    raise exception 'not_found';
+  end if;
+  perform pg_advisory_xact_lock(hashtext('report_question_content:' || p_uid::text));
+  if (select count(*) from public.question_reports
+      where reporter_id = p_uid and created_at > now() - interval '24 hours') >= 10 then
+    raise exception 'report_limit';
+  end if;
+  begin
+    insert into public.question_reports (target_type, target_id, question_id, reporter_id, note)
+    values (p_target_type, p_target_id, v_question, p_uid, v_note);
+  exception when unique_violation then
+    raise exception 'already_reported';
+  end;
+  return v_question;
+end;
+$$;
+
+-- ---------------------------------------------------------------- admin
+-- Held questions (oldest first), and reported questions and answers that are still up, with their open reports.
+create or replace function public.admin_list_question_queue() returns jsonb
+language plpgsql stable security definer set search_path = ''
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'not admin' using errcode = '42501';
+  end if;
+  return jsonb_build_object(
+    'held', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', q.id, 'category_name', c.name, 'district', q.district, 'body', q.body, 'created_at', q.created_at,
+        'asker_name', coalesce(pr.display_name, 'Deleted account'), 'sign_in_kind', private.sign_in_kind(q.asker_id),
+        'account_created_at', u.created_at
+      ) order by q.created_at, q.id)
+      from public.questions q
+      join public.categories c on c.id = q.category_id
+      left join public.profiles pr on pr.user_id = q.asker_id
+      left join auth.users u on u.id = q.asker_id
+      where q.status = 'pending'
+    ), '[]'::jsonb),
+    'reported', coalesce((
+      select jsonb_agg(t.item order by t.first_at, t.target_id)
+      from (
+        select r.target_type, r.target_id, min(r.created_at) as first_at,
+          jsonb_build_object(
+            'target_type', r.target_type, 'target_id', r.target_id, 'question_id', q.id,
+            'question_body', q.body, 'category_name', c.name, 'district', q.district,
+            'asker_name', coalesce(qp.display_name, 'Deleted account'),
+            'answer', case when r.target_type = 'answer' then (
+              select jsonb_build_object('kind', a.kind, 'business_name', p.business_name, 'provider_slug', p.slug,
+                                        'note', a.note, 'author_name', coalesce(ap.display_name, 'Deleted account'))
+              from public.question_answers a
+              join public.providers p on p.id = a.provider_id
+              left join public.profiles ap on ap.user_id = a.author_id
+              where a.id = r.target_id
+            ) end,
+            'reports', jsonb_agg(jsonb_build_object(
+              'id', r.id, 'note', r.note, 'created_at', r.created_at,
+              'reporter_name', (select display_name from public.profiles where user_id = r.reporter_id)
+            ) order by r.created_at)
+          ) as item
+        from public.question_reports r
+        join public.questions q on q.id = r.question_id
+        join public.categories c on c.id = q.category_id
+        left join public.profiles qp on qp.user_id = q.asker_id
+        where r.status = 'open'
+          and q.status <> 'removed'
+          and (r.target_type = 'question'
+               or exists (select 1 from public.question_answers a where a.id = r.target_id and a.status <> 'removed'))
+        group by r.target_type, r.target_id, q.id, q.body, c.name, q.district, qp.display_name
+      ) t
+    ), '[]'::jsonb)
+  );
+end;
+$$;
+
+-- Number of things waiting on the questions page: held questions plus reported items still up.
+create or replace function private.question_queue_count() returns int
+language sql stable security definer set search_path = ''
+as $$
+  select (select count(*) from public.questions where status = 'pending')::int
+       + (select count(distinct (r.target_type, r.target_id))
+          from public.question_reports r
+          join public.questions q on q.id = r.question_id
+          where r.status = 'open' and q.status <> 'removed'
+            and (r.target_type = 'question'
+                 or exists (select 1 from public.question_answers a where a.id = r.target_id and a.status <> 'removed')))::int;
+$$;
+revoke execute on function private.question_queue_count() from public, anon, authenticated;
+
+-- pending -> published: the 14 days start now. Returns the question id.
+create or replace function public.admin_approve_question(p_question uuid) returns uuid
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'not admin' using errcode = '42501';
+  end if;
+  update public.questions set status = 'published', published_at = now()
+  where id = p_question and status = 'pending';
+  if not found then
+    raise exception 'question not pending';
+  end if;
+  insert into public.audit_log (actor_id, action, target_type, target_id)
+  values (auth.uid(), 'approve_question', 'question', p_question::text);
+  return p_question;
+end;
+$$;
+
+-- pending | published -> removed (reason required and kept); its open reports, and its answers', are resolved.
+create or replace function public.admin_remove_question(p_question uuid, p_reason text) returns uuid
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_reason text := nullif(btrim(coalesce(p_reason, '')), '');
+begin
+  if not public.is_admin() then
+    raise exception 'not admin' using errcode = '42501';
+  end if;
+  if v_reason is null then
+    raise exception 'a reason is required to remove a question' using errcode = 'check_violation';
+  end if;
+  update public.questions set status = 'removed', removal_reason = v_reason
+  where id = p_question and status in ('pending', 'published');
+  if not found then
+    raise exception 'question not found' using errcode = 'P0002';
+  end if;
+  update public.question_reports set status = 'resolved', resolved_by = auth.uid(), resolved_at = now(),
+    resolution_note = 'Question removed: ' || v_reason
+  where question_id = p_question and status = 'open';
+  insert into public.audit_log (actor_id, action, target_type, target_id, reason)
+  values (auth.uid(), 'remove_question', 'question', p_question::text, v_reason);
+  return p_question;
+end;
+$$;
+
+-- published -> removed (reason required and kept); its open reports are resolved. Returns the question id.
+create or replace function public.admin_remove_question_answer(p_answer uuid, p_reason text) returns uuid
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_reason text := nullif(btrim(coalesce(p_reason, '')), '');
+  v_question uuid;
+begin
+  if not public.is_admin() then
+    raise exception 'not admin' using errcode = '42501';
+  end if;
+  if v_reason is null then
+    raise exception 'a reason is required to remove an answer' using errcode = 'check_violation';
+  end if;
+  update public.question_answers set status = 'removed', removal_reason = v_reason
+  where id = p_answer and status = 'published'
+  returning question_id into v_question;
+  if v_question is null then
+    raise exception 'answer not found' using errcode = 'P0002';
+  end if;
+  update public.question_reports set status = 'resolved', resolved_by = auth.uid(), resolved_at = now(),
+    resolution_note = 'Answer removed: ' || v_reason
+  where target_type = 'answer' and target_id = p_answer and status = 'open';
+  insert into public.audit_log (actor_id, action, target_type, target_id, reason)
+  values (auth.uid(), 'remove_question_answer', 'question_answer', p_answer::text, v_reason);
+  return v_question;
+end;
+$$;
+
+-- The reports on one question or answer were wrong: dismissed, the item stays. Returns the question id.
+create or replace function public.admin_dismiss_question_reports(p_target_type text, p_target_id uuid, p_note text)
+returns uuid
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_note text := nullif(btrim(coalesce(p_note, '')), '');
+  v_question uuid;
+begin
+  if not public.is_admin() then
+    raise exception 'not admin' using errcode = '42501';
+  end if;
+  with dismissed as (
+    update public.question_reports set status = 'dismissed', resolved_by = auth.uid(), resolved_at = now(),
+      resolution_note = v_note
+    where target_type = p_target_type and target_id = p_target_id and status = 'open'
+    returning question_id
+  )
+  select max(question_id::text)::uuid into v_question from dismissed;
+  if v_question is null then
+    raise exception 'no open reports';
+  end if;
+  insert into public.audit_log (actor_id, action, target_type, target_id, reason)
+  values (auth.uid(), 'dismiss_question_reports', p_target_type, p_target_id::text, coalesce(v_note, 'dismissed'));
+  return v_question;
+end;
+$$;
+
+-- admin_counts (000030 body + the questions page's queue).
+create or replace function public.admin_counts() returns jsonb
+language plpgsql stable security definer set search_path = ''
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'not admin' using errcode = '42501';
+  end if;
+  return jsonb_build_object(
+    'pending', (select count(*) from public.reviews where status = 'pending'),
+    'under_check', (select count(*) from public.reviews where status = 'under_check'),
+    'open_flags', (select count(*) from public.flags where status = 'open'),
+    'pending_proofs', (select count(*) from public.review_proofs pr join public.reviews r on r.id = pr.review_id
+                       where pr.outcome = 'pending' and r.status <> 'removed'),
+    'listing_requests', (select count(*) from public.listing_requests where status = 'new'),
+    'pending_pro_documents', (select count(*) from public.pro_documents where status = 'pending'),
+    'questions', private.question_queue_count()
+  );
+end;
+$$;
+
+-- ---------------------------------------------------------------- delete_my_account (000020 body + questions)
+create or replace function public.delete_my_account() returns text[]
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_phone text;
+  v_slugs text[];
+  c_reason constant text := 'Reviewer deleted their account';
+  c_author constant text := 'Author deleted their account';
+begin
+  if v_uid is null then
+    raise exception 'not_member';
+  end if;
+  if exists (select 1 from public.profiles where user_id = v_uid and role = 'admin') then
+    raise exception 'admin_account';
+  end if;
+
+  delete from public.phone_retention where purge_after < now();
+  delete from public.identity_retention where purge_after < now();
+
+  select nullif(btrim(u.phone), '') into v_phone from auth.users u where u.id = v_uid;
+  if v_phone is not null and not exists (select 1 from public.phone_retention r where r.user_id = v_uid) then
+    insert into public.phone_retention (user_id, phone_e164) values (v_uid, '+' || ltrim(v_phone, '+'));
+  end if;
+  -- The hashed sign-in keys, while the account still has them (GoTrue's soft delete obfuscates them next).
+  insert into public.identity_retention (user_id, identity_key)
+  select v_uid, k from unnest(private.identity_keys(v_uid)) k
+  where not exists (select 1 from public.identity_retention ir where ir.user_id = v_uid and ir.identity_key = k);
+
+  -- Their community questions and answers come down too (the public views hide a deleted account's anyway).
+  update public.questions set status = 'removed', removal_reason = c_author
+  where asker_id = v_uid and status <> 'removed';
+  update public.question_answers set status = 'removed', removal_reason = c_author
+  where author_id = v_uid and status <> 'removed';
+
+  with taken_down as (
+    update public.reviews r set status = 'removed', removal_reason = c_reason
+    where r.reviewer_id = v_uid and r.status <> 'removed'
+    returning r.provider_id
+  ), replies as (
+    update public.review_responses rr set status = 'removed', removal_reason = c_reason
+    where rr.author_id = v_uid and rr.status <> 'removed'
+    returning rr.provider_id
+  ), unlinked as (
+    update public.providers p set user_id = null
+    where p.user_id = v_uid
+    returning p.id
+  )
+  select coalesce(array_agg(distinct p.slug order by p.slug), '{}') into v_slugs
+  from public.providers p
+  where p.id in (select provider_id from taken_down union select provider_id from replies union select id from unlinked);
+
+  update public.profiles set deleted_at = coalesce(deleted_at, now()), display_name = null where user_id = v_uid;
+
+  if not exists (select 1 from public.audit_log a where a.actor_id = v_uid and a.action = 'delete_account') then
+    insert into public.audit_log (actor_id, action, target_type, target_id) values (v_uid, 'delete_account', 'user', v_uid::text);
+  end if;
+
+  return v_slugs;
+end;
+$$;
+
+-- ---------------------------------------------------------------- grants
+do $$
+declare
+  f text;
+begin
+  -- The app's server only (service role key): it passes the user id from the verified session.
+  foreach f in array array[
+    'public.submit_question(uuid, uuid, text, text)',
+    'public.question_answer_context(uuid, uuid)',
+    'public.submit_question_answer(uuid, uuid, text, uuid, text)',
+    'public.report_question_content(uuid, text, uuid, text)'
+  ] loop
+    execute format('revoke execute on function %s from public, anon, authenticated', f);
+    execute format('grant execute on function %s to service_role', f);
+  end loop;
+  -- The admin, signed in (each checks is_admin()); and delete_my_account for the account itself.
+  foreach f in array array[
+    'public.admin_list_question_queue()',
+    'public.admin_approve_question(uuid)',
+    'public.admin_remove_question(uuid, text)',
+    'public.admin_remove_question_answer(uuid, text)',
+    'public.admin_dismiss_question_reports(text, uuid, text)',
+    'public.admin_counts()',
+    'public.delete_my_account()'
+  ] loop
+    execute format('revoke execute on function %s from public, anon', f);
+    execute format('grant execute on function %s to authenticated', f);
+  end loop;
+end $$;

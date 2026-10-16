@@ -65,7 +65,7 @@ select throws_ok($$select public.admin_remove_reply('00000000-0000-0000-0000-000
 
 -- ---------------------------------------------------------------- reads
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000009a1","role":"authenticated"}';
-select is(public.admin_counts(), '{"pending":0,"under_check":1,"open_flags":2,"pending_proofs":1,"listing_requests":0,"pending_pro_documents":0}'::jsonb, 'counts');
+select is(public.admin_counts(), '{"pending":0,"under_check":1,"open_flags":2,"pending_proofs":1,"listing_requests":0,"pending_pro_documents":0,"questions":0}'::jsonb, 'counts');
 insert into out select 'uc', public.admin_list_reviews_under_check();
 select is(jsonb_array_length((select v from out where k = 'uc')), 1, 'one review under check');
 select is((select v -> 0 ->> 'provider_slug' from out where k = 'uc'), 'mod-plumb', 'with the provider slug');
