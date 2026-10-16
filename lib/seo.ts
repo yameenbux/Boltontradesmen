@@ -122,19 +122,25 @@ export const SOCIAL_IMAGE = {
   alt: "Bolton Vouched: Anyone know a good…? Bolton already does.",
 };
 
-/** Title, description, canonical, Open Graph and Twitter card for one page. Paths are resolved via metadataBase. */
+/**
+ * Title, description, canonical, Open Graph and Twitter card for one page. Paths are resolved via metadataBase.
+ * `ownImage` leaves the image out, for a page whose segment draws its own (a profile's opengraph-image.tsx), so the
+ * generic social.png can't stand in for it.
+ */
 export function pageMetadata({
   title,
   description,
   path,
   type = "website",
   noindex = false,
+  ownImage = false,
 }: {
   title: string;
   description: string;
   path: string;
   type?: "website" | "profile";
   noindex?: boolean;
+  ownImage?: boolean;
 }): Metadata {
   return {
     title: { absolute: title },
@@ -147,9 +153,9 @@ export function pageMetadata({
       locale: "en_GB",
       title,
       description,
-      images: [SOCIAL_IMAGE],
+      ...(ownImage ? {} : { images: [SOCIAL_IMAGE] }),
     },
-    twitter: { card: "summary_large_image", title, description, images: [SOCIAL_IMAGE.url] },
+    twitter: { card: "summary_large_image", title, description, ...(ownImage ? {} : { images: [SOCIAL_IMAGE.url] }) },
     ...(noindex ? { robots: { index: false, follow: true } } : {}),
   };
 }
@@ -179,7 +185,8 @@ export function providerMetadata(p: {
   const lead = `${p.businessName}: ${p.trade ? p.trade.toLowerCase() : "local pro"} in Bolton${areas}.`;
   const bio = p.bio ? stripPhoneNumbers(p.bio) : "";
   const description = truncate(bio ? `${lead} ${bio}` : `${lead} Recommended on ${SITE_NAME}.`, 160);
-  return pageMetadata({ title, description, path: platformPath("p", p.slug), type: "profile" });
+  // The image comes from app/platform/p/[slug]/opengraph-image.tsx.
+  return pageMetadata({ title, description, path: platformPath("p", p.slug), type: "profile", ownImage: true });
 }
 
 export function homeJsonLd(base: string = siteUrl()) {

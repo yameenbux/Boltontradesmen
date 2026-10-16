@@ -160,7 +160,14 @@ describe("page metadata", () => {
     expect(m.description).toContain("Boilers and leaks.");
     expect(m.description).not.toMatch(/\d{6}/);
     expect(m.alternates?.canonical).toBe("/platform/p/ace");
-    expect(JSON.stringify(m.openGraph)).toContain("/social.png");
+  });
+
+  it("provider: no generic social image, so the profile's own opengraph-image is used", () => {
+    const m = providerMetadata({ slug: "ace", businessName: "Ace Plumbing", areas: [], bio: null, trade: null });
+    expect(JSON.stringify(m.openGraph)).not.toContain("/social.png");
+    expect(JSON.stringify(m.twitter)).not.toContain("/social.png");
+    expect(m.openGraph).not.toHaveProperty("images");
+    expect(m.twitter).not.toHaveProperty("images");
   });
 });
 
