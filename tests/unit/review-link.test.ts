@@ -5,6 +5,7 @@ import {
   reviewFormPath,
   reviewLink,
   reviewRequestMessage,
+  reviewShare,
   reviewShortPath,
   reviewSource,
   whatsappShareUrl,
@@ -63,6 +64,14 @@ describe("the review request message", () => {
     expect(text).not.toMatch(/[\s&#?/:]/);
     expect(decodeURIComponent(text)).toBe(message);
     expect(text).toContain("https%3A%2F%2Fboltonvouched.ysbdesigns.uk%2Fr%2Face-plumbing");
+  });
+
+  it("bundles the link, its display form and the WhatsApp link for the share buttons", () => {
+    expect(reviewShare("ace-plumbing", "Ace Plumbing", "https://boltonvouched.ysbdesigns.uk")).toEqual({
+      link,
+      display: "boltonvouched.ysbdesigns.uk/r/ace-plumbing",
+      whatsapp: whatsappShareUrl(message),
+    });
   });
 
   it("encodes characters that would break the query", () => {

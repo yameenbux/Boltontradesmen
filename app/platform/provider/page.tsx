@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { ShopIcon } from "@/components/auth/icons";
 import { ReplyForm } from "@/components/provider/ReplyForm";
+import { ShareReviewLink } from "@/components/review-card/ShareReviewLink";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { requireMember } from "@/lib/auth";
 import { dayMonthYear } from "@/lib/checks";
 import { platformPath } from "@/lib/paths";
 import { stillOpen } from "@/lib/review-form";
+import { reviewShare } from "@/lib/review-link";
 import {
   monthYear,
   ON_PRICE_TEXT,
@@ -163,11 +165,21 @@ export default async function ProviderArea() {
               See your public page
             </Button>
           </section>
+          <section className="auth-card" aria-labelledby={`ask-${p.id}`}>
+            <div>
+              <h2 id={`ask-${p.id}`}>Ask for reviews</h2>
+              <p className="lede">
+                Send your review link after each job, or hand over a printed card. Ask every customer, not just the
+                happy ones — that&apos;s the rule, and it&apos;s what makes your reviews count.
+              </p>
+            </div>
+            <ShareReviewLink {...reviewShare(p.slug, p.business_name)} cardHref={platformPath("provider", "card")} />
+          </section>
           <section className="card reviews" aria-labelledby={`reviews-${p.id}`}>
             <h2 id={`reviews-${p.id}`}>Reviews {reviews.length > 0 && <em>{reviews.length}</em>}</h2>
             {reviews.length === 0 ? (
               <p className="reviews-empty">
-                No reviews yet. Share your page with happy customers and ask them to leave one.
+                No reviews yet. Send your review link to every customer after a job.
               </p>
             ) : (
               <div className="review-list">

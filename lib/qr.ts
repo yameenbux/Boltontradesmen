@@ -7,10 +7,14 @@ import QRCode from "qrcode";
 
 export async function qrSvg(text: string): Promise<string> {
   if (!text) throw new Error("qrSvg: nothing to encode");
-  return QRCode.toString(text, {
+  const svg = await QRCode.toString(text, {
     type: "svg",
     errorCorrectionLevel: "Q",
     margin: 4,
     color: { dark: "#000000", light: "#ffffff" },
   });
+  // The card puts this into the page as markup, so it must be exactly an <svg> of <path>s (it always is: the text is
+  // encoded into module positions, never copied in).
+  if (!/^<svg [^<>]*>(<path [^<>]*\/>)+<\/svg>\s*$/.test(svg)) throw new Error("qrSvg: unexpected output");
+  return svg;
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ShareReviewLink } from "@/components/review-card/ShareReviewLink";
 import { Pill } from "@/components/ui/Pill";
 import {
   CheckForm,
@@ -13,6 +14,7 @@ import {
 } from "@/components/admin/ProviderForms";
 import { requireAdmin } from "@/lib/admin";
 import { dayMonthYear } from "@/lib/checks";
+import { reviewShare } from "@/lib/review-link";
 import { phoneSignInEnabled } from "@/lib/sign-in-methods";
 
 const STATUS_TONE = { invited: "gold", consented: "outline", live: "sage", paused: "muted", removed: "muted" } as const;
@@ -100,6 +102,22 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
           <p className="a-hint">Sign-in by text is on, so they can also sign in with the number on this listing.</p>
         )}
       </section>
+
+      {p.status !== "removed" && (
+        <section aria-label="Review requests" className="a-card">
+          <h2>Review requests</h2>
+          <p className="a-hint">
+            The trader&apos;s review link and printable QR card, to send or print for them. Reviews that start here are
+            marked &ldquo;via review card&rdquo; in the review queues.
+            {p.status !== "live" && " The link takes reviews once the listing is live."}
+          </p>
+          <ShareReviewLink
+            {...reviewShare(p.slug, p.business_name)}
+            cardHref={`/admin/providers/${p.id}/card`}
+            label="Review link"
+          />
+        </section>
+      )}
 
       <section aria-label="Status" className="a-card">
         <h2>Change status</h2>

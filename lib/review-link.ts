@@ -47,3 +47,9 @@ export function reviewRequestMessage(businessName: string, link: string): string
 export function whatsappShareUrl(message: string): string {
   return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
+
+/** Everything the Copy link / Share on WhatsApp buttons need for one listing. */
+export function reviewShare(slug: string, businessName: string, base: string = siteUrl()) {
+  const link = reviewLink(slug, base);
+  return { link, display: displayLink(link), whatsapp: whatsappShareUrl(reviewRequestMessage(businessName, link)) };
+}
