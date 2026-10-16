@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Proves docs/launch/plan-2b-production.sql applies in one go to a database in production's state (all migrations
-# up to 20261012000017, with production-like rows), then docs/launch/launch-checklist-production.sql and
-# docs/launch/review-source-production.sql after it (and that each later one refuses to run first), each twice, then
-# runs every pgTAP test on the result. Local databases only.
+# up to 20261012000017, with production-like rows), then docs/launch/launch-checklist-production.sql,
+# docs/launch/review-source-production.sql and docs/launch/availability-production.sql after it (and that each later
+# one refuses to run first), each twice, then runs every pgTAP test on the result. Local databases only.
 #   npm run db:check-prod
 # On the local stack (psql reset, postgres is a superuser) and on the Supabase CLI stack (SUPABASE_CLI_STACK=1, as
 # in CI, where postgres doesn't own auth.users, as in production).
@@ -18,6 +18,8 @@ SCRIPT2=docs/launch/launch-checklist-production.sql
 UNTIL2=20261012000025
 SCRIPT3=docs/launch/review-source-production.sql
 UNTIL3=20261012000026
+SCRIPT4=docs/launch/availability-production.sql
+UNTIL4=20261012000027
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
 echo "[check-prod] database at $UNTIL"
@@ -73,13 +75,26 @@ echo "$out" | grep -q "^Launch checklist database changes applied|$expected2\$" 
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT2" | tail -1
 
+echo "[check-prod] the availability script refuses to run before the review card one"
+if "${PSQL[@]}" -f "$SCRIPT4" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT4 ran before $SCRIPT3"; exit 1; fi
+"${PSQL[@]}" -A -t -c "select count(*) = 0 from information_schema.columns where table_schema = 'public' and table_name = 'providers' and column_name = 'availability'" | grep -qx t \
+  || { echo "[check-prod] the refused availability script left something behind"; exit 1; }
+
 echo "[check-prod] applying $SCRIPT3"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT3")"
 echo "$out" | tail -1
-expected3="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL3" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+expected3="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; v="${b%%_*}"; if [[ "$v" > "$UNTIL3" && ! "$v" > "$UNTIL4" ]]; then echo "$b"; fi; done | wc -l | tr -d ' ')"
 echo "$out" | grep -q "^Review card database changes applied|$expected3\$" || { echo "[check-prod] the closing check did not report $expected3 migrations"; exit 1; }
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT3" | tail -1
+
+echo "[check-prod] applying $SCRIPT4"
+out="$("${PSQL[@]}" -A -t -f "$SCRIPT4")"
+echo "$out" | tail -1
+expected4="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL4" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^Availability database changes applied|$expected4\$" || { echo "[check-prod] the closing check did not report $expected4 migrations"; exit 1; }
+echo "[check-prod] applying it a second time (a re-run must not fail)"
+"${PSQL[@]}" -A -t -f "$SCRIPT4" | tail -1
 
 # The pgTAP tests expect only their own fixtures.
 "${PSQL[@]}" -c "delete from public.providers where slug = 'prod-check-travel';

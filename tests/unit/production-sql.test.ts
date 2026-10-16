@@ -5,8 +5,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 // Plan 2b Task 12: the one-paste production scripts are generated from the migrations and must stay in step with them.
-// Plan 2b is 000018..000025 and the launch checklist 000026 (both closed); the review card script is 000027 onwards,
-// so a new migration can't be left out.
+// Plan 2b is 000018..000025, the launch checklist 000026 and the review card script 000027 (all closed); the
+// availability script is 000028 onwards, so a new migration can't be left out.
 const root = process.cwd();
 const all = readdirSync(path.join(root, "supabase/migrations"))
   .filter((f) => f.endsWith(".sql"))
@@ -34,9 +34,17 @@ const SCRIPTS = [
     file: "docs/launch/review-source-production.sql",
     preset: "review-source",
     from: "20261012000027",
-    to: NEWEST,
+    to: "20261012000027",
     functions: ["reviews", "source"],
     requires: "20261012000026",
+  },
+  {
+    file: "docs/launch/availability-production.sql",
+    preset: "availability",
+    from: "20261012000028",
+    to: NEWEST,
+    functions: ["set_my_availability", "admin_set_availability", "availability_status"],
+    requires: "20261012000027",
   },
 ];
 
