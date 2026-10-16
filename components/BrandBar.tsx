@@ -17,7 +17,7 @@ export function BrandBar() {
         </span>
       </Link>
       <div className="bar-actions">
-        <Link href={platformPath("ask")} className="icon-btn press" aria-label="Ask Bolton">
+        <Link href={platformPath("ask")} className="icon-btn press bar-ask" aria-label="Ask Bolton">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M21 11.5a8.4 8.4 0 0 1-12.5 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5Z" />
             <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.2M12 16.5h.01" />

@@ -82,6 +82,9 @@ h1,h2,h3{text-wrap:balance}
   .bar-actions{display:flex; gap:8px; flex:none}
   .icon-btn{flex:none; width:48px; height:48px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:grid; place-items:center; cursor:pointer}
   .icon-btn svg{width:20px; height:20px}
+  /* Ask Bolton in the bar only where it fits beside the full wordmark; phones reach it from the home and trade pages. */
+  .bar-ask{display:none}
+  @media (min-width:440px){.bar-ask{display:grid}}
 
   /* ---------- footer ---------- */
   .foot{margin-top:36px; padding-top:20px; border-top:1px solid var(--line); font-size:14px; color:var(--ink-2); display:grid; gap:10px}

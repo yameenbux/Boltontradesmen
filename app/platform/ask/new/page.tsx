@@ -43,7 +43,7 @@ export default async function AskNewPage({
           <h1 id="ask-title">Who do the neighbours recommend?</h1>
           <p className="lede">
             Ask once and locals will point you to people listed here. You&apos;ll show as{" "}
-            <b>{account.displayName}</b>.
+            <b>{account.displayName}</b>
           </p>
         </div>
         <AskForm
