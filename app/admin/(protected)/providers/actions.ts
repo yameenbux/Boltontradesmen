@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
 import { CHECK_KINDS, SETTABLE_STATUSES, type FormState } from "@/lib/admin-shared";
+import { AVAILABILITY_ERRORS, parseAvailabilityForm } from "@/lib/availability";
 import { InvalidPhoneError, toE164 } from "@/lib/phone";
 import { platformPath } from "@/lib/paths";
 import { dayMonthYear } from "@/lib/checks";
@@ -232,6 +233,33 @@ export async function reinviteProvider(_prev: FormState, fd: FormData): Promise<
     message: "Re-invited. Send them the new consent link: they need to agree again before going live.",
     values: { consent_url: consentUrl(data as string), ...(expires ? { consent_expires: expires } : {}) },
   };
+}
+
+// ---- availability: "Taking on work", "Booked up until …" or nothing, for any listing that isn't removed.
+
+export async function setProviderAvailability(_prev: FormState, fd: FormData): Promise<FormState> {
+  const { supabase } = await requireAdmin();
+  const providerId = text(fd.get("provider_id"));
+  const values = { choice: text(fd.get("choice")), this_week: text(fd.get("this_week")), until: text(fd.get("until")) };
+  if (!z.guid().safeParse(providerId).success) return { message: "Unknown provider", values };
+  const parsed = parseAvailabilityForm(fd);
+  if (!parsed.ok) return { errors: { [parsed.field]: parsed.message }, values };
+  const { data, error } = await supabase.rpc("admin_set_availability", {
+    p_provider: providerId,
+    p_status: parsed.choice.status,
+    p_until: parsed.choice.until,
+  });
+  if (error) {
+    const known = Object.entries(AVAILABILITY_ERRORS).find(([k]) => error.message.includes(k))?.[1];
+    if (!known) {
+      console.error("admin: admin_set_availability failed:", error.message);
+      return { message: "Could not save the availability. Try again.", values };
+    }
+    return known.field ? { errors: { [known.field]: known.message }, values } : { message: known.message, values };
+  }
+  revalidatePath(`/admin/providers/${providerId}`);
+  revalidatePublicPages(typeof data === "string" ? data : undefined);
+  return { ok: true, message: parsed.choice.status ? "Availability saved" : "Availability cleared" };
 }
 
 // ---- trader sign-in links (Plan 2b): a single-use link that links the signed-in account opening it to the listing.

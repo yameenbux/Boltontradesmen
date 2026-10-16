@@ -52,6 +52,10 @@ export default function HowRatingsWorkPage() {
         Would use again, On time, Stuck to price and Tidy are shown on each listing to help you choose, but they
         don&apos;t decide the order.
       </p>
+      <p>
+        &ldquo;Taking on work&rdquo; and &ldquo;Booked up until&rdquo; are set by the trader, run out by themselves
+        (after 14 days, or on the date given) and don&apos;t change the order.
+      </p>
 
       <H2>Newer reviews count more</H2>
       <p>Recent work is the best guide, so a review&apos;s influence halves every two years.</p>

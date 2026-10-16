@@ -69,6 +69,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
         isVerified={p.isVerified}
         badge={ratingBadge(p)}
         areas={p.areas}
+        availability={p.availability}
       />
       <StatCard stats={p} />
       <ChecksList checks={p.checks} />

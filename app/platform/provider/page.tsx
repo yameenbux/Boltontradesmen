@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { ShopIcon } from "@/components/auth/icons";
+import { AvailabilityForm } from "@/components/provider/AvailabilityForm";
 import { ReplyForm } from "@/components/provider/ReplyForm";
 import { ShareReviewLink } from "@/components/review-card/ShareReviewLink";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
+import { setMyAvailability } from "@/app/platform/provider/actions";
 import { requireMember } from "@/lib/auth";
+import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
 import { dayMonthYear } from "@/lib/checks";
 import { platformPath } from "@/lib/paths";
 import { stillOpen } from "@/lib/review-form";
@@ -45,7 +48,10 @@ type Review = {
   comment: string | null;
   reply: Reply | null;
 };
-type Listing = { provider: { id: string; slug: string; business_name: string; status: string }; reviews: Review[] };
+type Listing = {
+  provider: { id: string; slug: string; business_name: string; status: string; availability?: StoredAvailability };
+  reviews: Review[];
+};
 
 const Star = ({ dim }: { dim?: boolean }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" opacity={dim ? 0.3 : undefined} aria-hidden="true">
@@ -165,6 +171,18 @@ export default async function ProviderArea() {
               See your public page
             </Button>
           </section>
+          {(p.status === "live" || p.status === "paused") && (
+            <section className="auth-card" aria-labelledby={`avail-${p.id}`}>
+              <div>
+                <h2 id={`avail-${p.id}`}>Taking on work?</h2>
+                <p className="lede">
+                  Let customers know if you&apos;ve room for new jobs, or when you&apos;re free again.
+                  {listings.length > 1 && " It's the same on all your listings."}
+                </p>
+              </div>
+              <AvailabilityForm action={setMyAvailability} now={availabilityNow(p.availability)} range={bookedRange()} />
+            </section>
+          )}
           <section className="auth-card" aria-labelledby={`ask-${p.id}`}>
             <div>
               <h2 id={`ask-${p.id}`}>Ask for reviews</h2>

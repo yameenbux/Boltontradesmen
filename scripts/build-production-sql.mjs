@@ -4,8 +4,10 @@
 //   node scripts/build-production-sql.mjs --from 20261012000018 --to 20261012000025 --out docs/launch/plan-2b-production.sql
 //   node scripts/build-production-sql.mjs --preset launch-checklist --from 20261012000026 --to 20261012000026 \
 //     --out docs/launch/launch-checklist-production.sql
-//   node scripts/build-production-sql.mjs --preset review-source --from 20261012000027 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset review-source --from 20261012000027 --to 20261012000027 \
 //     --out docs/launch/review-source-production.sql
+//   node scripts/build-production-sql.mjs --preset availability --from 20261012000028 --to <newest> \
+//     --out docs/launch/availability-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -134,6 +136,44 @@ end
 $verify$;
 `;
 
+// Availability (migration 000028 onwards): "Taking on work".
+const VERIFY_AVAILABILITY = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+declare
+  f text;
+  c text;
+begin
+  foreach f in array array['set_my_availability', 'admin_set_availability'] loop
+    if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                   where n.nspname = 'public' and p.proname = f) then
+      raise exception 'Availability check failed: function public.% is missing', f;
+    end if;
+  end loop;
+  foreach c in array array['availability', 'available_until', 'availability_set_at'] loop
+    if not exists (select 1 from information_schema.columns
+                   where table_schema = 'public' and table_name = 'providers' and column_name = c) then
+      raise exception 'Availability check failed: column public.providers.% is missing', c;
+    end if;
+  end loop;
+  foreach c in array array['availability_status', 'availability_until', 'availability_set_at'] loop
+    if not exists (select 1 from information_schema.columns
+                   where table_schema = 'public' and table_name = 'provider_public' and column_name = c) then
+      raise exception 'Availability check failed: provider_public has no column %', c;
+    end if;
+  end loop;
+  if not has_table_privilege('anon', 'public.provider_public', 'select') then
+    raise exception 'Availability check failed: provider_public is no longer readable by anon';
+  end if;
+  if has_function_privilege('anon', 'public.set_my_availability(text, date)', 'execute')
+     or has_function_privilege('anon', 'public.admin_set_availability(uuid, text, date)', 'execute')
+     or has_function_privilege('authenticated', 'private.write_availability(uuid, text, date, text)', 'execute') then
+    raise exception 'Availability check failed: availability can be set without signing in';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -153,6 +193,13 @@ const PRESETS = {
     done: "Review card database changes applied",
     requires: { version: "20261012000026", what: "the launch checklist script (docs/launch/launch-checklist-production.sql)" },
     verify: VERIFY_REVIEW_SOURCE,
+  },
+  availability: {
+    title: "availability database changes (Taking on work)",
+    done: "Availability database changes applied",
+    // It re-creates provider_my_reviews and admin_get_provider, and the review card script came first.
+    requires: { version: "20261012000027", what: "the review card script (docs/launch/review-source-production.sql)" },
+    verify: VERIFY_AVAILABILITY,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

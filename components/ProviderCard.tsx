@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PublicProvider } from "@/lib/directory";
 import { initials } from "@/lib/initials";
+import { AvailabilityChip } from "@/components/AvailabilityChip";
 import { CountUp } from "@/components/CountUp";
 import { RatingBadge } from "@/components/RatingBadge";
 import { Pill } from "@/components/ui/Pill";
@@ -32,8 +33,8 @@ const verifiedJobs = (n: number) =>
   ) : null;
 
 /**
- * Category-page card: initials avatar, name, Verified pill and any earned rating badge, areas, and the score with the
- * review count and how many of those are verified jobs (or how many reviews so far).
+ * Category-page card: initials avatar, name, Verified pill, any earned rating badge and the trader's availability,
+ * areas, and the score with the review count and how many of those are verified jobs (or how many reviews so far).
  */
 export function ProviderCard({ provider: p }: { provider: PublicProvider }) {
   const scored = p.score !== null && p.useAgainPct !== null;
@@ -45,7 +46,7 @@ export function ProviderCard({ provider: p }: { provider: PublicProvider }) {
       </span>
       <span className="info">
         <span className="name">{p.businessName}</span>
-        {(p.isVerified || badge) && (
+        {(p.isVerified || badge || p.availability) && (
           <span className="pills">
             {p.isVerified && (
               <Pill tone="sage">
@@ -54,6 +55,7 @@ export function ProviderCard({ provider: p }: { provider: PublicProvider }) {
               </Pill>
             )}
             {badge && <RatingBadge badge={badge} />}
+            {p.availability && <AvailabilityChip availability={p.availability} />}
           </span>
         )}
         {p.areas.length > 0 && <span className="meta">{p.areas.join(" · ")}</span>}

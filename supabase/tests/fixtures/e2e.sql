@@ -28,7 +28,26 @@ insert into public.providers (id, slug, business_name, contact_name, phone_e164,
   -- Review cards: linked by its trader and reviewed through /r/<slug> in review-card.spec.ts. A second man & van,
   -- so the home page's tiles don't change.
   ('00000000-0000-0000-0000-00000000e210', 'e2e-card-vans', 'Card Removals', 'Cath Card', '+447700900310', null,
-    array['BL2'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null);
+    array['BL2'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  -- Availability (availability.spec.ts), more man & van so the home page's tiles don't change: Keen is taking on
+  -- work (set today), Busy Bee booked up for four weeks, Stale's "taking on work" ran out (set 20 days ago); Ready is
+  -- linked and set by its trader in the spec, Swift set and cleared by the admin.
+  ('00000000-0000-0000-0000-00000000e211', 'e2e-keen-vans', 'Keen Removals', 'Kit Keen', '+447700900311', null,
+    array['BL3'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  ('00000000-0000-0000-0000-00000000e212', 'e2e-busy-vans', 'Busy Bee Removals', 'Bev Busy', '+447700900312', null,
+    array['BL3'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  ('00000000-0000-0000-0000-00000000e213', 'e2e-stale-vans', 'Stale Removals', 'Stu Stale', '+447700900313', null,
+    array['BL3'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  ('00000000-0000-0000-0000-00000000e214', 'e2e-ready-vans', 'Ready Removals', 'Rae Ready', '+447700900314', null,
+    array['BL4'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  ('00000000-0000-0000-0000-00000000e215', 'e2e-swift-vans', 'Swift Removals', 'Sid Swift', '+447700900315', null,
+    array['BL4'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null);
+
+update public.providers set availability = 'taking', availability_set_at = now() where slug = 'e2e-keen-vans';
+update public.providers set availability = 'booked', availability_set_at = now() - interval '2 days',
+  available_until = (now() at time zone 'Europe/London')::date + 28 where slug = 'e2e-busy-vans';
+update public.providers set availability = 'taking', availability_set_at = now() - interval '20 days'
+where slug = 'e2e-stale-vans';
 
 insert into public.provider_categories (provider_id, category_id)
 select p.id, c.id
@@ -36,7 +55,8 @@ from public.providers p cross join public.categories c
 where (p.slug in ('e2e-ace-plumbing', 'e2e-fresh-pipes', 'e2e-half-way') and c.slug = 'plumber')
    or (p.slug in ('e2e-calm-carpentry', 'e2e-oak-joinery', 'e2e-birch-joinery', 'e2e-pine-joinery') and c.slug = 'joiner')
    or (p.slug = 'e2e-neat-sparks' and c.slug = 'electrician')
-   or (p.slug in ('e2e-tidy-vans', 'e2e-card-vans') and c.slug = 'man-and-van');
+   or (p.slug in ('e2e-tidy-vans', 'e2e-card-vans', 'e2e-keen-vans', 'e2e-busy-vans', 'e2e-stale-vans',
+                  'e2e-ready-vans', 'e2e-swift-vans') and c.slug = 'man-and-van');
 
 insert into public.provider_checks (provider_id, kind, reference, expires_on, checked_at) values
   ('00000000-0000-0000-0000-00000000e201', 'id', 'E2E-ID', null, '2026-10-03'),

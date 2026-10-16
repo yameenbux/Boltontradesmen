@@ -12,7 +12,10 @@ import {
   TraderLinkButton,
   UnlinkForm,
 } from "@/components/admin/ProviderForms";
+import { AvailabilityForm } from "@/components/provider/AvailabilityForm";
+import { setProviderAvailability } from "@/app/admin/(protected)/providers/actions";
 import { requireAdmin } from "@/lib/admin";
+import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
 import { dayMonthYear } from "@/lib/checks";
 import { reviewShare } from "@/lib/review-link";
 import { phoneSignInEnabled } from "@/lib/sign-in-methods";
@@ -42,6 +45,7 @@ type Detail = {
   checks: Check[];
   linked: boolean;
   trader_link_expires_at: string | null;
+  availability?: StoredAvailability;
 };
 
 const LINKABLE = ["consented", "live", "paused"];
@@ -115,6 +119,25 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
             {...reviewShare(p.slug, p.business_name)}
             cardHref={`/admin/providers/${p.id}/card`}
             label="Review link"
+          />
+        </section>
+      )}
+
+      {p.status !== "removed" && (
+        <section aria-label="Availability" className="a-card">
+          <h2>Availability</h2>
+          <p className="a-hint">
+            {p.linked
+              ? "The trader sets this from their listing page. Change it here if they ask you to."
+              : "Not linked to an account, so set it here if the trader tells you."}
+            {p.status !== "live" && " It shows once the listing is live."}
+          </p>
+          <AvailabilityForm
+            action={setProviderAvailability}
+            now={availabilityNow(p.availability)}
+            range={bookedRange()}
+            providerId={p.id}
+            admin
           />
         </section>
       )}
