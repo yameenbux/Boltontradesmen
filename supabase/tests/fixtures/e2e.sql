@@ -41,7 +41,10 @@ insert into public.providers (id, slug, business_name, contact_name, phone_e164,
   ('00000000-0000-0000-0000-00000000e214', 'e2e-ready-vans', 'Ready Removals', 'Rae Ready', '+447700900314', null,
     array['BL4'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
   ('00000000-0000-0000-0000-00000000e215', 'e2e-swift-vans', 'Swift Removals', 'Sid Swift', '+447700900315', null,
-    array['BL4'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null);
+    array['BL4'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  -- Website badge (share.spec.ts): linked by its trader, who copies the embed code. The ampersand checks escaping.
+  ('00000000-0000-0000-0000-00000000e216', 'e2e-shaw-vans', 'Shaw & Daughters Removals', 'Sam Shaw', '+447700900316', null,
+    array['BL6'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null);
 
 update public.providers set availability = 'taking', availability_set_at = now() where slug = 'e2e-keen-vans';
 update public.providers set availability = 'booked', availability_set_at = now() - interval '2 days',
@@ -56,7 +59,7 @@ where (p.slug in ('e2e-ace-plumbing', 'e2e-fresh-pipes', 'e2e-half-way') and c.s
    or (p.slug in ('e2e-calm-carpentry', 'e2e-oak-joinery', 'e2e-birch-joinery', 'e2e-pine-joinery') and c.slug = 'joiner')
    or (p.slug = 'e2e-neat-sparks' and c.slug = 'electrician')
    or (p.slug in ('e2e-tidy-vans', 'e2e-card-vans', 'e2e-keen-vans', 'e2e-busy-vans', 'e2e-stale-vans',
-                  'e2e-ready-vans', 'e2e-swift-vans') and c.slug = 'man-and-van');
+                  'e2e-ready-vans', 'e2e-swift-vans', 'e2e-shaw-vans') and c.slug = 'man-and-van');
 
 insert into public.provider_checks (provider_id, kind, reference, expires_on, checked_at) values
   ('00000000-0000-0000-0000-00000000e201', 'id', 'E2E-ID', null, '2026-10-03'),

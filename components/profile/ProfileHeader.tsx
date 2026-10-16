@@ -13,7 +13,8 @@ const Tick = () => (
 
 /**
  * Centred profile header: initials avatar, Gloock name, "contact · trade", Verified pill, any earned rating badge
- * and areas covered, then the trader's availability with how fresh it is (just above the score card).
+ * and areas covered, then the trader's availability with how fresh it is, and the Share button (just above the score
+ * card).
  */
 export function ProfileHeader({
   businessName,
@@ -23,6 +24,7 @@ export function ProfileHeader({
   badge,
   areas,
   availability = null,
+  share = null,
 }: {
   businessName: string;
   contactName: string | null;
@@ -31,6 +33,8 @@ export function ProfileHeader({
   badge: Badge | null;
   areas: string[];
   availability?: Availability | null;
+  /** The Share button (components/profile/ShareProfile.tsx). */
+  share?: React.ReactNode;
 }) {
   const who = [contactName, trades.join(", ")].filter(Boolean).join(" · ");
   return (
@@ -58,6 +62,7 @@ export function ProfileHeader({
           <span className="avail-when">· {updatedAgo(availability.setAt)}</span>
         </div>
       )}
+      {share}
     </div>
   );
 }

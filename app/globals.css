@@ -342,6 +342,16 @@ h1,h2,h3{text-wrap:balance}
   .prof-head .who{color:var(--ink-2); margin-top:-4px}
   .prof-head .row{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center; color:var(--ink-2); font-size:16px}
   .prof-head .avail-row{display:flex; gap:6px; flex-wrap:wrap; justify-content:center; align-items:center; color:var(--ink-2); font-size:14px}
+  /* Share (components/profile/ShareProfile.tsx): a quiet button under the badges; the fallback menu drops below it. */
+  .share-prof{position:relative; z-index:5; display:grid; justify-items:center; margin-top:2px}
+  .share-prof-btn{display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 18px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; font-size:15px; font-weight:700; cursor:pointer}
+  .share-prof-btn svg{width:17px; height:17px; color:var(--brick)}
+  .share-prof-btn[aria-expanded="true"]{border-color:var(--brick)}
+  .share-menu{position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%); width:min(260px,calc(100vw - 32px)); display:grid; gap:2px; padding:6px; border-radius:var(--r-md); border:1px solid var(--line); background:var(--surface); box-shadow:var(--shadow),0 18px 40px -14px rgba(40,20,10,.35); text-align:left}
+  .share-menu a,.share-menu button{display:flex; align-items:center; gap:10px; min-height:48px; padding:0 12px; border:0; border-radius:var(--r-sm); background:transparent; color:var(--ink); font:inherit; font-size:16px; font-weight:700; text-decoration:none; cursor:pointer}
+  .share-menu a:hover,.share-menu button:hover{background:var(--surface-2)}
+  .share-menu svg{width:20px; height:20px; flex:none; color:var(--sage)}
+  .share-menu .share-copied{padding:2px 12px 6px; font-size:14px}
   .stat{margin-top:22px; background:var(--surface); border:1px solid var(--line); border-radius:26px; padding:22px; box-shadow:var(--shadow)}
   .stat .big{display:flex; align-items:flex-end; gap:14px}
   .stat .big .num{font-family:var(--display); font-size:76px; line-height:.85; color:var(--brick); font-variant-numeric:tabular-nums}
@@ -603,6 +613,14 @@ h1,h2,h3{text-wrap:balance}
   .share-copied{margin:0; font-size:15px; font-weight:700; color:var(--sage); overflow-wrap:anywhere}
   .share-card-link{display:inline-flex; align-items:center; gap:8px; justify-self:start; min-height:48px; font-weight:700; color:var(--brick); text-underline-offset:3px}
   .share-card-link svg{width:20px; height:20px; flex:none}
+  /* Website badge (components/share/WebsiteBadge.tsx): the preview sits on a checked strip, half light and half dark,
+     to show it reads on either kind of site. */
+  .web-badge{display:grid; gap:12px}
+  .web-badge-preview{display:grid; place-items:center; padding:18px 12px; border-radius:var(--r-md); border:1px solid var(--line); background:linear-gradient(90deg,#FFFFFF 50%,#1E1A17 50%)}
+  .web-badge-preview img{display:block; max-width:100%; height:auto; border-radius:14px; box-shadow:0 6px 18px -10px rgba(0,0,0,.45)}
+  .web-badge-code{display:grid; gap:6px}
+  .web-badge-code span{font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3)}
+  .web-badge-code textarea{width:100%; resize:vertical; padding:10px 12px; border-radius:var(--r-sm); border:1px solid var(--line); background:var(--surface-2); color:var(--ink); font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; overflow-wrap:anywhere; field-sizing:content}
   .rcard-page{display:grid; gap:16px}
   .rcard-back{display:inline-flex; align-items:center; justify-self:start; min-height:48px; font-weight:700; color:var(--brick); text-underline-offset:3px}
   .rcard-rule{margin:0; padding:12px 14px; border-left:4px solid var(--gold); border-radius:0 var(--r-sm) var(--r-sm) 0; background:color-mix(in srgb,var(--gold) 12%,var(--surface)); font-size:16px; font-weight:600}

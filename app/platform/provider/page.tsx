@@ -3,6 +3,7 @@ import { ShopIcon } from "@/components/auth/icons";
 import { AvailabilityForm } from "@/components/provider/AvailabilityForm";
 import { ReplyForm } from "@/components/provider/ReplyForm";
 import { ShareReviewLink } from "@/components/review-card/ShareReviewLink";
+import { WebsiteBadge } from "@/components/share/WebsiteBadge";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { setMyAvailability } from "@/app/platform/provider/actions";
@@ -12,6 +13,7 @@ import { dayMonthYear } from "@/lib/checks";
 import { platformPath } from "@/lib/paths";
 import { stillOpen } from "@/lib/review-form";
 import { reviewShare } from "@/lib/review-link";
+import { badgeShare, pageShare } from "@/lib/share";
 import {
   monthYear,
   ON_PRICE_TEXT,
@@ -192,6 +194,27 @@ export default async function ProviderArea() {
               </p>
             </div>
             <ShareReviewLink {...reviewShare(p.slug, p.business_name)} cardHref={platformPath("provider", "card")} />
+          </section>
+          <section className="auth-card" aria-labelledby={`badge-${p.id}`}>
+            <div>
+              <h2 id={`badge-${p.id}`}>Your website badge</h2>
+              <p className="lede">
+                Put it on your website or Facebook page, or print it for your van. It links to your page here and
+                shows your rating badge once you&apos;ve earned one.
+              </p>
+            </div>
+            {p.status === "live" ? (
+              <WebsiteBadge {...badgeShare(p.slug, p.business_name)} />
+            ) : (
+              <p className="form-alert">Your badge is ready once your listing is live.</p>
+            )}
+          </section>
+          <section className="auth-card" aria-labelledby={`page-${p.id}`}>
+            <div>
+              <h2 id={`page-${p.id}`}>Share your page</h2>
+              <p className="lede">Send your page to anyone who asks for a recommendation.</p>
+            </div>
+            <ShareReviewLink {...pageShare(p.slug, p.business_name)} label="Your page" testId="page-link" />
           </section>
           <section className="card reviews" aria-labelledby={`reviews-${p.id}`}>
             <h2 id={`reviews-${p.id}`}>Reviews {reviews.length > 0 && <em>{reviews.length}</em>}</h2>
