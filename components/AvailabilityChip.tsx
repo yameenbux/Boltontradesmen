@@ -1,4 +1,4 @@
-import { availabilityLabel, type Availability } from "@/lib/availability";
+import { availabilityLabel, shortDate, type Availability } from "@/lib/availability";
 
 const Dot = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -21,7 +21,13 @@ export function AvailabilityChip({ availability: a }: { availability: Availabili
   return (
     <span className={`pill pill-wrap pill-avail-${a.status}`} data-testid="availability">
       {a.status === "taking" ? <Dot /> : <Calendar />}
-      {availabilityLabel(a)}
+      {a.status === "booked" && a.until ? (
+        <span>
+          Booked up until <span className="whitespace-nowrap">{shortDate(a.until)}</span>
+        </span>
+      ) : (
+        availabilityLabel(a)
+      )}
     </span>
   );
 }
