@@ -52,17 +52,17 @@ export default async function Home() {
         <ol>
           <li>
             <span>
-              <b>Find someone.</b> Pick a trade and your area. The ones whose work reviewers rate highest come first.
+              <b>Find someone</b>Pick a trade and your area. The ones whose work reviewers rate highest come first.
             </span>
           </li>
           <li>
             <span>
-              <b>Call or WhatsApp them.</b> Straight from their page, no sign-up needed.
+              <b>Call or WhatsApp them</b>Straight from their page, no sign-up needed.
             </span>
           </li>
           <li>
             <span>
-              <b>Vouch for them.</b> Leave a review in a minute, so the next person knows how it went.
+              <b>Vouch for them</b>Leave a review in a minute, so the next person knows how it went.
             </span>
           </li>
         </ol>
