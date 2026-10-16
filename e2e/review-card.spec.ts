@@ -61,10 +61,8 @@ test("a review that starts from the card is recorded as from the card, for the a
   const held = page.getByRole("article").filter({ hasText: comment });
   await expect(held).toContainText("Card Removals");
   await expect(held).toContainText("via review card");
-  // Reviews without a source carry no note.
-  await expect(page.getByRole("article").filter({ hasText: "Hung three doors, all perfect." })).not.toContainText(
-    "via review card",
-  );
+  // Only reviews from the card carry the note (no count: other specs change the queues in parallel).
+  expect(sql(`select count(*) from public.reviews where source = 'card' and comment <> '${lit}'`)).toBe("0");
 });
 
 test("a linked trader shares their review link and prints their card; the admin can print it too", async ({
