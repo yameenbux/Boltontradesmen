@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 /**
  * The trader's review link with Copy link and Share on WhatsApp (in the trader area and on the admin's provider page).
  * The link and WhatsApp URL are built on the server (lib/review-link.ts); the message is neutral by rule.
+ * Also used, without the card link, for the trader's own profile link ("Share your page", lib/share.ts).
  */
 export function ShareReviewLink({
   link,
@@ -13,15 +14,17 @@ export function ShareReviewLink({
   whatsapp,
   cardHref,
   label = "Your review link",
+  testId = "review-link",
 }: {
   link: string;
   /** The link as printed: no https://. */
   display: string;
   /** wa.me share URL carrying the review request message. */
   whatsapp: string;
-  /** The printable card page. */
-  cardHref: string;
+  /** The printable card page, when there is one. */
+  cardHref?: string;
   label?: string;
+  testId?: string;
 }) {
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -38,7 +41,7 @@ export function ShareReviewLink({
     <div className="share-review">
       <p className="share-link">
         <span>{label}</span>
-        <b data-testid="review-link">{display}</b>
+        <b data-testid={testId}>{display}</b>
       </p>
       <div className="share-actions">
         <Button type="button" onClick={copy}>
@@ -55,10 +58,12 @@ export function ShareReviewLink({
           {copied}
         </p>
       )}
-      <a href={cardHref} className="share-card-link">
-        <QrIcon />
-        Print a review card with a QR code
-      </a>
+      {cardHref && (
+        <a href={cardHref} className="share-card-link">
+          <QrIcon />
+          Print a review card with a QR code
+        </a>
+      )}
     </div>
   );
 }

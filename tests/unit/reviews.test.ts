@@ -99,6 +99,8 @@ describe("revalidatePublicPages", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/platform/c/[category]", "page");
     expect(revalidatePath).toHaveBeenCalledWith("/platform");
     expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
+    expect(revalidatePath).toHaveBeenCalledWith("/badge/ace.svg");
+    expect(revalidatePath).toHaveBeenCalledWith("/badge/ace.png");
   });
 
   it("skips the provider page without a slug", () => {

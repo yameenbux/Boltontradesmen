@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ShareReviewLink } from "@/components/review-card/ShareReviewLink";
+import { WebsiteBadge } from "@/components/share/WebsiteBadge";
 import { Pill } from "@/components/ui/Pill";
 import {
   CheckForm,
@@ -18,6 +19,7 @@ import { requireAdmin } from "@/lib/admin";
 import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
 import { dayMonthYear } from "@/lib/checks";
 import { reviewShare } from "@/lib/review-link";
+import { badgeShare } from "@/lib/share";
 import { phoneSignInEnabled } from "@/lib/sign-in-methods";
 
 const STATUS_TONE = { invited: "gold", consented: "outline", live: "sage", paused: "muted", removed: "muted" } as const;
@@ -120,6 +122,18 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
             cardHref={`/admin/providers/${p.id}/card`}
             label="Review link"
           />
+        </section>
+      )}
+
+      {p.status !== "removed" && (
+        <section aria-label="Website badge" className="a-card">
+          <h2>Website badge</h2>
+          <p className="a-hint">
+            The trader&apos;s &ldquo;Vouched in Bolton&rdquo; badge for their website, Facebook page or van, linking to
+            their profile. Send them the code or the PNG.
+            {p.status !== "live" && " It works once the listing is live."}
+          </p>
+          {p.status === "live" && <WebsiteBadge {...badgeShare(p.slug, p.business_name)} />}
         </section>
       )}
 
