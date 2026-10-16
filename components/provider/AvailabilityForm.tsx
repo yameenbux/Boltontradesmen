@@ -53,10 +53,9 @@ export function AvailabilityForm({
         {now.showing ? (
           <>
             <span className="avail-now-row">
-              <span>{admin ? "Showing now:" : "Your page shows:"}</span>
-              <AvailabilityChip availability={now.showing} />
-              <span>· {now.updated}</span>
-            </span>
+              <span>{admin ? "Showing now:" : "Your page shows:"}</span>{" "}
+              <AvailabilityChip availability={now.showing} /> <span>· {now.updated}</span>
+            </span>{" "}
             <span className="avail-ends">{now.ends}</span>
           </>
         ) : now.expired ? (

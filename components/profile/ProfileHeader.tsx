@@ -54,7 +54,7 @@ export function ProfileHeader({
       )}
       {availability && (
         <div className="avail-row">
-          <AvailabilityChip availability={availability} />
+          <AvailabilityChip availability={availability} />{" "}
           <span className="avail-when">· {updatedAgo(availability.setAt)}</span>
         </div>
       )}

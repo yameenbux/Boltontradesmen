@@ -102,6 +102,10 @@ One site, free for residents and free for traders.
 - **Provider replies** at `/platform/provider`: the admin sends a trader a
   single-use **trader sign-in link** (`/platform/link/<token>`, 14 days); they open it
   signed in and their account is linked to the listing. Then they reply once to each review.
+- **Taking on work**: on the same page the trader says they're taking on work (optionally
+  "this week") or booked up until a date, and the admin can set or clear it too. It shows as a
+  chip on the profile ("updated 3 days ago") and the cards, runs out by itself (14 days, or on
+  the date), can filter a category list, and never changes the order or a badge.
 - **Report** on every review, and **My reviews** and **Delete account** at
   `/platform/account` (reviews come down; the number is kept privately for 12 months).
 - **Admin** at `/admin`, for the owner only: add and edit providers, record
