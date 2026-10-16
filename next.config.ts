@@ -26,6 +26,9 @@ const nextConfig: NextConfig = {
       { source: "/c/:category", destination: "/platform/c/:category", permanent: true },
       { source: "/p/:slug", destination: "/platform/p/:slug", permanent: true },
       { source: "/consent/:token", destination: "/platform/consent/:token", permanent: true },
+      // The trader's review link and QR card (lib/review-link.ts): short to type and to scan, 308 to the review form.
+      // ref=card records where the review started, for the admin.
+      { source: "/r/:slug([a-z0-9-]+)", destination: "/platform/p/:slug/review?ref=card", permanent: true },
     ];
   },
 };

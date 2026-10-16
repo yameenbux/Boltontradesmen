@@ -16,6 +16,7 @@ import {
   type ReviewStatus,
 } from "@/lib/review-form";
 import { prepareProof, ProofError, uploadProof } from "@/lib/proofs";
+import { reviewSource } from "@/lib/review-link";
 import { revalidatePublicPages } from "@/lib/revalidate-public";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -164,9 +165,11 @@ export async function submitReview(_prev: ReviewFormState, fd: FormData): Promis
   const prep = await prepare(fd);
   if (prep.kind === "done") return prep.state;
   const service = createServiceClient();
+  // Where the review started (only "card" is kept); submit_review stores it for the admin. Edits never change it.
+  const source = reviewSource(field(fd, "source"));
   const { data, error } = await service.rpc("submit_review", {
     p_uid: prep.userId,
-    p: prep.p,
+    p: source ? { ...prep.p, source } : prep.p,
     p_device_hash: await device(),
   });
   if (error) return failed(error, "submit_review");

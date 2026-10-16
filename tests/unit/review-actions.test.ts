@@ -111,6 +111,15 @@ describe("submitReview", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/platform/account");
   });
 
+  it("passes source card through from the review link, and nothing else", async () => {
+    signedIn({ data: { id: REVIEW, status: "published" } });
+    await submitReview({}, form({ ...answers, source: "card" }));
+    expect(serviceRpc.mock.calls[0][1].p).toMatchObject({ provider_id: PROVIDER, source: "card" });
+    serviceRpc.mockClear();
+    await submitReview({}, form({ ...answers, source: "flyer" }));
+    expect(serviceRpc.mock.calls[0][1].p).not.toHaveProperty("source");
+  });
+
   it("shows the already-reviewed copy for a double tap (Review Focus 3)", async () => {
     signedIn({ error: { message: "already_reviewed", code: "P0001" } });
     const res = await submitReview({}, form(answers));
@@ -159,6 +168,12 @@ describe("editReview", () => {
       expect.objectContaining({ p_uid: "u1", p_id: REVIEW, p_device_hash: deviceHash("10.0.0.1", "Test/1") }),
     );
     expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
+  });
+
+  it("never sends a source with an edit", async () => {
+    signedIn({ data: { id: REVIEW, status: "published" } });
+    await editReview({}, form({ ...answers, review_id: REVIEW, source: "card" }));
+    expect(serviceRpc.mock.calls[0][1].p).not.toHaveProperty("source");
   });
 
   it("explains a closed edit window", async () => {
