@@ -5,7 +5,15 @@ const state: {
   rpc: () => Promise<{ data: Row[] | null; error: unknown }>;
   select: () => Promise<{ data: Row | null; error: unknown }>;
   rpcArgs: unknown[];
-} = { rpc: async () => ({ data: [], error: null }), select: async () => ({ data: null, error: null }), rpcArgs: [] };
+  actor: (cookie: string | null) => Promise<string | null>;
+} = {
+  rpc: async () => ({ data: [], error: null }),
+  select: async () => ({ data: null, error: null }),
+  rpcArgs: [],
+  actor: async () => null,
+};
+
+vi.mock("@/lib/tap-actor", () => ({ tapActor: (cookie: string | null) => state.actor(cookie) }));
 
 vi.mock("@/lib/supabase/service", () => ({
   createServiceClient: () => ({
@@ -24,10 +32,10 @@ vi.mock("@/lib/supabase/service", () => ({
 import { GET, HEAD } from "@/app/api/contact/[slug]/route";
 import { deviceHash } from "@/lib/device-hash";
 
-const call = (slug: string, via?: string, ua = "UA") =>
+const call = (slug: string, via?: string, ua = "UA", cookie?: string) =>
   GET(
     new Request(`http://localhost/api/contact/${slug}${via ? `?via=${via}` : ""}`, {
-      headers: { "x-forwarded-for": "9.9.9.9, 10.0.0.1", "user-agent": ua },
+      headers: { "x-forwarded-for": "9.9.9.9, 10.0.0.1", "user-agent": ua, ...(cookie ? { cookie } : {}) },
     }),
     { params: Promise.resolve({ slug }) },
   );
@@ -37,6 +45,7 @@ beforeEach(() => {
   state.rpcArgs = [];
   state.rpc = async () => ({ data: [{ phone_e164: "+447700900123", whatsapp_e164: "+447700900123" }], error: null });
   state.select = async () => ({ data: null, error: null });
+  state.actor = async () => null;
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -52,6 +61,21 @@ describe("GET /api/contact/[slug]", () => {
     expect(args.p_device_hash).toMatch(/^[0-9a-f]{64}$/);
     // the rightmost X-Forwarded-For entry (appended by the trusted proxy), not the spoofable leftmost
     expect(args.p_device_hash).toBe(deviceHash("10.0.0.1", "UA"));
+  });
+
+  it("logs a signed-in tapper's id (so the trader's own and the admin's taps aren't counted)", async () => {
+    const seen: (string | null)[] = [];
+    state.actor = async (cookie) => {
+      seen.push(cookie);
+      return cookie ? "00000000-0000-0000-0000-0000000000aa" : null;
+    };
+    const res = await call("acme", "call", "UA", "sb-127-auth-token=abc");
+    expect(res.status).toBe(302);
+    expect(seen).toEqual(["sb-127-auth-token=abc"]);
+    expect((state.rpcArgs[0] as [string, Record<string, unknown>])[1]).toMatchObject({
+      p_actor: "00000000-0000-0000-0000-0000000000aa",
+    });
+    expect(res.headers.get("set-cookie")).toBeNull();
   });
 
   it("via=whatsapp redirects to wa.me without plus", async () => {

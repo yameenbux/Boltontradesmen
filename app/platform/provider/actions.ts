@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireMember } from "@/lib/auth";
 import type { FormState } from "@/lib/admin-shared";
 import { AVAILABILITY_ERRORS, parseAvailabilityForm } from "@/lib/availability";
+import { LISTING_ERRORS, parseListingEdit } from "@/lib/listing-edit";
 import { platformPath } from "@/lib/paths";
 import { ID_PATTERN, REPLY_MAX } from "@/lib/review-form";
 import { revalidatePublicPages } from "@/lib/revalidate-public";
@@ -76,4 +78,84 @@ export async function setMyAvailability(_prev: FormState, fd: FormData): Promise
     ok: true,
     message: parsed.choice.status ? "Saved. It's on your page now." : "Cleared. Your page doesn't show availability now.",
   };
+}
+
+// A listing error code as form state (field errors where there's a field), or a general failure for anything else.
+function listingFail(code: string, values?: FormState["values"]): FormState {
+  const known = LISTING_ERRORS[code];
+  if (!known) {
+    console.error("provider: listing change failed:", code);
+    return { message: "Something went wrong. Please try again.", values };
+  }
+  return known.field ? { errors: { [known.field]: known.message }, values } : { message: known.message, values };
+}
+
+const providerIdFrom = (fd: FormData) => {
+  const v = fd.get("provider_id");
+  return typeof v === "string" && ID_PATTERN.test(v) ? v : null;
+};
+
+// Refreshes the listing's public pages (profile, lists, badges) and the trader's own page.
+function refresh(slug: unknown) {
+  revalidatePublicPages(typeof slug === "string" ? slug : undefined);
+  revalidatePath(platformPath("provider"));
+}
+
+/** The trader's description and areas (categories stay with the admin). */
+export async function saveMyListing(_prev: FormState, fd: FormData): Promise<FormState> {
+  const { supabase } = await requireMember(platformPath("provider"));
+  const values = {
+    bio: typeof fd.get("bio") === "string" ? (fd.get("bio") as string) : "",
+    areas: fd.getAll("areas").filter((v): v is string => typeof v === "string"),
+  };
+  const id = providerIdFrom(fd);
+  if (!id) return listingFail("", values);
+  const parsed = parseListingEdit(fd);
+  if (!parsed.ok) return { errors: parsed.errors, values };
+
+  const { data, error } = await supabase.rpc("update_my_listing", {
+    p_provider: id,
+    p_bio: parsed.value.bio,
+    p_areas: parsed.value.areas,
+  });
+  if (error) return listingFail(error.message, values);
+  refresh(data);
+  return {
+    ok: true,
+    message: "Saved. It's on your page now.",
+    values: { bio: parsed.value.bio ?? "", areas: parsed.value.areas },
+  };
+}
+
+type StatusRpc = "pause_my_listing" | "unpause_my_listing" | "withdraw_my_listing";
+
+// Runs one of the trader's status changes; null when it worked, else the form state to show.
+async function changeStatus(fd: FormData, rpc: StatusRpc): Promise<FormState | null> {
+  const { supabase } = await requireMember(platformPath("provider"));
+  const id = providerIdFrom(fd);
+  if (!id) return listingFail("");
+  const { data, error } = await supabase.rpc(rpc, { p_provider: id });
+  if (error) return listingFail(error.message);
+  refresh(data);
+  return null;
+}
+
+/** Live -> paused: hidden from the lists and the profile, reviews kept. */
+export async function pauseMyListing(_prev: FormState, fd: FormData): Promise<FormState> {
+  return (await changeStatus(fd, "pause_my_listing")) ?? { ok: true, message: "Paused. Your page is hidden until you unpause it." };
+}
+
+/** Paused (by the trader) -> live. */
+export async function unpauseMyListing(_prev: FormState, fd: FormData): Promise<FormState> {
+  return (await changeStatus(fd, "unpause_my_listing")) ?? { ok: true, message: "Unpaused. Your page is back on Bolton Vouched." };
+}
+
+/** Withdraw: removed, as the admin's removal; only a new invite brings it back. Needs the confirm box ticked. */
+export async function withdrawMyListing(_prev: FormState, fd: FormData): Promise<FormState> {
+  if (fd.get("confirm") !== "on") {
+    return { errors: { confirm: "Tick the box to confirm you want to withdraw your listing." } };
+  }
+  const failed = await changeStatus(fd, "withdraw_my_listing");
+  if (failed) return failed;
+  redirect(`${platformPath("provider")}?withdrawn=1`);
 }

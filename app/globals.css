@@ -604,6 +604,67 @@ h1,h2,h3{text-wrap:balance}
   .provider-area .reviews{margin-top:0}
   .listing-icon svg{width:30px; height:30px}
 
+  /* ---------- trader dashboard: enquiry numbers (components/provider/EnquiryStats.tsx; the admin's page too) ---------- */
+  .enquiry-stats{display:grid; gap:16px}
+  .stats-block{display:grid; gap:8px}
+  .stats-label{margin:0; font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3)}
+  .stat-strip{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:0}
+  .stat{display:flex; flex-direction:row-reverse; justify-content:flex-end; align-items:baseline; gap:10px; min-width:0; padding:10px 14px; border-radius:var(--r-sm); background:var(--surface-2)}
+  .stat dt{font-size:15px; font-weight:700; color:var(--ink-2); line-height:1.2; min-width:0}
+  .stat dd{margin:0; font-family:var(--display); font-size:30px; line-height:1.05; color:var(--ink); font-variant-numeric:tabular-nums}
+  .stats-all{margin:0; font-size:15px; font-weight:600; color:var(--ink-2)}
+  .stats-how{margin:0; font-size:14.5px; color:var(--ink-2)}
+  /* Six months of bars: one hue (brick), this month full strength, the rest quieter; values printed above each bar,
+     a recessive baseline, no grid. */
+  .echart{margin:0; display:grid; gap:10px}
+  .echart figcaption{font-size:15px; font-weight:700; color:var(--ink)}
+  .echart-bars{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; align-items:end}
+  .echart-bars li{display:grid; grid-template-rows:auto 96px auto; justify-items:center; gap:4px; min-width:0}
+  .echart-val{font-size:14px; font-weight:700; color:var(--ink-2); font-variant-numeric:tabular-nums}
+  .echart-track{position:relative; width:100%; height:96px; border-bottom:1.5px solid var(--line); display:flex; align-items:flex-end; justify-content:center}
+  .echart-bar{display:block; width:min(70%,32px); border-radius:4px 4px 0 0; background:color-mix(in srgb,var(--brick) 55%,var(--surface))}
+  .is-now .echart-bar{background:var(--brick)}
+  .is-now .echart-val{color:var(--ink)}
+  .echart-mon{font-size:13px; font-weight:600; color:var(--ink-3)}
+  .is-now .echart-mon{color:var(--ink); font-weight:700}
+  /* Upgrade progress: a quiet meter, then a calm "coming soon" card once reached (never a call to buy). */
+  .pro-progress{display:grid; gap:10px; padding:14px; border-radius:var(--r-md); border:1px solid var(--line); background:var(--bg)}
+  .pro-head{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:4px 12px; margin:0; font-size:16px}
+  .pro-head span{font-weight:700; color:var(--ink-2); font-variant-numeric:tabular-nums}
+  .pro-meter{height:10px; border-radius:999px; background:var(--surface-2); overflow:hidden; box-shadow:inset 0 0 0 1px var(--line)}
+  .pro-meter span{display:block; height:100%; border-radius:999px; background:var(--sage)}
+  .pro-note{margin:0; font-size:14.5px; color:var(--ink-2)}
+  .pro-card{display:grid; gap:6px; padding:12px 14px; border-radius:var(--r-sm); background:var(--sage-tint); color:var(--ink)}
+  .pro-card p{margin:0; font-size:15px; color:var(--ink-2)}
+  .pro-card .pro-title{font-size:16.5px; font-weight:700; color:color-mix(in srgb,var(--sage) 70%,var(--ink))}
+
+  /* ---------- trader dashboard: edit, pause and withdraw ---------- */
+  .area-picks{border:0; margin:0; padding:0; min-width:0; display:grid; gap:10px}
+  .area-picks legend{padding:0; margin-bottom:10px; font-size:17px; font-weight:700; color:var(--ink)}
+  .area-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(76px,1fr)); gap:8px}
+  .area-pick{display:flex; align-items:center; gap:8px; min-height:48px; padding:8px 10px; border:1.5px solid var(--line); border-radius:12px; background:var(--bg); font-size:16px; font-weight:700; cursor:pointer}
+  .area-pick input{width:20px; height:20px; margin:0; flex:none; accent-color:var(--brick)}
+  .area-pick:has(input:checked){border-color:var(--brick); background:var(--brick-tint)}
+  .area-pick:has(input:focus-visible){outline:3px solid var(--brick); outline-offset:3px}
+  .trades{display:grid; gap:4px; padding-top:16px; border-top:1px solid var(--line)}
+  .trades-label{margin:0; font-size:17px; font-weight:700}
+  .trades-list{margin:0; font-size:16px; color:var(--ink)}
+  .trades a, .confirm-body a{color:var(--brick); font-weight:700; text-underline-offset:3px; overflow-wrap:anywhere}
+  .listing-status{display:grid; gap:18px; padding-top:16px; border-top:1px solid var(--line)}
+  .status-row{display:grid; gap:10px}
+  .status-row .btn, .listing-status .auth-form .btn{width:100%}
+  .status-text{margin:0; font-size:15.5px; color:var(--ink-2)}
+  .status-text b{color:var(--ink)}
+  .confirm-dialog{width:min(100% - 32px,428px); max-height:calc(100dvh - 32px); margin:auto; padding:22px; border:1px solid var(--line); border-radius:26px; background:var(--surface); color:var(--ink); box-shadow:var(--shadow)}
+  .confirm-dialog::backdrop{background:rgba(20,12,8,.55)}
+  .confirm-dialog h3{margin:0; font-family:var(--display); font-weight:400; font-size:26px; line-height:1.1}
+  .confirm-body{display:grid; gap:10px; font-size:16px; color:var(--ink-2)}
+  .confirm-body p{margin:0}
+  .confirm-body b{color:var(--ink)}
+  .confirm-actions{display:grid; gap:10px}
+  .confirm-actions .btn{width:100%}
+  .btn-danger-solid{background:var(--brick-deep); box-shadow:none}
+
   /* ---------- review requests: share buttons and the printable review card ---------- */
   .share-review{display:grid; gap:12px}
   .share-link{margin:0; display:grid; gap:2px; padding:12px 14px; border-radius:var(--r-md); background:var(--surface-2)}

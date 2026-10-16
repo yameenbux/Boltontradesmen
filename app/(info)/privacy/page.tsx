@@ -39,7 +39,7 @@ export default function PrivacyPage() {
       <p>Visitors:</p>
       <List
         items={[
-          "When you tap Call or WhatsApp on a profile, we record which provider you tapped and a device signature. The signature is a one-way hash (HMAC) of your IP address and browser user agent, so we do not store your IP address or phone number for this. We use these records to count enquiries.",
+          "When you tap Call or WhatsApp on a profile, we record which provider you tapped and a device signature. The signature is a one-way hash (HMAC) of your IP address and browser user agent, so we do not store your IP address or phone number for this. If you are signed in, we also record your account, so a trader's own taps (and the admin's) are not counted as enquiries. We use these records to count enquiries.",
           "If you only browse, we set no cookies and you need no account.",
           "If you choose the light or dark look, that choice is saved in your browser's own storage (local storage), not sent to us.",
         ]}

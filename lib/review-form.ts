@@ -13,7 +13,7 @@ export const PROOF_ACCEPT = "image/jpeg,image/png,image/webp,application/pdf";
 export const PROOF_WRONG_TYPE = "Please upload a photo (JPEG, PNG or WebP) or a PDF.";
 export const PROOF_TOO_BIG = "Files must be 10 MB or smaller.";
 // Ten or more digits, however they are spaced or punctuated, is a phone number (same pattern as the database).
-const PHONE_IN_TEXT = /([0-9][ ().-]*){10,}/;
+export const PHONE_IN_TEXT = /([0-9][ ().-]*){10,}/;
 
 export type ReviewStatus = "pending" | "published" | "under_check";
 

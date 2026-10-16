@@ -106,6 +106,14 @@ One site, free for residents and free for traders.
   "this week") or booked up until a date, and the admin can set or clear it too. It shows as a
   chip on the profile ("updated 3 days ago") and the cards, runs out by itself (14 days, or on
   the date), can filter a category list, and never changes the order or a badge.
+- **Trader dashboard** at `/platform/provider`: enquiries this month and all time (calls
+  and WhatsApps; one per person or phone a day, the trader's own and the admin's taps left
+  out), six months as bars, reviews this month, and "3 of 5 enquiries" towards Pro (a quiet
+  *coming soon* card at 5; nothing to buy yet). The trader edits their description (300
+  characters, no phone numbers or web addresses) and areas, pauses and unpauses (never an
+  admin's pause), or withdraws (removed, as the admin's removal: only a new invite brings
+  it back). Trades stay with the admin. The admin sees the same numbers on the provider
+  page. Profile views aren't recorded, so they aren't shown.
 - **Report** on every review, and **My reviews** and **Delete account** at
   `/platform/account` (reviews come down; the number is kept privately for 12 months).
 - **Admin** at `/admin`, for the owner only: add and edit providers, record
@@ -115,12 +123,11 @@ One site, free for residents and free for traders.
 **Coming, and not built**
 
 - Community questions.
-- Trader dashboards.
-- The optional paid **Verified** tier (see *Free and Verified*).
+- The optional paid tier, **Pro** (see *Free and Verified*). The dashboard only says it's coming soon.
 
 > [!IMPORTANT]
-> **Only the green boxes are built.** Never claim community questions, dashboards
-> or Verified exist before they do: not on the site, in the WhatsApp group, in a
+> **Only the green boxes are built.** Never claim community questions or Pro
+> exist before they do: not on the site, in the WhatsApp group, in a
 > message to a trader or on a listing. Say *coming soon*, or say nothing.
 > `tests/unit/no-stale-claims.test.ts` fails if old "reviews are coming" wording
 > comes back.
@@ -294,9 +301,10 @@ npm run db:check-prod # the one-paste production scripts apply, in order, on a 0
 ```
 
 The production pastes are generated from the migrations: `docs/launch/plan-2b-production.sql` (000018 to 000025),
-`docs/launch/launch-checklist-production.sql` (000026), `docs/launch/review-source-production.sql` (000027) and
-`docs/launch/availability-production.sql` (000028 on). After adding or changing a migration from 000028 on, regenerate with
-`node scripts/build-production-sql.mjs --preset availability --from 20261012000028 --to <newest> --out docs/launch/availability-production.sql`
+`docs/launch/launch-checklist-production.sql` (000026), `docs/launch/review-source-production.sql` (000027),
+`docs/launch/availability-production.sql` (000028) and `docs/launch/trader-dashboard-production.sql` (000029 on). After
+adding or changing a migration from 000029 on, regenerate with
+`node scripts/build-production-sql.mjs --preset trader-dashboard --from 20261012000029 --to <newest> --out docs/launch/trader-dashboard-production.sql`
 (`tests/unit/production-sql.test.ts` fails until you do).
 
 Run `npm run test:db` straight after a reset: the scoring tests expect an empty
@@ -495,7 +503,8 @@ settings and test phone numbers for local use and CI only.
 | Admin pages and actions | `app/admin/(protected)/`, `lib/admin.ts` |
 | Categories and groups | `supabase/seed.sql`, then a new migration for the live database |
 | What the public can read | `supabase/migrations/20261011000003_public_view_rls.sql` |
-| Enquiry logging and counting | `supabase/migrations/20261011000004_contact_events.sql` |
+| Enquiry logging and counting | `supabase/migrations/20261011000004_contact_events.sql`, `…000029_trader_dashboard.sql` (the one definition, the dashboard's numbers), `lib/tap-actor.ts` (who tapped, when signed in) |
+| The trader dashboard (numbers, edit, pause, withdraw) | `app/platform/provider/`, `components/provider/`, `lib/enquiries.ts`, `lib/listing-edit.ts` |
 | Admin functions and the audit log | `supabase/migrations/20261011000005_admin_consent.sql` |
 | Privacy, terms, how ratings work, review and fake-reviews policies | `app/(info)/`, `components/PolicyPage.tsx` (the draft banner) |
 | Owner and contact on the policy pages | `lib/policy-config.ts` |
@@ -513,21 +522,23 @@ settings and test phone numbers for local use and CI only.
 | :--- | :--- |
 | **Residents** | Free. No account, no sign-up |
 | **A basic listing** | Free, for good |
-| **Verified**, optional (*not built*) | £10 a month or £100 a year, offered to a trader after their 5th enquiry |
+| **Pro**, optional (*not built*) | £10 a month or £100 a year, offered to a trader after their 5th enquiry |
 
-Rules that hold whatever happens with Verified:
+Rules that hold whatever happens with Pro:
 
 - **The basic listing is free forever.** Nobody is removed, hidden or moved down
   for not paying.
 - **Payment never affects ranking.** A trader's place in the list will come from
-  reviews only. Whatever Verified ends up including, it never includes a position.
-- **Verified is offered, never pushed.** Only after five enquiries, so it's
+  reviews only. Whatever Pro ends up including, it never includes a position.
+- **Pro is offered, never pushed.** Only after five enquiries, so it's
   offered to traders the site is already working for.
 
 > [!NOTE]
-> **None of Verified is built.** There's no payment, no badge for sale and no
-> offer in the code today. The enquiry threshold is stored (`enquiry_threshold`
-> in `settings`), ready for when it is.
+> **None of the paid tier is built.** It will be called **Pro** ("Verified" already
+> means the admin's recorded checks). There's no payment and no badge for sale. The
+> trader dashboard shows "3 of 5 enquiries" and, at 5, a quiet *Pro is coming soon*
+> card with nothing to click. The threshold is `PRO_ENQUIRY_THRESHOLD` in
+> `lib/enquiries.ts` (`enquiry_threshold` in `settings` holds the same 5).
 
 ---
 
@@ -596,7 +607,7 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
 ## Before you change any copy
 
 > [!CAUTION]
-> **Never claim community questions, dashboards or Verified exist before they
+> **Never claim community questions or Pro (the paid tier) exist before they
 > do.** Not on the site, not in a message to a trader, not in the WhatsApp group.
 > They're *coming*. The same goes for every other feature in the sand boxes above.
 > Reviews, replies, and Google and email sign-in are live, so say so plainly. Sign-in by
