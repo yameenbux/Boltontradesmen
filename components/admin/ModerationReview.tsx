@@ -31,6 +31,8 @@ export type AdminReview = {
   reviewer_name: string;
   account_created_at: string | null;
   reviewer_review_count: number;
+  /** "card": it started from the trader's review link or QR card (migration 000027). Admin only, never public. */
+  source?: string | null;
 };
 
 export type AdminFlag = { id: string; rule: string; source: string; note: string | null };
@@ -68,6 +70,14 @@ export function ModerationReview({
       </p>
       <p className="mod-meta">
         {r.category_name} · job in {monthYear(r.job_month)}
+        {r.source === "card" && (
+          <>
+            {" · "}
+            <span className="mod-source" title="Started from the trader's review link or QR card">
+              via review card
+            </span>
+          </>
+        )}
       </p>
       <ul className="answer-tags" aria-label="Answers">
         {answers.map((a) => (
