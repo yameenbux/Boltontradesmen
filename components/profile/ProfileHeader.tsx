@@ -12,15 +12,16 @@ const Tick = () => (
 );
 
 /**
- * Centred profile header: initials avatar, Gloock name, "contact · trade", Verified pill, any earned rating badge
- * and areas covered, then the trader's availability with how fresh it is, and the Share button (just above the score
- * card).
+ * Centred profile header: initials avatar, Gloock name, "contact · trade", Verified pill, "ID checked" (the trader's
+ * photo ID seen by the admin; it comes with Pro but never says so), any earned rating badge and areas covered, then
+ * the trader's availability with how fresh it is, and the Share button (just above the score card).
  */
 export function ProfileHeader({
   businessName,
   contactName,
   trades,
   isVerified,
+  idChecked = false,
   badge,
   areas,
   availability = null,
@@ -30,6 +31,7 @@ export function ProfileHeader({
   contactName: string | null;
   trades: string[];
   isVerified: boolean;
+  idChecked?: boolean;
   badge: Badge | null;
   areas: string[];
   availability?: Availability | null;
@@ -44,13 +46,22 @@ export function ProfileHeader({
       </div>
       <h1>{businessName}</h1>
       {who && <div className="who">{who}</div>}
-      {(isVerified || badge || areas.length > 0) && (
+      {(isVerified || idChecked || badge || areas.length > 0) && (
         <div className="row">
           {isVerified && (
             <Pill tone="sage">
               <Tick />
               Verified
             </Pill>
+          )}
+          {idChecked && (
+            <a href="#checks-title" className="id-mark" title="We've checked this trader's photo ID">
+              <Pill tone="sage">
+                <Tick />
+                ID checked
+              </Pill>
+              <span className="sr-only"> (we&apos;ve checked this trader&apos;s photo ID)</span>
+            </a>
           )}
           {badge && <RatingBadge badge={badge} />}
           {areas.length > 0 && <span>Covers {areas.join(", ")}</span>}

@@ -7,6 +7,7 @@ import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ShareProfile } from "@/components/profile/ShareProfile";
 import { ReviewList } from "@/components/profile/ReviewList";
 import { StatCard } from "@/components/profile/StatCard";
+import { WorkGallery } from "@/components/profile/WorkGallery";
 import { ratingBadge } from "@/lib/badges";
 import { getProvider, listCategoryGroups } from "@/lib/directory";
 import { firstName } from "@/lib/initials";
@@ -69,19 +70,21 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
         contactName={p.contactName}
         trades={trades.map((t) => t.name)}
         isVerified={p.isVerified}
+        idChecked={p.idChecked}
         badge={ratingBadge(p)}
         areas={p.areas}
         availability={p.availability}
         share={<ShareProfile {...profileShare(p.slug, p.businessName)} />}
       />
       <StatCard stats={p} />
-      <ChecksList checks={p.checks} />
+      <ChecksList checks={p.checks} idChecked={p.idChecked} />
       {p.bio && (
         <section className="card" aria-labelledby="about-title">
           <h2 id="about-title">About</h2>
           <p className="bio">{p.bio}</p>
         </section>
       )}
+      <WorkGallery photos={p.photos} businessName={p.businessName} />
       <ReviewList reviews={reviews} slug={p.slug} businessName={p.businessName} />
       <ActionBar
         slug={p.slug}

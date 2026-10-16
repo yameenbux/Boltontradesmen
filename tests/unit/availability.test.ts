@@ -196,6 +196,8 @@ describe("the chip on cards and profiles", () => {
     createdAt: "2026-10-01T10:00:00Z",
     verifiedJobCount: 0,
     availability: null,
+    idChecked: false,
+    photos: [],
     ...over,
   });
   const header = (availability?: PublicProvider["availability"]) =>

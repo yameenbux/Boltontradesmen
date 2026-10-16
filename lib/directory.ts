@@ -3,6 +3,7 @@ import { cache } from "react";
 import { createPublicClient } from "@/lib/supabase/server";
 import type { Availability } from "@/lib/availability";
 import type { Check } from "@/lib/checks";
+import { toPublicPhotos, type PublicPhoto } from "@/lib/pro";
 
 export { BL_DISTRICTS } from "@/lib/districts";
 
@@ -29,6 +30,10 @@ export type PublicProvider = {
   verifiedJobCount: number;
   /** "Taking on work" or "Booked up until …", already past its shelf life when null. Never ranks or badges. */
   availability: Availability | null;
+  /** Photo ID checked by the admin, while the trader has Pro. Never ranks or badges. */
+  idChecked: boolean;
+  /** Up to 6 work photos, while the trader has Pro (empty otherwise). Never ranks or badges. */
+  photos: PublicPhoto[];
 };
 
 export type Group = { id: string; name: string; slug: string; sort: number };
@@ -68,6 +73,8 @@ function toProvider(r: any): PublicProvider {
       r.availability_status === "taking" || r.availability_status === "booked"
         ? { status: r.availability_status, until: r.availability_until ?? null, setAt: r.availability_set_at }
         : null,
+    idChecked: r.id_checked === true,
+    photos: toPublicPhotos(r.photos),
   };
 }
 
@@ -117,7 +124,8 @@ export async function listProvidersInCategory(
   const { data, error } = await q;
   if (error) throw new Error(`listProvidersInCategory: ${error.message}`);
   const all = (data ?? []).map(toProvider);
-  // Ordering depends only on review data; nothing about payment is available here, and availability isn't read. A score needs 3 reviews
+  // Ordering depends only on review data; nothing about payment is available here, and availability, the ID check
+  // and photos aren't read. A score needs 3 reviews
   // (the view enforces it too); the count check keeps the two lists disjoint whatever the view returns.
   const ranked = all
     .filter((p) => p.score !== null && p.reviewCount >= 3)
