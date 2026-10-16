@@ -62,7 +62,11 @@ test("provider profile: title, description, canonical, OG and LocalBusiness JSON
   expect(description).toContain("BL1, BL3 and BL4");
   expect(description).not.toMatch(PHONE_DIGITS);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${ORIGIN}/platform/p/e2e-ace-plumbing`);
-  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", `${ORIGIN}/social.png`);
+  // Its own social image (app/platform/p/[slug]/opengraph-image.tsx), not the site-wide social.png.
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    "content",
+    new RegExp(`^${ORIGIN}/platform/p/e2e-ace-plumbing/opengraph-image`),
+  );
 
   const scripts = await jsonLd(page);
   expect(scripts).toHaveLength(2);
