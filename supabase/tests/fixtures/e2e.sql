@@ -21,13 +21,16 @@ insert into public.providers (id, slug, business_name, contact_name, phone_e164,
   ('00000000-0000-0000-0000-00000000e207', 'e2e-oak-joinery', 'Oak Joinery', 'Owen Oak', '+447700900307', null,
     array['BL1'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
   ('00000000-0000-0000-0000-00000000e208', 'e2e-birch-joinery', 'Birch Joinery', 'Bea Birch', '+447700900308', null,
-    array['BL2'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null);
+    array['BL2'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  -- Rating badges: Pine Joinery has 5 top reviews (Top rated). A joiner too, so the home page's counts don't change.
+  ('00000000-0000-0000-0000-00000000e209', 'e2e-pine-joinery', 'Pine Joinery', 'Pip Pine', '+447700900309', null,
+    array['BL1','BL2'], 'Staircases, doors and kitchens.', 'live', now(), '{"source":"e2e"}'::jsonb, null);
 
 insert into public.provider_categories (provider_id, category_id)
 select p.id, c.id
 from public.providers p cross join public.categories c
 where (p.slug in ('e2e-ace-plumbing', 'e2e-fresh-pipes', 'e2e-half-way') and c.slug = 'plumber')
-   or (p.slug in ('e2e-calm-carpentry', 'e2e-oak-joinery', 'e2e-birch-joinery') and c.slug = 'joiner')
+   or (p.slug in ('e2e-calm-carpentry', 'e2e-oak-joinery', 'e2e-birch-joinery', 'e2e-pine-joinery') and c.slug = 'joiner')
    or (p.slug = 'e2e-neat-sparks' and c.slug = 'electrician')
    or (p.slug = 'e2e-tidy-vans' and c.slug = 'man-and-van');
 
@@ -39,7 +42,7 @@ insert into auth.users (id)
 select ('00000000-0000-0000-0000-00000000e3' || lpad(n::text, 2, '0'))::uuid from generate_series(1, 5) n
 on conflict (id) do nothing; -- the local-stack db:reset does not clear auth.users
 
--- Fixture reviewers' public names ("Pat P."); Pat and Sam are group members.
+-- Fixture reviewers' public names ("Pat P."). Pat and Sam joined the old WhatsApp group; nothing shows it now.
 insert into public.profiles (user_id, role, display_name, postcode_district, group_member_at)
 select ('00000000-0000-0000-0000-00000000e3' || lpad(n::text, 2, '0'))::uuid, 'resident', name, 'BL3', case when member then now() end
 from (values (1, 'Pat P.', true), (2, 'Jo B.', false), (3, 'Sam T.', true), (4, 'Ali R.', false), (5, 'Kim D.', false)) v(n, name, member);
@@ -54,6 +57,12 @@ insert into public.reviews (provider_id, reviewer_id, category_id, job_month, va
 select '00000000-0000-0000-0000-00000000e203', ('00000000-0000-0000-0000-00000000e3' || lpad(n::text, 2, '0'))::uuid,
   (select id from public.categories where slug = 'plumber'), date_trunc('month', current_date)::date, '<250', 'yes', 'yes', 4, 'yes'
 from generate_series(1, 2) n;
+
+-- Pine Joinery: 5 published reviews, all 5 stars and "would use again", so it earns Top rated (Ace, with 4, earns none).
+insert into public.reviews (provider_id, reviewer_id, category_id, job_month, value_band, on_time, on_price, quality, tidy, use_again)
+select '00000000-0000-0000-0000-00000000e209', ('00000000-0000-0000-0000-00000000e3' || lpad(n::text, 2, '0'))::uuid,
+  (select id from public.categories where slug = 'joiner'), date_trunc('month', current_date)::date, '250-1k', 'yes', 'yes', 5, true, 'yes'
+from generate_series(1, 5) n;
 
 -- Ace reviews: comments (no digits that look like a phone number), and one accepted proof (Pat's: "Verified job").
 update public.reviews r set comment = v.comment
