@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireMember } from "@/lib/auth";
 import type { FormState } from "@/lib/admin-shared";
+import { AVAILABILITY_ERRORS, parseAvailabilityForm } from "@/lib/availability";
 import { platformPath } from "@/lib/paths";
 import { ID_PATTERN, REPLY_MAX } from "@/lib/review-form";
 import { revalidatePublicPages } from "@/lib/revalidate-public";
@@ -44,4 +45,35 @@ export async function saveReply(_prev: FormState, fd: FormData): Promise<FormSta
   revalidatePublicPages(typeof data === "string" ? data : undefined);
   revalidatePath(platformPath("provider"));
   return { ok: true, message: "Reply posted. It's on your page now.", values: { body } };
+}
+
+/** The trader's availability ("Taking on work", "Booked up until …" or nothing), for every listing they're linked to. */
+export async function setMyAvailability(_prev: FormState, fd: FormData): Promise<FormState> {
+  const { supabase } = await requireMember(platformPath("provider"));
+  const values = Object.fromEntries(
+    ["choice", "this_week", "until"].map((k) => [k, typeof fd.get(k) === "string" ? (fd.get(k) as string) : ""]),
+  );
+  const parsed = parseAvailabilityForm(fd);
+  if (!parsed.ok) return { errors: { [parsed.field]: parsed.message }, values };
+
+  const { data, error } = await supabase.rpc("set_my_availability", {
+    p_status: parsed.choice.status,
+    p_until: parsed.choice.until,
+  });
+  if (error) {
+    const known = AVAILABILITY_ERRORS[error.message];
+    if (!known) {
+      console.error("provider: set_my_availability failed:", error.message);
+      return { message: "Something went wrong. Please try again.", values };
+    }
+    return known.field ? { errors: { [known.field]: known.message }, values } : { message: known.message, values };
+  }
+  const slugs = Array.isArray(data) ? (data as string[]) : [];
+  if (slugs.length === 0) revalidatePublicPages();
+  for (const slug of slugs) revalidatePublicPages(slug);
+  revalidatePath(platformPath("provider"));
+  return {
+    ok: true,
+    message: parsed.choice.status ? "Saved. It's on your page now." : "Cleared. Your page doesn't show availability now.",
+  };
 }
