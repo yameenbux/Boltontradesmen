@@ -198,9 +198,29 @@ test("no horizontal scroll at 360px on /cookies", async ({ page }) => {
 test("the privacy notice covers Cloudflare, local storage and listing requests", async ({ page }) => {
   await page.goto("/privacy");
   const main = page.getByRole("main");
-  await expect(main).toContainText("Supabase, Resend and Cloudflare act for us as processors.");
+  await expect(main).toContainText("Supabase, Resend, Cloudflare and Stripe act for us as processors");
   await expect(main).toContainText("local storage");
   await expect(main.getByRole("link", { name: "cookies page" })).toHaveAttribute("href", "/cookies");
   await expect(main).toContainText("Traders who ask to be listed");
   await expect(main).toContainText("A request to be listed is deleted 90 days after you send it");
+});
+
+// Pro: the terms give the price, cancelling and refunds; the privacy notice says what happens to ID documents.
+test("the terms and privacy notice cover Pro; how ratings work says paying changes nothing", async ({ page }) => {
+  await page.goto("/terms");
+  const terms = page.getByRole("main");
+  await expect(terms.getByRole("heading", { name: "Pro, for listed traders" })).toBeVisible();
+  await expect(terms).toContainText("£10 a month or £100 a year");
+  await expect(terms).toContainText("Pro never changes where you are listed, your scores or your badges");
+  await expect(terms).toContainText("if we can't accept your photo ID we refund your Pro payment in full");
+  await expect(page.getByText("Draft — pending legal review")).toBeVisible();
+
+  await page.goto("/privacy");
+  const privacy = page.getByRole("main");
+  await expect(privacy).toContainText("Stripe, our payment processor");
+  await expect(privacy).toContainText("We delete each file 30 days after we've decided on it and keep only the decision");
+  await expect(privacy).toContainText("Work photos you add are published on your page while Pro is on.");
+
+  await page.goto("/how-ratings-work");
+  await expect(page.getByRole("main")).toContainText("It doesn't change the order of any list, the scores or the badges");
 });
