@@ -19,7 +19,6 @@ export type PublicReview = {
   comment: string | null;
   underCheck: boolean;
   reviewerName: string;
-  groupMember: boolean;
   verifiedJob: boolean;
   replyBody: string | null;
   replyAt: string | null;

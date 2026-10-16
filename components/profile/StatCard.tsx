@@ -1,4 +1,5 @@
 import { CountUp } from "@/components/CountUp";
+import { shownQuality } from "@/lib/badges";
 import type { PublicProvider } from "@/lib/directory";
 
 type Stats = Pick<PublicProvider, "reviewCount" | "score" | "useAgainPct" | "onTimePct" | "onPricePct" | "tidyPct">;
@@ -44,7 +45,7 @@ export function StatCard({ stats }: { stats: Stats }) {
     { label: "Stuck to the quote", pct: stats.onPricePct },
     { label: "Left the place tidy", pct: stats.tidyPct },
   ].filter((b): b is { label: string; pct: number } => b.pct !== null);
-  const quality = stats.score.toFixed(1);
+  const quality = shownQuality(stats.score);
   const filled = Math.min(5, Math.max(0, Math.round(stats.score)));
   return (
     <section className="stat" aria-label="What people say">

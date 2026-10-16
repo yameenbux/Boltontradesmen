@@ -102,6 +102,11 @@ h1,h2,h3{text-wrap:balance}
   .pill-gold{background:color-mix(in srgb,var(--gold) 16%,var(--surface)); color:color-mix(in srgb,var(--gold) 62%,var(--ink))}
   .pill-outline{background:transparent; color:var(--sage); box-shadow:inset 0 0 0 1.5px var(--sage)}
   .pill-muted{background:var(--surface-2); color:var(--ink-2)}
+  /* Earned rating badges (components/RatingBadge.tsx). Text is at least 5:1 on surface and page in both themes. */
+  .pill-top{background:color-mix(in srgb,var(--gold) 22%,var(--surface)); color:color-mix(in srgb,var(--gold) 50%,var(--ink)); box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 55%,transparent)}
+  .pill-top svg{color:var(--gold)}
+  .pill-high{background:transparent; color:var(--ink-2); box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--gold) 50%,var(--line))}
+  .pill-high svg{color:var(--gold)}
   .pill-wrap{width:auto; max-width:100%; border-radius:12px; padding:4px 10px 4px 8px; line-height:1.3}
   .pill-wrap svg{flex:none}
 
@@ -305,6 +310,7 @@ h1,h2,h3{text-wrap:balance}
   .pcard .info{min-width:0; display:grid; gap:5px}
   .pcard .name{font-weight:700; font-size:18px; line-height:1.2; overflow-wrap:anywhere}
   .pcard .meta{font-size:14px; color:var(--ink-2)}
+  .pcard .pills{display:flex; flex-wrap:wrap; gap:6px}
   .score{text-align:right; display:grid; justify-items:end}
   .score .pct{font-family:var(--display); font-size:34px; line-height:1; color:var(--brick); font-variant-numeric:tabular-nums}
   .score .lab{font-size:12px; font-weight:600; color:var(--ink-2); line-height:1.2; margin-top:4px}

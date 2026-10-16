@@ -116,7 +116,7 @@ test("profile shows the header, stat card, checks list and about card", async ({
   await expect(page.getByRole("region", { name: "About" })).toContainText("Boilers, leaks and bathrooms across Bolton.");
 });
 
-test("profile lists reviews with Verified job and Group member filters", async ({ page }) => {
+test("profile lists reviews with a Verified job filter", async ({ page }) => {
   await page.goto("/platform/p/e2e-ace-plumbing");
   const section = page.getByRole("region", { name: /^Reviews/ });
   const items = section.getByRole("article");
@@ -135,9 +135,7 @@ test("profile lists reviews with Verified job and Group member filters", async (
   await expect(items.first().getByText("Verified job", { exact: true })).toBeVisible();
   await verified.click();
   await expect(items).toHaveCount(4);
-
-  await section.getByRole("button", { name: /Group member/ }).click();
-  await expect(items).toHaveCount(2);
+  await expect(section.getByText("Group member")).toHaveCount(0);
 
   const report = items.first().getByRole("link", { name: "Report" });
   await expect(report).toHaveAttribute("href", /^\/platform\/report\/[0-9a-f-]{36}$/);

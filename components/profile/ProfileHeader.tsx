@@ -1,4 +1,6 @@
+import { RatingBadge } from "@/components/RatingBadge";
 import { Pill } from "@/components/ui/Pill";
+import type { RatingBadge as Badge } from "@/lib/badges";
 import { initials } from "@/lib/initials";
 
 const Tick = () => (
@@ -7,18 +9,23 @@ const Tick = () => (
   </svg>
 );
 
-/** Centred profile header: initials avatar, Gloock name, "contact · trade", Verified pill and areas covered. */
+/**
+ * Centred profile header: initials avatar, Gloock name, "contact · trade", Verified pill, any earned rating badge
+ * (just above the score card) and areas covered.
+ */
 export function ProfileHeader({
   businessName,
   contactName,
   trades,
   isVerified,
+  badge,
   areas,
 }: {
   businessName: string;
   contactName: string | null;
   trades: string[];
   isVerified: boolean;
+  badge: Badge | null;
   areas: string[];
 }) {
   const who = [contactName, trades.join(", ")].filter(Boolean).join(" · ");
@@ -29,7 +36,7 @@ export function ProfileHeader({
       </div>
       <h1>{businessName}</h1>
       {who && <div className="who">{who}</div>}
-      {(isVerified || areas.length > 0) && (
+      {(isVerified || badge || areas.length > 0) && (
         <div className="row">
           {isVerified && (
             <Pill tone="sage">
@@ -37,6 +44,7 @@ export function ProfileHeader({
               Verified
             </Pill>
           )}
+          {badge && <RatingBadge badge={badge} />}
           {areas.length > 0 && <span>Covers {areas.join(", ")}</span>}
         </div>
       )}

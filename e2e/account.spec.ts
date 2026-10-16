@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signInAsGoogle, signInWithEmail } from "./helpers/email";
+import { signInAsGoogle } from "./helpers/email";
 import { E2E_EMAIL_DOMAIN, latestCode } from "./helpers/mailbox";
 import { answer } from "./helpers/review";
 
@@ -48,23 +48,4 @@ test("a resident sees their review under My reviews, deletes their account, and 
   await page.getByLabel("6-digit code").fill(await latestCode(`del@${E2E_EMAIL_DOMAIN}`, sentAfter));
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/platform\/welcome/);
-});
-
-test("after 5 wrong group codes in a day, the account page says so plainly", async ({ page }) => {
-  await signInWithEmail(page, `gil@${E2E_EMAIL_DOMAIN}`, { first: "Gil", surname: "Hart" });
-  await expect(page).toHaveURL(/\/platform\/account$/);
-  const group = page.getByRole("region", { name: "In the WhatsApp group?" });
-  for (let i = 1; i <= 5; i++) {
-    await group.getByLabel(/Group code/).fill(`WRONG${i}`);
-    // Wait for each try's answer: the message is already on screen from the try before.
-    await Promise.all([
-      page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/platform/account"),
-      group.getByRole("button", { name: "Add group code" }).click(),
-    ]);
-    await expect(group.getByText("That group code isn't right. Leave it blank if you don't have one.")).toBeVisible();
-  }
-  await group.getByLabel(/Group code/).fill("BOLTON");
-  await group.getByRole("button", { name: "Add group code" }).click();
-  await expect(group.getByText("Too many wrong group codes today. Please try again tomorrow.")).toBeVisible();
-  await expect(page.getByRole("main").getByText("Group member", { exact: true })).toHaveCount(0);
 });

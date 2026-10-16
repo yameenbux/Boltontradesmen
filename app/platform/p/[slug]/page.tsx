@@ -6,6 +6,7 @@ import { ChecksList } from "@/components/profile/ChecksList";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ReviewList } from "@/components/profile/ReviewList";
 import { StatCard } from "@/components/profile/StatCard";
+import { ratingBadge } from "@/lib/badges";
 import { getProvider, listCategoryGroups } from "@/lib/directory";
 import { firstName } from "@/lib/initials";
 import { platformPath } from "@/lib/paths";
@@ -66,6 +67,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
         contactName={p.contactName}
         trades={trades.map((t) => t.name)}
         isVerified={p.isVerified}
+        badge={ratingBadge(p)}
         areas={p.areas}
       />
       <StatCard stats={p} />

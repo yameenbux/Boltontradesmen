@@ -99,24 +99,6 @@ export function WelcomeForm({ next }: { next: string }) {
         </span>
         {err.district && <span className="field-err">{err.district}</span>}
       </label>
-      <label className="field">
-        <span>
-          Group code <span className="opt">(optional)</span>
-        </span>
-        <span className="hint">
-          From the Bolton Tradesmen WhatsApp group. It adds a Group member badge to your reviews.
-        </span>
-        <input
-          name="group_code"
-          className="input"
-          autoComplete="off"
-          autoCapitalize="characters"
-          defaultValue={v("group_code")}
-          key={`gc-${v("group_code")}`}
-          aria-invalid={err.group_code ? true : undefined}
-        />
-        {err.group_code && <span className="field-err">{err.group_code}</span>}
-      </label>
       {state.message && (
         <p role="alert" className="form-alert">
           <AlertIcon />

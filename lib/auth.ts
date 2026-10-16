@@ -6,17 +6,10 @@ import { createServerAuthClient } from "@/lib/supabase/server";
 // Signed-in residents and providers (Google, email-code or phone accounts). Only the dynamic signed-in routes use these:
 // they read the session cookie, which public pages must never do.
 
-export const GROUP_CODE_ERROR = "That group code isn't right. Leave it blank if you don't have one.";
-/** After 5 wrong group codes in 24 hours (enforced in the database), on Welcome and on the account page. */
-export const GROUP_CODE_LIMIT_WELCOME =
-  "Too many wrong group codes today. Leave it blank for now and add it from your account page tomorrow.";
-export const GROUP_CODE_LIMIT_ACCOUNT = "Too many wrong group codes today. Please try again tomorrow.";
-
 export type Account = {
   userId: string;
   displayName: string | null;
   district: string | null;
-  groupMember: boolean;
   role: "resident" | "provider" | "admin";
   deleted: boolean;
   createdAt: string;
@@ -30,7 +23,6 @@ type AccountRow = {
   user_id: string;
   display_name: string | null;
   postcode_district: string | null;
-  group_member: boolean;
   role: Account["role"];
   deleted: boolean;
   created_at: string;
@@ -45,7 +37,6 @@ export function toAccount(row: AccountRow | null | undefined): Account | null {
     userId: row.user_id,
     displayName: row.display_name,
     district: row.postcode_district,
-    groupMember: row.group_member === true,
     role: row.role,
     deleted: row.deleted === true,
     createdAt: row.created_at,

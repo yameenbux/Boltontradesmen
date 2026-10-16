@@ -3,7 +3,7 @@ import { expect, type Page } from "@playwright/test";
 // Test numbers accepted by the local stack and CI with the code 123456 (supabase/config.toml [auth.sms.test_otp]).
 export const TEST_OTP = "123456";
 
-type Options = { first?: string; surname?: string; district?: string; groupCode?: string; next?: string };
+type Options = { first?: string; surname?: string; district?: string; next?: string };
 
 /**
  * Signs in on /platform/sign-in with a test number and code 123456. If Welcome appears (no profile yet),
@@ -22,7 +22,6 @@ export async function signInWithPhone(page: Page, phone: string, opts: Options =
     await page.getByLabel("First name").fill(opts.first ?? "Test");
     await page.getByLabel("Surname").fill(opts.surname ?? "Resident");
     await page.getByLabel("Your area").selectOption(opts.district ?? "BL1");
-    if (opts.groupCode) await page.getByLabel(/Group code/).fill(opts.groupCode);
     await page.getByRole("button", { name: "Save and continue" }).click();
     await page.waitForURL((u) => u.pathname !== "/platform/welcome");
   }

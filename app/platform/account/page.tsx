@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { ChevronRight, ShopIcon, TickIcon } from "@/components/auth/icons";
+import { ChevronRight, ShopIcon } from "@/components/auth/icons";
 import { DeleteAccountForm } from "@/components/account/DeleteAccountForm";
 import { MyReviews } from "@/components/account/MyReviews";
-import { GroupCodeForm } from "@/components/auth/GroupCodeForm";
 import { Button } from "@/components/ui/Button";
-import { Pill } from "@/components/ui/Pill";
 import { type MyReviewRow, SIGN_IN_RETENTION_TEXT } from "@/lib/account-text";
 import { requireMember } from "@/lib/auth";
 import { OTHER_DISTRICT } from "@/lib/districts";
@@ -45,12 +43,6 @@ export default async function AccountPage() {
               <span className="signed">Signed in as</span> {name}
             </h1>
             {area && <p className="area">Area: {area}</p>}
-            {account.groupMember && (
-              <Pill tone="sage">
-                <TickIcon />
-                Group member
-              </Pill>
-            )}
           </div>
         </div>
       </section>
@@ -69,16 +61,6 @@ export default async function AccountPage() {
       )}
 
       <MyReviews reviews={reviews} />
-
-      {!account.groupMember && (
-        <section className="auth-card" aria-labelledby="group-title">
-          <div>
-            <h2 id="group-title">In the WhatsApp group?</h2>
-            <p className="lede">Add the group code and your reviews show a Group member badge.</p>
-          </div>
-          <GroupCodeForm />
-        </section>
-      )}
 
       <form action={signOutResident}>
         <Button type="submit" variant="secondary" className="w-full">

@@ -45,15 +45,12 @@ export function ReviewItem({ review: r, businessName }: { review: PublicReview; 
         <b>{r.reviewerName}</b>
         <span>{monthYear(r.jobMonth)}</span>
       </div>
-      {(r.verifiedJob || r.groupMember) && (
+      {r.verifiedJob && (
         <div className="badges">
-          {r.verifiedJob && (
-            <Pill tone="sage">
-              <Tick />
-              Verified job
-            </Pill>
-          )}
-          {r.groupMember && <Pill tone="outline">Group member</Pill>}
+          <Pill tone="sage">
+            <Tick />
+            Verified job
+          </Pill>
         </div>
       )}
       <div className="rq">

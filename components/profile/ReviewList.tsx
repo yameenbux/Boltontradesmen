@@ -9,8 +9,8 @@ import { platformPath } from "@/lib/paths";
 const reviews = (n: number) => `${n} review${n === 1 ? "" : "s"}`;
 
 /**
- * The profile's Reviews section. "Verified job" and "Group member" are optional filters (both on = both must
- * apply), done in the browser like the area chips, so the profile stays a static, cacheable page.
+ * The profile's Reviews section. "Verified job" is an optional filter, done in the browser like the area chips,
+ * so the profile stays a static, cacheable page.
  */
 export function ReviewList({
   reviews: all,
@@ -22,8 +22,7 @@ export function ReviewList({
   businessName: string;
 }) {
   const [verified, setVerified] = useState(false);
-  const [member, setMember] = useState(false);
-  const shown = all.filter((r) => (!verified || r.verifiedJob) && (!member || r.groupMember));
+  const shown = all.filter((r) => !verified || r.verifiedJob);
   const leave = (
     <Button href={platformPath("p", slug, "review")} variant="secondary" className="leave">
       Leave a review
@@ -47,17 +46,14 @@ export function ReviewList({
             <button type="button" className="chip press" aria-pressed={verified} onClick={() => setVerified((v) => !v)}>
               Verified job <em>{all.filter((r) => r.verifiedJob).length}</em>
             </button>
-            <button type="button" className="chip press" aria-pressed={member} onClick={() => setMember((v) => !v)}>
-              Group member <em>{all.filter((r) => r.groupMember).length}</em>
-            </button>
           </div>
           <p className="sr-only" aria-live="polite">
             Showing {reviews(shown.length)}
           </p>
           {shown.length === 0 ? (
-            <p className="empty">No reviews match. Try turning a filter off.</p>
+            <p className="empty">No reviews match. Try turning the filter off.</p>
           ) : (
-            <div className="review-list" key={`${verified}-${member}`}>
+            <div className="review-list" key={String(verified)}>
               {shown.map((r) => (
                 <ReviewItem key={r.id} review={r} businessName={businessName} />
               ))}
