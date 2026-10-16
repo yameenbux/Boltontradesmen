@@ -75,14 +75,16 @@ test("a trader sees their enquiries, edits their listing, pauses and unpauses it
   await expect(strip.locator(".stat")).toHaveText(["Enquiries3", "Calls1", "WhatsApps2", "Reviews0"]);
   await expect(progress).toHaveAttribute("aria-valuetext", "4 of 5 enquiries");
 
-  // The fifth: the quiet "Pro is coming soon" card, with no link to buy anything.
+  // The fifth: Stripe isn't set up in E2E, so the quiet "Pro opens soon" card, with nothing to buy.
   sql(`insert into public.contact_events (provider_id, type, device_hash)
        values ('00000000-0000-0000-0000-00000000e217', 'call_tap', 'e2e-dash-5')`);
   await trader.reload();
   await expect(progress).toHaveAttribute("aria-valuetext", "5 of 5 enquiries");
   const soon = stats.getByTestId("pro-soon");
-  await expect(soon).toContainText("You've reached 5 enquiries — Pro unlocks soon");
+  await expect(soon).toContainText("You've reached 5 enquiries — Pro opens soon");
   await expect(soon.getByRole("link")).toHaveCount(0);
+  await expect(soon.getByRole("button")).toHaveCount(0);
+  await expect(stats.getByTestId("pro-upgrade")).toHaveCount(0);
 
   // Edit the bio and areas: refused with a phone number, then saved and on the public page.
   const edit = trader.getByRole("region", { name: "Edit your listing" });

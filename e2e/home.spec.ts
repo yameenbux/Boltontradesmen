@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 // Fixture (supabase/tests/fixtures/e2e.sql): three live plumbers, four live joiners, plus one live electrician and
-// eleven man & van (review targets for the sign-in and review card specs, and the availability, share and trader
-// dashboard specs). Every other category is empty.
+// twelve man & van (review targets for the sign-in and review card specs, and the availability, share and trader
+// dashboard and Pro specs). Every other category is empty.
 
 test("hero shows the headline and the search", async ({ page }) => {
   await page.goto("/platform");
