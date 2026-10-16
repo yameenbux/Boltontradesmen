@@ -5,7 +5,7 @@ select columns_are('public', 'provider_public', array[
   'id', 'slug', 'business_name', 'contact_name', 'areas', 'bio', 'is_verified', 'has_whatsapp',
   'category_slugs', 'checks', 'review_count', 'use_again_pct', 'on_time_pct', 'on_price_pct',
   'tidy_pct', 'score', 'last_review_at', 'created_at', 'verified_job_count',
-  'availability_status', 'availability_until', 'availability_set_at'
+  'availability_status', 'availability_until', 'availability_set_at', 'id_checked', 'photos'
 ], 'provider_public exposes exactly the public columns');
 
 select columns_are('public', 'review_public', array[

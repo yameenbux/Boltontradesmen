@@ -8,8 +8,10 @@
 //     --out docs/launch/review-source-production.sql
 //   node scripts/build-production-sql.mjs --preset availability --from 20261012000028 --to 20261012000028 \
 //     --out docs/launch/availability-production.sql
-//   node scripts/build-production-sql.mjs --preset trader-dashboard --from 20261012000029 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset trader-dashboard --from 20261012000029 --to 20261012000029 \
 //     --out docs/launch/trader-dashboard-production.sql
+//   node scripts/build-production-sql.mjs --preset pro-tier --from 20261012000030 --to <newest> \
+//     --out docs/launch/pro-tier-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -219,6 +221,64 @@ end
 $verify$;
 `;
 
+// Pro (migration 000030 onwards): subscriptions, ID documents, work photos and the public view's two columns.
+const VERIFY_PRO_TIER = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+declare
+  f text;
+  t text;
+  n int;
+begin
+  foreach f in array array['stripe_apply_event', 'stripe_event_seen', 'stripe_reconcile_subscription',
+                           'stripe_list_subscriptions', 'stripe_customer_for', 'my_pro_status', 'add_my_pro_document',
+                           'add_my_work_photo', 'remove_my_work_photo', 'reorder_my_work_photos', 'admin_pro_overview',
+                           'admin_pro_document_path', 'admin_decide_pro_document', 'admin_provider_pro',
+                           'pro_id_files_due', 'mark_pro_id_files_deleted'] loop
+    if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                   where n.nspname = 'public' and p.proname = f) then
+      raise exception 'Pro check failed: function public.% is missing', f;
+    end if;
+  end loop;
+  foreach t in array array['subscriptions', 'stripe_events', 'pro_documents', 'work_photos'] loop
+    if not (select relrowsecurity from pg_class where oid = ('public.' || t)::regclass) then
+      raise exception 'Pro check failed: row level security is off on public.%', t;
+    end if;
+    if has_table_privilege('anon', 'public.' || t, 'select') or has_table_privilege('authenticated', 'public.' || t, 'select') then
+      raise exception 'Pro check failed: public.% is readable without the server', t;
+    end if;
+  end loop;
+  foreach t in array array['id_checked', 'photos', 'availability_status'] loop
+    if not exists (select 1 from information_schema.columns
+                   where table_schema = 'public' and table_name = 'provider_public' and column_name = t) then
+      raise exception 'Pro check failed: provider_public has no column %', t;
+    end if;
+  end loop;
+  if not has_table_privilege('anon', 'public.provider_public', 'select') then
+    raise exception 'Pro check failed: provider_public is no longer readable by anon';
+  end if;
+  if position('pending_pro_documents' in pg_get_functiondef('public.admin_counts()'::regprocedure)) = 0 then
+    raise exception 'Pro check failed: admin_counts does not count ID documents waiting';
+  end if;
+  if has_function_privilege('anon', 'public.stripe_apply_event(text, text, jsonb)', 'execute')
+     or has_function_privilege('authenticated', 'public.stripe_apply_event(text, text, jsonb)', 'execute')
+     or not has_function_privilege('service_role', 'public.stripe_apply_event(text, text, jsonb)', 'execute')
+     or has_function_privilege('authenticated', 'public.stripe_customer_for(uuid)', 'execute')
+     or has_function_privilege('anon', 'public.add_my_work_photo(uuid, text, int, int)', 'execute') then
+    raise exception 'Pro check failed: the Stripe or trader functions are reachable without the right key';
+  end if;
+  -- Dynamic SQL: a local database without Storage has no storage.buckets to name.
+  if to_regclass('storage.buckets') is not null then
+    execute $q$select count(*) from storage.buckets
+               where (id = 'work-photos' and public) or (id = 'pro-id' and not public)$q$ into n;
+    if n <> 2 then
+      raise exception 'Pro check failed: the work-photos (public) or pro-id (private) bucket is missing';
+    end if;
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -252,6 +312,13 @@ const PRESETS = {
     // It re-creates provider_my_reviews (000028's body), so the availability script came first.
     requires: { version: "20261012000028", what: "the availability script (docs/launch/availability-production.sql)" },
     verify: VERIFY_TRADER_DASHBOARD,
+  },
+  "pro-tier": {
+    title: "Pro database changes (subscriptions, ID checks and work photos)",
+    done: "Pro database changes applied",
+    // It re-creates provider_public (000028's body) and admin_counts, after the trader dashboard script.
+    requires: { version: "20261012000029", what: "the trader dashboard script (docs/launch/trader-dashboard-production.sql)" },
+    verify: VERIFY_PRO_TIER,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];
