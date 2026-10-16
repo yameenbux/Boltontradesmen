@@ -189,7 +189,7 @@ export const FAQ: Faq[] = [
     q: "Can a trader pay to rank higher?",
     a: [
       [
-        "No. Payment never affects ranking. Nobody can pay to be placed higher, or to have a review changed or removed.",
+        "No. Payment never affects ranking. Nobody can pay to be placed higher, to have a review changed or removed, or to get a Top rated or Highly rated badge: those are earned from reviews alone.",
       ],
     ],
   },

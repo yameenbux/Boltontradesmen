@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { renderToString } from "react-dom/server";
+import HowRatingsWork from "@/app/(info)/how-ratings-work/page";
 import {
   BADGE_LABEL,
   BADGE_MIN_REVIEWS,
@@ -74,5 +77,22 @@ describe("shownQuality", () => {
   it("matches the profile's 1-decimal score", () => {
     expect(shownQuality(4.4666)).toBe("4.5");
     expect(shownQuality(4)).toBe("4.0");
+  });
+});
+
+describe("How ratings work explains the badges", () => {
+  it("states the exact rules, that they're earned from reviews only and can't be bought", () => {
+    const text = renderToString(createElement(HowRatingsWork))
+      .replace(/<!--.*?-->/g, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&#x27;|&apos;/g, "'")
+      .replace(/\s+/g, " ");
+    expect(text).toContain("Badges");
+    expect(text).toContain("A provider with 5 or more reviews that count can earn one badge");
+    expect(text).toContain("Top rated: a quality score of 4.5 or more and 90% or more would use them again.");
+    expect(text).toContain("Highly rated: a quality score of 4.0 or more and 80% or more would use them again.");
+    expect(text).toContain("earned from residents' reviews alone");
+    expect(text).toContain("can lose one as well as gain one");
+    expect(text).toContain("Nobody can buy a badge or pay for one");
   });
 });

@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
 import { H2, List, PolicyPage } from "@/components/PolicyPage";
+import {
+  BADGE_MIN_REVIEWS,
+  HIGHLY_RATED_MIN_SCORE,
+  HIGHLY_RATED_MIN_USE_AGAIN,
+  TOP_RATED_MIN_SCORE,
+  TOP_RATED_MIN_USE_AGAIN,
+} from "@/lib/badges";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
   title: "How ratings work | Bolton Vouched",
   description:
-    "How Bolton Vouched works out a local pro's figures from residents' reviews: would use again, on time, stuck to price, tidy and the overall quality score.",
+    "How Bolton Vouched works out a local pro's figures from residents' reviews: would use again, on time, stuck to price, tidy, the overall quality score and the Top rated and Highly rated badges.",
   path: "/how-ratings-work",
 });
 
@@ -58,8 +65,26 @@ export default function HowRatingsWorkPage() {
         rules.
       </p>
 
+      <H2>Badges</H2>
+      <p>
+        A provider with {BADGE_MIN_REVIEWS} or more reviews that count can earn one badge, shown on their profile and in
+        lists:
+      </p>
+      <List
+        items={[
+          `Top rated: a quality score of ${TOP_RATED_MIN_SCORE.toFixed(1)} or more and ${TOP_RATED_MIN_USE_AGAIN}% or more would use them again.`,
+          `Highly rated: a quality score of ${HIGHLY_RATED_MIN_SCORE.toFixed(1)} or more and ${HIGHLY_RATED_MIN_USE_AGAIN}% or more would use them again.`,
+        ]}
+      />
+      <p>
+        We use the quality score and the would use again figure exactly as the profile shows them. A provider who meets
+        both gets Top rated only. Badges are earned from residents&apos; reviews alone, and they update by themselves as
+        reviews come in, so a provider can lose one as well as gain one. Nobody can buy a badge or pay for one, and
+        badges don&apos;t change the order of a list.
+      </p>
+
       <H2>Payment</H2>
-      <p>Payment never affects ranking.</p>
+      <p>Payment never affects ranking or badges.</p>
     </PolicyPage>
   );
 }
