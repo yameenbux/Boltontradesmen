@@ -67,6 +67,7 @@ The reviews and phone sign-in release needs these database changes in production
 19. **Review cards (where a review came from):** after step 18, paste the whole of `docs/launch/review-source-production.sql` **once** and **Run** (migration 000027 onwards in one transaction; it refuses to run, changing nothing, if step 18 hasn't been done). It should say `Review card database changes applied` with the number of migrations in it. Do this before the review request links branch is merged to `main`. Reviews still post without it, but the admin won't see which came from a review card until it's run.
 20. **Taking on work (availability):** after step 19, paste the whole of `docs/launch/availability-production.sql` **once** and **Run** (migration 000028 onwards in one transaction; it refuses to run, changing nothing, if step 19 hasn't been done). It should say `Availability database changes applied` with the number of migrations in it. Do this before the availability branch is merged to `main`: the trader's and the admin's availability controls need it.
 21. **Trader dashboard (enquiry counts, edit, pause and withdraw):** after step 20, paste the whole of `docs/launch/trader-dashboard-production.sql` **once** and **Run** (migration 000029 onwards in one transaction; it refuses to run, changing nothing, if step 20 hasn't been done). It should say `Trader dashboard database changes applied` with the number of migrations in it. Do this before the trader dashboard branch is merged to `main`: the trader's page reads its enquiry counts and listing details from it. Listings already paused count as paused by you, so traders can't unpause them.
+22. **Pro (subscriptions, ID checks and work photos):** after step 21, paste the whole of `docs/launch/pro-tier-production.sql` **once** and **Run** (migration 000030 onwards in one transaction; it refuses to run, changing nothing, if step 21 hasn't been done). It should say `Pro database changes applied` with the number of migrations in it. It also creates the two Storage buckets (`pro-id`, private; `work-photos`, public). Do this before the Pro branch is merged to `main`, even if Stripe isn't set up yet: the trader's page reads Pro's status from it (and says "Pro opens soon" until the Stripe step below is done).
 
 Check afterwards: `select proname from pg_proc where proname in ('otp_approve','sms_hook_gate','submit_review','delete_my_account','otp_verify_gate','proof_files_due');` returns six rows, and `select pg_get_function_identity_arguments('public.submit_review'::regproc);` shows `p_uid uuid, p jsonb, p_device_hash text`.
 
@@ -163,9 +164,32 @@ Send C only once at least a handful of traders are live, so the first visit does
 
 ## What's live vs coming
 
-- **Live:** directory, categories, provider profiles, Call/WhatsApp (counted as enquiries), consent links, admin, Google and email sign-in, trader sign-in links, reviews with replies and proof checks, review moderation.
-- **Coming:** community questions (Plan 3); trader dashboard and the optional Verified tier (Plan 4); complaints process and monitoring (Plan 5).
+- **Live:** directory, categories, provider profiles, Call/WhatsApp (counted as enquiries), consent links, admin, Google and email sign-in, trader sign-in links, reviews with replies and proof checks, review moderation, the trader dashboard.
+- **Ready, switched on by the Stripe step below:** Pro, the optional paid tier (until then traders see "Pro opens soon").
+- **Coming:** community questions (Plan 3); complaints process and monitoring (Plan 5).
 - Before wider promotion: solicitor review of the draft policy pages (they show "Draft — pending legal review"), and ICO registration for YSB Ventures Ltd.
+
+## Pro — set up Stripe (about 40 minutes, when you're ready to take payments)
+
+Pro is the optional paid tier for traders: **£10 a month or £100 a year**, no VAT (below the threshold). It adds an ID check (their page shows "ID checked" once you approve their photo ID), up to 6 work photos on their page, and a monthly enquiry report on their dashboard. It never changes ranking, badges or list order, and the word "Pro" never shows publicly. A trader sees the offer on their dashboard once they've had 5 enquiries; nothing is ever emailed or texted.
+
+Until all four Stripe variables are set in Railway, traders who reach 5 enquiries see "Pro opens soon" and nothing can be bought. Do step 22 above first.
+
+**Do it all in test mode first** (the "Test mode" switch at the top of the Stripe Dashboard), with test keys in Railway, then repeat in live mode.
+
+1. **Product and prices.** Stripe Dashboard → **Product catalogue → Add product**: name **Bolton Vouched Pro**. Add two prices: **£10.00 GBP, recurring, monthly**, and **£100.00 GBP, recurring, yearly**. Tax: none (no VAT). Copy each price's id (`price_…`).
+2. **Customer portal.** **Settings → Billing → Customer portal**: turn on **Cancel subscriptions** (at the end of the billing period), **Update payment methods**, and **Invoice history**. Optionally **Switch plans** between the two prices. Business information: YSB Designs, a trading name of YSB Ventures Ltd; terms link `https://boltonvouched.ysbdesigns.uk/terms`, privacy link `https://boltonvouched.ysbdesigns.uk/privacy`. Save.
+3. **Webhook.** **Developers → Webhooks → Add endpoint**: URL `https://boltonvouched.ysbdesigns.uk/api/stripe/webhook`, and choose exactly these four events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`. Save, then **Reveal** the signing secret (`whsec_…`).
+4. **Failed payments.** **Settings → Billing → Subscriptions and emails → Manage failed payments**: Smart Retries on, for about 2 weeks, then **cancel the subscription**. (Pro stays on for 14 days after a failed payment, then stops until they pay.) Turn on Stripe's own emails for failed payments and receipts if you like; the site sends none.
+5. **Keys into Railway.** Railway → **web → Variables**: set `STRIPE_SECRET_KEY` (Developers → API keys → Secret key, `sk_test_…` or `sk_live_…`), `STRIPE_WEBHOOK_SECRET` (from step 3), `STRIPE_PRICE_MONTHLY` and `STRIPE_PRICE_ANNUAL` (from step 1). Never put them anywhere else. Railway redeploys by itself.
+6. **Test it (test mode).** Give a test listing 5 enquiries, sign in as its trader, choose **Upgrade to Pro → Continue to payment**, and pay with card `4242 4242 4242 4242` (any future date, any CVC). Back on the dashboard the Pro panel shows "Pro is on" within a minute. Send an ID photo and a work photo; approve the ID in **admin → Pro**; the public page shows "ID checked" and the photo. In **Manage billing**, cancel: it says Pro stays on until the period end. Stripe → Webhooks → your endpoint should show the events delivered with 200s.
+7. **Go live:** switch Stripe to live mode, repeat steps 1–5 with live keys (live prices and webhook have different ids and secret), and replace the four Railway variables.
+
+**When you reject a photo ID:** refund their payment in full in Stripe (**Payments** → the payment → **Refund**), as the terms promise, and cancel the subscription if they don't send another. The site doesn't refund by itself.
+
+**If something looks out of step** (a trader paid but the dashboard doesn't show Pro): Stripe → Webhooks → the endpoint → resend the failed event, or run the reconciliation script from a computer with the repo, the four Stripe variables and the Supabase service role key in a local env file: `node --env-file=.env.production.local scripts/stripe-reconcile.mjs` lists what differs; add `--fix` to write Stripe's values. Delete that env file afterwards.
+
+**Every month — delete old ID documents:** **admin → Pro → Old ID documents → Delete documents due now** (the privacy notice says ID documents go 30 days after you decide on them).
 
 ## Every month — delete old proof files (until Plan 5)
 
