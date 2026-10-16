@@ -61,13 +61,13 @@ The reviews and phone sign-in release needs these database changes in production
 13. `20261012000014_removal_survives_resignup.sql` — a removal for cause survives deleting the account and signing up again.
 14. `20261012000015_otp_verify_limits.sql` — limits on wrong sign-in codes.
 15. `20261012000016_review2_minors.sql` — confirmed-mobile check, report limit, the admin can't delete itself.
-16. `20261012000017_owner_decisions.sql` — 5 wrong group codes per person a day; number Lookups count towards the £20 monthly cap (`lookup_cost_gbp`, £0.01); proof files can be deleted 12 months after they're checked.
+16. `20261012000017_owner_decisions.sql` — 5 wrong group codes per person a day (the group code has since been taken out of the site; the database parts stay, unused); number Lookups count towards the £20 monthly cap (`lookup_cost_gbp`, £0.01); proof files can be deleted 12 months after they're checked.
 17. **Plan 2b (free sign-in):** paste the whole of `docs/launch/plan-2b-production.sql` **once** and **Run** (it's migrations 000018 onwards in one transaction, ending with a check that fails loudly if anything is missing; it should say `Plan 2b database changes applied` with the number of migrations in it). Do this before Plan 2b is merged to `main`, after Step 3b's settings.
 18. **Launch checklist (Get listed form):** after step 17, paste the whole of `docs/launch/launch-checklist-production.sql` **once** and **Run** (migration 000026 onwards in one transaction; it refuses to run, changing nothing, if step 17 hasn't been done). It should say `Launch checklist database changes applied` with the number of migrations in it. Do this before the launch checklist branch is merged to `main`: the /get-listed form needs it.
 
 Check afterwards: `select proname from pg_proc where proname in ('otp_approve','sms_hook_gate','submit_review','delete_my_account','otp_verify_gate','proof_files_due');` returns six rows, and `select pg_get_function_identity_arguments('public.submit_review'::regproc);` shows `p_uid uuid, p jsonb, p_device_hash text`.
 
-Then set a private group code (the one members type on Welcome to get the Group member badge; the default is easy to guess): `update public.settings set value = '"<your code>"'::jsonb where key = 'group_code';`
+There's no group code to set: the site no longer asks for one, so the `group_code` setting is unused.
 
 ## Step 3b — Free sign-in setup (Google and email codes, about 45 minutes)
 

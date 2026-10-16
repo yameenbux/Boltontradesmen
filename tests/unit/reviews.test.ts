@@ -77,7 +77,6 @@ describe("listProviderReviews", () => {
         comment: "Great",
         underCheck: false,
         reviewerName: "Pat P.",
-        groupMember: true,
         verifiedJob: true,
         replyBody: "Thanks Pat",
         replyAt: "2026-10-02T10:00:00Z",

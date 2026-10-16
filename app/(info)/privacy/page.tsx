@@ -58,7 +58,6 @@ export default function PrivacyPage() {
           "Your email address, and if you use Google, your Google account ID and the name and email Google shares with us. Our sign-in provider holds them. We use them to sign you in and to limit sign-in attempts. They are never shown on the site.",
           "If you signed in with a mobile number before October 2026, we keep that number in the same way.",
           "The name you show, like \"Sarah K.\" (your first name and the first letter of your surname), and your postcode district, which is never shown publicly. We don't save the full surname you type in. If you use Google, our sign-in provider holds the name Google shares; we don't show or use it.",
-          "Whether you are in the Bolton Tradesmen WhatsApp group, if you add the group code.",
           "Your reviews and replies, which are published with your shown name.",
           "Proof files you choose to add to a review (a photo of an invoice or the finished work). They are kept private, we remove the photo's hidden details (such as location) before storing it, and only the admin sees them. Proof files are deleted 12 months after we check them; a review keeps its Verified job label.",
           "Records of sign-in attempts: the email address or mobile number that was entered, and a scrambled signature of your connection, kept for up to 30 days to stop abuse.",
@@ -99,10 +98,9 @@ export default function PrivacyPage() {
       <p>
         Retention policy (draft, subject to legal review): listing data is kept until the provider withdraws, after which the
         listing is hidden. Contact-event records (the hashed device signature and provider tapped) are kept for up to 12
-        months. Sign-in attempt records (with the email address or number entered) are kept for up to 30 days, an unfinished
-        account (a code asked for but never used) is deleted after 24 hours, and wrong group code tries are kept for 2
-        days. Proof files are deleted 12 months after we check them. A request to be listed is deleted 90 days after
-        you send it; if you&apos;re listed, the details the listing needs are kept with it instead.
+        months. Sign-in attempt records (with the email address or number entered) are kept for up to 30 days, and an
+        unfinished account (a code asked for but never used) is deleted after 24 hours. Proof files are deleted 12 months
+        after we check them. A request to be listed is deleted 90 days after you send it; if you&apos;re listed, the details the listing needs are kept with it instead.
       </p>
 
       <H2>Deleting your account</H2>

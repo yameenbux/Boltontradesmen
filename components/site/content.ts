@@ -96,7 +96,7 @@ export const DECK: DeckCard[] = [
   },
   {
     shot: "profile-reviews",
-    alt: "Sample listing: a plumber's reviews, with Verified job and Group member badges and the plumber's reply",
+    alt: "Sample listing: a plumber's reviews, with a Verified job badge and the plumber's reply",
     crop: "top",
     tone: "sage",
     title: "Real reviews, with replies",

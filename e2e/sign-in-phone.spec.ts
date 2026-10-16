@@ -28,12 +28,11 @@ test("a new resident signs in with a code and sets up their name", async ({ page
   await page.getByLabel("First name").fill("sarah");
   await page.getByLabel("Surname").fill("Khan");
   await page.getByLabel("Your area").selectOption("BL3");
-  await page.getByLabel(/Group code/).fill("BOLTON");
+  await expect(page.getByLabel(/Group code/)).toHaveCount(0);
   await page.getByRole("button", { name: "Save and continue" }).click();
 
   await expect(page).toHaveURL(/\/platform\/account$/);
   await expect(page.getByRole("main").getByText("Signed in as Sarah K.")).toBeVisible();
-  await expect(page.getByRole("main").getByText("Group member", { exact: true })).toBeVisible();
 });
 
 test("a wrong code shows a plain message", async ({ page }) => {

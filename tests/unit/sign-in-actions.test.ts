@@ -251,42 +251,36 @@ describe("completeOnboarding", () => {
     auth.getUser.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
   });
 
-  it("flags a wrong group code answered as data (the wrong try stays recorded)", async () => {
+  it("passes a blank group code (no longer offered) and ignores one sent anyway", async () => {
+    rpc.mockResolvedValue({ data: ACCOUNT, error: null });
+    await expect(
+      completeOnboarding(
+        {},
+        form({ first_name: "sarah", surname: "Khan", district: "BL3", group_code: "Bolton", next: "/platform/account" }),
+      ),
+    ).rejects.toThrow("REDIRECT /platform/account");
+    expect(rpc).toHaveBeenCalledWith("complete_onboarding", {
+      p_display_name: "Sarah K.",
+      p_district: "BL3",
+      p_group_code: "",
+    });
+  });
+
+  it("shows a general message when the database refuses for any reason", async () => {
     rpc.mockResolvedValue({ data: { error: "bad_group_code" }, error: null });
     const res = await completeOnboarding(
       {},
-      form({ first_name: "sarah", surname: "Khan", district: "BL3", group_code: "nope", next: "/platform/account" }),
+      form({ first_name: "sarah", surname: "Khan", district: "BL3", next: "/platform/account" }),
     );
-    expect(res.errors?.group_code).toBe("That group code isn't right. Leave it blank if you don't have one.");
-    expect(res.values).toMatchObject({ group_code: "nope" });
-  });
-
-  it("says plainly when the day's wrong group-code tries are used up", async () => {
-    rpc.mockResolvedValue({ data: { error: "group_code_limit" }, error: null });
-    const res = await completeOnboarding(
-      {},
-      form({ first_name: "sarah", surname: "Khan", district: "BL3", group_code: "Bolton", next: "/platform/account" }),
-    );
-    expect(res.errors?.group_code).toBe(
-      "Too many wrong group codes today. Leave it blank for now and add it from your account page tomorrow.",
-    );
-    expect(res.values).toMatchObject({ first_name: "sarah", group_code: "Bolton" });
-  });
-
-  it("keeps the form filled and flags a wrong group code", async () => {
-    rpc.mockResolvedValue({ data: null, error: { message: "bad_group_code", code: "P0001" } });
-    const res = await completeOnboarding(
-      {},
-      form({ first_name: "sarah", surname: "Khan", district: "BL3", group_code: "nope", next: "/platform/account" }),
-    );
-    expect(res.errors?.group_code).toBe("That group code isn't right. Leave it blank if you don't have one.");
-    expect(res.values).toMatchObject({ first_name: "sarah", surname: "Khan", district: "BL3", group_code: "nope" });
+    expect(res.errors).toBeUndefined();
+    expect(res.message).toBe("Something went wrong saving your details. Please try again.");
+    expect(res.values).toMatchObject({ first_name: "sarah", surname: "Khan", district: "BL3" });
   });
 
   it("checks the name before calling the database", async () => {
     const res = await completeOnboarding(
       {},
-      form({ first_name: "", surname: "Khan", district: "BL3", group_code: "", next: "" }),
+      form({ first_name: "", surname: "Khan", district: "BL3", next: "" }),
     );
     expect(res.errors?.first_name).toBeTruthy();
     expect(rpc).not.toHaveBeenCalled();
@@ -295,7 +289,7 @@ describe("completeOnboarding", () => {
   it("needs an area", async () => {
     const res = await completeOnboarding(
       {},
-      form({ first_name: "Sarah", surname: "Khan", district: "", group_code: "", next: "" }),
+      form({ first_name: "Sarah", surname: "Khan", district: "", next: "" }),
     );
     expect(res.errors?.district).toBeTruthy();
     expect(rpc).not.toHaveBeenCalled();
@@ -310,7 +304,6 @@ describe("completeOnboarding", () => {
           first_name: "sarah",
           surname: "khan",
           district: "BL3",
-          group_code: " bolton ",
           next: "/platform/p/ace/review",
         }),
       ),
@@ -318,7 +311,7 @@ describe("completeOnboarding", () => {
     expect(rpc).toHaveBeenCalledWith("complete_onboarding", {
       p_display_name: "Sarah K.",
       p_district: "BL3",
-      p_group_code: " bolton ",
+      p_group_code: "",
     });
   });
 
@@ -327,7 +320,7 @@ describe("completeOnboarding", () => {
     await expect(
       completeOnboarding(
         {},
-        form({ first_name: "Sarah", surname: "Khan", district: "BL3", group_code: "", next: "/platform/account" }),
+        form({ first_name: "Sarah", surname: "Khan", district: "BL3", next: "/platform/account" }),
       ),
     ).rejects.toThrow("REDIRECT /platform/sign-in?next=%2Fplatform%2Faccount");
   });

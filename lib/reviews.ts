@@ -22,7 +22,6 @@ function toReview(r: any): PublicReview {
     comment: r.comment ?? null,
     underCheck: !!r.under_check,
     reviewerName: r.reviewer_name,
-    groupMember: !!r.group_member,
     verifiedJob: !!r.verified_job,
     replyBody: r.reply_body ?? null,
     replyAt: r.reply_at ?? null,

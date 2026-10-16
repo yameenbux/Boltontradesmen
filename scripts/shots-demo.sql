@@ -65,7 +65,7 @@ values ('00000000-0000-0000-0000-0000000d0199', 'demo-invited-tiling', 'Deane Ti
 insert into public.provider_categories (provider_id, category_id)
 select '00000000-0000-0000-0000-0000000d0199', id from public.categories where slug = 'tiler';
 
--- Reviewer names (only "First I." is ever stored), a few comments, a Group member or two, one accepted proof and one
+-- Reviewer names (only "First I." is ever stored), a few comments, one accepted proof and one
 -- reply, so the profile screenshots show the reviews section as residents see it.
 insert into public.profiles (user_id, role, display_name, postcode_district, group_member_at)
 select ('00000000-0000-0000-0000-0000000d05' || lpad(n::text, 2, '0'))::uuid, 'resident', name, 'BL3',
