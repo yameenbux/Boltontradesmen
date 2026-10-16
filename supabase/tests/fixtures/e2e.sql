@@ -56,7 +56,15 @@ insert into public.providers (id, slug, business_name, contact_name, phone_e164,
   -- Pro (pro.spec.ts), more man & van: linked by its trader, who has had 5 enquiries, takes Pro (a subscription
   -- written as the webhook would), sends their ID and a work photo; the admin approves the ID; then Pro lapses.
   ('00000000-0000-0000-0000-00000000e220', 'e2e-lift-vans', 'Lift Removals', 'Pip Lift', '+447700900320', null,
-    array['BL1'], 'Careful moves, big and small.', 'live', now(), '{"source":"e2e"}'::jsonb, null);
+    array['BL1'], 'Careful moves, big and small.', 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  -- Community questions (questions.spec.ts), more man & van: Hill Top and Brook are recommended in answers (Hill Top
+  -- has WhatsApp, for the question page's buttons); Helper is linked to its trader in the spec, who says "I can help".
+  ('00000000-0000-0000-0000-00000000e221', 'e2e-hilltop-vans', 'Hill Top Removals', 'Hal Hill', '+447700900321', '+447700900321',
+    array['BL3','BL5'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  ('00000000-0000-0000-0000-00000000e222', 'e2e-brook-vans', 'Brook Removals', 'Bri Brook', '+447700900322', null,
+    array['BL6'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  ('00000000-0000-0000-0000-00000000e223', 'e2e-helper-vans', 'Helper Removals', 'Hel Helper', '+447700900323', null,
+    array['BL7'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null);
 
 -- Enquiries (contact_events, at a fixed time of day in Bolton so a run near midnight doesn't split them). Dash: this
 -- month a call and a WhatsApp (two devices; a repeat call doesn't count), last month one call: 3 of 5. Tally: this
@@ -99,7 +107,8 @@ where (p.slug in ('e2e-ace-plumbing', 'e2e-fresh-pipes', 'e2e-half-way') and c.s
    or (p.slug = 'e2e-neat-sparks' and c.slug = 'electrician')
    or (p.slug in ('e2e-tidy-vans', 'e2e-card-vans', 'e2e-keen-vans', 'e2e-busy-vans', 'e2e-stale-vans',
                   'e2e-ready-vans', 'e2e-swift-vans', 'e2e-shaw-vans', 'e2e-dash-vans', 'e2e-gone-vans',
-                  'e2e-tally-vans', 'e2e-lift-vans') and c.slug = 'man-and-van');
+                  'e2e-tally-vans', 'e2e-lift-vans', 'e2e-hilltop-vans', 'e2e-brook-vans', 'e2e-helper-vans')
+       and c.slug = 'man-and-van');
 
 insert into public.provider_checks (provider_id, kind, reference, expires_on, checked_at) values
   ('00000000-0000-0000-0000-00000000e201', 'id', 'E2E-ID', null, '2026-10-03'),
@@ -151,6 +160,16 @@ values ('00000000-0000-0000-0000-00000000e204', '00000000-0000-0000-0000-0000000
   date_trunc('month', current_date)::date, '250-1k', 'yes', 'yes', 5, true, 'yes', 'Hung three doors, all perfect.', 'under_check', 'e2e-kim');
 insert into public.flags (target_type, target_id, source, rule)
 select 'review', id, 'auto', 'burst_48h' from public.reviews where provider_id = '00000000-0000-0000-0000-00000000e204';
+
+-- Community questions: one asked 15 days ago, so it's closed (Ali asked, Kim recommended Hill Top Removals).
+insert into public.questions (id, asker_id, category_id, district, body, status, created_at, published_at)
+values ('00000000-0000-0000-0000-00000000e401', '00000000-0000-0000-0000-00000000e304',
+  (select id from public.categories where slug = 'man-and-van'), 'BL5',
+  'Anyone know a man and van for a piano? Closed fixture question.', 'published',
+  now() - interval '15 days', now() - interval '15 days');
+insert into public.question_answers (question_id, author_id, kind, provider_id, note, created_at)
+values ('00000000-0000-0000-0000-00000000e401', '00000000-0000-0000-0000-00000000e305', 'recommend',
+  '00000000-0000-0000-0000-00000000e221', 'Moved ours without a scratch.', now() - interval '14 days');
 
 -- Every E2E sign-in comes from 127.0.0.1, so raise the per-IP (and per-number) OTP limits.
 update public.settings set value = '{"number_15m":50,"number_24h":200,"ip_1h":1000,"ip_24h":5000}'::jsonb where key = 'otp_limits';
