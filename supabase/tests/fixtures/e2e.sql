@@ -44,7 +44,37 @@ insert into public.providers (id, slug, business_name, contact_name, phone_e164,
     array['BL4'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
   -- Website badge (share.spec.ts): linked by its trader, who copies the embed code. The ampersand checks escaping.
   ('00000000-0000-0000-0000-00000000e216', 'e2e-shaw-vans', 'Shaw & Daughters Removals', 'Sam Shaw', '+447700900316', null,
-    array['BL6'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null);
+    array['BL6'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  -- Trader dashboard (trader-dashboard.spec.ts), more man & van: Dash is linked by its trader, who sees its
+  -- enquiries, edits it, pauses and unpauses it; Gone is linked and withdrawn; Tally (unlinked) has the admin's stats.
+  ('00000000-0000-0000-0000-00000000e217', 'e2e-dash-vans', 'Dash Removals', 'Dee Dash', '+447700900317', '+447700900317',
+    array['BL2'], 'House moves across Bolton.', 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  ('00000000-0000-0000-0000-00000000e218', 'e2e-gone-vans', 'Gone Removals', 'Gus Gone', '+447700900318', null,
+    array['BL7'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  ('00000000-0000-0000-0000-00000000e219', 'e2e-tally-vans', 'Tally Removals', 'Tam Tally', '+447700900319', '+447700900319',
+    array['BL5'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null);
+
+-- Enquiries (contact_events, at a fixed time of day in Bolton so a run near midnight doesn't split them). Dash: this
+-- month a call and a WhatsApp (two devices; a repeat call doesn't count), last month one call: 3 of 5. Tally: this
+-- month three calls and a WhatsApp, two months ago two calls: 6, so Pro's threshold is reached.
+create temp table e2e_month on commit drop as
+select date_trunc('month', now() at time zone 'Europe/London') as m;
+insert into public.contact_events (provider_id, type, device_hash, created_at)
+select v.provider_id::uuid, v.type::public.contact_type, v.device,
+  (least((select m from e2e_month) + make_interval(months => v.months) + interval '12 hours',
+         date_trunc('day', now() at time zone 'Europe/London') + interval '1 hour')) at time zone 'Europe/London'
+from (values
+  ('00000000-0000-0000-0000-00000000e217', 'call_tap', 'e2e-dash-1', 0),
+  ('00000000-0000-0000-0000-00000000e217', 'call_tap', 'e2e-dash-1', 0),
+  ('00000000-0000-0000-0000-00000000e217', 'whatsapp_tap', 'e2e-dash-2', 0),
+  ('00000000-0000-0000-0000-00000000e217', 'call_tap', 'e2e-dash-3', -1),
+  ('00000000-0000-0000-0000-00000000e219', 'call_tap', 'e2e-tally-1', 0),
+  ('00000000-0000-0000-0000-00000000e219', 'call_tap', 'e2e-tally-2', 0),
+  ('00000000-0000-0000-0000-00000000e219', 'call_tap', 'e2e-tally-3', 0),
+  ('00000000-0000-0000-0000-00000000e219', 'whatsapp_tap', 'e2e-tally-4', 0),
+  ('00000000-0000-0000-0000-00000000e219', 'call_tap', 'e2e-tally-5', -2),
+  ('00000000-0000-0000-0000-00000000e219', 'call_tap', 'e2e-tally-6', -2)
+) v(provider_id, type, device, months);
 
 update public.providers set availability = 'taking', availability_set_at = now() where slug = 'e2e-keen-vans';
 update public.providers set availability = 'booked', availability_set_at = now() - interval '2 days',
@@ -59,7 +89,8 @@ where (p.slug in ('e2e-ace-plumbing', 'e2e-fresh-pipes', 'e2e-half-way') and c.s
    or (p.slug in ('e2e-calm-carpentry', 'e2e-oak-joinery', 'e2e-birch-joinery', 'e2e-pine-joinery') and c.slug = 'joiner')
    or (p.slug = 'e2e-neat-sparks' and c.slug = 'electrician')
    or (p.slug in ('e2e-tidy-vans', 'e2e-card-vans', 'e2e-keen-vans', 'e2e-busy-vans', 'e2e-stale-vans',
-                  'e2e-ready-vans', 'e2e-swift-vans', 'e2e-shaw-vans') and c.slug = 'man-and-van');
+                  'e2e-ready-vans', 'e2e-swift-vans', 'e2e-shaw-vans', 'e2e-dash-vans', 'e2e-gone-vans',
+                  'e2e-tally-vans') and c.slug = 'man-and-van');
 
 insert into public.provider_checks (provider_id, kind, reference, expires_on, checked_at) values
   ('00000000-0000-0000-0000-00000000e201', 'id', 'E2E-ID', null, '2026-10-03'),
