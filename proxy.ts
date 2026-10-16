@@ -2,9 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Refreshes Supabase session cookies on the signed-in routes only (admin, sign-in, the Google callback, welcome,
-// account, review form, report, provider area, trader sign-in links), so public pages stay cookie-free and
-// cacheable. This is not authorisation: every page and server action checks the user itself (lib/admin.ts,
-// lib/auth.ts).
+// account, review form, report, provider area, trader sign-in links, and asking, answering and reporting community
+// questions), so public pages stay cookie-free and cacheable. This is not authorisation: every page and server action
+// checks the user itself (lib/admin.ts, lib/auth.ts).
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
@@ -37,5 +37,8 @@ export const config = {
     "/platform/provider/:path*",
     "/platform/auth/callback",
     "/platform/link/:path*",
+    "/platform/ask/new",
+    "/platform/ask/:id/answer",
+    "/platform/ask/:id/report",
   ],
 };

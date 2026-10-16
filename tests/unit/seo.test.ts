@@ -7,6 +7,7 @@ import {
   homeJsonLd,
   providerJsonLd,
   providerMetadata,
+  questionMetadata,
   serializeJsonLd,
   siteUrl,
   stripPhoneNumbers,
@@ -220,5 +221,46 @@ describe("breadcrumbJsonLd", () => {
       ],
     });
     expect(serializeJsonLd(ld)).not.toContain("</script");
+  });
+});
+
+describe("community questions in the sitemap and metadata", () => {
+  const now = new Date("2026-10-16T12:00:00Z");
+  const q = (id: string, created: string, recs: number) => ({
+    id,
+    createdAt: created,
+    closesAt: new Date(new Date(created).getTime() + 14 * 86400000).toISOString(),
+    recommendationCount: recs,
+  });
+  const questions = [
+    q("00000000-0000-0000-0000-0000000000a1", "2026-10-10T09:00:00Z", 2), // open, answered
+    q("00000000-0000-0000-0000-0000000000a2", "2026-10-11T09:00:00Z", 0), // open, unanswered
+    q("00000000-0000-0000-0000-0000000000a3", "2026-08-01T09:00:00Z", 1), // closed, recent
+    q("00000000-0000-0000-0000-0000000000a4", "2026-05-01T09:00:00Z", 3), // closed, old
+  ];
+
+  it("lists the Ask page and only answered questions that are open or recent", () => {
+    const urls = buildSitemap({ categories: [], providers: [], questions, now }, BASE).map((e) => e.url);
+    expect(urls.filter((u) => u.includes("/platform/ask"))).toEqual([
+      `${BASE}/platform/ask`,
+      `${BASE}/platform/ask/00000000-0000-0000-0000-0000000000a1`,
+      `${BASE}/platform/ask/00000000-0000-0000-0000-0000000000a3`,
+    ]);
+  });
+
+  it("leaves the Ask page out while nothing is answered", () => {
+    const urls = buildSitemap({ categories: [], providers: [], questions: [questions[1]], now }, BASE).map((e) => e.url);
+    expect(urls.some((u) => u.includes("/platform/ask"))).toBe(false);
+  });
+
+  it("indexes a question page only once it has a recommendation, with no phone number in the title", () => {
+    const base = { id: "00000000-0000-0000-0000-0000000000a1", categoryName: "Electrician", district: "BL3" };
+    const unanswered = questionMetadata({ ...base, body: "Anyone know a good electrician in BL3?", recommendationCount: 0 });
+    expect(unanswered.robots).toEqual({ index: false, follow: true });
+    const answered = questionMetadata({ ...base, body: "Anyone know a good electrician? 07700 900123", recommendationCount: 2 });
+    expect(answered.robots).toBeUndefined();
+    expect((answered.title as { absolute: string }).absolute).not.toMatch(/\d{5}/);
+    expect(answered.description).toContain("Electrician in BL3, Bolton. 2 recommendations from local people");
+    expect(answered.alternates?.canonical).toBe("/platform/ask/00000000-0000-0000-0000-0000000000a1");
   });
 });

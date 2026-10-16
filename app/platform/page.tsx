@@ -1,12 +1,16 @@
+import { AskCard } from "@/components/home/AskCard";
 import { CategoryGroups } from "@/components/home/CategoryGroups";
 import { CategoryTile } from "@/components/home/CategoryTile";
 import { Hero } from "@/components/home/Hero";
 import { TrustStrip } from "@/components/home/TrustStrip";
 import { popularCategories } from "@/lib/category-search";
 import { listCategoryGroups } from "@/lib/directory";
+import { isQuestionOpen } from "@/lib/questions";
+import { listRecentQuestions } from "@/lib/questions-public";
 import { pageMetadata } from "@/lib/seo";
 
-// Categories plus live-provider counts only; cached and refreshed every 5 minutes, no cookies.
+// Categories plus live-provider counts and the latest community questions; cached and refreshed every 5 minutes (and
+// when a question is posted or answered), no cookies.
 export const revalidate = 300;
 
 export const metadata = pageMetadata({
@@ -17,14 +21,18 @@ export const metadata = pageMetadata({
 });
 
 export default async function Home() {
-  const groups = await listCategoryGroups();
+  const [groups, questions] = await Promise.all([listCategoryGroups(), listRecentQuestions(10)]);
   const searchable = groups.flatMap((g) => g.categories).map(({ slug, name }) => ({ slug, name }));
   const popular = popularCategories(groups);
+  // The two newest questions still open (as of this render), for the Ask Bolton card.
+  const now = new Date();
+  const latest = questions.filter((q) => isQuestionOpen(q.createdAt, now)).slice(0, 2);
 
   return (
     <main>
       <Hero categories={searchable} />
       <TrustStrip />
+      <AskCard latest={latest} />
 
       <div className="section-head">
         <h2>Most asked for</h2>
