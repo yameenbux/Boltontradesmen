@@ -12,7 +12,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 // Shown on the page; change it whenever the terms change.
-const TERMS_UPDATED = "12 October 2026";
+const TERMS_UPDATED = "16 October 2026";
 
 export default function TermsPage() {
   const { contact } = policyIdentity();
@@ -66,6 +66,40 @@ export default function TermsPage() {
       <H2>Payment and ranking</H2>
       <p>Payment never affects ranking. No provider can pay to be placed higher or to have a review changed or removed.</p>
 
+      <H2>Pro, for listed traders</H2>
+      <p>
+        Being listed is free. Traders who have had 5 enquiries through the site can choose Pro, an optional paid extra,
+        for £10 a month or £100 a year. There is no VAT to add. Pro includes:
+      </p>
+      <List
+        items={[
+          "An ID check: we look at a photo of your passport or driving licence, and when we've checked it your page shows “ID checked”.",
+          "Up to 6 photos of your own work on your page. They must be your work, and must not show anyone's personal details (including phone numbers) or anyone who hasn't agreed to be in them.",
+          "A monthly report of your enquiries on your dashboard.",
+        ]}
+      />
+      <p>
+        Pro never changes where you are listed, your scores or your badges, and there is no way to filter lists by it.
+      </p>
+      <p>
+        Payments are taken by Stripe, our payment processor; we never see your card details. Pro renews automatically
+        each month or year until you cancel. You can cancel at any time from Manage billing on your dashboard: Pro then
+        stays on until the end of the period you have paid for, and you aren&apos;t charged again. We don&apos;t refund
+        part-used periods, except that if we can&apos;t accept your photo ID we refund your Pro payment in full.
+      </p>
+      <p>
+        If a payment fails, Stripe tries again for about two weeks and Pro stays on for up to 14 days after the paid
+        period ends. If it still isn&apos;t paid, or Pro ends for any other reason, your photos and the ID checked mark
+        stop showing. Your listing and its reviews stay as they were, and your photos come back if you restart Pro.
+        You can remove your photos at any time. Withdrawing your listing doesn&apos;t cancel Pro by itself, so cancel
+        it in Manage billing first.
+      </p>
+      <p>
+        We can remove a photo, or end Pro and refund the period not yet used, if it is used to break these terms or the
+        review policy. If we change the price, we&apos;ll tell you on your dashboard at least 30 days before it applies,
+        and you can cancel before then.
+      </p>
+
       <H2>Work done by providers</H2>
       <p>
         Any work is agreed directly between you and the provider. Bolton Vouched is not a party to that agreement and
@@ -75,7 +109,7 @@ export default function TermsPage() {
 
       <H2>Our liability</H2>
       <p>
-        Bolton Vouched is a free directory. We take care over what we publish, including the checks we show, but we
+        Bolton Vouched is free for residents to use. We take care over what we publish, including the checks we show, but we
         don&apos;t promise the site will always be available or free of mistakes. The contract for any job is between you
         and the provider, and we are not responsible for what either of you does under it.
       </p>

@@ -36,6 +36,14 @@ export default function PrivacyPage() {
           "Checks recorded by the site admin about your business (for example, that a check was made and when).",
         ]}
       />
+      <p>Traders who choose Pro, the optional paid extra:</p>
+      <List
+        items={[
+          "Payment: Stripe, our payment processor, takes your payment and holds your card details; we never see them. We keep the references Stripe gives us for you and your subscription, which plan you're on, its status and when it renews or ends.",
+          "Your ID check: a photo of your passport or driving licence, and, if you choose, your insurance certificate or trade accreditations. We use them only to check who you are and what you're covered for. They are stored privately, we remove photos' hidden details (such as location) first, and only the site admin sees them. We delete each file 30 days after we've decided on it and keep only the decision: whether it was accepted, when, and why not if it wasn't. While Pro is on, your page shows \"ID checked\".",
+          "Work photos you add are published on your page while Pro is on. We remove their hidden details (such as location) before publishing them. You can delete them at any time from your dashboard, Pro or not.",
+        ]}
+      />
       <p>Visitors:</p>
       <List
         items={[
@@ -76,6 +84,7 @@ export default function PrivacyPage() {
       <List
         items={[
           "Publishing a provider's listing: consent. You can withdraw it at any time.",
+          "Pro (payment, the ID check and work photos): contract, providing the service you paid for.",
           "Counting enquiries and keeping the site secure and free of abuse: legitimate interests. We keep this to what is needed and it does not identify visitors by name.",
           "Your account, your reviews and your replies: contract (providing the service you signed up for).",
           "Sign-in attempt records, the sign-in fingerprint we keep after deletion, device signatures and proof files: legitimate interests in preventing fraud and fake reviews.",
@@ -89,8 +98,9 @@ export default function PrivacyPage() {
         Data is stored in the UK, in a Supabase database hosted in London. Supabase also runs our sign-in. Resend sends our
         sign-in emails. Cloudflare runs the security check (Turnstile) on the sign-in page, the admin login and the Get
         listed form, which may look at signals from your device and browser, and, if it&apos;s switched on, counts page
-        views without cookies or a profile of you (Cloudflare Web Analytics). Supabase, Resend and Cloudflare act for us
-        as processors. If you choose Continue with Google, Google is an
+        views without cookies or a profile of you (Cloudflare Web Analytics). Stripe takes Pro payments. Supabase, Resend, Cloudflare and Stripe act for
+        us as processors (Stripe also has its own legal duties for payments, such as preventing fraud, under its own
+        privacy policy). If you choose Continue with Google, Google is an
         independent controller for your Google account, under its own terms, and only tells us who you are.
       </p>
 
@@ -100,7 +110,7 @@ export default function PrivacyPage() {
         listing is hidden. Contact-event records (the hashed device signature and provider tapped) are kept for up to 12
         months. Sign-in attempt records (with the email address or number entered) are kept for up to 30 days, and an
         unfinished account (a code asked for but never used) is deleted after 24 hours. Proof files are deleted 12 months
-        after we check them. A request to be listed is deleted 90 days after you send it; if you&apos;re listed, the details the listing needs are kept with it instead.
+        after we check them. A request to be listed is deleted 90 days after you send it; if you&apos;re listed, the details the listing needs are kept with it instead. ID documents sent for Pro are deleted 30 days after we decide on them; the decision is kept with the listing. Pro subscription records are kept with the listing, and Stripe keeps payment records as the law on accounts requires.
       </p>
 
       <H2>Deleting your account</H2>

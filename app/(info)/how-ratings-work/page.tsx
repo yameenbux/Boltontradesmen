@@ -89,6 +89,12 @@ export default function HowRatingsWorkPage() {
 
       <H2>Payment</H2>
       <p>Payment never affects ranking or badges.</p>
+      <p>
+        Traders can pay for an optional extra: we check their photo ID, they can show up to 6 photos of their work, and
+        they get a monthly report of their enquiries. It doesn&apos;t change the order of any list, the scores or the
+        badges, and there&apos;s no way to filter lists by it. A profile shows &ldquo;ID checked&rdquo; when we&apos;ve
+        seen the trader&apos;s photo ID; it says nothing about the quality of their work, which only reviews show.
+      </p>
     </PolicyPage>
   );
 }
