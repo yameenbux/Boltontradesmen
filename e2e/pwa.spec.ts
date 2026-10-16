@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 test("/platform shows the directory home", async ({ page }) => {
   const res = await page.goto("/platform");
   expect(res?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Who's good round here?");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Trades your neighbours vouch for.");
   await expect(page.getByRole("banner").getByRole("link", { name: /^Bolton Vouched Local trades/ })).toHaveAttribute(
     "href",
     "/platform",

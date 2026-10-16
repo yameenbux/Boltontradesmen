@@ -6,9 +6,9 @@ import { expect, test } from "@playwright/test";
 
 test("hero shows the headline and the search", async ({ page }) => {
   await page.goto("/platform");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Who's good round here?");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Trades your neighbours vouch for.");
   await expect(page.getByRole("searchbox", { name: "What do you need?" })).toBeVisible();
-  await expect(page.getByText("Real locals")).toBeVisible();
+  await expect(page.getByText("Real local reviews")).toBeVisible();
   await expect(page.getByText("Nobody pays to rank")).toBeVisible();
 });
 
