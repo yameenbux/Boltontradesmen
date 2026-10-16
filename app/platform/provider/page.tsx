@@ -4,6 +4,8 @@ import { AvailabilityForm } from "@/components/provider/AvailabilityForm";
 import { EditListingForm } from "@/components/provider/EditListingForm";
 import { EnquiryStats } from "@/components/provider/EnquiryStats";
 import { ListingStatus } from "@/components/provider/ListingStatus";
+import { ProSoonCard, ProUpgradeCard } from "@/components/provider/ProOffer";
+import { ProPanel } from "@/components/provider/ProPanel";
 import { ReplyForm } from "@/components/provider/ReplyForm";
 import { ShareReviewLink } from "@/components/review-card/ShareReviewLink";
 import { WebsiteBadge } from "@/components/share/WebsiteBadge";
@@ -16,6 +18,7 @@ import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/ava
 import { dayMonthYear } from "@/lib/checks";
 import { toEnquiryStats } from "@/lib/enquiries";
 import { platformPath } from "@/lib/paths";
+import { stripeConfig, toProStatus } from "@/lib/pro";
 import { stillOpen } from "@/lib/review-form";
 import { reviewShare } from "@/lib/review-link";
 import { badgeShare, pageShare } from "@/lib/share";
@@ -139,9 +142,13 @@ function ProviderReview({ r }: { r: Review }) {
   );
 }
 
-export default async function ProviderArea({ searchParams }: { searchParams: Promise<{ withdrawn?: string }> }) {
+export default async function ProviderArea({
+  searchParams,
+}: {
+  searchParams: Promise<{ withdrawn?: string; pro?: string }>;
+}) {
   const { supabase } = await requireMember(platformPath("provider"));
-  const { withdrawn } = await searchParams;
+  const { withdrawn, pro: proParam } = await searchParams;
   const { data, error } = await supabase.rpc("provider_my_reviews");
   if (error) throw new Error(`provider_my_reviews failed: ${error.message}`);
   const listings = (data ?? []) as Listing[];
@@ -177,14 +184,25 @@ export default async function ProviderArea({ searchParams }: { searchParams: Pro
     );
   }
 
-  // Each listing's enquiry counts (the trader's own listings only: the database checks).
-  const stats = await Promise.all(
-    listings.map(async ({ provider: p }) => {
-      const { data: s, error: e } = await supabase.rpc("my_enquiry_stats", { p_provider: p.id });
-      if (e) throw new Error(`my_enquiry_stats failed: ${e.message}`);
-      return toEnquiryStats(s);
-    }),
-  );
+  // Each listing's enquiry counts and Pro (the trader's own listings only: the database checks).
+  const [stats, pros] = await Promise.all([
+    Promise.all(
+      listings.map(async ({ provider: p }) => {
+        const { data: s, error: e } = await supabase.rpc("my_enquiry_stats", { p_provider: p.id });
+        if (e) throw new Error(`my_enquiry_stats failed: ${e.message}`);
+        return toEnquiryStats(s);
+      }),
+    ),
+    Promise.all(
+      listings.map(async ({ provider: p }) => {
+        const { data: s, error: e } = await supabase.rpc("my_pro_status", { p_provider: p.id });
+        if (e) throw new Error(`my_pro_status failed: ${e.message}`);
+        return toProStatus(s);
+      }),
+    ),
+  ]);
+  // Without all four Stripe settings the offer says "Pro opens soon" and nothing can be bought.
+  const stripeReady = stripeConfig() !== null;
 
   return (
     <main className="auth">
@@ -209,6 +227,12 @@ export default async function ProviderArea({ searchParams }: { searchParams: Pro
             {p.status !== "live" && (
               <p className="form-alert">{STATUS_NOTE[p.status] ?? "Your listing isn't live right now."}</p>
             )}
+            {proParam === "success" && !pros[i].isPro && (
+              <p className="form-ok" role="status">
+                Thanks, your payment went through. Pro switches on as soon as Stripe confirms it, usually within a
+                minute: refresh this page to see it.
+              </p>
+            )}
             <Button href={platformPath("p", p.slug)} variant="secondary">
               See your public page
             </Button>
@@ -216,8 +240,32 @@ export default async function ProviderArea({ searchParams }: { searchParams: Pro
 
           <section className="auth-card" aria-labelledby={`stats-${p.id}`}>
             <h2 id={`stats-${p.id}`}>Enquiries</h2>
-            <EnquiryStats stats={stats[i]} id={`chart-${p.id}`} />
+            <EnquiryStats
+              stats={stats[i]}
+              id={`chart-${p.id}`}
+              isPro={pros[i].isPro}
+              offer={
+                stripeReady ? (
+                  <ProUpgradeCard
+                    providerId={p.id}
+                    ended={!!pros[i].subscription && pros[i].subscription?.status !== "incomplete"}
+                  />
+                ) : (
+                  <ProSoonCard />
+                )
+              }
+            />
           </section>
+
+          {(pros[i].subscription || pros[i].photos.length > 0 || pros[i].documents.length > 0) && (
+            <ProPanel
+              providerId={p.id}
+              businessName={p.business_name}
+              pro={pros[i]}
+              stats={stats[i]}
+              billing={stripeReady}
+            />
+          )}
 
           {(p.status === "live" || p.status === "paused") && (
             <section className="auth-card" aria-labelledby={`avail-${p.id}`}>
