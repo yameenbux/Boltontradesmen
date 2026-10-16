@@ -6,8 +6,10 @@
 //     --out docs/launch/launch-checklist-production.sql
 //   node scripts/build-production-sql.mjs --preset review-source --from 20261012000027 --to 20261012000027 \
 //     --out docs/launch/review-source-production.sql
-//   node scripts/build-production-sql.mjs --preset availability --from 20261012000028 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset availability --from 20261012000028 --to 20261012000028 \
 //     --out docs/launch/availability-production.sql
+//   node scripts/build-production-sql.mjs --preset trader-dashboard --from 20261012000029 --to <newest> \
+//     --out docs/launch/trader-dashboard-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -174,6 +176,49 @@ end
 $verify$;
 `;
 
+// Trader dashboard (migration 000029 onwards): enquiry counts, and the trader's own edits, pause and withdraw.
+const VERIFY_TRADER_DASHBOARD = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+declare
+  f text;
+begin
+  foreach f in array array['my_enquiry_stats', 'admin_enquiry_stats', 'update_my_listing', 'pause_my_listing',
+                           'unpause_my_listing', 'withdraw_my_listing'] loop
+    if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                   where n.nspname = 'public' and p.proname = f) then
+      raise exception 'Trader dashboard check failed: function public.% is missing', f;
+    end if;
+  end loop;
+  if not exists (select 1 from information_schema.columns
+                 where table_schema = 'public' and table_name = 'providers' and column_name = 'paused_by') then
+    raise exception 'Trader dashboard check failed: column public.providers.paused_by is missing';
+  end if;
+  if not exists (select 1 from pg_trigger where tgrelid = 'public.providers'::regclass
+                 and tgname = 'providers_set_paused_by' and not tgisinternal) then
+    raise exception 'Trader dashboard check failed: trigger providers_set_paused_by is missing';
+  end if;
+  if not exists (select 1 from pg_trigger where tgrelid = 'public.providers'::regclass
+                 and tgname = 'providers_removed_is_final' and not tgisinternal) then
+    raise exception 'Trader dashboard check failed: removed is no longer final';
+  end if;
+  if position('private.enquiries' in pg_get_functiondef('public.enquiry_count(uuid)'::regprocedure)) = 0 then
+    raise exception 'Trader dashboard check failed: enquiry_count does not use the shared definition';
+  end if;
+  if position('paused_by' in pg_get_functiondef('public.provider_my_reviews()'::regprocedure)) = 0 then
+    raise exception 'Trader dashboard check failed: provider_my_reviews does not return the listing details';
+  end if;
+  if has_function_privilege('anon', 'public.my_enquiry_stats(uuid)', 'execute')
+     or has_function_privilege('anon', 'public.update_my_listing(uuid, text, text[])', 'execute')
+     or has_function_privilege('anon', 'public.withdraw_my_listing(uuid)', 'execute')
+     or has_function_privilege('authenticated', 'private.enquiry_stats(uuid)', 'execute')
+     or has_function_privilege('authenticated', 'public.enquiry_count(uuid)', 'execute') then
+    raise exception 'Trader dashboard check failed: enquiry counts or listing edits are reachable without signing in';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -200,6 +245,13 @@ const PRESETS = {
     // It re-creates provider_my_reviews and admin_get_provider, and the review card script came first.
     requires: { version: "20261012000027", what: "the review card script (docs/launch/review-source-production.sql)" },
     verify: VERIFY_AVAILABILITY,
+  },
+  "trader-dashboard": {
+    title: "trader dashboard database changes (enquiry counts, edit, pause and withdraw)",
+    done: "Trader dashboard database changes applied",
+    // It re-creates provider_my_reviews (000028's body), so the availability script came first.
+    requires: { version: "20261012000028", what: "the availability script (docs/launch/availability-production.sql)" },
+    verify: VERIFY_TRADER_DASHBOARD,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];
