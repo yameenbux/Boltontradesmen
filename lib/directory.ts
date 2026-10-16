@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createPublicClient } from "@/lib/supabase/server";
+import type { Availability } from "@/lib/availability";
 import type { Check } from "@/lib/checks";
 
 export { BL_DISTRICTS } from "@/lib/districts";
@@ -26,6 +27,8 @@ export type PublicProvider = {
   createdAt: string;
   /** Published or under-check reviews with a proof the admin accepted ("Verified job"). */
   verifiedJobCount: number;
+  /** "Taking on work" or "Booked up until …", already past its shelf life when null. Never ranks or badges. */
+  availability: Availability | null;
 };
 
 export type Group = { id: string; name: string; slug: string; sort: number };
@@ -61,6 +64,10 @@ function toProvider(r: any): PublicProvider {
     lastReviewAt: r.last_review_at,
     createdAt: r.created_at,
     verifiedJobCount: r.verified_job_count ?? 0,
+    availability:
+      r.availability_status === "taking" || r.availability_status === "booked"
+        ? { status: r.availability_status, until: r.availability_until ?? null, setAt: r.availability_set_at }
+        : null,
   };
 }
 
@@ -110,7 +117,7 @@ export async function listProvidersInCategory(
   const { data, error } = await q;
   if (error) throw new Error(`listProvidersInCategory: ${error.message}`);
   const all = (data ?? []).map(toProvider);
-  // Ordering depends only on review data; nothing about payment is available here. A score needs 3 reviews
+  // Ordering depends only on review data; nothing about payment is available here, and availability isn't read. A score needs 3 reviews
   // (the view enforces it too); the count check keeps the two lists disjoint whatever the view returns.
   const ranked = all
     .filter((p) => p.score !== null && p.reviewCount >= 3)

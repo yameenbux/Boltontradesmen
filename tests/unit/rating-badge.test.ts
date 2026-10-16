@@ -26,6 +26,7 @@ const provider = (over: Partial<PublicProvider> = {}): PublicProvider => ({
   lastReviewAt: null,
   createdAt: "2026-10-01T10:00:00Z",
   verifiedJobCount: 0,
+  availability: null,
   ...over,
 });
 

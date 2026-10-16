@@ -103,6 +103,29 @@ describe("listProvidersInCategory", () => {
     expect(newcomers[0].verifiedJobCount).toBe(0);
   });
 
+  it("maps availability, and it never changes the order", async () => {
+    const taking = { availability_status: "taking", availability_until: null, availability_set_at: "2026-10-16T09:00:00Z" };
+    state.rows = [
+      row("first", { score: 4.8, review_count: 5 }),
+      row("second", { score: 4.2, review_count: 5, ...taking }),
+      row("booked", {
+        score: 4.0,
+        review_count: 5,
+        availability_status: "booked",
+        availability_until: "2026-11-14",
+        availability_set_at: "2026-10-01T09:00:00Z",
+      }),
+      row("new-taking", { review_count: 1, created_at: "2026-01-01T00:00:00Z", ...taking }),
+      row("new-plain", { review_count: 0, created_at: "2026-02-01T00:00:00Z" }),
+    ];
+    const { ranked, newcomers } = await listProvidersInCategory("plumber");
+    expect(ranked.map((p) => p.slug)).toEqual(["first", "second", "booked"]);
+    expect(newcomers.map((p) => p.slug)).toEqual(["new-plain", "new-taking"]);
+    expect(ranked[0].availability).toBeNull();
+    expect(ranked[1].availability).toEqual({ status: "taking", until: null, setAt: "2026-10-16T09:00:00Z" });
+    expect(ranked[2].availability).toEqual({ status: "booked", until: "2026-11-14", setAt: "2026-10-01T09:00:00Z" });
+  });
+
   it("maps columns to camelCase", async () => {
     state.rows = [row("a", { score: 4, review_count: 3, use_again_pct: 100, has_whatsapp: true, business_name: "A Ltd" })];
     const { ranked } = await listProvidersInCategory("plumber");
