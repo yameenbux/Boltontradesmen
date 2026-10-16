@@ -60,13 +60,14 @@ export default function PrivacyPage() {
           "We use these only to contact you about a listing.",
         ]}
       />
-      <p>People who sign in (to leave a review, or to reply as a provider):</p>
+      <p>People who sign in (to leave a review, to ask or answer a question, or to reply as a provider):</p>
       <List
         items={[
           "Your email address, and if you use Google, your Google account ID and the name and email Google shares with us. Our sign-in provider holds them. We use them to sign you in and to limit sign-in attempts. They are never shown on the site.",
           "If you signed in with a mobile number before October 2026, we keep that number in the same way.",
           "The name you show, like \"Sarah K.\" (your first name and the first letter of your surname), and your postcode district, which is never shown publicly. We don't save the full surname you type in. If you use Google, our sign-in provider holds the name Google shares; we don't show or use it.",
           "Your reviews and replies, which are published with your shown name.",
+          "Questions you ask on Ask Bolton (with the trade and the postcode district you choose) and your answers to other people's questions, which are published with your shown name. A trader's \"I can help\" is published under their business name. They stay up until you delete your account, when they're taken down.",
           "Proof files you choose to add to a review (a photo of an invoice or the finished work). They are kept private, we remove the photo's hidden details (such as location) before storing it, and only the admin sees them. Proof files are deleted 12 months after we check them; a review keeps its Verified job label.",
           "Records of sign-in attempts: the email address or mobile number that was entered, and a scrambled signature of your connection, kept for up to 30 days to stop abuse.",
           "If a sign-in code is asked for but never used, the unfinished account holding that email address is deleted after 24 hours.",
@@ -86,7 +87,7 @@ export default function PrivacyPage() {
           "Publishing a provider's listing: consent. You can withdraw it at any time.",
           "Pro (payment, the ID check and work photos): contract, providing the service you paid for.",
           "Counting enquiries and keeping the site secure and free of abuse: legitimate interests. We keep this to what is needed and it does not identify visitors by name.",
-          "Your account, your reviews and your replies: contract (providing the service you signed up for).",
+          "Your account, your reviews, your replies, and your questions and answers: contract (providing the service you signed up for).",
           "Sign-in attempt records, the sign-in fingerprint we keep after deletion, device signatures and proof files: legitimate interests in preventing fraud and fake reviews.",
           "A request to be listed: legitimate interests in answering it, and taking the steps you asked for before you agree to be listed. The connection signature: legitimate interests in stopping spam.",
           "The security check on forms (Cloudflare Turnstile) and counting page views: legitimate interests in keeping the site secure and knowing which pages are used.",
@@ -115,8 +116,8 @@ export default function PrivacyPage() {
 
       <H2>Deleting your account</H2>
       <p>
-        You can delete your account from your account page at any time. Your reviews and replies are taken down and your
-        shown name is removed. We keep a scrambled fingerprint of your sign-in (worked out from your email address, Google
+        You can delete your account from your account page at any time. Your reviews, replies, questions and answers are
+        taken down and your shown name is removed. We keep a scrambled fingerprint of your sign-in (worked out from your email address, Google
         account or mobile number, made with a secret key, and used only to recognise the same sign-in) for 12 months, so
         someone whose review was
         removed for breaking the rules can&apos;t sign up again to review that provider. If you signed in with a mobile

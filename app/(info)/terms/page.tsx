@@ -49,6 +49,25 @@ export default function TermsPage() {
         of their own listing.
       </p>
 
+      <H2>Ask Bolton: community rules</H2>
+      <p>
+        Signed-in residents can ask who to use for a job, and answer by recommending someone listed on the site.
+        Questions and answers are public, with your shown name. Questions from accounts that sign in with an email code
+        are checked before they go up. A question takes answers for 14 days, then closes.
+      </p>
+      <List
+        items={[
+          "Recommend only people you've used, or would honestly recommend. Recommendations aren't reviews and don't change anyone's rating, badges or place in a list.",
+          "Traders: don't advertise. You can't recommend your own business; tap “I can help” instead, which shows as you speaking for yourself. Nothing more, please: no prices, offers or links.",
+          "No personal attacks, and nothing about someone's private life. A bad experience belongs in a review, where the trader can reply.",
+          "No phone numbers, web or email addresses, in questions or answers. People get in touch through the buttons on a trader's page.",
+        ]}
+      />
+      <p>
+        We can remove a question or an answer that breaks these rules, and suspend an account that keeps breaking them.
+        Tap Report on a question or an answer to tell us about one.
+      </p>
+
       <H2>Accounts and suspension</H2>
       <p>
         You are responsible for what is posted from your account. We can remove a review or reply, or suspend or close an

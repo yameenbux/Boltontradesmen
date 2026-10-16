@@ -68,6 +68,7 @@ The reviews and phone sign-in release needs these database changes in production
 20. **Taking on work (availability):** after step 19, paste the whole of `docs/launch/availability-production.sql` **once** and **Run** (migration 000028 onwards in one transaction; it refuses to run, changing nothing, if step 19 hasn't been done). It should say `Availability database changes applied` with the number of migrations in it. Do this before the availability branch is merged to `main`: the trader's and the admin's availability controls need it.
 21. **Trader dashboard (enquiry counts, edit, pause and withdraw):** after step 20, paste the whole of `docs/launch/trader-dashboard-production.sql` **once** and **Run** (migration 000029 onwards in one transaction; it refuses to run, changing nothing, if step 20 hasn't been done). It should say `Trader dashboard database changes applied` with the number of migrations in it. Do this before the trader dashboard branch is merged to `main`: the trader's page reads its enquiry counts and listing details from it. Listings already paused count as paused by you, so traders can't unpause them.
 22. **Pro (subscriptions, ID checks and work photos):** after step 21, paste the whole of `docs/launch/pro-tier-production.sql` **once** and **Run** (migration 000030 onwards in one transaction; it refuses to run, changing nothing, if step 21 hasn't been done). It should say `Pro database changes applied` with the number of migrations in it. It also creates the two Storage buckets (`pro-id`, private; `work-photos`, public). Do this before the Pro branch is merged to `main`, even if Stripe isn't set up yet: the trader's page reads Pro's status from it (and says "Pro opens soon" until the Stripe step below is done).
+23. **Ask Bolton (community questions):** after step 22, paste the whole of `docs/launch/community-questions-production.sql` **once** and **Run** (migration 000031 onwards in one transaction; it refuses to run, changing nothing, if step 22 hasn't been done). It should say `Community questions database changes applied` with the number of migrations in it. Do this before the community questions branch is merged to `main`: the directory home, `/platform/ask` and the sitemap read from it, so the build fails without it. Questions from email-code sign-ins then wait for you in **admin → Questions**, with anything reported.
 
 Check afterwards: `select proname from pg_proc where proname in ('otp_approve','sms_hook_gate','submit_review','delete_my_account','otp_verify_gate','proof_files_due');` returns six rows, and `select pg_get_function_identity_arguments('public.submit_review'::regproc);` shows `p_uid uuid, p jsonb, p_device_hash text`.
 
@@ -164,9 +165,9 @@ Send C only once at least a handful of traders are live, so the first visit does
 
 ## What's live vs coming
 
-- **Live:** directory, categories, provider profiles, Call/WhatsApp (counted as enquiries), consent links, admin, Google and email sign-in, trader sign-in links, reviews with replies and proof checks, review moderation, the trader dashboard.
+- **Live:** directory, categories, provider profiles, Call/WhatsApp (counted as enquiries), consent links, admin, Google and email sign-in, trader sign-in links, reviews with replies and proof checks, review moderation, the trader dashboard, Ask Bolton (community questions, answered with listed traders).
 - **Ready, switched on by the Stripe step below:** Pro, the optional paid tier (until then traders see "Pro opens soon").
-- **Coming:** community questions (Plan 3); complaints process and monitoring (Plan 5).
+- **Coming:** complaints process and monitoring (Plan 5).
 - Before wider promotion: solicitor review of the draft policy pages (they show "Draft — pending legal review"), and ICO registration for YSB Ventures Ltd.
 
 ## Pro — set up Stripe (about 40 minutes, when you're ready to take payments)

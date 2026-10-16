@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { DECK } from "@/components/site/content";
 
 // Reviews, replies and phone sign-in are live (Plan 2). Nothing public may still say they're on the way.
-// "Coming soon" stays allowed for what isn't built yet (community questions, trader dashboards, Verified).
+// "Coming soon" stays allowed for what isn't built yet.
 const ROOTS = ["app", "components", "lib", "docs/launch"];
 const STALE = [
   "reviews coming soon",
