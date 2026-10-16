@@ -9,6 +9,7 @@ import { requireMember } from "@/lib/auth";
 import { dayMonthYear } from "@/lib/checks";
 import { listCategoryGroups } from "@/lib/directory";
 import { platformPath } from "@/lib/paths";
+import { reviewFormPath, reviewSource } from "@/lib/review-link";
 import { recentMonths, REVIEW_ERRORS, REVIEW_FALLBACK_ERROR, statusLabel, stillOpen } from "@/lib/review-form";
 import {
   monthYear,
@@ -65,9 +66,17 @@ function toValues(e: Existing): ReviewValues {
   };
 }
 
-export default async function ReviewPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ReviewPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { slug } = await params;
-  const { supabase, account } = await requireMember(platformPath("p", slug, "review"));
+  // ?ref=card: they came through the trader's review link (/r/<slug>). Kept through sign-in, recorded for the admin.
+  const source = reviewSource((await searchParams).ref);
+  const { supabase, account } = await requireMember(reviewFormPath(slug, source));
   const { data, error } = await supabase.rpc("review_form_context", { p_slug: slug });
   if (error) throw new Error(`review_form_context failed: ${error.message}`);
   const ctx = data as Context | null;
@@ -173,6 +182,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ slug: s
         categories={ctx.categories.map((c) => ({ id: c.id, name: c.name, asksTidy: c.asks_tidy }))}
         months={recentMonths(new Date())}
         existing={e ? { id: e.id, values: toValues(e), editableUntil: until, hasProof: e.has_active_proof } : undefined}
+        source={source}
         header={
           <section className="auth-card" aria-labelledby="review-title">
             <div>

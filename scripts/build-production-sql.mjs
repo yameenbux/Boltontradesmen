@@ -2,8 +2,10 @@
 // Builds the one-paste production script for a range of migrations (Plan 2b Task 12):
 //
 //   node scripts/build-production-sql.mjs --from 20261012000018 --to 20261012000025 --out docs/launch/plan-2b-production.sql
-//   node scripts/build-production-sql.mjs --preset launch-checklist --from 20261012000026 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset launch-checklist --from 20261012000026 --to 20261012000026 \
 //     --out docs/launch/launch-checklist-production.sql
+//   node scripts/build-production-sql.mjs --preset review-source --from 20261012000027 --to <newest> \
+//     --out docs/launch/review-source-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -108,6 +110,30 @@ end
 $verify$;
 `;
 
+// Review request cards (migration 000027 onwards): reviews.source.
+const VERIFY_REVIEW_SOURCE = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if not exists (select 1 from information_schema.columns
+                 where table_schema = 'public' and table_name = 'reviews' and column_name = 'source') then
+    raise exception 'Review source check failed: column public.reviews.source is missing';
+  end if;
+  if position('source' in pg_get_functiondef('public.submit_review(uuid, jsonb, text)'::regprocedure)) = 0 then
+    raise exception 'Review source check failed: submit_review does not record the source';
+  end if;
+  if position('source' in pg_get_functiondef('private.admin_review_json(uuid)'::regprocedure)) = 0 then
+    raise exception 'Review source check failed: the admin review view does not show the source';
+  end if;
+  if has_function_privilege('anon', 'public.submit_review(uuid, jsonb, text)', 'execute')
+     or has_function_privilege('authenticated', 'public.submit_review(uuid, jsonb, text)', 'execute')
+     or not has_function_privilege('service_role', 'public.submit_review(uuid, jsonb, text)', 'execute') then
+    raise exception 'Review source check failed: submit_review is no longer service role only';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -121,6 +147,12 @@ const PRESETS = {
     // It re-creates private.tidy_sign_in_records, which needs Plan 2b's pieces.
     requires: { version: "20261012000025", what: "the Plan 2b script (docs/launch/plan-2b-production.sql)" },
     verify: VERIFY_LAUNCH,
+  },
+  "review-source": {
+    title: "review card database changes (where a review came from)",
+    done: "Review card database changes applied",
+    requires: { version: "20261012000026", what: "the launch checklist script (docs/launch/launch-checklist-production.sql)" },
+    verify: VERIFY_REVIEW_SOURCE,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

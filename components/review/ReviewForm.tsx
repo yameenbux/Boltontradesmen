@@ -22,6 +22,7 @@ import {
   VALUE_BAND_OPTIONS,
 } from "@/lib/review-form";
 import { platformPath } from "@/lib/paths";
+import type { ReviewSource } from "@/lib/review-link";
 
 export type ReviewValues = Record<(typeof REVIEW_FIELDS)[number], string>;
 export type ReviewCategory = { id: string; name: string; asksTidy: boolean };
@@ -37,6 +38,8 @@ type Props = {
   existing?: { id: string; values: ReviewValues; editableUntil: string; hasProof: boolean };
   /** The page's title card, shown above the questions and replaced by the result once posted. */
   header?: React.ReactNode;
+  /** Where a new review started ("card": the trader's review link), recorded for the admin only. */
+  source?: ReviewSource | null;
 };
 
 const EMPTY: ReviewValues = {
@@ -87,6 +90,7 @@ function Form({
   months,
   existing,
   header,
+  source,
   initial,
 }: Props & { initial: ReviewValues }) {
   const [state, action, pending] = useActionState(existing ? editReview : submitReview, {} as ReviewFormState);
@@ -186,6 +190,7 @@ function Form({
         <input type="hidden" name="provider_id" value={providerId} />
         <input type="hidden" name="asks_tidy" value={asksTidy ? "1" : ""} />
         {existing && <input type="hidden" name="review_id" value={existing.id} />}
+        {!existing && source && <input type="hidden" name="source" value={source} />}
 
         {missing && (
           <p role="alert" className="form-alert">

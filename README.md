@@ -289,10 +289,10 @@ PW_CHROMIUM_PATH=/path/to/chrome npm run test:e2e   # Playwright; builds and ser
 npm run db:check-prod # the one-paste production scripts apply, in order, on a 000017-state database
 ```
 
-The production pastes are generated from the migrations: `docs/launch/plan-2b-production.sql` (000018 to 000025)
-and `docs/launch/launch-checklist-production.sql` (000026 on). After adding or changing a migration from 000026 on,
-regenerate with
-`node scripts/build-production-sql.mjs --preset launch-checklist --from 20261012000026 --to <newest> --out docs/launch/launch-checklist-production.sql`
+The production pastes are generated from the migrations: `docs/launch/plan-2b-production.sql` (000018 to 000025),
+`docs/launch/launch-checklist-production.sql` (000026) and `docs/launch/review-source-production.sql` (000027 on).
+After adding or changing a migration from 000027 on, regenerate with
+`node scripts/build-production-sql.mjs --preset review-source --from 20261012000027 --to <newest> --out docs/launch/review-source-production.sql`
 (`tests/unit/production-sql.test.ts` fails until you do).
 
 Run `npm run test:db` straight after a reset: the scoring tests expect an empty

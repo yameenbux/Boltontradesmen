@@ -24,7 +24,11 @@ insert into public.providers (id, slug, business_name, contact_name, phone_e164,
     array['BL2'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
   -- Rating badges: Pine Joinery has 5 top reviews (Top rated). A joiner too, so the home page's counts don't change.
   ('00000000-0000-0000-0000-00000000e209', 'e2e-pine-joinery', 'Pine Joinery', 'Pip Pine', '+447700900309', null,
-    array['BL1','BL2'], 'Staircases, doors and kitchens.', 'live', now(), '{"source":"e2e"}'::jsonb, null);
+    array['BL1','BL2'], 'Staircases, doors and kitchens.', 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  -- Review cards: linked by its trader and reviewed through /r/<slug> in review-card.spec.ts. A second man & van,
+  -- so the home page's tiles don't change.
+  ('00000000-0000-0000-0000-00000000e210', 'e2e-card-vans', 'Card Removals', 'Cath Card', '+447700900310', null,
+    array['BL2'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null);
 
 insert into public.provider_categories (provider_id, category_id)
 select p.id, c.id
@@ -32,7 +36,7 @@ from public.providers p cross join public.categories c
 where (p.slug in ('e2e-ace-plumbing', 'e2e-fresh-pipes', 'e2e-half-way') and c.slug = 'plumber')
    or (p.slug in ('e2e-calm-carpentry', 'e2e-oak-joinery', 'e2e-birch-joinery', 'e2e-pine-joinery') and c.slug = 'joiner')
    or (p.slug = 'e2e-neat-sparks' and c.slug = 'electrician')
-   or (p.slug = 'e2e-tidy-vans' and c.slug = 'man-and-van');
+   or (p.slug in ('e2e-tidy-vans', 'e2e-card-vans') and c.slug = 'man-and-van');
 
 insert into public.provider_checks (provider_id, kind, reference, expires_on, checked_at) values
   ('00000000-0000-0000-0000-00000000e201', 'id', 'E2E-ID', null, '2026-10-03'),
