@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { clientIpFrom } from "@/lib/client-ip";
 import { deviceHash } from "@/lib/device-hash";
 import { isLinkPreviewBot } from "@/lib/bots";
+import { tapActor } from "@/lib/tap-actor";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       const { data, error } = await supabase.rpc("log_contact", {
         p_slug: slug,
         p_type: via === "call" ? "call_tap" : "whatsapp_tap",
-        p_actor: null, // taps are not attributed to signed-in people until Plan 4's enquiry stats
+        // A signed-in tapper's id, so the trader's own taps and the admin's don't count as enquiries.
+        p_actor: await tapActor(request.headers.get("cookie")),
         p_device_hash: deviceHash(ip, ua),
       });
       if (error) throw error;
