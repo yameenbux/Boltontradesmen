@@ -10,6 +10,7 @@ type Counts = {
   pending_proofs: number;
   listing_requests?: number;
   pending_pro_documents?: number;
+  questions?: number;
 };
 
 /** The admin's sections, with how many items wait in each queue. */
@@ -23,6 +24,8 @@ export function AdminNav({ counts }: { counts: Counts | null }) {
     { href: "/admin/proofs", label: "Proofs", n: counts?.pending_proofs ?? 0 },
     { href: "/admin/requests", label: "Requests", n: counts?.listing_requests ?? 0 },
     { href: "/admin/pro", label: "Pro", n: counts?.pending_pro_documents ?? 0 },
+    // Held community questions and reported questions and answers.
+    { href: "/admin/questions", label: "Questions", n: counts?.questions ?? 0 },
   ];
   return (
     <nav aria-label="Admin" className="admin-nav">
