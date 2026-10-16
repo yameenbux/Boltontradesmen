@@ -4,6 +4,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ActionBar } from "@/components/profile/ActionBar";
 import { ChecksList } from "@/components/profile/ChecksList";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { ShareProfile } from "@/components/profile/ShareProfile";
 import { ReviewList } from "@/components/profile/ReviewList";
 import { StatCard } from "@/components/profile/StatCard";
 import { ratingBadge } from "@/lib/badges";
@@ -11,6 +12,7 @@ import { getProvider, listCategoryGroups } from "@/lib/directory";
 import { firstName } from "@/lib/initials";
 import { platformPath } from "@/lib/paths";
 import { listProviderReviews } from "@/lib/reviews";
+import { profileShare } from "@/lib/share";
 import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbJsonLd, type Crumb, providerJsonLd, providerMetadata } from "@/lib/seo";
 
@@ -70,6 +72,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
         badge={ratingBadge(p)}
         areas={p.areas}
         availability={p.availability}
+        share={<ShareProfile {...profileShare(p.slug, p.businessName)} />}
       />
       <StatCard stats={p} />
       <ChecksList checks={p.checks} />
