@@ -72,6 +72,17 @@ test("provider consents via their link, then the admin sets them live", async ({
   await agree.click();
   await expect(consent.getByRole("heading", { name: "You're all set, Sam" })).toBeVisible();
   await expect(consent.getByText("once we've checked it", { exact: false })).toBeVisible();
+  // "Manage your listing": a single-use trader link (sign in, then link the listing to that account).
+  const manage = consent.getByRole("link", { name: "Manage your listing" });
+  await expect(manage).toHaveAttribute("href", /^\/platform\/link\/[0-9a-f-]{36}$/);
+  expect(
+    sql(
+      `select count(*) from public.trader_link_tokens t join public.providers p on p.id = t.provider_id where p.business_name = '${name}' and t.used_at is null and t.revoked_at is null`,
+    ),
+  ).toBe("1");
+  await manage.click();
+  await expect(consent).toHaveURL(/\/platform\/sign-in/);
+  await consent.goBack();
   await expect(consent.getByRole("button", { name: "I agree, list me" })).toHaveCount(0);
 
   await consent.goto(`/platform/consent/${token}`);

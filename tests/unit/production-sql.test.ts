@@ -75,9 +75,17 @@ const SCRIPTS = [
     file: "docs/launch/price-guides-production.sql",
     preset: "price-guides",
     from: "20261012000032",
-    to: NEWEST,
+    to: "20261012000032",
     functions: ["price_guide_min_reviews"],
     requires: "20261012000031",
+  },
+  {
+    file: "docs/launch/consent-link-production.sql",
+    preset: "consent-link",
+    from: "20261012000033",
+    to: NEWEST,
+    functions: ["consent_trader_link"],
+    requires: "20261012000032",
   },
 ];
 

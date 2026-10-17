@@ -14,8 +14,10 @@
 //     --out docs/launch/pro-tier-production.sql
 //   node scripts/build-production-sql.mjs --preset community-questions --from 20261012000031 --to 20261012000031 \
 //     --out docs/launch/community-questions-production.sql
-//   node scripts/build-production-sql.mjs --preset price-guides --from 20261012000032 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset price-guides --from 20261012000032 --to 20261012000032 \
 //     --out docs/launch/price-guides-production.sql
+//   node scripts/build-production-sql.mjs --preset consent-link --from 20261012000033 --to <newest> \
+//     --out docs/launch/consent-link-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -360,6 +362,25 @@ end
 $verify$;
 `;
 
+const VERIFY_CONSENT_LINK = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                 where n.nspname = 'public' and p.proname = 'consent_trader_link') then
+    raise exception 'Consent link check failed: function public.consent_trader_link is missing';
+  end if;
+  if has_function_privilege('anon', 'public.consent_trader_link(uuid)', 'execute')
+     or has_function_privilege('authenticated', 'public.consent_trader_link(uuid)', 'execute') then
+    raise exception 'Consent link check failed: public.consent_trader_link must be server-only';
+  end if;
+  if not has_function_privilege('service_role', 'public.consent_trader_link(uuid)', 'execute') then
+    raise exception 'Consent link check failed: the server cannot call public.consent_trader_link';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -414,6 +435,12 @@ const PRESETS = {
     // Only reads tables that were there long before; after the community questions script, to keep the order simple.
     requires: { version: "20261012000031", what: "the community questions script (docs/launch/community-questions-production.sql)" },
     verify: VERIFY_PRICE_GUIDES,
+  },
+  "consent-link": {
+    title: "\"Manage your listing\" after consent (trader link on the done screen)",
+    done: "Consent link database changes applied",
+    requires: { version: "20261012000032", what: "the price guides script (docs/launch/price-guides-production.sql)" },
+    verify: VERIFY_CONSENT_LINK,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];
