@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { StickyBar } from "@/components/ui/StickyBar";
 import { acceptConsent } from "./actions";
+import { AgreeContext } from "./AgreeBox";
 import { InvalidLink } from "./InvalidLink";
 
 /**
@@ -20,6 +21,7 @@ export function ConsentForm({
   children: React.ReactNode;
 }) {
   const [result, setResult] = useState<"ok" | "invalid" | "error" | null>(null);
+  const [agreed, setAgreed] = useState(false);
   const [pending, start] = useTransition();
   const heading = useRef<HTMLHeadingElement>(null);
 
@@ -47,9 +49,14 @@ export function ConsentForm({
   if (result === "invalid") return <InvalidLink headingRef={heading} />;
 
   return (
-    <>
+    <AgreeContext.Provider value={{ agreed, setAgreed }}>
       {children}
       <StickyBar label="Agree to be listed">
+        {!agreed && (
+          <p id="agree-hint" className="bar-hint">
+            Tick the box above to continue.
+          </p>
+        )}
         {result === "error" && (
           <p role="alert" className="bar-error">
             Something went wrong. Please try again.
@@ -58,12 +65,12 @@ export function ConsentForm({
         <div className="inner one">
           <Button
             variant="primary"
-            disabled={pending}
+            disabled={pending || !agreed}
             aria-busy={pending}
             onClick={() =>
               start(async () => {
                 try {
-                  setResult((await acceptConsent(token)).status);
+                  setResult((await acceptConsent(token, agreed)).status);
                 } catch {
                   setResult("error");
                 }
@@ -74,6 +81,6 @@ export function ConsentForm({
           </Button>
         </div>
       </StickyBar>
-    </>
+    </AgreeContext.Provider>
   );
 }

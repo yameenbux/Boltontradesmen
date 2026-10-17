@@ -6,9 +6,9 @@ import { expect, test } from "@playwright/test";
 
 test("hero shows the headline and the search", async ({ page }) => {
   await page.goto("/platform");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Who's good round here?");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Trades your neighbours vouch for.");
   await expect(page.getByRole("searchbox", { name: "What do you need?" })).toBeVisible();
-  await expect(page.getByText("Real locals")).toBeVisible();
+  await expect(page.getByText("Real local reviews")).toBeVisible();
   await expect(page.getByText("Nobody pays to rank")).toBeVisible();
 });
 
@@ -79,4 +79,15 @@ test("how it works invites a review", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
   await expect(page.getByText("Leave a review in a minute")).toBeVisible();
   await expect(page.getByText(/coming soon|once reviews open/i)).toHaveCount(0);
+});
+
+test("a search that finds nothing is logged, cleaned and without the person", async ({ page }) => {
+  await page.goto("/platform");
+  const beacon = page.waitForRequest((r) => r.url().endsWith("/api/search-log") && r.method() === "POST");
+  await page.getByRole("searchbox", { name: "What do you need?" }).fill("Zebra tuning 07466");
+  await page.getByRole("button", { name: "Find" }).click();
+  const body = JSON.parse((await beacon).postData() ?? "{}");
+  expect(body).toEqual({ q: "Zebra tuning 07466", matched: false, category: null });
+  const res = await page.request.post("/api/search-log", { data: body });
+  expect(res.status()).toBe(204);
 });

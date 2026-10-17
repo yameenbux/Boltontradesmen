@@ -90,6 +90,27 @@ test("a trader asks to be listed, gets the thank-you page, and the admin sees th
   expect(sql(`select status from public.listing_requests where business_name = '${BUSINESS}'`)).toBe("done");
 });
 
+test("creating a provider from a request marks the request done", async ({ page }) => {
+  const business = `${BUSINESS} made`;
+  sql(
+    `insert into public.listing_requests (business_name, contact_name, trade, phone_e164) values ('${business}', 'Pat Tester', 'Joiner', '+447700900779')`,
+  );
+  await page.goto("/admin/login");
+  await page.getByLabel("Email").fill("admin@example.test");
+  await page.getByLabel("Password").fill("e2e-admin-password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
+  await page.goto("/admin/requests");
+  const card = page.getByRole("article", { name: `Request from ${business}` });
+  await card.getByRole("link", { name: /Create provider from this/ }).click();
+  await expect(page.getByLabel("Business name")).toHaveValue(business);
+  await page.getByRole("button", { name: "Add provider" }).click();
+  await expect(page).toHaveURL(/\/admin\/providers\/[0-9a-f-]{36}$/);
+  expect(sql(`select status from public.listing_requests where business_name = '${business}'`)).toBe("done");
+  await page.goto("/admin/requests");
+  await expect(page.getByRole("article", { name: `Request from ${business}` })).toHaveCount(0);
+});
+
 test("a filled honeypot gets the thank-you page and stores nothing", async ({ page }) => {
   await page.goto("/get-listed");
   await page.getByLabel("Business name").fill(`${BUSINESS} bot`);
