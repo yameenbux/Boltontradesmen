@@ -93,7 +93,7 @@ h1,h2,h3{text-wrap:balance}
 
   /* ---------- buttons and pills ---------- */
   .btn{display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:56px; padding:0 20px; border-radius:16px; font-size:17px; font-weight:700; border:0; cursor:pointer; position:relative; overflow:hidden; text-decoration:none; text-align:center}
-  .btn svg{width:20px; height:20px}
+  .btn svg{width:20px; height:20px; flex:none}
   .btn-primary{background:var(--brick); color:var(--on-brick); box-shadow:0 10px 24px -10px color-mix(in srgb,var(--brick) 70%,transparent)}
   .btn-secondary{background:var(--surface); color:var(--sage); border:2px solid var(--sage)}
   .btn:disabled,.btn[aria-disabled="true"]{opacity:.55; cursor:not-allowed}
@@ -846,6 +846,17 @@ h1,h2,h3{text-wrap:balance}
   .q-contact{display:grid; grid-template-columns:1fr 1fr; gap:8px}
   .q-contact.one{grid-template-columns:1fr}
   .q-contact .btn{min-height:48px; font-size:16px}
+  /* Ask form: traders already listed for the chosen trade and area */
+  .ask-matches{display:grid; gap:10px; padding:14px 12px; background:var(--sage-tint); border-radius:var(--r-lg); animation:rise .4s var(--ease) both}
+  .ask-matches h2{margin:0; font-size:18px; line-height:1.3}
+  .ask-matches p{margin:0}
+  .ask-matches-sub, .ask-matches-or{color:var(--ink-2); font-size:15px}
+  .ask-matches .list{display:grid; gap:12px; margin:0; padding:0; list-style:none}
+  .ask-match{display:grid; gap:8px}
+  .ask-match .pcard{padding:12px; gap:10px}
+  .ask-match .avatar{width:42px; height:42px; font-size:17px}
+  .ask-match .pcard .name{overflow-wrap:break-word}
+  .ask-matches.none{background:var(--surface-2); color:var(--ink-2)}
   .rec-report{font-size:14px; color:var(--ink-3)}
   .rec-report summary{display:inline-flex; align-items:center; min-height:40px; cursor:pointer; text-decoration:underline; text-underline-offset:3px}
   .rec-report ul{margin:0; padding:0; list-style:none}
