@@ -12,8 +12,9 @@ export const TERMS_LINK_TEXT = "terms";
 
 export type ConsentCardKey = "listing" | "reviews" | "leaving" | "fairness" | "privacy" | "controller";
 /**
- * One card on the consent page. Its paragraph (the hashed text) is `${title}. ${body}`, or just `body` when there
- * is no title; the page renders the title in bold, then ". ", then the body, so the card's text is the paragraph.
+ * One card on the consent page. Its paragraph (the hashed text) is `${title}. ${body}`, `${title}.` when the body is
+ * empty, or just `body` when there is no title; the page renders the title in bold, then ". ", then the body, so the
+ * card's text is the paragraph.
  */
 export type ConsentCard = { key: ConsentCardKey; title: string | null; body: string };
 
@@ -26,7 +27,8 @@ export type ConsentStatement = {
 };
 
 export function cardParagraph(card: ConsentCard): string {
-  return card.title ? `${card.title}. ${card.body}` : card.body;
+  if (!card.title) return card.body;
+  return card.body ? `${card.title}. ${card.body}` : `${card.title}.`;
 }
 
 // Plain text only; render as text nodes (never as HTML).
@@ -73,7 +75,7 @@ export function consentStatement(
     {
       key: "privacy",
       title: `I have read and agree to the ${TERMS_LINK_TEXT} and the ${PRIVACY_LINK_TEXT}`,
-      body: "The terms set out how listings work; the privacy notice explains what we keep and why.",
+      body: "",
     },
     {
       key: "controller",

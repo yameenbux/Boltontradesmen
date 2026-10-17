@@ -88,7 +88,7 @@ function Paragraph({ card }: { card: ConsentCard }) {
     return (
       <AgreeBox>
         <p data-consent-paragraph>
-          <b>{title}.</b> {card.body}
+          <b>{title}.</b>
         </p>
       </AgreeBox>
     );

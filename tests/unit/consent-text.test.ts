@@ -48,7 +48,9 @@ describe("consentStatement", () => {
 
   it("builds each paragraph from exactly the card's title and body, as rendered", () => {
     const s = consentStatement(env, "development")!;
-    expect(s.cards.map((c) => (c.title ? `${c.title}. ${c.body}` : c.body))).toEqual(s.paragraphs);
+    expect(s.cards.map((c) => (c.title ? (c.body ? `${c.title}. ${c.body}` : `${c.title}.`) : c.body))).toEqual(
+      s.paragraphs,
+    );
     expect(s.cards.find((c) => c.key === "privacy")!.title).toContain(PRIVACY_LINK_TEXT);
     expect(s.cards.find((c) => c.key === "privacy")!.title).toContain(TERMS_LINK_TEXT);
   });

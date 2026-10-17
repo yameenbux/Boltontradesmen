@@ -54,9 +54,7 @@ test("provider consents via their link, then the admin sets them live", async ({
   await expect(consent.getByText("come back if you list again", { exact: false })).toBeVisible();
   await expect(consent.getByText("comes from reviews only", { exact: false })).toBeVisible();
   await expect(consent.getByText("the data controller for this information", { exact: false })).toBeVisible();
-  expect(paragraphs[4]).toBe(
-    "I have read and agree to the terms and the privacy notice. The terms set out how listings work; the privacy notice explains what we keep and why.",
-  );
+  expect(paragraphs[4]).toBe("I have read and agree to the terms and the privacy notice.");
   await expect(consent.getByRole("link", { name: "privacy notice" })).toHaveAttribute("href", "/privacy");
   await expect(consent.getByRole("link", { name: "terms", exact: true })).toHaveAttribute("href", "/terms");
   expect(paragraphs.join("\n")).not.toMatch(/tradespeople/i);
