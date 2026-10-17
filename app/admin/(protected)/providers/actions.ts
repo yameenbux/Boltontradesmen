@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { ID_PATTERN } from "@/lib/review-form";
 import { requireAdmin } from "@/lib/admin";
 import { CHECK_KINDS, SETTABLE_STATUSES, type FormState } from "@/lib/admin-shared";
 import { AVAILABILITY_ERRORS, parseAvailabilityForm } from "@/lib/availability";
@@ -103,6 +104,17 @@ export async function saveProvider(_prev: FormState, formData: FormData): Promis
       };
     }
     return { message: "Could not save the provider. Try again.", values };
+  }
+  // A new provider made from a "Get listed" request: that request is dealt with, so mark it done. Failing here
+  // never undoes the save; the admin can still mark the request by hand.
+  const fromRequest = text(formData.get("from_request"));
+  if (!v.id && fromRequest && ID_PATTERN.test(fromRequest)) {
+    const { error: reqError } = await supabase.rpc("admin_set_listing_request_status", {
+      p_id: fromRequest,
+      p_status: "done",
+    });
+    if (reqError) console.error("admin: marking listing request done failed:", reqError.message);
+    revalidatePath("/admin/requests");
   }
   revalidatePath("/admin");
   revalidatePublicPages();
