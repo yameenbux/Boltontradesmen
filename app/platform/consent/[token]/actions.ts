@@ -8,8 +8,10 @@ import { createServiceClient } from "@/lib/supabase/service";
 
 export type ConsentResult = { status: "ok" | "invalid" | "error" };
 
-export async function acceptConsent(token: string): Promise<ConsentResult> {
+/** `agreed` is the trader's tick on the terms and privacy box; nothing is recorded without it. */
+export async function acceptConsent(token: string, agreed: boolean): Promise<ConsentResult> {
   if (!z.string().uuid().safeParse(token).success) return { status: "invalid" };
+  if (agreed !== true) return { status: "error" };
   const statement = consentStatement();
   if (!statement) {
     console.error("consent refused: OWNER_LEGAL_NAME and CONTACT_EMAIL must be set in production");

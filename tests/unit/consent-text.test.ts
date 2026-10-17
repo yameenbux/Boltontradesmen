@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { CONSENT_TEXT_VERSION, consentStatement, PRIVACY_LINK_TEXT } from "@/lib/consent-text";
+import { CONSENT_TEXT_VERSION, consentStatement, PRIVACY_LINK_TEXT, TERMS_LINK_TEXT } from "@/lib/consent-text";
 
 const env = { OWNER_LEGAL_NAME: "Jane Doe Ltd", CONTACT_EMAIL: "jane@example.org" };
 
 describe("consentStatement", () => {
-  it("is the 2026-10-12 wording", () => {
-    expect(CONSENT_TEXT_VERSION).toBe("2026-10-12");
+  it("is the 2026-10-17 wording (the terms and privacy tick box)", () => {
+    expect(CONSENT_TEXT_VERSION).toBe("2026-10-17");
   });
 
   it("covers every required point in plain English", () => {
@@ -22,7 +22,7 @@ describe("consentStatement", () => {
       "Your basic listing is free.",
       "you'll never be removed for not buying them",
       "they never change your place in the list",
-      "I have read the privacy notice",
+      "I have read and agree to the terms and the privacy notice",
       "operated by",
       "data controller",
     ]) {
@@ -50,6 +50,7 @@ describe("consentStatement", () => {
     const s = consentStatement(env, "development")!;
     expect(s.cards.map((c) => (c.title ? `${c.title}. ${c.body}` : c.body))).toEqual(s.paragraphs);
     expect(s.cards.find((c) => c.key === "privacy")!.title).toContain(PRIVACY_LINK_TEXT);
+    expect(s.cards.find((c) => c.key === "privacy")!.title).toContain(TERMS_LINK_TEXT);
   });
 
   it("hashes exactly the paragraphs shown", () => {
@@ -79,11 +80,10 @@ describe("consentStatement", () => {
 });
 
 describe("consent text and sign-in (Plan 2b)", () => {
-  it("says nothing about how traders sign in, so the version stays 2026-10-12", () => {
+  it("says nothing about how traders sign in", () => {
     const text = consentStatement(env, "development")!.paragraphs.join("\n");
     for (const word of ["mobile", "sign in", "Google", "email code"]) {
       expect(text.toLowerCase()).not.toContain(word.toLowerCase());
     }
-    expect(CONSENT_TEXT_VERSION).toBe("2026-10-12");
   });
 });
