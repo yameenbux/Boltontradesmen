@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AskCard } from "@/components/home/AskCard";
 import { CategoryGroups } from "@/components/home/CategoryGroups";
 import { CategoryTile } from "@/components/home/CategoryTile";
@@ -29,29 +30,40 @@ export default async function Home() {
   const latest = questions.filter((q) => isQuestionOpen(q.createdAt, now)).slice(0, 2);
 
   return (
-    <main>
+    <main className="home">
       <Hero categories={searchable} />
       <TrustStrip />
       <AskCard latest={latest} />
 
-      <div className="section-head">
-        <h2>Most asked for</h2>
-        <a className="link" href="#all-trades">
-          All trades
-        </a>
-      </div>
       {popular.length > 0 ? (
-        <div className="tiles stagger" data-testid="popular-tiles">
-          {popular.map((c) => (
-            <CategoryTile key={c.slug} slug={c.slug} name={c.name} liveCount={c.liveCount} />
-          ))}
-        </div>
+        <>
+          <div className="section-head">
+            <h2>Most asked for</h2>
+            <a className="link" href="#all-trades">
+              All trades
+            </a>
+          </div>
+          <div className="tiles stagger" data-testid="popular-tiles">
+            {popular.map((c) => (
+              <CategoryTile key={c.slug} slug={c.slug} name={c.name} liveCount={c.liveCount} />
+            ))}
+          </div>
+        </>
       ) : (
-        <p className="empty">We&apos;re adding Bolton&apos;s first pros now. Have a look through the trades below.</p>
+        <section className="launch" aria-labelledby="launch-title" data-testid="launch-note">
+          <h2 id="launch-title">The first Bolton pros are joining now</h2>
+          <p>
+            We approve every listing by hand before it goes live, so the directory is filling up
+            one trader at a time. Search above, or look through the trades below, and check back soon.
+          </p>
+          <p>
+            Know a good trader? Send them the <Link href="/get-listed">Get listed</Link> page. It&apos;s free.
+          </p>
+        </section>
       )}
 
       <div className="section-head" id="all-trades">
-        <h2>Everything else</h2>
+        <h2>{popular.length > 0 ? "Everything else" : "All trades"}</h2>
       </div>
       <CategoryGroups groups={groups} />
 
@@ -60,17 +72,17 @@ export default async function Home() {
         <ol>
           <li>
             <span>
-              <b>Find someone.</b> Pick a trade and your area. The ones whose work reviewers rate highest come first.
+              <b>Find someone</b>Pick a trade and your area. The ones whose work reviewers rate highest come first.
             </span>
           </li>
           <li>
             <span>
-              <b>Call or WhatsApp them.</b> Straight from their page, no sign-up needed.
+              <b>Call or WhatsApp them</b>Straight from their page, no sign-up needed.
             </span>
           </li>
           <li>
             <span>
-              <b>Vouch for them.</b> Leave a review in a minute, so the next person knows how it went.
+              <b>Vouch for them</b>Leave a review in a minute, so the next person knows how it went.
             </span>
           </li>
         </ol>

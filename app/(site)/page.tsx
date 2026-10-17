@@ -188,7 +188,7 @@ export default function ShowcasePage() {
             />
             <Phone
               shot="home"
-              alt="Sample listing: the Bolton Vouched home screen, Who's good round here?"
+              alt="Sample listing: the Bolton Vouched home screen, Trades your neighbours vouch for."
               className="c"
               sizes="(min-width: 880px) 290px, 44vw"
               eager

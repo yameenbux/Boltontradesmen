@@ -1,12 +1,11 @@
 import { HomeSearch } from "@/components/home/HomeSearch";
 
-// Brick panel with a slowly drifting running-bond pattern (CSS ::before), headline and search.
+// Calm editorial hero on the page background: serif headline, one line of reassurance and the search.
 export function Hero({ categories }: { categories: { slug: string; name: string }[] }) {
   return (
     <section className="hero" aria-labelledby="hero-title">
-      <div className="eyebrow">Bolton · BL1 – BL7</div>
-      <h1 id="hero-title">Who&apos;s good round here?</h1>
-      <p>Plumbers, caterers, bouncy castles and more, recommended by the Bolton group.</p>
+      <h1 id="hero-title">Trades your neighbours vouch for.</h1>
+      <p>Plumbers, electricians, cleaners and more across Bolton, BL1 to BL7. Free to look, <span className="whitespace-nowrap">no sign-up.</span></p>
       <HomeSearch categories={categories} />
     </section>
   );

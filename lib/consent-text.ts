@@ -2,16 +2,19 @@ import { createHash } from "node:crypto";
 
 // The statement a provider reads before agreeing to be listed. Bump the version when the wording changes:
 // the version and a hash of the exact rendered text are stored with each consent as evidence.
-export const CONSENT_TEXT_VERSION = "2026-10-12";
+export const CONSENT_TEXT_VERSION = "2026-10-17";
 
 export const PRIVACY_PATH = "/privacy";
-// The words in the privacy card's title that link to PRIVACY_PATH (the link adds no text of its own).
+// The words in the agreement card's title that link to PRIVACY_PATH and TERMS_PATH (the links add no text of their own).
 export const PRIVACY_LINK_TEXT = "privacy notice";
+export const TERMS_PATH = "/terms";
+export const TERMS_LINK_TEXT = "terms";
 
 export type ConsentCardKey = "listing" | "reviews" | "leaving" | "fairness" | "privacy" | "controller";
 /**
- * One card on the consent page. Its paragraph (the hashed text) is `${title}. ${body}`, or just `body` when there
- * is no title; the page renders the title in bold, then ". ", then the body, so the card's text is the paragraph.
+ * One card on the consent page. Its paragraph (the hashed text) is `${title}. ${body}`, `${title}.` when the body is
+ * empty, or just `body` when there is no title; the page renders the title in bold, then ". ", then the body, so the
+ * card's text is the paragraph.
  */
 export type ConsentCard = { key: ConsentCardKey; title: string | null; body: string };
 
@@ -24,7 +27,8 @@ export type ConsentStatement = {
 };
 
 export function cardParagraph(card: ConsentCard): string {
-  return card.title ? `${card.title}. ${card.body}` : card.body;
+  if (!card.title) return card.body;
+  return card.body ? `${card.title}. ${card.body}` : `${card.title}.`;
 }
 
 // Plain text only; render as text nodes (never as HTML).
@@ -68,7 +72,11 @@ export function consentStatement(
         "Your basic listing is free. Your place in the list comes from reviews only. Nobody can pay to move up the list. " +
         "We may later offer optional paid extras; you'll never be removed for not buying them, and they never change your place in the list.",
     },
-    { key: "privacy", title: `I have read the ${PRIVACY_LINK_TEXT}`, body: "It explains what we keep and why." },
+    {
+      key: "privacy",
+      title: `I have read and agree to the ${TERMS_LINK_TEXT} and the ${PRIVACY_LINK_TEXT}`,
+      body: "",
+    },
     {
       key: "controller",
       title: null,
