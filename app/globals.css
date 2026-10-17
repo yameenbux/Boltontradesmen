@@ -424,6 +424,7 @@ h1,h2,h3{text-wrap:balance}
   .actionbar .btn{min-width:0; padding:0 14px}
   /* Room below the footer so the last of the page is never hidden behind the bar (bar: 12 + 56 + 12 + 1px border). */
   body:has(.actionbar) .app{padding-bottom:calc(24px + 81px + env(safe-area-inset-bottom,0px))}
+  body:has(.actionbar .bar-hint) .app{padding-bottom:calc(24px + 81px + 32px + env(safe-area-inset-bottom,0px))}
 
   /* ---------- consent ---------- */
   .consent-top{margin-top:8px; background:var(--surface); border:1px solid var(--line); border-radius:26px; padding:22px; box-shadow:var(--shadow)}
@@ -449,6 +450,10 @@ h1,h2,h3{text-wrap:balance}
   /* Headings focused by script when the consent view changes; not interactive, so no focus ring. */
   h1[tabindex="-1"]:focus{outline:none}
   .done p{color:var(--ink-2); margin:0; max-width:32ch}
+  .actionbar .bar-hint{max-width:428px; margin:0 auto 10px; font-size:14px; color:var(--ink-2); text-align:center}
+  .points li.agree-card{grid-template-columns:minmax(0,1fr); border-color:color-mix(in srgb,var(--brick) 45%,var(--line))}
+  .agree{display:flex; gap:14px; align-items:flex-start; cursor:pointer}
+  .agree input{flex:none; width:26px; height:26px; margin:2px 0 0; accent-color:var(--brick); cursor:pointer}
   .actionbar .bar-error{max-width:428px; margin:0 auto 10px; font-weight:600; color:var(--brick); text-align:center}
 
   /* ---------- signed-in pages: sign-in, welcome, account (residents and providers) ---------- */
