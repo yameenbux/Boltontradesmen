@@ -159,7 +159,7 @@ describe("verifyEmailCode", () => {
     rpc.mockImplementation(async (name: string) => ({ data: name === "my_account" ? ACCOUNT : 0, error: null }));
     await expect(
       verifyEmailCode(base, form({ email: base.email, code: "123 456", next: "//evil.example" })),
-    ).rejects.toThrow("REDIRECT /platform/account");
+    ).rejects.toThrow(/REDIRECT \/platform$/);
     expect(rpc).not.toHaveBeenCalledWith("claim_provider_listings");
   });
 

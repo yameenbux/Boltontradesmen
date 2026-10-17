@@ -10,6 +10,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 const rpc = vi.fn();
+vi.mock("@/lib/listing-duplicates", () => ({ listingForPhone: async () => null, duplicateMessage: () => null }));
 vi.mock("@/lib/admin", () => ({ requireAdmin: async () => ({ supabase: { rpc }, user: { id: "u" } }) }));
 
 import { newConsentLink, recordCheck, reinviteProvider, saveProvider, setStatus } from "@/app/admin/(protected)/providers/actions";
