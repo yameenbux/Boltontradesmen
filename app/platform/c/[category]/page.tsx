@@ -4,9 +4,11 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ChatIcon } from "@/components/ask/QuestionCard";
 import { AreaFilter } from "@/components/category/AreaFilter";
+import { PriceIcon } from "@/components/prices/PriceIcon";
 import { localPros } from "@/components/home/CategoryTile";
 import { listCategoryGroups, listProvidersInCategory } from "@/lib/directory";
 import { platformPath } from "@/lib/paths";
+import { getPriceGuide } from "@/lib/price-guides-public";
 import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbJsonLd, categoryMetadata } from "@/lib/seo";
 
@@ -44,7 +46,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
   const found = await findCategory(slug);
   if (!found) notFound();
   const { name, guidanceNote } = found.category;
-  const { ranked, newcomers } = await listProvidersInCategory(slug);
+  const [{ ranked, newcomers }, guide] = await Promise.all([listProvidersInCategory(slug), getPriceGuide(slug)]);
   const total = new Set([...ranked, ...newcomers].map((p) => p.id)).size;
   const trail = [
     { name: "Trades", path: platformPath() },
@@ -63,6 +65,19 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
           <Info />
           <span>{guidanceNote}</span>
         </p>
+      )}
+
+      {/* Only once the trade has a published price guide (enough reviews); otherwise nothing. */}
+      {guide && (
+        <Link href={platformPath("prices", slug)} className="price-link press lift" data-testid="price-guide-link">
+          <span className="ask-ic" aria-hidden="true">
+            <PriceIcon />
+          </span>
+          <span>
+            <b>What locals paid</b>
+            <small>Totals from {guide.reviewCount} reviews, not hourly rates</small>
+          </span>
+        </Link>
       )}
 
       {total > 0 ? (

@@ -12,6 +12,16 @@ const sql = (query: string) =>
 
 const CATEGORY = "/platform/c/man-and-van";
 const card = (page: Page, name: string) => page.getByRole("link", { name: new RegExp(name) });
+// The category page is ISR. Another spec's visit can start regenerating it just before a status change and store
+// the older list just after the change's revalidation, so reload until the change shows (it always does at once
+// when nothing else is rendering it).
+async function categoryShows(page: Page, name: string, count: 0 | 1) {
+  await expect(async () => {
+    await page.goto(CATEGORY);
+    await expect(card(page, "Keen Removals")).toBeVisible({ timeout: 1000 });
+    await expect(card(page, name)).toHaveCount(count, { timeout: 1000 });
+  }).toPass({ timeout: 15_000 });
+}
 
 async function adminSignIn(page: Page) {
   await page.goto("/admin/login");
@@ -117,16 +127,13 @@ test("a trader sees their enquiries, edits their listing, pauses and unpauses it
   await expect(dialog).toBeHidden();
   await expect(edit.getByRole("button", { name: "Unpause my listing" })).toBeVisible();
   await expect(trader.getByText("Your listing is paused, so customers can't see it.")).toBeVisible();
-  await visitor.goto(CATEGORY);
-  await expect(card(visitor, "Keen Removals")).toBeVisible();
-  await expect(card(visitor, "Dash Removals")).toHaveCount(0);
+  await categoryShows(visitor, "Dash Removals", 0);
   expect((await visitor.goto("/platform/p/e2e-dash-vans"))?.status()).toBe(404);
   expect(sql(`select status || '/' || paused_by from public.providers where slug = 'e2e-dash-vans'`)).toBe("paused/trader");
 
   await edit.getByRole("button", { name: "Unpause my listing" }).click();
   await expect(edit.getByRole("button", { name: "Pause my listing" })).toBeVisible();
-  await visitor.goto(CATEGORY);
-  await expect(card(visitor, "Dash Removals")).toBeVisible();
+  await categoryShows(visitor, "Dash Removals", 1);
   expect(sql(`select string_agg(reason, ',' order by id) from public.audit_log
               where action = 'set_provider_status' and target_id = '00000000-0000-0000-0000-00000000e217'`)).toBe(
     "paused: Paused by trader,live: Unpaused by trader",
@@ -163,9 +170,7 @@ test("a trader withdraws their listing after confirming", async ({ page, browser
   );
   const visitor = await (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
   expect((await visitor.goto("/platform/p/e2e-gone-vans"))?.status()).toBe(404);
-  await visitor.goto(CATEGORY);
-  await expect(card(visitor, "Keen Removals")).toBeVisible();
-  await expect(card(visitor, "Gone Removals")).toHaveCount(0);
+  await categoryShows(visitor, "Gone Removals", 0);
 
   // The admin sees it removed, and only Re-invite brings it back.
   await page.goto("/admin/providers/00000000-0000-0000-0000-00000000e218");

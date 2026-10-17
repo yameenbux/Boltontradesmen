@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { toPriceGuide } from "@/lib/price-guides";
 import {
   breadcrumbJsonLd,
   buildRobots,
   buildSitemap,
   categoryMetadata,
   homeJsonLd,
+  priceGuideMetadata,
+  priceIndexMetadata,
   providerJsonLd,
   providerMetadata,
   questionMetadata,
@@ -262,5 +265,45 @@ describe("community questions in the sitemap and metadata", () => {
     expect((answered.title as { absolute: string }).absolute).not.toMatch(/\d{5}/);
     expect(answered.description).toContain("Electrician in BL3, Bolton. 2 recommendations from local people");
     expect(answered.alternates?.canonical).toBe("/platform/ask/00000000-0000-0000-0000-0000000000a1");
+  });
+});
+
+describe("price guides in the sitemap and metadata", () => {
+  const guide = toPriceGuide({
+    category_slug: "gardener",
+    category_name: "Gardener",
+    group_slug: "home-trades",
+    group_name: "Home & trades",
+    review_count: 10,
+    band_under_250: 4,
+    band_250_1k: 4,
+    band_1k_5k: 1,
+    band_over_5k: 1,
+    on_price_pct: 70,
+    earliest_job_month: "2025-04-01",
+    latest_job_month: "2026-09-01",
+  })!;
+
+  it("lists the index and each published guide, and nothing when there are none", () => {
+    const urls = (priceGuides: { slug: string; latestJobMonth: string }[]) =>
+      buildSitemap({ categories: [], providers: [], priceGuides }, BASE).map((e) => e.url);
+    expect(urls([{ slug: "gardener", latestJobMonth: "2026-09-01" }])).toEqual(
+      expect.arrayContaining([`${BASE}/platform/prices`, `${BASE}/platform/prices/gardener`]),
+    );
+    expect(urls([]).filter((u) => u.includes("/prices"))).toEqual([]);
+  });
+
+  it("titles the guide as the question, with a canonical and no noindex", () => {
+    const m = priceGuideMetadata(guide);
+    expect(m.title).toEqual({ absolute: "How much does a gardener cost in Bolton? | Bolton Vouched" });
+    expect(m.alternates?.canonical).toBe("/platform/prices/gardener");
+    expect(m.robots).toBeUndefined();
+    expect(String(m.description)).toMatch(/^What Bolton residents paid, from 10 reviews of gardener jobs since April 2025\. 70% said the price matched the quote\. Most often: Under £250 and £250–£1,000\.$/);
+    expect(String(m.description).length).toBeLessThanOrEqual(160);
+  });
+
+  it("keeps an empty index out of search results", () => {
+    expect(priceIndexMetadata(0).robots).toEqual({ index: false, follow: true });
+    expect(priceIndexMetadata(2).robots).toBeUndefined();
   });
 });

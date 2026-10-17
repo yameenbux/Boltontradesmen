@@ -161,6 +161,51 @@ values ('00000000-0000-0000-0000-00000000e204', '00000000-0000-0000-0000-0000000
 insert into public.flags (target_type, target_id, source, rule)
 select 'review', id, 'auto', 'burst_48h' from public.reviews where provider_id = '00000000-0000-0000-0000-00000000e204';
 
+-- Price guides (prices.spec.ts): gardeners and roofers, from paused listings only, so no listing, tile or count that
+-- other specs check changes (paused listings' reviews still count, as they do for scores). Gardener: 10 published
+-- reviews, so its guide shows (4 under £250 and 4 at £250-£1,000, a tie; 1 and 1 above; 7 on the quote; since
+-- September 2025). Roofer: 9 published and 1 removed, so 9 count and there's no guide.
+insert into public.providers (id, slug, business_name, contact_name, phone_e164, areas, status, paused_by, consent_at, consent_evidence) values
+  ('00000000-0000-0000-0000-00000000e224', 'e2e-green-thumb', 'Green Thumb Gardens', 'Gil Green', '+447700900324',
+    array['BL1'], 'paused', 'admin', now(), '{"source":"e2e"}'::jsonb),
+  ('00000000-0000-0000-0000-00000000e225', 'e2e-hedge-cut', 'Hedge Cut Gardening', 'Hen Hedge', '+447700900325',
+    array['BL2'], 'paused', 'admin', now(), '{"source":"e2e"}'::jsonb),
+  ('00000000-0000-0000-0000-00000000e226', 'e2e-ridge-roofing', 'Ridge Roofing', 'Rod Ridge', '+447700900326',
+    array['BL3'], 'paused', 'admin', now(), '{"source":"e2e"}'::jsonb),
+  ('00000000-0000-0000-0000-00000000e227', 'e2e-slate-roofing', 'Slate Roofing', 'Sol Slate', '+447700900327',
+    array['BL4'], 'paused', 'admin', now(), '{"source":"e2e"}'::jsonb);
+insert into public.provider_categories (provider_id, category_id)
+select p.id, c.id from public.providers p join public.categories c
+  on c.slug = case when p.slug like '%roofing' then 'roofer' else 'gardener' end
+where p.slug in ('e2e-green-thumb', 'e2e-hedge-cut', 'e2e-ridge-roofing', 'e2e-slate-roofing');
+insert into public.reviews (provider_id, reviewer_id, category_id, job_month, value_band, on_time, on_price, quality, tidy, use_again, status, removal_reason)
+select v.provider_id::uuid, ('00000000-0000-0000-0000-00000000e3' || lpad(v.n::text, 2, '0'))::uuid,
+  (select id from public.categories where slug = v.cat), v.month::date, v.band::public.value_band, 'yes',
+  v.on_price::public.on_price_answer, 4, true, 'yes', v.status::public.review_status,
+  case when v.status = 'removed' then 'E2E fixture' end
+from (values
+  ('00000000-0000-0000-0000-00000000e224', 1, 'gardener', '2025-09-01', '<250', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e224', 2, 'gardener', '2025-11-01', '<250', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e224', 3, 'gardener', '2026-01-01', '250-1k', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e224', 4, 'gardener', '2026-03-01', '250-1k', 'slightly_over_explained', 'published'),
+  ('00000000-0000-0000-0000-00000000e224', 5, 'gardener', '2026-05-01', '1k-5k', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e225', 1, 'gardener', '2026-02-01', '<250', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e225', 2, 'gardener', '2026-04-01', '<250', 'significantly_over', 'published'),
+  ('00000000-0000-0000-0000-00000000e225', 3, 'gardener', '2026-06-01', '250-1k', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e225', 4, 'gardener', '2026-07-01', '250-1k', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e225', 5, 'gardener', '2026-08-01', '5k+', 'slightly_over_explained', 'published'),
+  ('00000000-0000-0000-0000-00000000e226', 1, 'roofer', '2026-01-01', '1k-5k', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e226', 2, 'roofer', '2026-02-01', '1k-5k', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e226', 3, 'roofer', '2026-03-01', '250-1k', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e226', 4, 'roofer', '2026-04-01', '5k+', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e226', 5, 'roofer', '2026-05-01', '1k-5k', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e227', 1, 'roofer', '2026-06-01', '250-1k', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e227', 2, 'roofer', '2026-07-01', '1k-5k', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e227', 3, 'roofer', '2026-08-01', '<250', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e227', 4, 'roofer', '2026-09-01', '1k-5k', 'yes', 'published'),
+  ('00000000-0000-0000-0000-00000000e227', 5, 'roofer', '2026-09-01', '1k-5k', 'yes', 'removed')
+) v(provider_id, n, cat, month, band, on_price, status);
+
 -- Community questions: one asked 15 days ago, so it's closed (Ali asked, Kim recommended Hill Top Removals).
 insert into public.questions (id, asker_id, category_id, district, body, status, created_at, published_at)
 values ('00000000-0000-0000-0000-00000000e401', '00000000-0000-0000-0000-00000000e304',

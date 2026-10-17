@@ -19,6 +19,8 @@ const PUBLIC_PATHS = [
   ["/platform/p/[slug]", "page"],
   ["/platform/c/[category]", "page"],
   ["/platform"],
+  ["/platform/prices/[category]", "page"],
+  ["/platform/prices"],
 ];
 
 function form(entries: Record<string, string>) {

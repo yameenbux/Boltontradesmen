@@ -3,6 +3,7 @@
 import type { Metadata, MetadataRoute } from "next";
 import { CONTACT_EMAIL } from "@/components/site/content";
 import { platformPath } from "@/lib/paths";
+import { guideDescription, guideQuestion, type PriceGuide } from "@/lib/price-guides";
 
 export const SITE_NAME = "Bolton Vouched";
 export const DEFAULT_SITE_URL = "https://boltonvouched.ysbdesigns.uk";
@@ -62,17 +63,28 @@ export function sitemapQuestions(questions: SitemapQuestion[], now: Date = new D
   );
 }
 
+/** A published price guide (only trades at or above the review threshold reach the sitemap). */
+export type SitemapPriceGuide = { slug: string; latestJobMonth: string };
+
 /**
  * "/", "/get-listed", "/platform", categories with live providers, every live provider, the Ask page and its
- * answered questions (when there are any), then the policy pages.
+ * answered questions (when there are any), the price guides and their index (when there are any), then the policy
+ * pages.
  */
 export function buildSitemap(
   {
     categories,
     providers,
     questions = [],
+    priceGuides = [],
     now = new Date(),
-  }: { categories: SitemapCategory[]; providers: SitemapProvider[]; questions?: SitemapQuestion[]; now?: Date },
+  }: {
+    categories: SitemapCategory[];
+    providers: SitemapProvider[];
+    questions?: SitemapQuestion[];
+    priceGuides?: SitemapPriceGuide[];
+    now?: Date;
+  },
   base: string = siteUrl(),
 ): MetadataRoute.Sitemap {
   const url = (path: string) => absoluteUrl(path, base);
@@ -108,6 +120,19 @@ export function buildSitemap(
     for (const q of asked) {
       entries.push(
         withDate({ url: url(platformPath("ask", q.id)), changeFrequency: "weekly", priority: 0.5 }, latest([q.createdAt])),
+      );
+    }
+  }
+  if (priceGuides.length > 0) {
+    entries.push(
+      withDate(
+        { url: url(platformPath("prices")), changeFrequency: "weekly", priority: 0.6 },
+        latest(priceGuides.map((g) => g.latestJobMonth)),
+      ),
+    );
+    for (const g of priceGuides) {
+      entries.push(
+        withDate({ url: url(platformPath("prices", g.slug)), changeFrequency: "weekly", priority: 0.6 }, latest([g.latestJobMonth])),
       );
     }
   }
@@ -243,6 +268,29 @@ export function questionMetadata(q: {
       : `Asked by a local resident. Answers name traders listed on ${SITE_NAME}.`;
   const description = truncate(`${q.categoryName} in ${q.district}, Bolton. ${answered}`, 160);
   return pageMetadata({ title, description, path: platformPath("ask", q.id), noindex: q.recommendationCount === 0 });
+}
+
+/**
+ * A trade's price guide. Only published guides have a page (the rest are 404s), so it's always indexed. No JSON-LD:
+ * structured price data could read as a price list or offer, which these totals are not.
+ */
+export function priceGuideMetadata(g: PriceGuide): Metadata {
+  return pageMetadata({
+    title: `${guideQuestion(g)} | ${SITE_NAME}`,
+    description: truncate(guideDescription(g), 160),
+    path: platformPath("prices", g.slug),
+  });
+}
+
+/** The price guides index; kept out of the index (and the sitemap) until there is at least one guide. */
+export function priceIndexMetadata(guideCount: number): Metadata {
+  return pageMetadata({
+    title: `What locals paid: Bolton price guides | ${SITE_NAME}`,
+    description:
+      "What Bolton residents told us they paid for whole jobs, trade by trade, from their reviews on Bolton Vouched. Totals, not hourly rates; always get a quote.",
+    path: platformPath("prices"),
+    noindex: guideCount === 0,
+  });
 }
 
 export function homeJsonLd(base: string = siteUrl()) {
