@@ -22,6 +22,7 @@ export function ConsentForm({
 }) {
   const [result, setResult] = useState<"ok" | "invalid" | "error" | null>(null);
   const [agreed, setAgreed] = useState(false);
+  const [manageHref, setManageHref] = useState<string | undefined>();
   const [pending, start] = useTransition();
   const heading = useRef<HTMLHeadingElement>(null);
 
@@ -43,6 +44,17 @@ export function ConsentForm({
           {firstName ? `You're all set, ${firstName}` : "You're all set"}
         </h1>
         <p>Thanks. Your listing goes live once we&apos;ve checked it, usually within a day.</p>
+        {manageHref && (
+          <div className="done-next">
+            <p>
+              Set up your account now to edit your listing, say when you&apos;re taking on work, see your enquiries and
+              reply to reviews.
+            </p>
+            <Button href={manageHref} variant="primary">
+              Manage your listing
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
@@ -70,7 +82,9 @@ export function ConsentForm({
             onClick={() =>
               start(async () => {
                 try {
-                  setResult((await acceptConsent(token, agreed)).status);
+                  const r = await acceptConsent(token, agreed);
+                  setManageHref(r.manageHref);
+                  setResult(r.status);
                 } catch {
                   setResult("error");
                 }

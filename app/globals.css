@@ -463,6 +463,8 @@ h1,h2,h3{text-wrap:balance}
   .done svg{width:96px; height:96px}
   .done circle{stroke:var(--sage); stroke-width:4; fill:var(--sage-tint); stroke-dasharray:300; stroke-dashoffset:300; animation:draw .7s var(--ease) forwards}
   .done path{stroke:var(--sage); stroke-width:6; fill:none; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:80; stroke-dashoffset:80; animation:draw .5s .45s var(--ease) forwards}
+  .done-next{display:grid; gap:14px; width:100%; max-width:380px; margin-top:14px; padding-top:18px; border-top:1px solid var(--line)}
+  .done-next p{color:var(--ink-2); font-size:15.5px}
   .done h1{font-size:32px; line-height:1.1; overflow-wrap:anywhere}
   /* Headings focused by script when the consent view changes; not interactive, so no focus ring. */
   h1[tabindex="-1"]:focus{outline:none}

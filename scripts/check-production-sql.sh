@@ -3,7 +3,8 @@
 # up to 20261012000017, with production-like rows), then docs/launch/launch-checklist-production.sql,
 # docs/launch/review-source-production.sql, docs/launch/availability-production.sql,
 # docs/launch/trader-dashboard-production.sql, docs/launch/pro-tier-production.sql,
-# docs/launch/community-questions-production.sql and docs/launch/price-guides-production.sql after it (and that each
+# docs/launch/community-questions-production.sql, docs/launch/price-guides-production.sql and
+# docs/launch/consent-link-production.sql after it (and that each
 # later one refuses to run first), each twice, then runs every pgTAP test on the result. Local databases only.
 #   npm run db:check-prod
 # On the local stack (psql reset, postgres is a superuser) and on the Supabase CLI stack (SUPABASE_CLI_STACK=1, as
@@ -30,6 +31,8 @@ SCRIPT7=docs/launch/community-questions-production.sql
 UNTIL7=20261012000030
 SCRIPT8=docs/launch/price-guides-production.sql
 UNTIL8=20261012000031
+SCRIPT9=docs/launch/consent-link-production.sql
+UNTIL9=20261012000032
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
 echo "[check-prod] database at $UNTIL"
@@ -152,6 +155,11 @@ if "${PSQL[@]}" -f "$SCRIPT8" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT8 
 "${PSQL[@]}" -A -t -c "select to_regclass('public.price_guide_public') is null" | grep -qx t \
   || { echo "[check-prod] the refused price guides script left something behind"; exit 1; }
 
+echo "[check-prod] the consent link script refuses to run before the price guides one"
+if "${PSQL[@]}" -f "$SCRIPT9" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT9 ran before $SCRIPT8"; exit 1; fi
+"${PSQL[@]}" -A -t -c "select to_regprocedure('public.consent_trader_link(uuid)') is null" | grep -qx t \
+  || { echo "[check-prod] the refused consent link script left something behind"; exit 1; }
+
 echo "[check-prod] applying $SCRIPT7"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT7")"
 echo "$out" | tail -1
@@ -165,12 +173,20 @@ echo "[check-prod] applying it a second time (a re-run must not fail)"
 echo "[check-prod] applying $SCRIPT8"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT8")"
 echo "$out" | tail -1
-expected8="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL8" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+expected8="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; v="${b%%_*}"; if [[ "$v" > "$UNTIL8" && ! "$v" > "$UNTIL9" ]]; then echo "$b"; fi; done | wc -l | tr -d ' ')"
 echo "$out" | grep -q "^Price guides database changes applied|$expected8\$" || { echo "[check-prod] the closing check did not report $expected8 migrations"; exit 1; }
 "${PSQL[@]}" -A -t -c "select count(*) from public.price_guide_public" | grep -qx 0 \
   || { echo "[check-prod] price_guide_public is not empty and readable after the price guides script"; exit 1; }
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT8" | tail -1
+
+echo "[check-prod] applying $SCRIPT9"
+out="$("${PSQL[@]}" -A -t -f "$SCRIPT9")"
+echo "$out" | tail -1
+expected9="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL9" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^Consent link database changes applied|$expected9\$" || { echo "[check-prod] the closing check did not report $expected9 migrations"; exit 1; }
+echo "[check-prod] applying it a second time (a re-run must not fail)"
+"${PSQL[@]}" -A -t -f "$SCRIPT9" | tail -1
 
 # The pgTAP tests expect only their own fixtures.
 "${PSQL[@]}" -c "delete from public.providers where slug in ('prod-check-travel', 'prod-check-paused', 'prod-check-live');
