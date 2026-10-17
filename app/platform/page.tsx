@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CategoryGroups } from "@/components/home/CategoryGroups";
 import { CategoryTile } from "@/components/home/CategoryTile";
 import { Hero } from "@/components/home/Hero";
@@ -22,28 +23,39 @@ export default async function Home() {
   const popular = popularCategories(groups);
 
   return (
-    <main>
+    <main className="home">
       <Hero categories={searchable} />
       <TrustStrip />
 
-      <div className="section-head">
-        <h2>Most asked for</h2>
-        <a className="link" href="#all-trades">
-          All trades
-        </a>
-      </div>
       {popular.length > 0 ? (
-        <div className="tiles stagger" data-testid="popular-tiles">
-          {popular.map((c) => (
-            <CategoryTile key={c.slug} slug={c.slug} name={c.name} liveCount={c.liveCount} />
-          ))}
-        </div>
+        <>
+          <div className="section-head">
+            <h2>Most asked for</h2>
+            <a className="link" href="#all-trades">
+              All trades
+            </a>
+          </div>
+          <div className="tiles stagger" data-testid="popular-tiles">
+            {popular.map((c) => (
+              <CategoryTile key={c.slug} slug={c.slug} name={c.name} liveCount={c.liveCount} />
+            ))}
+          </div>
+        </>
       ) : (
-        <p className="empty">We&apos;re adding Bolton&apos;s first pros now. Have a look through the trades below.</p>
+        <section className="launch" aria-labelledby="launch-title" data-testid="launch-note">
+          <h2 id="launch-title">The first Bolton pros are joining now</h2>
+          <p>
+            We approve every listing by hand before it goes live, so the directory is filling up
+            one trader at a time. Search above, or look through the trades below, and check back soon.
+          </p>
+          <p>
+            Know a good trader? Send them the <Link href="/get-listed">Get listed</Link> page. It&apos;s free.
+          </p>
+        </section>
       )}
 
       <div className="section-head" id="all-trades">
-        <h2>Everything else</h2>
+        <h2>{popular.length > 0 ? "Everything else" : "All trades"}</h2>
       </div>
       <CategoryGroups groups={groups} />
 

@@ -40,6 +40,7 @@ export default function PrivacyPage() {
       <List
         items={[
           "When you tap Call or WhatsApp on a profile, we record which provider you tapped and a device signature. The signature is a one-way hash (HMAC) of your IP address and browser user agent, so we do not store your IP address or phone number for this. If you are signed in, we also record your account, so a trader's own taps (and the admin's) are not counted as enquiries. We use these records to count enquiries.",
+          "What you type into the home page search, with nothing that links it to you: we don't record your IP address, a device signature or an account with it. Digits are masked and it's cut to 40 characters. We use it to see which trades people look for and how often search finds nothing.",
           "If you only browse, we set no cookies and you need no account.",
           "If you choose the light or dark look, that choice is saved in your browser's own storage (local storage), not sent to us.",
         ]}
@@ -80,7 +81,7 @@ export default function PrivacyPage() {
           "Your account, your reviews and your replies: contract (providing the service you signed up for).",
           "Sign-in attempt records, the sign-in fingerprint we keep after deletion, device signatures and proof files: legitimate interests in preventing fraud and fake reviews.",
           "A request to be listed: legitimate interests in answering it, and taking the steps you asked for before you agree to be listed. The connection signature: legitimate interests in stopping spam.",
-          "The security check on forms (Cloudflare Turnstile) and counting page views: legitimate interests in keeping the site secure and knowing which pages are used.",
+          "The security check on forms (Cloudflare Turnstile), counting page views and the home page search words: legitimate interests in keeping the site secure, knowing which pages are used and which trades are missing.",
         ]}
       />
 
@@ -90,7 +91,7 @@ export default function PrivacyPage() {
         sign-in emails. Cloudflare runs the security check (Turnstile) on the sign-in page, the admin login and the Get
         listed form, which may look at signals from your device and browser, and, if it&apos;s switched on, counts page
         views without cookies or a profile of you (Cloudflare Web Analytics). Supabase, Resend and Cloudflare act for us
-        as processors. If you choose Continue with Google, Google is an
+        as processors. Railway hosts the website; the home page search words are kept only in its server logs, which are deleted automatically. If you choose Continue with Google, Google is an
         independent controller for your Google account, under its own terms, and only tells us who you are.
       </p>
 
