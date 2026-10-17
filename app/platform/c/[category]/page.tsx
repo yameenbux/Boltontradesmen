@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ChatIcon } from "@/components/ask/QuestionCard";
 import { AreaFilter } from "@/components/category/AreaFilter";
 import { localPros } from "@/components/home/CategoryTile";
 import { listCategoryGroups, listProvidersInCategory } from "@/lib/directory";
@@ -77,6 +78,17 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
           </Link>
         </div>
       )}
+
+      {/* A plain link: asking needs sign-in (cookies), and this page stays static. */}
+      <a href={`${platformPath("ask", "new")}?category=${encodeURIComponent(slug)}`} className="ask-nudge press lift">
+        <span className="ask-ic" aria-hidden="true">
+          <ChatIcon />
+        </span>
+        <span>
+          <b>Can&apos;t decide? Ask Bolton</b>
+          <small>Ask the neighbours who they&apos;d use for {name.toLowerCase()}.</small>
+        </span>
+      </a>
     </main>
   );
 }

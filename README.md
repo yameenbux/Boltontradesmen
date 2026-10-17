@@ -114,20 +114,29 @@ One site, free for residents and free for traders.
   admin's pause), or withdraws (removed, as the admin's removal: only a new invite brings
   it back). Trades stay with the admin. The admin sees the same numbers on the provider
   page. Profile views aren't recorded, so they aren't shown.
+- **Ask Bolton** (community questions) at `/platform/ask`: a signed-in resident asks
+  "Anyone know a good electrician in BL3?" (a trade, a district and up to 280 characters; no
+  phone numbers or web addresses; 3 a day, one open per trade). Questions from email-code
+  accounts wait for the admin, as their reviews do. Answers must name a live listing in that
+  trade; recommendations of the same trader are grouped ("Recommended by 3 people"), and a
+  linked trader can't recommend themselves but can tap **I can help**, shown apart as the
+  trader speaking for themselves. A question takes answers for 14 days. Call and WhatsApp on
+  a question page go through `/api/contact`, so they count as enquiries. Recommendations never
+  touch ranking, scores or badges. Report on every question and answer; the admin's queue is
+  `/admin/questions`.
 - **Report** on every review, and **My reviews** and **Delete account** at
-  `/platform/account` (reviews come down; the number is kept privately for 12 months).
+  `/platform/account` (reviews, questions and answers come down; the number is kept privately for 12 months).
 - **Admin** at `/admin`, for the owner only: add and edit providers, record
   checks, copy consent links, set live, pause or remove; clear or remove reviews
   under check (with a logged reason), resolve flags and reports, and accept proofs.
 
 **Coming, and not built**
 
-- Community questions.
 - The optional paid tier, **Pro** (see *Free and Verified*). The dashboard only says it's coming soon.
 
 > [!IMPORTANT]
-> **Only the green boxes are built.** Never claim community questions or Pro
-> exist before they do: not on the site, in the WhatsApp group, in a
+> **Only the green boxes are built.** Never claim Pro
+> exists before it does: not on the site, in the WhatsApp group, in a
 > message to a trader or on a listing. Say *coming soon*, or say nothing.
 > `tests/unit/no-stale-claims.test.ts` fails if old "reviews are coming" wording
 > comes back.
@@ -302,9 +311,10 @@ npm run db:check-prod # the one-paste production scripts apply, in order, on a 0
 
 The production pastes are generated from the migrations: `docs/launch/plan-2b-production.sql` (000018 to 000025),
 `docs/launch/launch-checklist-production.sql` (000026), `docs/launch/review-source-production.sql` (000027),
-`docs/launch/availability-production.sql` (000028) and `docs/launch/trader-dashboard-production.sql` (000029 on). After
-adding or changing a migration from 000029 on, regenerate with
-`node scripts/build-production-sql.mjs --preset trader-dashboard --from 20261012000029 --to <newest> --out docs/launch/trader-dashboard-production.sql`
+`docs/launch/availability-production.sql` (000028), `docs/launch/trader-dashboard-production.sql` (000029),
+`docs/launch/pro-tier-production.sql` (000030) and `docs/launch/community-questions-production.sql` (000031 on). After
+adding or changing a migration from 000031 on, regenerate with
+`node scripts/build-production-sql.mjs --preset community-questions --from 20261012000031 --to <newest> --out docs/launch/community-questions-production.sql`
 (`tests/unit/production-sql.test.ts` fails until you do).
 
 Run `npm run test:db` straight after a reset: the scoring tests expect an empty
@@ -607,10 +617,10 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
 ## Before you change any copy
 
 > [!CAUTION]
-> **Never claim community questions or Pro (the paid tier) exist before they
-> do.** Not on the site, not in a message to a trader, not in the WhatsApp group.
-> They're *coming*. The same goes for every other feature in the sand boxes above.
-> Reviews, replies, and Google and email sign-in are live, so say so plainly. Sign-in by
+> **Never claim Pro (the paid tier) exists before it
+> does.** Not on the site, not in a message to a trader, not in the WhatsApp group.
+> It's *coming*. The same goes for every other feature in the sand boxes above.
+> Reviews, replies, Ask Bolton, and Google and email sign-in are live, so say so plainly. Sign-in by
 > text is switched off: don't tell anyone to sign in with their mobile.
 
 Four more that catch people out:

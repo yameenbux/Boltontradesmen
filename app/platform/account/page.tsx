@@ -72,7 +72,7 @@ export default async function AccountPage() {
         <div>
           <h2 id="delete-title">Delete account</h2>
           <p className="lede">
-            Your reviews and replies are taken down and your name is removed. {SIGN_IN_RETENTION_TEXT} The{" "}
+            Your reviews, replies, questions and answers are taken down and your name is removed. {SIGN_IN_RETENTION_TEXT} The{" "}
             <a href="/privacy">privacy notice</a> has the detail. Any listing of yours stays up.
           </p>
         </div>

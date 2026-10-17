@@ -10,8 +10,10 @@
 //     --out docs/launch/availability-production.sql
 //   node scripts/build-production-sql.mjs --preset trader-dashboard --from 20261012000029 --to 20261012000029 \
 //     --out docs/launch/trader-dashboard-production.sql
-//   node scripts/build-production-sql.mjs --preset pro-tier --from 20261012000030 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset pro-tier --from 20261012000030 --to 20261012000030 \
 //     --out docs/launch/pro-tier-production.sql
+//   node scripts/build-production-sql.mjs --preset community-questions --from 20261012000031 --to <newest> \
+//     --out docs/launch/community-questions-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -279,6 +281,54 @@ end
 $verify$;
 `;
 
+// Community questions (migration 000031 onwards): the three tables (no direct access), the two public views, the
+// server-only posting functions and the admin's.
+const VERIFY_COMMUNITY_QUESTIONS = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+declare
+  f text;
+  t text;
+begin
+  foreach f in array array['submit_question', 'question_answer_context', 'submit_question_answer',
+                           'report_question_content', 'admin_list_question_queue', 'admin_approve_question',
+                           'admin_remove_question', 'admin_remove_question_answer',
+                           'admin_dismiss_question_reports'] loop
+    if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                   where n.nspname = 'public' and p.proname = f) then
+      raise exception 'Community questions check failed: function public.% is missing', f;
+    end if;
+  end loop;
+  foreach t in array array['questions', 'question_answers', 'question_reports'] loop
+    if not (select relrowsecurity from pg_class where oid = ('public.' || t)::regclass) then
+      raise exception 'Community questions check failed: row level security is off on public.%', t;
+    end if;
+    if has_table_privilege('anon', 'public.' || t, 'select') or has_table_privilege('authenticated', 'public.' || t, 'select')
+       or has_table_privilege('service_role', 'public.' || t, 'select') then
+      raise exception 'Community questions check failed: public.% is readable directly', t;
+    end if;
+  end loop;
+  foreach t in array array['question_public', 'question_answer_public'] loop
+    if not has_table_privilege('anon', 'public.' || t, 'select') then
+      raise exception 'Community questions check failed: public.% is not readable by anon', t;
+    end if;
+  end loop;
+  if has_function_privilege('anon', 'public.submit_question(uuid, uuid, text, text)', 'execute')
+     or has_function_privilege('authenticated', 'public.submit_question(uuid, uuid, text, text)', 'execute')
+     or has_function_privilege('authenticated', 'public.submit_question_answer(uuid, uuid, text, uuid, text)', 'execute')
+     or not has_function_privilege('service_role', 'public.submit_question_answer(uuid, uuid, text, uuid, text)', 'execute') then
+    raise exception 'Community questions check failed: posting is reachable without the server';
+  end if;
+  if position('questions' in pg_get_functiondef('public.admin_counts()'::regprocedure)) = 0 then
+    raise exception 'Community questions check failed: admin_counts does not count the questions queue';
+  end if;
+  if position('question_answers' in pg_get_functiondef('public.delete_my_account()'::regprocedure)) = 0 then
+    raise exception 'Community questions check failed: deleting an account leaves its answers up';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -319,6 +369,13 @@ const PRESETS = {
     // It re-creates provider_public (000028's body) and admin_counts, after the trader dashboard script.
     requires: { version: "20261012000029", what: "the trader dashboard script (docs/launch/trader-dashboard-production.sql)" },
     verify: VERIFY_PRO_TIER,
+  },
+  "community-questions": {
+    title: "community questions database changes (Ask Bolton)",
+    done: "Community questions database changes applied",
+    // It re-creates admin_counts (000030's body) and delete_my_account, after the Pro script.
+    requires: { version: "20261012000030", what: "the Pro script (docs/launch/pro-tier-production.sql)" },
+    verify: VERIFY_COMMUNITY_QUESTIONS,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

@@ -82,6 +82,9 @@ h1,h2,h3{text-wrap:balance}
   .bar-actions{display:flex; gap:8px; flex:none}
   .icon-btn{flex:none; width:48px; height:48px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:grid; place-items:center; cursor:pointer}
   .icon-btn svg{width:20px; height:20px}
+  /* Ask Bolton in the bar only where it fits beside the full wordmark; phones reach it from the home and trade pages. */
+  .bar-ask{display:none}
+  @media (min-width:440px){.bar-ask{display:grid}}
 
   /* ---------- footer ---------- */
   .foot{margin-top:36px; padding-top:20px; border-top:1px solid var(--line); font-size:14px; color:var(--ink-2); display:grid; gap:10px}
@@ -792,6 +795,78 @@ h1,h2,h3{text-wrap:balance}
   .report-quote figcaption b{color:var(--ink)}
   .report-quote blockquote{margin:0; font-size:16.5px; white-space:pre-line; overflow-wrap:anywhere}
   .report-quote .no-comment{margin:0; font-size:15px; color:var(--ink-3)}
+
+  /* ---------- community questions (Ask Bolton) ---------- */
+  .ask-ic{flex:none; width:44px; height:44px; border-radius:13px; background:var(--brick-tint); color:var(--brick); display:grid; place-items:center}
+  .ask-ic svg{width:22px; height:22px}
+  .ask-card{margin-top:22px; display:grid; gap:14px; padding:18px; background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--brick); border-radius:var(--r-lg); box-shadow:var(--shadow)}
+  .ask-card-head{display:flex; gap:14px; align-items:flex-start}
+  .ask-card h2{margin:0; font-family:var(--display); font-weight:400; font-size:26px; line-height:1.1}
+  .ask-card-head p{margin:4px 0 0; font-size:16px; color:var(--ink-2)}
+  .ask-latest{margin:0; padding:0; list-style:none; display:grid; gap:8px}
+  .ask-latest a{display:grid; gap:2px; padding:10px 12px; border-radius:var(--r-sm); background:var(--surface-2); color:inherit; text-decoration:none}
+  .ask-q{font-size:15.5px; font-weight:600; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+  .ask-latest small{font-size:13.5px; color:var(--ink-2)}
+  .ask-card-actions{display:flex; flex-wrap:wrap; align-items:center; gap:4px 16px}
+  .ask-card-actions .btn{flex:1 1 180px}
+  .ask-nudge{margin-top:22px; display:grid; grid-template-columns:44px minmax(0,1fr); gap:14px; align-items:center; padding:14px 16px; background:var(--surface); border:1px dashed var(--brick); border-radius:var(--r-lg); color:inherit; text-decoration:none}
+  .ask-nudge b{display:block; font-size:17px; line-height:1.25; color:var(--brick)}
+  .ask-nudge small{display:block; margin-top:2px; font-size:14.5px; color:var(--ink-2)}
+  .ask-cta{display:grid; gap:8px; margin:14px 0 6px}
+  .ask-cta .muted{margin:0; font-size:14.5px}
+  .ask .areas{margin-top:8px}
+  .qcard{display:grid; gap:8px; padding:16px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow); color:inherit; text-decoration:none}
+  .qmeta{display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; margin:0; font-size:14px; font-weight:600; color:var(--ink-2)}
+  .qtrade{color:var(--brick); text-decoration:none}
+  a.qtrade{text-decoration:underline; text-underline-offset:3px; text-decoration-color:color-mix(in srgb,var(--brick) 40%,transparent)}
+  .qmeta .qstate{margin-left:auto}
+  .qbody{font-size:17.5px; font-weight:600; line-height:1.35; overflow-wrap:anywhere}
+  .qfoot{display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; font-size:14px; color:var(--ink-2)}
+  .qfoot b{font-weight:700; color:var(--ink-3)}
+  .qfoot b[data-some]{color:var(--sage)}
+  .qhead{margin-top:6px; display:grid; gap:12px; padding:20px; background:var(--surface); border:1px solid var(--line); border-radius:26px; box-shadow:var(--shadow)}
+  .qhead h1{margin:0; font-family:var(--display); font-weight:400; font-size:clamp(26px,7.2vw,32px); line-height:1.12; overflow-wrap:anywhere}
+  .qasked{margin:0; font-size:15px; color:var(--ink-2)}
+  .qhint{margin:-4px 0 0; font-size:14.5px; color:var(--ink-2)}
+  .qhead .btn{width:100%}
+  .question .subhead{margin-top:26px}
+  .rec-list{display:grid; gap:12px; margin-top:12px}
+  .rec{display:grid; gap:10px; padding:16px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow)}
+  .rec-head{display:flex; align-items:center; justify-content:space-between; gap:12px}
+  .rec-name{font-weight:700; font-size:19px; line-height:1.2; color:var(--ink); text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:4px; overflow-wrap:anywhere}
+  .rec-count{flex:none; min-width:40px; height:40px; padding:0 8px; border-radius:999px; background:var(--sage-tint); color:var(--sage); display:grid; place-items:center; font-family:var(--display); font-size:22px}
+  .rec-by{margin:0; font-size:15px; color:var(--ink-2)}
+  .rec-by b{color:var(--ink)}
+  .rec-notes{margin:0; padding:0; list-style:none; display:grid; gap:8px}
+  .rec-notes li{display:grid; gap:2px; border-left:3px solid var(--brick-tint); padding:2px 0 2px 12px; font-size:15.5px}
+  .rec-notes q, .rec-self-note q{overflow-wrap:anywhere}
+  .rec-notes span{font-size:13.5px; font-weight:600; color:var(--ink-3)}
+  .q-contact{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .q-contact.one{grid-template-columns:1fr}
+  .q-contact .btn{min-height:48px; font-size:16px}
+  .rec-report{font-size:14px; color:var(--ink-3)}
+  .rec-report summary{display:inline-flex; align-items:center; min-height:40px; cursor:pointer; text-decoration:underline; text-underline-offset:3px}
+  .rec-report ul{margin:0; padding:0; list-style:none}
+  .rec-report .link{min-height:40px; color:var(--ink-2)}
+  .rec-report-link{justify-self:start; display:inline-flex; align-items:center; min-height:44px; font-size:14px; color:var(--ink-3); text-decoration:underline; text-underline-offset:3px}
+  .rec-self{background:var(--surface-2); box-shadow:none; border-style:dashed}
+  .rec-label{margin:0; font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3)}
+  .rec-says{margin:0; font-size:17px}
+  .rec-self-note{margin:0; font-size:15.5px; color:var(--ink-2)}
+  .q-foot{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:4px 16px; margin-top:20px}
+  .q-rules{margin:4px 0 0; font-size:14px}
+  .q-quote{font-size:clamp(24px,6.6vw,28px)!important}
+  .picker{border:0; margin:0; padding:0; min-width:0; display:grid; gap:10px}
+  .picker legend{padding:0; margin-bottom:10px; font-size:17px; font-weight:700; color:var(--ink)}
+  .picker-list{margin:0; padding:0; list-style:none; display:grid; gap:8px; max-height:340px; overflow-y:auto; overscroll-behavior:contain}
+  .pick{display:flex; align-items:center; gap:12px; min-height:56px; padding:10px 14px; border:1.5px solid var(--line); border-radius:14px; background:var(--bg); cursor:pointer}
+  .pick input{width:22px; height:22px; margin:0; flex:none; accent-color:var(--brick)}
+  .pick b{display:block; font-size:16.5px; line-height:1.25; overflow-wrap:anywhere}
+  .pick small{display:block; font-size:13.5px; color:var(--ink-2)}
+  .pick:has(input:checked){border-color:var(--brick); background:var(--brick-tint)}
+  .pick:has(input:focus-visible){outline:3px solid var(--brick); outline-offset:3px}
+  .picker-empty{margin:0; padding:14px; border:1.5px dashed var(--line); border-radius:14px; font-size:15px; color:var(--ink-2); text-align:center}
+  .textarea.short{min-height:84px}
 
   /* ---------- 404 and error pages ---------- */
   .lost{display:grid; justify-items:start; gap:14px; padding:28px 0 8px}

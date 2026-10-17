@@ -48,9 +48,31 @@ const latest = (dates: (string | null | undefined)[]): Date | undefined => {
 
 const providerUpdated = (p: SitemapProvider) => latest([p.createdAt, p.lastReviewAt]);
 
-/** "/", "/get-listed", "/platform", categories with live providers, every live provider, then the policy pages. */
+export type SitemapQuestion = { id: string; createdAt: string; closesAt: string; recommendationCount: number };
+/** A closed question stays in the sitemap until this long after it was asked; an open one is always in. */
+export const SITEMAP_QUESTION_DAYS = 90;
+
+/** Community questions worth indexing: at least one recommendation, and still open or asked recently. */
+export function sitemapQuestions(questions: SitemapQuestion[], now: Date = new Date()): SitemapQuestion[] {
+  const recent = now.getTime() - SITEMAP_QUESTION_DAYS * 24 * 60 * 60 * 1000;
+  return questions.filter(
+    (q) =>
+      q.recommendationCount > 0 &&
+      (new Date(q.closesAt).getTime() > now.getTime() || new Date(q.createdAt).getTime() > recent),
+  );
+}
+
+/**
+ * "/", "/get-listed", "/platform", categories with live providers, every live provider, the Ask page and its
+ * answered questions (when there are any), then the policy pages.
+ */
 export function buildSitemap(
-  { categories, providers }: { categories: SitemapCategory[]; providers: SitemapProvider[] },
+  {
+    categories,
+    providers,
+    questions = [],
+    now = new Date(),
+  }: { categories: SitemapCategory[]; providers: SitemapProvider[]; questions?: SitemapQuestion[]; now?: Date },
   base: string = siteUrl(),
 ): MetadataRoute.Sitemap {
   const url = (path: string) => absoluteUrl(path, base);
@@ -74,6 +96,20 @@ export function buildSitemap(
     entries.push(
       withDate({ url: url(platformPath("p", p.slug)), changeFrequency: "weekly", priority: 0.7 }, providerUpdated(p)),
     );
+  }
+  const asked = sitemapQuestions(questions, now);
+  if (asked.length > 0) {
+    entries.push(
+      withDate(
+        { url: url(platformPath("ask")), changeFrequency: "daily", priority: 0.6 },
+        latest(asked.map((q) => q.createdAt)),
+      ),
+    );
+    for (const q of asked) {
+      entries.push(
+        withDate({ url: url(platformPath("ask", q.id)), changeFrequency: "weekly", priority: 0.5 }, latest([q.createdAt])),
+      );
+    }
   }
   for (const path of POLICY_PATHS) entries.push({ url: url(path), changeFrequency: "yearly", priority: 0.3 });
   return entries;
@@ -187,6 +223,26 @@ export function providerMetadata(p: {
   const description = truncate(bio ? `${lead} ${bio}` : `${lead} Recommended on ${SITE_NAME}.`, 160);
   // The image comes from app/platform/p/[slug]/opengraph-image.tsx.
   return pageMetadata({ title, description, path: platformPath("p", p.slug), type: "profile", ownImage: true });
+}
+
+/**
+ * A community question's page. Indexed only once a resident has recommended a listed trader (an unanswered question
+ * is a thin page). Nothing that looks like a phone number reaches the title or description.
+ */
+export function questionMetadata(q: {
+  id: string;
+  body: string;
+  categoryName: string;
+  district: string;
+  recommendationCount: number;
+}): Metadata {
+  const title = `${truncate(stripPhoneNumbers(q.body), 70)} | ${SITE_NAME}`;
+  const answered =
+    q.recommendationCount > 0
+      ? `${plural(q.recommendationCount, "recommendation", "recommendations")} from local people, each a trader listed on ${SITE_NAME}.`
+      : `Asked by a local resident. Answers name traders listed on ${SITE_NAME}.`;
+  const description = truncate(`${q.categoryName} in ${q.district}, Bolton. ${answered}`, 160);
+  return pageMetadata({ title, description, path: platformPath("ask", q.id), noindex: q.recommendationCount === 0 });
 }
 
 export function homeJsonLd(base: string = siteUrl()) {

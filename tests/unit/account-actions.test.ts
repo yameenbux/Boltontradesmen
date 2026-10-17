@@ -58,6 +58,9 @@ describe("deleteAccount", () => {
     expect(deleteUser).toHaveBeenCalledWith("u1", true);
     expect(auth.signOut).toHaveBeenCalledWith({ scope: "local" });
     expect(revalidatePath).toHaveBeenCalledWith("/platform/p/e2e-neat-sparks");
+    // Their community questions and answers came down too.
+    expect(revalidatePath).toHaveBeenCalledWith("/platform/ask");
+    expect(revalidatePath).toHaveBeenCalledWith("/platform/ask/[id]", "page");
   });
 
   it("asks for a retry when the sign-in can't be deleted after the reviews are down", async () => {

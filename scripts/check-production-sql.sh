@@ -2,7 +2,8 @@
 # Proves docs/launch/plan-2b-production.sql applies in one go to a database in production's state (all migrations
 # up to 20261012000017, with production-like rows), then docs/launch/launch-checklist-production.sql,
 # docs/launch/review-source-production.sql, docs/launch/availability-production.sql,
-# docs/launch/trader-dashboard-production.sql and docs/launch/pro-tier-production.sql after it (and that each later one
+# docs/launch/trader-dashboard-production.sql, docs/launch/pro-tier-production.sql and
+# docs/launch/community-questions-production.sql after it (and that each later one
 # refuses to run first), each twice, then
 # runs every pgTAP test on the result. Local databases only.
 #   npm run db:check-prod
@@ -26,6 +27,8 @@ SCRIPT5=docs/launch/trader-dashboard-production.sql
 UNTIL5=20261012000028
 SCRIPT6=docs/launch/pro-tier-production.sql
 UNTIL6=20261012000029
+SCRIPT7=docs/launch/community-questions-production.sql
+UNTIL7=20261012000030
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
 echo "[check-prod] database at $UNTIL"
@@ -128,15 +131,30 @@ echo "$out" | grep -q "^Trader dashboard database changes applied|$expected5\$" 
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT5" | tail -1
 
+echo "[check-prod] the community questions script refuses to run before the Pro one"
+if "${PSQL[@]}" -f "$SCRIPT7" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT7 ran before $SCRIPT6"; exit 1; fi
+"${PSQL[@]}" -A -t -c "select to_regclass('public.questions') is null" | grep -qx t \
+  || { echo "[check-prod] the refused community questions script left something behind"; exit 1; }
+
 echo "[check-prod] applying $SCRIPT6"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT6")"
 echo "$out" | tail -1
-expected6="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL6" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+expected6="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; v="${b%%_*}"; if [[ "$v" > "$UNTIL6" && ! "$v" > "$UNTIL7" ]]; then echo "$b"; fi; done | wc -l | tr -d ' ')"
 echo "$out" | grep -q "^Pro database changes applied|$expected6\$" || { echo "[check-prod] the closing check did not report $expected6 migrations"; exit 1; }
 "${PSQL[@]}" -A -t -c "select count(*) from public.provider_public where slug = 'prod-check-live' and not id_checked and photos = '[]'::jsonb" | grep -qx 1 \
   || { echo "[check-prod] a live listing without Pro does not read as a plain listing after the Pro script"; exit 1; }
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT6" | tail -1
+
+echo "[check-prod] applying $SCRIPT7"
+out="$("${PSQL[@]}" -A -t -f "$SCRIPT7")"
+echo "$out" | tail -1
+expected7="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL7" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^Community questions database changes applied|$expected7\$" || { echo "[check-prod] the closing check did not report $expected7 migrations"; exit 1; }
+"${PSQL[@]}" -A -t -c "select count(*) from public.question_public" | grep -qx 0 \
+  || { echo "[check-prod] question_public is not empty and readable after the community questions script"; exit 1; }
+echo "[check-prod] applying it a second time (a re-run must not fail)"
+"${PSQL[@]}" -A -t -f "$SCRIPT7" | tail -1
 
 # The pgTAP tests expect only their own fixtures.
 "${PSQL[@]}" -c "delete from public.providers where slug in ('prod-check-travel', 'prod-check-paused', 'prod-check-live');

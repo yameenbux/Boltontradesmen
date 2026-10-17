@@ -10,7 +10,7 @@ import {
 import { requireSignedIn } from "@/lib/auth";
 import type { FormState } from "@/lib/admin-shared";
 import { platformPath } from "@/lib/paths";
-import { revalidatePublicPages } from "@/lib/revalidate-public";
+import { revalidatePublicPages, revalidateQuestionPages } from "@/lib/revalidate-public";
 import { createServerAuthClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
@@ -22,7 +22,7 @@ export async function signOutResident(): Promise<void> {
 }
 
 /**
- * Delete account: take the person's reviews and replies down and keep their number privately for 12 months
+ * Delete account: take the person's reviews, replies, questions and answers down and keep their number privately for 12 months
  * (delete_my_account), then soft-delete the Auth user (the row stays for the reviews' foreign key; GoTrue
  * obfuscates the phone so the number can sign up afresh), then sign out here — a Server Component can't clear
  * the cookie — and land on a page that says it's done. Both steps are safe to repeat, so a failed soft delete is retried by submitting again.
@@ -50,6 +50,9 @@ export async function deleteAccount(_prev: FormState, fd: FormData): Promise<For
 
   await supabase.auth.signOut({ scope: "local" });
   for (const slug of (data ?? []) as string[]) revalidatePublicPages(slug);
+  // Their community questions and answers came down too: the Ask list and every question page.
+  revalidateQuestionPages();
+  revalidatePath("/platform/ask/[id]", "page");
   revalidatePath("/platform/account");
   redirect(platformPath("account", "deleted"));
 }

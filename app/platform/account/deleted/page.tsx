@@ -21,7 +21,7 @@ export default function AccountDeletedPage() {
           </svg>
           <h1 id="deleted-title">Your account is deleted</h1>
           <p>
-            Your reviews and replies are down and you&apos;re signed out. {SIGN_IN_RETENTION_TEXT}
+            Your reviews, replies, questions and answers are down and you&apos;re signed out. {SIGN_IN_RETENTION_TEXT}
           </p>
         </div>
         <Button href={platformPath()}>Back to the directory</Button>
