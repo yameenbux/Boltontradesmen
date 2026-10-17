@@ -1,0 +1,76 @@
+import { describe, it, expect } from "vitest";
+import { guessTrade } from "@/lib/trade-words";
+import { ASK_MATCH_LIMIT, askMatches } from "@/lib/ask-matches";
+import type { PublicProvider } from "@/lib/directory";
+
+const cat = (slug: string, name: string) => ({ slug, name });
+
+const cats = [
+  cat("plumber", "Plumber"),
+  cat("electrician", "Electrician"),
+  cat("gas-boilers", "Gas & boilers"),
+  cat("heating-repair", "Heating repair"),
+  cat("plasterer", "Plasterer"),
+  cat("rubbish-removal", "Rubbish removal"),
+  cat("man-and-van", "Man & van"),
+  cat("cleaner", "Cleaner"),
+  cat("appliance-repair", "Appliance repair"),
+  cat("skip-hire", "Skip hire"),
+  cat("mot", "MOT"),
+  cat("taxi-private-hire", "Taxi & private hire"),
+];
+
+const guess = (text: string) => guessTrade(text, cats)?.slug ?? null;
+
+describe("guessTrade", () => {
+  it("sends a boiler to gas engineers, never to a plumber", () => {
+    expect(guess("Does anyone know someone that can fix a boiler?")).toBe("gas-boilers");
+    expect(guess("Combi boiler keeps losing pressure, BL3")).toBe("gas-boilers");
+  });
+
+  it("reads everyday words for the job", () => {
+    expect(guess("Kitchen tap is leaking")).toBe("plumber");
+    expect(guess("Need two sockets moving")).toBe("electrician");
+    expect(guess("Radiators cold at the top")).toBe("heating-repair");
+    expect(guess("anyone do an MOT near Farnworth")).toBe("mot");
+    expect(guess("Need a taxi to the station")).toBe("taxi-private-hire");
+  });
+
+  it("matches a category's own name, plurals included", () => {
+    expect(guess("Recommend a good plasterer?")).toBe("plasterer");
+    expect(guess("any electricians about")).toBe("electrician");
+    expect(guess("cheap skip hire")).toBe("skip-hire");
+  });
+
+  it("prefers the longest phrase", () => {
+    expect(guess("Looking for a man and van on Saturday")).toBe("man-and-van");
+    expect(guess("rubbish removal from the garden")).toBe("rubbish-removal");
+    expect(guess("oven clean before we move out")).toBe("cleaner");
+    expect(guess("oven stopped heating up")).not.toBe("cleaner");
+  });
+
+  it("matches whole words only", () => {
+    // "tap" is not in "taped", "gas" is not in "Vegas", "mot" is not in "motorbike".
+    expect(guess("I taped the box up for Vegas on my motorbike")).toBeNull();
+  });
+
+  it("returns null when nothing names a trade, and ignores retired trades", () => {
+    expect(guess("Who's good round here?")).toBeNull();
+    expect(guess("")).toBeNull();
+    expect(guessTrade("fix my boiler", [cat("plumber", "Plumber")])).toBeNull();
+  });
+});
+
+describe("askMatches", () => {
+  const p = (id: string) => ({ id }) as PublicProvider;
+
+  it("keeps the category page order, ranked first, and cuts to the limit", () => {
+    const r = askMatches({ ranked: [p("a"), p("b")], newcomers: [p("c"), p("d")] });
+    expect(r.total).toBe(4);
+    expect(r.top.map((x) => x.id)).toEqual(["a", "b", "c"].slice(0, ASK_MATCH_LIMIT));
+  });
+
+  it("reports none", () => {
+    expect(askMatches({ ranked: [], newcomers: [] })).toEqual({ total: 0, top: [] });
+  });
+});

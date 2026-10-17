@@ -1,16 +1,22 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { AlertIcon, ChevronDown, ClockIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
+import { AskMatches } from "@/components/ask/AskMatches";
 import { askQuestion, type AskState } from "@/app/platform/ask/new/actions";
 import { BL_DISTRICTS } from "@/lib/districts";
 import { platformPath } from "@/lib/paths";
 import { QUESTION_MAX, tidyText } from "@/lib/questions";
+import { guessTrade } from "@/lib/trade-words";
 
-type TradeGroup = { name: string; categories: { id: string; name: string }[] };
+type TradeGroup = { name: string; categories: { id: string; slug: string; name: string }[] };
 
-/** Trade, area and the question (10 to 280 characters, no phone numbers or web addresses). */
+/**
+ * The question (10 to 280 characters, no phone numbers or web addresses), its trade and area. The trade is picked
+ * from the question's words until the person chooses one themselves, and traders already listed for that trade
+ * and area show straight away.
+ */
 export function AskForm({
   groups,
   defaultCategory,
@@ -28,6 +34,13 @@ export function AskForm({
   const [body, setBody] = useState(v("body"));
   const err = state.errors ?? {};
   const used = [...tidyText(body)].length;
+  const categories = useMemo(() => groups.flatMap((g) => g.categories), [groups]);
+  // Chosen by the person (or carried in from a category page or a failed post): the words no longer override it.
+  const [chosen, setChosen] = useState(v("category_id") || defaultCategory);
+  const [district, setDistrict] = useState(v("district") || defaultDistrict);
+  const guessed = chosen ? null : guessTrade(body, categories);
+  const categoryId = chosen || guessed?.id || "";
+  const trade = categories.find((c) => c.id === categoryId);
 
   if (state.held) {
     return (
@@ -48,14 +61,39 @@ export function AskForm({
   return (
     <form action={action} className="auth-form" aria-label="Your question">
       <label className="field">
-        What do you need?
+        Your question
+        <span className="hint">For example: &ldquo;Anyone know a good electrician in BL3? Need two sockets moving.&rdquo;</span>
+        <textarea
+          name="body"
+          className="input textarea"
+          rows={4}
+          required
+          minLength={10}
+          maxLength={QUESTION_MAX + 20}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          aria-invalid={err.body ? true : undefined}
+          aria-describedby="ask-count"
+        />
+        <span id="ask-count" className="counter" data-near={used > QUESTION_MAX - 30 || undefined}>
+          {used} / {QUESTION_MAX}
+        </span>
+        {err.body && <span className="field-err">{err.body}</span>}
+      </label>
+      <label className="field">
+        Which trade?
+        {guessed && (
+          <span className="hint" data-testid="trade-guessed">
+            Picked from your question. Change it if it&apos;s not right.
+          </span>
+        )}
         <span className="select">
           <select
             name="category_id"
             className="input"
             required
-            defaultValue={v("category_id") || defaultCategory}
-            key={v("category_id") || defaultCategory}
+            value={categoryId}
+            onChange={(e) => setChosen(e.target.value)}
             aria-invalid={err.category_id ? true : undefined}
           >
             <option value="" disabled>
@@ -83,8 +121,8 @@ export function AskForm({
             name="district"
             className="input"
             required
-            defaultValue={v("district") || defaultDistrict}
-            key={v("district") || defaultDistrict}
+            value={district}
+            onChange={(e) => setDistrict(e.target.value)}
             aria-invalid={err.district ? true : undefined}
           >
             <option value="" disabled>
@@ -100,26 +138,7 @@ export function AskForm({
         </span>
         {err.district && <span className="field-err">{err.district}</span>}
       </label>
-      <label className="field">
-        Your question
-        <span className="hint">For example: &ldquo;Anyone know a good electrician in BL3? Need two sockets moving.&rdquo;</span>
-        <textarea
-          name="body"
-          className="input textarea"
-          rows={4}
-          required
-          minLength={10}
-          maxLength={QUESTION_MAX + 20}
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          aria-invalid={err.body ? true : undefined}
-          aria-describedby="ask-count"
-        />
-        <span id="ask-count" className="counter" data-near={used > QUESTION_MAX - 30 || undefined}>
-          {used} / {QUESTION_MAX}
-        </span>
-        {err.body && <span className="field-err">{err.body}</span>}
-      </label>
+      {trade && district && <AskMatches slug={trade.slug} tradeName={trade.name} district={district} />}
       {held && (
         <p className="form-note">
           <ClockIcon />
