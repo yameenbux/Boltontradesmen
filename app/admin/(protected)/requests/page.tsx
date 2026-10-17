@@ -32,7 +32,7 @@ const VIEWS: { status: Status; label: string }[] = [
 const shownNumber = (e164: string) => nationalMobile(e164);
 
 function newProviderHref(r: Row): string {
-  const q = new URLSearchParams({ business: r.business_name, name: r.contact_name, phone: r.phone_e164 });
+  const q = new URLSearchParams({ business: r.business_name, name: r.contact_name, phone: r.phone_e164, request: r.id });
   return `/admin/providers/new?${q.toString()}`;
 }
 

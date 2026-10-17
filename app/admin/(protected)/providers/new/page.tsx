@@ -9,10 +9,16 @@ export const metadata: Metadata = {
   description: "Add a new provider to the directory and get their consent link.",
 };
 
-type Search = { business?: string | string[]; name?: string | string[]; phone?: string | string[] };
+type Search = {
+  business?: string | string[];
+  name?: string | string[];
+  phone?: string | string[];
+  request?: string | string[];
+};
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)?.slice(0, 120) || undefined;
 
-// ?business=…&name=…&phone=… (from a listing request) fills the form in; the admin still checks and saves it.
+// ?business=…&name=…&phone=…&request=… (from a listing request) fills the form in; the admin still checks and saves it,
+// and saving marks that request done.
 export default async function NewProviderPage({ searchParams }: { searchParams: Promise<Search> }) {
   const { supabase } = await requireAdmin();
   const q = await searchParams;
@@ -27,6 +33,7 @@ export default async function NewProviderPage({ searchParams }: { searchParams: 
         <ProviderForm
           categories={data ?? []}
           values={{ business_name: one(q.business), contact_name: one(q.name), phone_e164: one(q.phone) }}
+          fromRequest={one(q.request)}
         />
       </div>
     </main>

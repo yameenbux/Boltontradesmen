@@ -46,7 +46,16 @@ export type ProviderValues = {
   category_ids?: string[];
 };
 
-export function ProviderForm({ categories, values = {} }: { categories: CategoryOption[]; values?: ProviderValues }) {
+export function ProviderForm({
+  categories,
+  values = {},
+  fromRequest,
+}: {
+  categories: CategoryOption[];
+  values?: ProviderValues;
+  /** The listing request this new provider came from; saving marks it done. */
+  fromRequest?: string;
+}) {
   const [state, action, pending] = useActionState(saveProvider, initial);
   // After a failed submit React resets the form; defaultValues from the submitted values keep it filled.
   const str = (k: string, fallback: string | null | undefined) => (state.values?.[k] as string | undefined) ?? fallback ?? "";
@@ -54,6 +63,7 @@ export function ProviderForm({ categories, values = {} }: { categories: Category
   return (
     <form action={action} className="a-form">
       {values.id && <input type="hidden" name="id" value={values.id} />}
+      {!values.id && fromRequest && <input type="hidden" name="from_request" value={fromRequest} />}
       <label className="a-field">
         Business name
         <input name="business_name" required defaultValue={str("business_name", values.business_name)} className={input} />
