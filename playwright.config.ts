@@ -7,6 +7,10 @@ for (const line of readFileSync(".env.example", "utf8").split("\n")) {
   if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2];
 }
 
+// A local-only webhook signing secret, so e2e/pro.spec.ts can send Stripe-signed events to the server. On its own it
+// doesn't open Pro (that needs all four Stripe settings), so the dashboard still says "Pro opens soon".
+if (!process.env.STRIPE_WEBHOOK_SECRET) process.env.STRIPE_WEBHOOK_SECRET = "whsec_e2e_local_only_not_a_real_secret";
+
 // PW_CHROMIUM_PATH lets sandboxes point at a pre-installed Chromium.
 const executablePath = process.env.PW_CHROMIUM_PATH || undefined;
 

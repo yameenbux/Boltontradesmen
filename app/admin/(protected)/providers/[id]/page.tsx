@@ -20,6 +20,7 @@ import { requireAdmin } from "@/lib/admin";
 import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
 import { dayMonthYear } from "@/lib/checks";
 import { toEnquiryStats } from "@/lib/enquiries";
+import { DOCUMENT_LABEL, type DocumentKind } from "@/lib/pro";
 import { reviewShare } from "@/lib/review-link";
 import { badgeShare } from "@/lib/share";
 import { phoneSignInEnabled } from "@/lib/sign-in-methods";
@@ -54,16 +55,33 @@ type Detail = {
 
 const LINKABLE = ["consented", "live", "paused"];
 
+type ProDetail = {
+  is_pro: boolean;
+  subscriptions: {
+    plan: "monthly" | "annual";
+    status: string;
+    current_period_end: string | null;
+    cancel_at_period_end: boolean;
+    stripe_customer_id: string;
+    stripe_subscription_id: string;
+    created_at: string;
+  }[];
+  documents: { id: string; kind: DocumentKind; status: string; reason: string | null; created_at: string; file_deleted: boolean }[];
+  photo_count: number;
+};
+
 export default async function ProviderAdminPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { supabase } = await requireAdmin();
-  const [{ data }, { data: categories }, { data: enquiries }] = await Promise.all([
+  const [{ data }, { data: categories }, { data: enquiries }, { data: proData }] = await Promise.all([
     supabase.rpc("admin_get_provider", { p_id: id }),
     supabase.from("categories").select("id, name").order("name"),
     supabase.rpc("admin_enquiry_stats", { p_provider: id }),
+    supabase.rpc("admin_provider_pro", { p_provider: id }),
   ]);
   const p = data as Detail | null;
+  const pro = proData as ProDetail | null;
   if (!p) notFound();
 
   return (
@@ -86,6 +104,54 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
         <section aria-label="Enquiries" className="a-card">
           <h2>Enquiries</h2>
           <EnquiryStats stats={toEnquiryStats(enquiries)} id={`chart-${p.id}`} admin />
+        </section>
+      )}
+
+      {pro && (
+        <section aria-label="Pro" className="a-card">
+          <h2>Pro</h2>
+          {pro.subscriptions.length === 0 ? (
+            <p className="text-ink-2">Never had Pro.</p>
+          ) : (
+            <>
+              <p className="flex flex-wrap items-center gap-2">
+                <Pill tone={pro.is_pro ? "sage" : "muted"}>
+                  <strong data-testid="pro-state">{pro.is_pro ? "Pro on" : "Pro off"}</strong>
+                </Pill>
+                <span className="text-ink-2">
+                  {pro.photo_count} photo{pro.photo_count === 1 ? "" : "s"} ·{" "}
+                  <Link href="/admin/pro" className="a-link">
+                    Pro page
+                  </Link>
+                </span>
+              </p>
+              <ul className="grid gap-2">
+                {pro.subscriptions.map((s) => (
+                  <li key={s.stripe_subscription_id}>
+                    {s.plan === "annual" ? "£100 a year" : "£10 a month"} · Stripe status {s.status}
+                    {s.cancel_at_period_end ? " (cancels at period end)" : ""}
+                    {s.current_period_end ? ` · period ends ${dayMonthYear(s.current_period_end)}` : ""} · started{" "}
+                    {dayMonthYear(s.created_at)}
+                    <br />
+                    <small className="a-hint">
+                      {s.stripe_customer_id} · {s.stripe_subscription_id}
+                    </small>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {pro.documents.length > 0 && (
+            <ul className="grid gap-2">
+              {pro.documents.map((d) => (
+                <li key={d.id}>
+                  {DOCUMENT_LABEL[d.kind] ?? d.kind} sent {dayMonthYear(d.created_at)} · {d.status}
+                  {d.reason ? ` (${d.reason})` : ""}
+                  {d.file_deleted ? " · file deleted" : ""}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
 

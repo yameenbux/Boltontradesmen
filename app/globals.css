@@ -156,6 +156,8 @@ h1,h2,h3{text-wrap:balance}
   .a-row{display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:64px; padding:12px 16px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); color:inherit; text-decoration:none; box-shadow:var(--shadow)}
   .a-row b{display:block; font-size:18px; line-height:1.2; overflow-wrap:anywhere}
   .a-row small{display:block; margin-top:3px; font-size:14px; color:var(--ink-2); overflow-wrap:anywhere}
+  .a-sub{margin:0; font-family:var(--display); font-weight:400; font-size:25px; line-height:1.15}
+  .a-sub em{font-style:normal; font-family:var(--body); font-size:15px; font-weight:700; color:var(--ink-3); margin-left:6px; vertical-align:2px}
   .a-link{display:inline-flex; align-items:center; min-height:48px; font-weight:700; color:var(--brick); text-underline-offset:3px}
   .a-consent .btn{width:100%; min-height:64px; font-size:19px}
 
@@ -387,6 +389,18 @@ h1,h2,h3{text-wrap:balance}
   .checks .ci svg{width:18px; height:18px}
   .checks b{display:block; font-size:16px}
   .checks li span span{font-size:14px; color:var(--ink-2)}
+  /* "ID checked" in the profile header: a link down to the checks list, explained there and in its title. */
+  .id-mark{display:inline-flex; border-radius:999px; text-decoration:none}
+  .id-mark:focus-visible{outline:3px solid var(--brick); outline-offset:2px}
+  /* The trader's work photos (components/profile/WorkGallery.tsx). */
+  .gallery-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:0; padding:0; list-style:none}
+  .gallery-grid.is-one{grid-template-columns:1fr}
+  .gallery-grid a{display:block; border-radius:14px; overflow:hidden; background:var(--surface-2)}
+  .gallery-grid a:focus-visible{outline:3px solid var(--brick); outline-offset:2px}
+  .gallery-grid img{display:block; width:100%; height:auto; aspect-ratio:4 / 3; object-fit:cover}
+  .gallery-grid.is-one img{aspect-ratio:auto; max-height:420px}
+  .gallery-note{margin:10px 0 0; font-size:14px; color:var(--ink-2)}
+  @media (min-width:640px){.gallery-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
   /* ---------- profile reviews (prototype .review / .reply) ---------- */
   .reviews h2 em{font-style:normal; font-family:var(--body); font-size:16px; font-weight:600; color:var(--ink-3); margin-left:4px; vertical-align:2px}
@@ -648,6 +662,43 @@ h1,h2,h3{text-wrap:balance}
   .pro-card{display:grid; gap:6px; padding:12px 14px; border-radius:var(--r-sm); background:var(--sage-tint); color:var(--ink)}
   .pro-card p{margin:0; font-size:15px; color:var(--ink-2)}
   .pro-card .pro-title{font-size:16.5px; font-weight:700; color:color-mix(in srgb,var(--sage) 70%,var(--ink))}
+  .pro-list{display:grid; gap:4px; margin:0; padding-left:20px; list-style:disc; font-size:15px; color:var(--ink-2)}
+  .pro-list li::marker{color:var(--sage)}
+  .pro-card .pro-list{color:var(--ink)}
+  .pro-offer{gap:10px}
+  .pro-upgrade-form{gap:12px; margin-top:4px}
+  .plan-picks{border:0; margin:0; padding:0; min-width:0; display:grid; gap:8px}
+  .plan-picks legend{grid-column:1 / -1; padding:0; margin-bottom:8px; font-size:16px; font-weight:700; color:var(--ink)}
+  .plan-picks .field-err{grid-column:1 / -1}
+  .plan-pick{display:flex; align-items:center; gap:12px; min-height:56px; padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; background:var(--surface); cursor:pointer}
+  .plan-pick input{width:20px; height:20px; margin:0; flex:none; accent-color:var(--brick)}
+  .plan-pick span{display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px}
+  .plan-pick b{font-size:16.5px; color:var(--ink)}
+  .plan-pick small{font-size:14px; font-weight:600; color:var(--ink-2)}
+  .plan-pick:has(input:checked){border-color:var(--brick); background:var(--brick-tint)}
+  .plan-pick:has(input:focus-visible){outline:3px solid var(--brick); outline-offset:3px}
+  .pro-small{margin:0; font-size:14.5px; color:var(--ink-2)}
+
+  /* ---------- trader dashboard: the Pro panel (components/provider/ProPanel.tsx) ---------- */
+  .pro-panel-head{display:flex; align-items:center; justify-content:space-between; gap:12px}
+  .pro-status{margin:0; font-size:16.5px; font-weight:600; color:var(--ink)}
+  .pro-status.is-off{color:var(--ink-2)}
+  .pro-block{display:grid; gap:12px; padding-top:16px; border-top:1px solid var(--line)}
+  .pro-block h3{margin:0; font-family:var(--display); font-weight:400; font-size:22px; line-height:1.15}
+  .pro-block h3 em{font-style:normal; font-family:var(--body); font-size:15px; font-weight:600; color:var(--ink-3); margin-left:6px}
+  .pro-docs{display:grid; gap:6px; margin:0; padding:0; list-style:none; font-size:15px; color:var(--ink-2)}
+  .pro-docs b{color:var(--ink)}
+  .photo-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:0; padding:0; list-style:none}
+  .photo-grid li{display:grid; gap:8px; min-width:0}
+  .photo-grid img{width:100%; height:auto; aspect-ratio:4 / 3; object-fit:cover; border-radius:12px; background:var(--surface-2)}
+  .photo-actions{display:flex; flex-wrap:wrap; gap:6px; align-items:center}
+  .photo-actions form{display:flex; gap:6px}
+  .photo-actions .chip{min-height:40px; padding:0 12px; font-size:15px}
+  .photo-actions .chip:disabled{opacity:.4; cursor:default}
+  .photo-remove{color:var(--brick)}
+  .pro-report{display:grid; gap:10px}
+  .pro-report-head{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:4px 12px; margin:0; font-size:17px}
+  .pro-report-head span{font-family:var(--display); font-size:26px; color:var(--ink)}
 
   /* ---------- trader dashboard: edit, pause and withdraw ---------- */
   .area-picks{border:0; margin:0; padding:0; min-width:0; display:grid; gap:10px}

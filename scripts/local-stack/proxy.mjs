@@ -2,8 +2,10 @@
 // Minimal stand-in for Supabase's Kong gateway on :54321.
 //   /rest/v1/*  -> PostgREST   (prefix stripped)
 //   /auth/v1/*  -> Supabase Auth (prefix stripped)
+//   /storage/v1/* -> a small file-backed stand-in for Storage (storage.mjs)
 // Forwards all headers (apikey, Authorization, ...) and answers CORS permissively.
 import http from "node:http";
+import { handleStorage } from "./storage.mjs";
 
 const PORT = Number(process.env.PROXY_PORT ?? 54321);
 const HOST = process.env.PROXY_HOST ?? "127.0.0.1";
@@ -33,6 +35,10 @@ const server = http.createServer((req, res) => {
   if (req.method === "OPTIONS") {
     res.writeHead(204, cors(req));
     return res.end();
+  }
+  if (url.pathname.startsWith("/storage/v1/")) {
+    for (const [k, v] of Object.entries(cors(req))) res.setHeader(k, v);
+    return void handleStorage(req, res, url.pathname.slice("/storage/v1".length), url.search);
   }
   if (!route) {
     res.writeHead(404, { "content-type": "application/json", ...cors(req) });

@@ -52,7 +52,11 @@ insert into public.providers (id, slug, business_name, contact_name, phone_e164,
   ('00000000-0000-0000-0000-00000000e218', 'e2e-gone-vans', 'Gone Removals', 'Gus Gone', '+447700900318', null,
     array['BL7'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
   ('00000000-0000-0000-0000-00000000e219', 'e2e-tally-vans', 'Tally Removals', 'Tam Tally', '+447700900319', '+447700900319',
-    array['BL5'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null);
+    array['BL5'], null, 'live', now(), '{"source":"e2e"}'::jsonb, null),
+  -- Pro (pro.spec.ts), more man & van: linked by its trader, who has had 5 enquiries, takes Pro (a subscription
+  -- written as the webhook would), sends their ID and a work photo; the admin approves the ID; then Pro lapses.
+  ('00000000-0000-0000-0000-00000000e220', 'e2e-lift-vans', 'Lift Removals', 'Pip Lift', '+447700900320', null,
+    array['BL1'], 'Careful moves, big and small.', 'live', now(), '{"source":"e2e"}'::jsonb, null);
 
 -- Enquiries (contact_events, at a fixed time of day in Bolton so a run near midnight doesn't split them). Dash: this
 -- month a call and a WhatsApp (two devices; a repeat call doesn't count), last month one call: 3 of 5. Tally: this
@@ -73,7 +77,12 @@ from (values
   ('00000000-0000-0000-0000-00000000e219', 'call_tap', 'e2e-tally-3', 0),
   ('00000000-0000-0000-0000-00000000e219', 'whatsapp_tap', 'e2e-tally-4', 0),
   ('00000000-0000-0000-0000-00000000e219', 'call_tap', 'e2e-tally-5', -2),
-  ('00000000-0000-0000-0000-00000000e219', 'call_tap', 'e2e-tally-6', -2)
+  ('00000000-0000-0000-0000-00000000e219', 'call_tap', 'e2e-tally-6', -2),
+  ('00000000-0000-0000-0000-00000000e220', 'call_tap', 'e2e-lift-1', 0),
+  ('00000000-0000-0000-0000-00000000e220', 'whatsapp_tap', 'e2e-lift-2', 0),
+  ('00000000-0000-0000-0000-00000000e220', 'call_tap', 'e2e-lift-3', -1),
+  ('00000000-0000-0000-0000-00000000e220', 'call_tap', 'e2e-lift-4', -1),
+  ('00000000-0000-0000-0000-00000000e220', 'whatsapp_tap', 'e2e-lift-5', -2)
 ) v(provider_id, type, device, months);
 
 update public.providers set availability = 'taking', availability_set_at = now() where slug = 'e2e-keen-vans';
@@ -90,7 +99,7 @@ where (p.slug in ('e2e-ace-plumbing', 'e2e-fresh-pipes', 'e2e-half-way') and c.s
    or (p.slug = 'e2e-neat-sparks' and c.slug = 'electrician')
    or (p.slug in ('e2e-tidy-vans', 'e2e-card-vans', 'e2e-keen-vans', 'e2e-busy-vans', 'e2e-stale-vans',
                   'e2e-ready-vans', 'e2e-swift-vans', 'e2e-shaw-vans', 'e2e-dash-vans', 'e2e-gone-vans',
-                  'e2e-tally-vans') and c.slug = 'man-and-van');
+                  'e2e-tally-vans', 'e2e-lift-vans') and c.slug = 'man-and-van');
 
 insert into public.provider_checks (provider_id, kind, reference, expires_on, checked_at) values
   ('00000000-0000-0000-0000-00000000e201', 'id', 'E2E-ID', null, '2026-10-03'),

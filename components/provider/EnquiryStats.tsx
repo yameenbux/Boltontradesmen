@@ -49,16 +49,30 @@ function Chart({ stats, id }: { stats: Stats; id: string }) {
   );
 }
 
-/** "3 of 5 enquiries", then a quiet "Pro is coming soon" once reached. No checkout yet. */
-export function ProProgress({ allTime, admin = false }: { allTime: number; admin?: boolean }) {
+/**
+ * "3 of 5 enquiries", then, once reached, the trader's offer (components/provider/ProOffer.tsx: "Upgrade to Pro", or
+ * "Pro opens soon" while Stripe isn't set up). Hidden while Pro is on. The admin sees a one-line summary.
+ */
+export function ProProgress({
+  allTime,
+  admin = false,
+  offer = null,
+  isPro = false,
+}: {
+  allTime: number;
+  admin?: boolean;
+  offer?: React.ReactNode;
+  isPro?: boolean;
+}) {
   const p = proProgress(allTime);
   if (admin) {
     return (
       <p className="a-hint" data-testid="pro-progress">
-        Upgrade progress: {p.count} of {p.of} enquiries{p.reached ? " (reached; Pro isn't built yet, so nothing is offered)" : ""}.
+        Upgrade progress: {p.count} of {p.of} enquiries{p.reached ? " (reached, so Pro is offered on their dashboard)" : ""}.
       </p>
     );
   }
+  if (isPro) return null;
   return (
     <div className={`pro-progress${p.reached ? " is-reached" : ""}`} data-testid="pro-progress">
       <p className="pro-head">
@@ -79,25 +93,31 @@ export function ProProgress({ allTime, admin = false }: { allTime: number; admin
         <span style={{ width: `${p.percent}%` }} />
       </div>
       {p.reached ? (
-        <div className="pro-card" data-testid="pro-soon">
-          <p className="pro-title">You&apos;ve reached {p.of} enquiries — Pro unlocks soon</p>
-          <p>
-            Pro will add an ID check, up to 6 work photos and a monthly enquiry report, for £10 a month or £100 a year.
-            It never changes where you&apos;re listed or your badges, and your listing stays free either way. It&apos;ll
-            show here when it&apos;s ready.
-          </p>
-        </div>
+        offer
       ) : (
         <p className="pro-note">
-          Pro is coming soon for traders who&apos;ve had {p.of} enquiries through Bolton Vouched. Your listing stays
-          free either way.
+          Pro opens to traders who&apos;ve had {p.of} enquiries through Bolton Vouched. Your listing stays free either
+          way.
         </p>
       )}
     </div>
   );
 }
 
-export function EnquiryStats({ stats, id, admin = false }: { stats: Stats; id: string; admin?: boolean }) {
+export function EnquiryStats({
+  stats,
+  id,
+  admin = false,
+  offer = null,
+  isPro = false,
+}: {
+  stats: Stats;
+  id: string;
+  admin?: boolean;
+  /** The trader's Pro offer, shown once the threshold is reached. */
+  offer?: React.ReactNode;
+  isPro?: boolean;
+}) {
   const all = stats.allTime;
   return (
     <div className="enquiry-stats">
@@ -115,7 +135,7 @@ export function EnquiryStats({ stats, id, admin = false }: { stats: Stats; id: s
         day, and {admin ? "the trader's own taps and yours" : "your own taps"} don&apos;t count. Page views aren&apos;t
         counted.
       </p>
-      <ProProgress allTime={all.enquiries} admin={admin} />
+      <ProProgress allTime={all.enquiries} admin={admin} offer={offer} isPro={isPro} />
     </div>
   );
 }

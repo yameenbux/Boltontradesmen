@@ -107,6 +107,10 @@ redirects to `https://accounts.google.com/…`, and tests stop there. Never `sup
 
 ## Differences from `supabase start`
 
-No Storage, Realtime, Studio, edge functions or `graphql_public`; the inbox is the mail sink above, not Mailpit's UI.
+No Realtime, Studio, edge functions or `graphql_public`; the inbox is the mail sink above, not Mailpit's UI.
+Storage is a small file-backed stand-in (`storage.mjs`, served by the gateway under `/storage/v1`): upload, remove
+and signed links with the service role key, and public reads for the buckets in `STORAGE_PUBLIC_BUCKETS`
+(default `work-photos`). Files are kept in `run/storage/`. There is no `storage` schema, so the migrations skip
+creating buckets here, and bucket size and type limits are not enforced (the app checks both itself).
 `db:reset` only rebuilds `public` and `private` (auth users survive a reset). Add pieces here
 only when a task needs them.

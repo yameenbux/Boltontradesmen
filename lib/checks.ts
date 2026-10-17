@@ -63,12 +63,14 @@ function latest(checks: Check[], kind: string): Check | undefined {
 /**
  * Rows for "What we've checked": ID, insurance, then one row per accreditation; when there are no
  * accreditations, a final dash row "Trade accreditations · None provided". Expired checks never reach
- * here (the public view filters them out).
+ * here (the public view filters them out). `idChecked` is the photo ID check (provider_public.id_checked): it shows
+ * the ID row even when no ID check was recorded by hand.
  */
-export function checkRows(checks: Check[]): CheckRow[] {
+export function checkRows(checks: Check[], idChecked = false): CheckRow[] {
   const rows: CheckRow[] = [];
   const id = latest(checks, "id");
   if (id) rows.push({ kind: "id", title: "ID checked", detail: monthYear(id.checked_at) ?? "Checked", ok: true });
+  else if (idChecked) rows.push({ kind: "id", title: "ID checked", detail: "We've checked this trader's photo ID", ok: true });
   const insurance = latest(checks, "insurance");
   if (insurance) rows.push({ kind: "insurance", title: "Public liability insurance", detail: validity(insurance), ok: true });
   const accreditations = checks.filter((c) => c.kind in ACCREDITATION_TITLES);

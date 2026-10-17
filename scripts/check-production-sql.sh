@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Proves docs/launch/plan-2b-production.sql applies in one go to a database in production's state (all migrations
 # up to 20261012000017, with production-like rows), then docs/launch/launch-checklist-production.sql,
-# docs/launch/review-source-production.sql, docs/launch/availability-production.sql and
-# docs/launch/trader-dashboard-production.sql after it (and that each later one refuses to run first), each twice, then
+# docs/launch/review-source-production.sql, docs/launch/availability-production.sql,
+# docs/launch/trader-dashboard-production.sql and docs/launch/pro-tier-production.sql after it (and that each later one
+# refuses to run first), each twice, then
 # runs every pgTAP test on the result. Local databases only.
 #   npm run db:check-prod
 # On the local stack (psql reset, postgres is a superuser) and on the Supabase CLI stack (SUPABASE_CLI_STACK=1, as
@@ -23,6 +24,8 @@ SCRIPT4=docs/launch/availability-production.sql
 UNTIL4=20261012000027
 SCRIPT5=docs/launch/trader-dashboard-production.sql
 UNTIL5=20261012000028
+SCRIPT6=docs/launch/pro-tier-production.sql
+UNTIL6=20261012000029
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
 echo "[check-prod] database at $UNTIL"
@@ -104,22 +107,39 @@ echo "$out" | grep -q "^Availability database changes applied|$expected4\$" || {
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT4" | tail -1
 
-# A listing paused before the trader dashboard script: it must count as paused by the admin afterwards.
+# A listing paused before the trader dashboard script: it must count as paused by the admin afterwards. A live one
+# must read as a plain listing (no ID checked mark, no photos) after the Pro script.
 "${PSQL[@]}" -c "insert into public.providers (slug, business_name, phone_e164, status, consent_at, consent_evidence)
-  values ('prod-check-paused', 'Prod Check Paused', '+447700900991', 'paused', now(), '{\"source\":\"check\"}'::jsonb)"
+  values ('prod-check-paused', 'Prod Check Paused', '+447700900991', 'paused', now(), '{\"source\":\"check\"}'::jsonb),
+         ('prod-check-live', 'Prod Check Live', '+447700900992', 'live', now(), '{\"source\":\"check\"}'::jsonb)"
+
+echo "[check-prod] the Pro script refuses to run before the trader dashboard one"
+if "${PSQL[@]}" -f "$SCRIPT6" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT6 ran before $SCRIPT5"; exit 1; fi
+"${PSQL[@]}" -A -t -c "select to_regclass('public.subscriptions') is null" | grep -qx t \
+  || { echo "[check-prod] the refused Pro script left something behind"; exit 1; }
 
 echo "[check-prod] applying $SCRIPT5"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT5")"
 echo "$out" | tail -1
-expected5="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL5" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+expected5="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; v="${b%%_*}"; if [[ "$v" > "$UNTIL5" && ! "$v" > "$UNTIL6" ]]; then echo "$b"; fi; done | wc -l | tr -d ' ')"
 echo "$out" | grep -q "^Trader dashboard database changes applied|$expected5\$" || { echo "[check-prod] the closing check did not report $expected5 migrations"; exit 1; }
 "${PSQL[@]}" -A -t -c "select paused_by from public.providers where slug = 'prod-check-paused'" | grep -qx admin \
   || { echo "[check-prod] a listing paused before the script is not marked as paused by the admin"; exit 1; }
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT5" | tail -1
 
+echo "[check-prod] applying $SCRIPT6"
+out="$("${PSQL[@]}" -A -t -f "$SCRIPT6")"
+echo "$out" | tail -1
+expected6="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL6" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^Pro database changes applied|$expected6\$" || { echo "[check-prod] the closing check did not report $expected6 migrations"; exit 1; }
+"${PSQL[@]}" -A -t -c "select count(*) from public.provider_public where slug = 'prod-check-live' and not id_checked and photos = '[]'::jsonb" | grep -qx 1 \
+  || { echo "[check-prod] a live listing without Pro does not read as a plain listing after the Pro script"; exit 1; }
+echo "[check-prod] applying it a second time (a re-run must not fail)"
+"${PSQL[@]}" -A -t -f "$SCRIPT6" | tail -1
+
 # The pgTAP tests expect only their own fixtures.
-"${PSQL[@]}" -c "delete from public.providers where slug in ('prod-check-travel', 'prod-check-paused');
+"${PSQL[@]}" -c "delete from public.providers where slug in ('prod-check-travel', 'prod-check-paused', 'prod-check-live');
   delete from public.profiles where user_id = '00000000-0000-0000-0000-0000000fad01';
   delete from auth.users where id = '00000000-0000-0000-0000-0000000fad01';
   update public.settings set value = value - 'prod-check-admin@example.com' where key = 'admin_emails';"

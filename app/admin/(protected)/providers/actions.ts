@@ -9,6 +9,7 @@ import { CHECK_KINDS, SETTABLE_STATUSES, type FormState } from "@/lib/admin-shar
 import { AVAILABILITY_ERRORS, parseAvailabilityForm } from "@/lib/availability";
 import { InvalidPhoneError, toE164 } from "@/lib/phone";
 import { platformPath } from "@/lib/paths";
+import { cancelProForListing } from "@/lib/pro-cancel";
 import { dayMonthYear } from "@/lib/checks";
 // Public pages read providers from the database (home is prerendered), so status changes and
 // edits must invalidate them for paused/removed providers to disappear immediately.
@@ -193,10 +194,15 @@ export async function setStatus(_prev: FormState, formData: FormData): Promise<F
     }
     return { message: "Could not change the status. Try again." };
   }
+  // A removed listing's Pro stops at the end of the period paid for (best effort; never blocks the removal).
+  const cancelled = v.status === "removed" ? await cancelProForListing(v.provider_id) : 0;
   revalidatePath(`/admin/providers/${v.provider_id}`);
   revalidatePath("/admin");
   revalidatePublicPages();
-  return { ok: true, message: "Status updated" };
+  return {
+    ok: true,
+    message: cancelled > 0 ? "Status updated. Their Pro is set to cancel at the end of the period paid for." : "Status updated",
+  };
 }
 
 function consentUrl(token: string): string {

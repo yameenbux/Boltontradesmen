@@ -13,12 +13,12 @@ const Dash = () => (
 );
 
 /** "What we've checked": a tick row per check, and a dash row when no trade accreditations were provided. */
-export function ChecksList({ checks }: { checks: Check[] }) {
+export function ChecksList({ checks, idChecked = false }: { checks: Check[]; idChecked?: boolean }) {
   return (
     <section className="card" aria-labelledby="checks-title">
       <h2 id="checks-title">What we&apos;ve checked</h2>
       <ul className="checks">
-        {checkRows(checks).map((row, i) => (
+        {checkRows(checks, idChecked).map((row, i) => (
           <li key={`${row.kind}-${i}`}>
             <span className={row.ok ? "ci" : "ci no"}>{row.ok ? <Tick /> : <Dash />}</span>
             <span>

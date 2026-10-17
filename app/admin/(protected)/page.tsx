@@ -27,6 +27,7 @@ export default async function AdminHome() {
     open_flags: number;
     pending_proofs: number;
     listing_requests?: number;
+    pending_pro_documents?: number;
   };
   const waiting = [
     {
@@ -49,6 +50,11 @@ export default async function AdminHome() {
       href: "/admin/requests",
       n: counts.listing_requests ?? 0,
       text: `${counts.listing_requests ?? 0} new listing request${counts.listing_requests === 1 ? "" : "s"}`,
+    },
+    {
+      href: "/admin/pro",
+      n: counts.pending_pro_documents ?? 0,
+      text: `${counts.pending_pro_documents ?? 0} Pro document${counts.pending_pro_documents === 1 ? "" : "s"} to check`,
     },
   ];
   return (

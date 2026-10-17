@@ -5,8 +5,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 // Plan 2b Task 12: the one-paste production scripts are generated from the migrations and must stay in step with them.
-// Plan 2b is 000018..000025, the launch checklist 000026, the review card script 000027 and availability 000028 (all
-// closed); the trader dashboard script is 000029 onwards, so a new migration can't be left out.
+// Plan 2b is 000018..000025, the launch checklist 000026, the review card script 000027, availability 000028 and the
+// trader dashboard 000029 (all closed); the Pro script is 000030 onwards, so a new migration can't be left out.
 const root = process.cwd();
 const all = readdirSync(path.join(root, "supabase/migrations"))
   .filter((f) => f.endsWith(".sql"))
@@ -50,9 +50,17 @@ const SCRIPTS = [
     file: "docs/launch/trader-dashboard-production.sql",
     preset: "trader-dashboard",
     from: "20261012000029",
-    to: NEWEST,
+    to: "20261012000029",
     functions: ["my_enquiry_stats", "admin_enquiry_stats", "update_my_listing", "pause_my_listing", "unpause_my_listing", "withdraw_my_listing"],
     requires: "20261012000028",
+  },
+  {
+    file: "docs/launch/pro-tier-production.sql",
+    preset: "pro-tier",
+    from: "20261012000030",
+    to: NEWEST,
+    functions: ["stripe_apply_event", "my_pro_status", "add_my_work_photo", "admin_decide_pro_document", "id_checked", "photos"],
+    requires: "20261012000029",
   },
 ];
 
