@@ -111,6 +111,32 @@ test("creating a provider from a request marks the request done", async ({ page 
   await expect(page.getByRole("article", { name: `Request from ${business}` })).toHaveCount(0);
 });
 
+test("one listing per number: the admin can't add a second listing, and requests point to the existing one", async ({ page }) => {
+  const business = `${BUSINESS} dupe`;
+  // Ace Plumbing (fixture) already has +447700900301.
+  sql(
+    `insert into public.listing_requests (business_name, contact_name, trade, phone_e164) values ('${business}', 'Al Again', 'Plumber', '+447700900301')`,
+  );
+  await page.goto("/admin/login");
+  await page.getByLabel("Email").fill("admin@example.test");
+  await page.getByLabel("Password").fill("e2e-admin-password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
+
+  await page.goto("/admin/requests");
+  const card = page.getByRole("article", { name: `Request from ${business}` });
+  await expect(card.getByTestId("already-listed")).toContainText("This number is already on Ace Plumbing");
+  await expect(card.getByRole("link", { name: /Create provider from this/ })).toHaveCount(0);
+
+  await page.goto("/admin/providers/new");
+  await page.getByLabel("Business name").fill(business);
+  await page.getByLabel("Phone", { exact: true }).fill("07700 900301");
+  await page.getByRole("button", { name: "Add provider" }).click();
+  await expect(page.getByText("This number is already on Ace Plumbing")).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/providers\/new/);
+  expect(sql(`select count(*) from public.providers where business_name = '${business}'`)).toBe("0");
+});
+
 test("a filled honeypot gets the thank-you page and stores nothing", async ({ page }) => {
   await page.goto("/get-listed");
   await page.getByLabel("Business name").fill(`${BUSINESS} bot`);

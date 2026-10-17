@@ -74,7 +74,7 @@ test("admin consent links point at /platform/consent/", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.getByRole("link", { name: "Add provider" }).click();
   await page.getByLabel("Business name").fill(`E2E PWA Link ${Date.now()}`);
-  await page.getByRole("textbox", { name: /^Phone/ }).fill("07700 900128");
+  await page.getByRole("textbox", { name: /^Phone/ }).fill("07700 900131"); // its own number: one listing per number
   await page.getByRole("button", { name: "Add provider" }).click();
   await expect(page.getByTestId("provider-status")).toHaveText("invited");
   await page.getByRole("button", { name: "New consent link" }).click();

@@ -19,7 +19,10 @@ test("a new resident signs in with an email code and sets up their name", async 
   await page.getByLabel("Your area").selectOption("BL3");
   await page.getByRole("button", { name: "Save and continue" }).click();
 
-  await expect(page).toHaveURL(/\/platform\/account$/);
+  // Signed in: straight to the directory, greeted by name (the account page is behind the profile icon).
+  await expect(page).toHaveURL(/\/platform$/);
+  await expect(page.getByTestId("greeting")).toHaveText(/^Good (morning|afternoon|evening), Sarah$/);
+  await page.goto("/platform/account");
   await expect(page.getByRole("main").getByText("Signed in as Sarah K.")).toBeVisible();
 });
 

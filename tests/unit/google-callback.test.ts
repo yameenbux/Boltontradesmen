@@ -95,13 +95,13 @@ describe("googleCallbackPath", () => {
         { code: "c", error: null, next: "https://evil.example" },
         { exchange: async () => true, account: member },
       ),
-    ).toBe("/platform/account");
+    ).toBe("/platform");
     expect(
       await googleCallbackPath(
         { code: null, error: "access_denied", next: "//evil.example" },
         { exchange: async () => true, account: member },
       ),
-    ).toBe("/platform/sign-in?error=google&next=%2Fplatform%2Faccount");
+    ).toBe("/platform/sign-in?error=google&next=%2Fplatform");
   });
 });
 
@@ -143,7 +143,7 @@ describe("GET /platform/auth/callback", () => {
     auth.exchangeCodeForSession.mockResolvedValue({ data: { session: null }, error: { message: "invalid flow state" } });
     const res = await GET(new NextRequest("http://localhost:3000/platform/auth/callback?code=abc"));
     expect(res.headers.get("location")).toBe(
-      "https://boltonvouched.example/platform/sign-in?error=google&next=%2Fplatform%2Faccount",
+      "https://boltonvouched.example/platform/sign-in?error=google&next=%2Fplatform",
     );
   });
 });

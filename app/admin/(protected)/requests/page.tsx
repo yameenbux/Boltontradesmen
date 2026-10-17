@@ -3,6 +3,7 @@ import { RequestActions } from "@/components/admin/RequestActions";
 import { Pill } from "@/components/ui/Pill";
 import { requireAdmin } from "@/lib/admin";
 import { dayMonthYear } from "@/lib/checks";
+import { listingsForPhones } from "@/lib/listing-duplicates";
 import { nationalMobile } from "@/lib/phone-format";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +45,8 @@ export default async function Requests({ searchParams }: { searchParams: Promise
   const { data, error } = await supabase.rpc("admin_list_listing_requests", { p_status: status });
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as Row[];
+  // A request from a number that's already listed: link to that listing instead of offering a second one.
+  const listed = await listingsForPhones(rows.map((r) => r.phone_e164));
   return (
     <main className="flex flex-col gap-5">
       <div>
@@ -106,10 +109,20 @@ export default async function Requests({ searchParams }: { searchParams: Promise
                   </>
                 )}
               </dl>
-              {r.status === "new" && (
-                <Link href={newProviderHref(r)} className="a-link">
-                  Create provider from this →
-                </Link>
+              {listed.has(r.phone_e164) ? (
+                <p className="a-hint" data-testid="already-listed">
+                  This number is already on{" "}
+                  <Link href={`/admin/providers/${listed.get(r.phone_e164)!.id}`} className="a-link">
+                    {listed.get(r.phone_e164)!.business_name}
+                  </Link>
+                  {listed.get(r.phone_e164)!.status === "removed" ? " (removed: use Reinvite there)" : ""}.
+                </p>
+              ) : (
+                r.status === "new" && (
+                  <Link href={newProviderHref(r)} className="a-link">
+                    Create provider from this →
+                  </Link>
+                )
               )}
               <RequestActions requestId={r.id} status={r.status} />
             </article>

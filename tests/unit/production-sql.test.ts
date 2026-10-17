@@ -83,9 +83,17 @@ const SCRIPTS = [
     file: "docs/launch/consent-link-production.sql",
     preset: "consent-link",
     from: "20261012000033",
-    to: NEWEST,
+    to: "20261012000033",
     functions: ["consent_trader_link"],
     requires: "20261012000032",
+  },
+  {
+    file: "docs/launch/one-listing-production.sql",
+    preset: "one-listing",
+    from: "20261012000034",
+    to: NEWEST,
+    functions: ["providers_one_listing_per_phone"],
+    requires: "20261012000033",
   },
 ];
 
