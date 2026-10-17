@@ -6,9 +6,12 @@ import {
   consentStatement,
   PRIVACY_LINK_TEXT,
   PRIVACY_PATH,
+  TERMS_LINK_TEXT,
+  TERMS_PATH,
 } from "@/lib/consent-text";
 import { firstName } from "@/lib/initials";
 import { createServiceClient } from "@/lib/supabase/service";
+import { AgreeBox } from "./AgreeBox";
 import { ConsentForm } from "./ConsentForm";
 import { InvalidLink } from "./InvalidLink";
 
@@ -37,7 +40,7 @@ const svg = {
   "aria-hidden": true,
 } as const;
 
-const ICONS: Record<Exclude<ConsentCardKey, "controller">, React.ReactNode> = {
+const ICONS: Record<Exclude<ConsentCardKey, "controller" | "privacy">, React.ReactNode> = {
   listing: (
     <svg {...svg}>
       <path d="M3 9 4.5 4h15L21 9" />
@@ -61,12 +64,6 @@ const ICONS: Record<Exclude<ConsentCardKey, "controller">, React.ReactNode> = {
       <path d="M5 13h8M5 20h13" />
     </svg>
   ),
-  privacy: (
-    <svg {...svg}>
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
-      <path d="M14 2v6h6M8 13h8M8 17h5" />
-    </svg>
-  ),
 };
 
 /**
@@ -77,13 +74,23 @@ function Paragraph({ card }: { card: ConsentCard }) {
   if (!card.title) return <p data-consent-paragraph>{card.body}</p>;
   let title: React.ReactNode = card.title;
   if (card.key === "privacy") {
-    const [before, after] = card.title.split(PRIVACY_LINK_TEXT);
+    const [beforeTerms, rest] = card.title.split(TERMS_LINK_TEXT);
+    const [between, after] = rest.split(PRIVACY_LINK_TEXT);
     title = (
       <>
-        {before}
+        {beforeTerms}
+        <Link href={TERMS_PATH}>{TERMS_LINK_TEXT}</Link>
+        {between}
         <Link href={PRIVACY_PATH}>{PRIVACY_LINK_TEXT}</Link>
         {after}
       </>
+    );
+    return (
+      <AgreeBox>
+        <p data-consent-paragraph>
+          <b>{title}.</b>
+        </p>
+      </AgreeBox>
     );
   }
   return (
@@ -142,8 +149,8 @@ export default async function ConsentPage({ params }: { params: Promise<{ token:
         <h2 className="sr-only">What you&apos;re agreeing to</h2>
         <ul className="points stagger">
           {points.map((card) => (
-            <li key={card.key}>
-              <span className="pi">{ICONS[card.key as keyof typeof ICONS]}</span>
+            <li key={card.key} className={card.key === "privacy" ? "agree-card" : undefined}>
+              {card.key !== "privacy" && <span className="pi">{ICONS[card.key as keyof typeof ICONS]}</span>}
               <Paragraph card={card} />
             </li>
           ))}

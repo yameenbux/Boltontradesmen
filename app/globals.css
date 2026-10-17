@@ -17,12 +17,12 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#161009; --surface:#211812; --surface-2:#2A1F18; --ink:#F3E9DC; --ink-2:#BBA998; --ink-3:#9C8B7D; --line:#3A2B22;
-  --brick:#D9704F; --brick-deep:#A9452C; --brick-tint:#3B2018; --hero:#6E2818; --on-brick:#FFF2E4;
+  --brick:#D9704F; --brick-deep:#A9452C; --brick-tint:#3B2018; --hero:#6E2818; --on-brick:#1B0F0A;
   --sage:#93BC95; --sage-tint:#20301F; --gold:#D7A94C;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark }}
 :root[data-theme="dark"]{
   --bg:#161009; --surface:#211812; --surface-2:#2A1F18; --ink:#F3E9DC; --ink-2:#BBA998; --ink-3:#9C8B7D; --line:#3A2B22;
-  --brick:#D9704F; --brick-deep:#A9452C; --brick-tint:#3B2018; --hero:#6E2818; --on-brick:#FFF2E4;
+  --brick:#D9704F; --brick-deep:#A9452C; --brick-tint:#3B2018; --hero:#6E2818; --on-brick:#1B0F0A;
   --sage:#93BC95; --sage-tint:#20301F; --gold:#D7A94C;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark }
 
@@ -236,40 +236,34 @@ h1,h2,h3{text-wrap:balance}
   .empty{margin:0; padding:22px; text-align:center; border:1.5px dashed var(--line); border-radius:var(--r-lg); color:var(--ink-2)}
 
   /* ---------- home ---------- */
-  .hero{position:relative; margin-top:6px; border-radius:28px; padding:26px 22px 22px; color:var(--on-brick); background:var(--hero); overflow:hidden; isolation:isolate; box-shadow:var(--shadow)}
-  /* Running-bond bricks drifting one brick diagonally every 40s; inset is larger than the drift so no edge shows. */
-  .hero::before{content:""; position:absolute; inset:-80px; z-index:-1; opacity:.55; pointer-events:none;
-    background:
-     linear-gradient(rgba(0,0,0,.13) 2px, transparent 2px) 0 0/72px 26px,
-     linear-gradient(90deg, rgba(0,0,0,.13) 2px, transparent 2px) 0 0/72px 52px,
-     linear-gradient(90deg, rgba(0,0,0,.13) 2px, transparent 2px) 36px 26px/72px 52px;
-    animation:drift 40s linear infinite}
-  .hero::after{content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(120% 90% at 85% 0%, rgba(255,214,170,.28), transparent 60%), linear-gradient(180deg, transparent 40%, rgba(0,0,0,.22))}
-  .hero .eyebrow{font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; opacity:.85}
-  .hero h1{font-family:var(--display); font-weight:400; font-size:clamp(36px,10vw,44px); line-height:1.02; margin:10px 0; letter-spacing:-.015em}
-  .hero > p{margin:0 0 18px; font-size:16.5px; opacity:.9; max-width:30ch}
-  .search{display:flex; align-items:center; gap:10px; background:var(--surface); color:var(--ink); border-radius:18px; padding:6px 6px 6px 16px; box-shadow:0 10px 30px -12px rgba(0,0,0,.45); transition:box-shadow .3s var(--ease), transform .3s var(--ease)}
-  .search:focus-within{transform:translateY(-1px); box-shadow:0 0 0 4px color-mix(in srgb,var(--on-brick) 45%,transparent),0 14px 34px -12px rgba(0,0,0,.5)}
+  .hero{margin-top:14px}
+  .hero h1{font-family:var(--display); font-weight:400; font-size:clamp(38px,11vw,48px); line-height:1.04; margin:0 0 12px; letter-spacing:-.015em; color:var(--ink)}
+  .hero > p{margin:0 0 20px; font-size:17px; color:var(--ink-2); max-width:34ch}
+  .search{display:flex; align-items:center; gap:10px; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:18px; padding:6px 6px 6px 16px; box-shadow:0 10px 30px -16px rgba(60,30,15,.35); transition:box-shadow .3s var(--ease), transform .3s var(--ease)}
+  .search:focus-within{transform:translateY(-1px); border-color:var(--brick); box-shadow:0 0 0 4px color-mix(in srgb,var(--brick) 20%,transparent),0 14px 34px -16px rgba(60,30,15,.4)}
   .search > svg{width:20px; height:20px; color:var(--ink-3); flex:none}
   .search input{flex:1; min-width:0; min-height:44px; border:0; background:transparent; font:inherit; font-size:17px; color:var(--ink); padding:10px 0; outline:none}
   .search input::placeholder{color:var(--ink-3); transition:opacity .25s}
   .search button{flex:none; min-height:48px; border:0; background:var(--brick); color:var(--on-brick); border-radius:13px; padding:0 18px; font-weight:700; cursor:pointer}
   .search-msg p{margin:12px 2px 0; font-size:16px}
-  .search-msg a{color:inherit; font-weight:700; text-decoration:underline; text-underline-offset:3px; display:inline-flex; align-items:center; min-height:48px}
+  .search-msg a{color:var(--brick); font-weight:700; text-decoration:underline; text-underline-offset:3px; display:inline-flex; align-items:center; min-height:48px}
 
-  .trust{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0 0; padding:0; list-style:none}
-  .trust li{display:flex; flex-direction:column; gap:4px; font-size:12.5px; line-height:1.3; color:var(--ink-2); background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px; min-width:0}
-  .trust svg{width:18px; height:18px; color:var(--sage)}
-  .trust strong{color:var(--ink); font-weight:700; font-size:13px}
+  .trust{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 0; padding:0; list-style:none}
+  .trust li{display:inline-flex; align-items:center; gap:7px; font-size:13.5px; font-weight:600; line-height:1.2; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:8px 12px 8px 10px}
+  .trust svg{flex:none; width:16px; height:16px; color:var(--brick)}
 
-  .tiles{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-  .tile{display:flex; flex-direction:column; align-items:flex-start; gap:10px; min-width:0; text-align:left; text-decoration:none; color:inherit; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); padding:16px; box-shadow:var(--shadow)}
-  .tile .ic{width:46px; height:46px; border-radius:14px; background:var(--brick-tint); color:var(--brick); display:grid; place-items:center; transition:transform .35s var(--ease)}
-  .tile .ic svg{width:24px; height:24px}
-  @media (hover:hover){.tile:hover .ic{transform:rotate(-6deg) scale(1.06)}}
-  .tile b{font-size:17px; font-weight:700; line-height:1.2; overflow-wrap:anywhere}
-  .tile > span:last-child{font-size:14px; color:var(--ink-2)}
-  .tile .dot{display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--sage); margin-right:6px; vertical-align:1px}
+  .tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .tile{display:flex; align-items:center; gap:12px; min-width:0; min-height:72px; text-align:left; text-decoration:none; color:inherit; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:12px}
+  .tile .ic{flex:none; width:40px; height:40px; border-radius:12px; background:var(--brick-tint); color:var(--brick); display:grid; place-items:center; transition:transform .35s var(--ease)}
+  .tile .ic svg{width:22px; height:22px}
+  @media (hover:hover){.tile:hover .ic{transform:rotate(-6deg) scale(1.06)} .tile:hover{border-color:color-mix(in srgb,var(--brick) 35%,var(--line))}}
+  .tile .tx{display:grid; gap:2px; min-width:0}
+  .tile b{font-size:16px; font-weight:700; line-height:1.2; overflow-wrap:anywhere}
+  .tile .tx > span{font-size:13.5px; color:var(--ink-2)}
+
+  .launch{margin-top:30px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); padding:20px; display:grid; gap:10px; color:var(--ink-2); font-size:15.5px}
+  .launch h2{font-family:var(--display); font-weight:400; font-size:24px; line-height:1.15; color:var(--ink)}
+  .launch a{color:var(--brick); font-weight:700; text-decoration:underline; text-underline-offset:3px}
 
   .groups{display:flex; flex-direction:column; gap:10px}
   details.group{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden}
@@ -280,12 +274,24 @@ h1,h2,h3{text-wrap:balance}
   details.group[open] summary svg{transform:rotate(180deg)}
   .chips{display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0 18px 18px; list-style:none}
 
-  .howto{margin-top:30px; background:var(--surface-2); border-radius:var(--r-lg); padding:20px}
-  .howto h2{font-family:var(--display); font-weight:400; font-size:22px; margin-bottom:12px}
-  .howto ol{margin:0; padding:0; list-style:none; display:grid; gap:12px; counter-reset:s}
-  .howto li{display:grid; grid-template-columns:30px 1fr; gap:12px; align-items:start; font-size:15.5px; color:var(--ink-2)}
-  .howto li::before{counter-increment:s; content:counter(s); width:30px; height:30px; border-radius:50%; background:var(--surface); border:1px solid var(--line); display:grid; place-items:center; font-weight:700; color:var(--brick); font-size:14px}
-  .howto li b{color:var(--ink)}
+  .howto{margin-top:34px; padding-top:24px; border-top:1px solid var(--line)}
+  .howto h2{font-family:var(--display); font-weight:400; font-size:26px; line-height:1.1; margin-bottom:16px}
+  .howto ol{margin:0; padding:0; list-style:none; display:grid; gap:16px; counter-reset:s}
+  .howto li{display:grid; grid-template-columns:34px 1fr; gap:14px; align-items:start; font-size:15.5px; color:var(--ink-2)}
+  .howto li::before{counter-increment:s; content:counter(s); width:34px; height:34px; border-radius:50%; background:var(--brick); color:var(--on-brick); display:grid; place-items:center; font-family:var(--display); font-size:17px}
+  .howto li b{display:block; color:var(--ink); font-weight:700}
+
+  /* Desktop: the home page widens past the phone column (the rest of the platform stays phone-width). */
+  @media (min-width:900px){
+    .app:has(main.home){max-width:880px}
+    .home .hero h1{font-size:60px; max-width:14ch}
+    .home .hero > p{font-size:18px; max-width:44ch}
+    .home .search{max-width:640px}
+    .home .tiles{grid-template-columns:repeat(4,1fr)}
+    .home .groups{display:grid; grid-template-columns:1fr 1fr; align-items:start}
+    .home .howto ol{grid-template-columns:repeat(3,1fr); gap:24px}
+    .home .launch{max-width:640px}
+  }
 
   /* ---------- category ---------- */
   .back{display:inline-flex; align-items:center; gap:6px; min-height:48px; font-weight:600; color:var(--ink-2); text-decoration:none}
@@ -432,6 +438,7 @@ h1,h2,h3{text-wrap:balance}
   .actionbar .btn{min-width:0; padding:0 14px}
   /* Room below the footer so the last of the page is never hidden behind the bar (bar: 12 + 56 + 12 + 1px border). */
   body:has(.actionbar) .app{padding-bottom:calc(24px + 81px + env(safe-area-inset-bottom,0px))}
+  body:has(.actionbar .bar-hint) .app{padding-bottom:calc(24px + 81px + 32px + env(safe-area-inset-bottom,0px))}
 
   /* ---------- consent ---------- */
   .consent-top{margin-top:8px; background:var(--surface); border:1px solid var(--line); border-radius:26px; padding:22px; box-shadow:var(--shadow)}
@@ -457,6 +464,10 @@ h1,h2,h3{text-wrap:balance}
   /* Headings focused by script when the consent view changes; not interactive, so no focus ring. */
   h1[tabindex="-1"]:focus{outline:none}
   .done p{color:var(--ink-2); margin:0; max-width:32ch}
+  .actionbar .bar-hint{max-width:428px; margin:0 auto 10px; font-size:14px; color:var(--ink-2); text-align:center}
+  .points li.agree-card{grid-template-columns:minmax(0,1fr); border-color:color-mix(in srgb,var(--brick) 45%,var(--line))}
+  .agree{display:flex; gap:14px; align-items:flex-start; cursor:pointer}
+  .agree input{flex:none; width:26px; height:26px; margin:2px 0 0; accent-color:var(--brick); cursor:pointer}
   .actionbar .bar-error{max-width:428px; margin:0 auto 10px; font-weight:600; color:var(--brick); text-align:center}
 
   /* ---------- signed-in pages: sign-in, welcome, account (residents and providers) ---------- */
@@ -798,7 +809,6 @@ h1,h2,h3{text-wrap:balance}
 
 /* ---------- keyframes ---------- */
 @keyframes rise{from{transform:translateY(14px) scale(.985); opacity:.35} to{transform:none; opacity:1}}
-@keyframes drift{to{transform:translate(72px,52px)}}
 @keyframes rip{to{transform:scale(4); opacity:0}}
 @keyframes draw{to{stroke-dashoffset:0}}
 @keyframes fill{from{transform:scaleX(0)}}

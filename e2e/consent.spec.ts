@@ -54,15 +54,22 @@ test("provider consents via their link, then the admin sets them live", async ({
   await expect(consent.getByText("come back if you list again", { exact: false })).toBeVisible();
   await expect(consent.getByText("comes from reviews only", { exact: false })).toBeVisible();
   await expect(consent.getByText("the data controller for this information", { exact: false })).toBeVisible();
-  expect(paragraphs[4]).toBe("I have read the privacy notice. It explains what we keep and why.");
+  expect(paragraphs[4]).toBe("I have read and agree to the terms and the privacy notice.");
   await expect(consent.getByRole("link", { name: "privacy notice" })).toHaveAttribute("href", "/privacy");
+  await expect(consent.getByRole("link", { name: "terms", exact: true })).toHaveAttribute("href", "/terms");
   expect(paragraphs.join("\n")).not.toMatch(/tradespeople/i);
 
   // No horizontal scroll at phone width.
   await consent.setViewportSize({ width: 360, height: 740 });
   expect(await consent.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
 
-  await consent.getByRole("button", { name: "I agree, list me" }).click();
+  // The button stays greyed out until the terms and privacy box is ticked.
+  const agree = consent.getByRole("button", { name: "I agree, list me" });
+  await expect(agree).toBeDisabled();
+  await expect(consent.getByText("Tick the box above to continue.")).toBeVisible();
+  await consent.getByRole("checkbox", { name: /I have read and agree to the terms/ }).check();
+  await expect(agree).toBeEnabled();
+  await agree.click();
   await expect(consent.getByRole("heading", { name: "You're all set, Sam" })).toBeVisible();
   await expect(consent.getByText("once we've checked it", { exact: false })).toBeVisible();
   await expect(consent.getByRole("button", { name: "I agree, list me" })).toHaveCount(0);
@@ -71,7 +78,7 @@ test("provider consents via their link, then the admin sets them live", async ({
   await expect(consent.getByText("This link is no longer valid").first()).toBeVisible();
   await ctx.close();
 
-  expect(sql(`select consent_evidence->>'text_version' from public.providers where business_name = '${name}'`)).toBe("2026-10-12");
+  expect(sql(`select consent_evidence->>'text_version' from public.providers where business_name = '${name}'`)).toBe("2026-10-17");
   // Review Focus 5: the stored hash is the hash of exactly the paragraphs the provider saw.
   const shown = createHash("sha256").update(paragraphs.join("\n\n")).digest("hex");
   expect(sql(`select consent_evidence->>'text_sha256' from public.providers where business_name = '${name}'`)).toBe(shown);
@@ -129,6 +136,7 @@ test("a provider with no contact name or WhatsApp gets the plain greeting", asyn
   await expect(page.getByRole("heading", { name: "Here's how you'll appear on Bolton Vouched" })).toBeVisible();
   await expect(page.getByText("None yet")).toBeVisible();
   await expect(page.getByText("A call button (your number isn't shown)")).toBeVisible();
+  await page.getByRole("checkbox", { name: /I have read and agree to the terms/ }).check();
   await page.getByRole("button", { name: "I agree, list me" }).click();
   await expect(page.getByRole("heading", { name: "You're all set", exact: true })).toBeVisible();
   expect(sql(`select status from public.providers where business_name = '${name}'`)).toBe("consented");
