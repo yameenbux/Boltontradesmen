@@ -76,7 +76,12 @@ describe("no claims that sign-in needs a mobile number", () => {
       const hits = all.filter((f) =>
         ALERT_TEXTS.reduce(
           (text, allowed) => text.split(allowed).join(""),
-          readFileSync(f, "utf8").replace(/’/g, "'").replace(/&apos;/g, "'").toLowerCase(),
+          readFileSync(f, "utf8")
+            // LAUNCH.md's Pro alerts section sets up the texts' Twilio account; it's not about sign-in.
+            .replace(/## Pro part 2[\s\S]*?(?=\n## )/, "")
+            .replace(/’/g, "'")
+            .replace(/&apos;/g, "'")
+            .toLowerCase(),
         ).includes(phrase),
       );
       expect(hits.map((f) => path.relative(process.cwd(), f))).toEqual([]);
