@@ -91,9 +91,17 @@ const SCRIPTS = [
     file: "docs/launch/one-listing-production.sql",
     preset: "one-listing",
     from: "20261012000034",
-    to: NEWEST,
+    to: "20261012000034",
     functions: ["providers_one_listing_per_phone"],
     requires: "20261012000033",
+  },
+  {
+    file: "docs/launch/pro-jobs-production.sql",
+    preset: "pro-jobs",
+    from: "20261012000035",
+    to: NEWEST,
+    functions: ["admin_grant_pro", "submit_job_request", "claim_question_alerts", "takes_requests"],
+    requires: "20261012000034",
   },
 ];
 

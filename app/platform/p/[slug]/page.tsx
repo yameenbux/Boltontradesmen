@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ActionBar } from "@/components/profile/ActionBar";
+import { Button } from "@/components/ui/Button";
 import { ChecksList } from "@/components/profile/ChecksList";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ShareProfile } from "@/components/profile/ShareProfile";
@@ -77,6 +78,15 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
         share={<ShareProfile {...profileShare(p.slug, p.businessName)} />}
       />
       <StatCard stats={p} />
+      {p.takesRequests && (
+        <section className="card quote-card" aria-labelledby="quote-title">
+          <h2 id="quote-title">Request a quote</h2>
+          <p>Can&apos;t talk now? Describe the job and {firstName(p.contactName) ?? p.businessName} gets it by text straight away.</p>
+          <Button href={platformPath("p", p.slug, "request")} variant="secondary">
+            Request a quote
+          </Button>
+        </section>
+      )}
       <ChecksList checks={p.checks} idChecked={p.idChecked} />
       {p.bio && (
         <section className="card" aria-labelledby="about-title">

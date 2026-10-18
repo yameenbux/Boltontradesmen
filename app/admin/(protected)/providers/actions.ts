@@ -343,3 +343,48 @@ export async function unlinkProviderAccount(_prev: FormState, fd: FormData): Pro
   revalidatePath(`/admin/providers/${v.provider_id}`);
   return { ok: true, message: "Unlinked. You can now make a new trader sign-in link." };
 }
+
+// ---- founding Pro (000035): Pro switched on without Stripe, until a date.
+
+const GRANT_ERRORS: Record<string, string> = {
+  bad_date: "Choose a date from today up to two years ahead.",
+  note_too_long: "Keep the note to 200 characters.",
+};
+
+export async function grantFoundingPro(_prev: FormState, fd: FormData): Promise<FormState> {
+  const { supabase } = await requireAdmin();
+  const providerId = text(fd.get("provider_id"));
+  const values = { until: text(fd.get("until")), note: text(fd.get("note")) };
+  if (!z.guid().safeParse(providerId).success) return { message: "Unknown provider", values };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(values.until)) return { errors: { until: GRANT_ERRORS.bad_date }, values };
+  const { data, error } = await supabase.rpc("admin_grant_pro", {
+    p_provider: providerId,
+    p_until: values.until,
+    p_note: values.note.trim() || null,
+  });
+  if (error) {
+    const known = Object.entries(GRANT_ERRORS).find(([k]) => error.message.includes(k));
+    if (!known) {
+      console.error("admin: admin_grant_pro failed:", error.message);
+      return { message: "Could not switch Pro on. Try again.", values };
+    }
+    return known[0] === "bad_date" ? { errors: { until: known[1] }, values } : { errors: { note: known[1] }, values };
+  }
+  revalidatePath(`/admin/providers/${providerId}`);
+  revalidatePublicPages(typeof data === "string" ? data : undefined);
+  return { ok: true, message: "Founding Pro is on" };
+}
+
+export async function endFoundingPro(_prev: FormState, fd: FormData): Promise<FormState> {
+  const { supabase } = await requireAdmin();
+  const providerId = text(fd.get("provider_id"));
+  if (!z.guid().safeParse(providerId).success) return { message: "Unknown provider" };
+  const { data, error } = await supabase.rpc("admin_revoke_pro_grant", { p_provider: providerId });
+  if (error) {
+    console.error("admin: admin_revoke_pro_grant failed:", error.message);
+    return { message: "Could not end founding Pro. Try again." };
+  }
+  revalidatePath(`/admin/providers/${providerId}`);
+  revalidatePublicPages(typeof data === "string" ? data : undefined);
+  return { ok: true, message: "Founding Pro ended" };
+}

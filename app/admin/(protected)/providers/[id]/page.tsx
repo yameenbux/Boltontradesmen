@@ -16,6 +16,7 @@ import {
 import { AvailabilityForm } from "@/components/provider/AvailabilityForm";
 import { EnquiryStats } from "@/components/provider/EnquiryStats";
 import { setProviderAvailability } from "@/app/admin/(protected)/providers/actions";
+import { FoundingProForm } from "@/components/admin/FoundingProForm";
 import { requireAdmin } from "@/lib/admin";
 import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
 import { dayMonthYear } from "@/lib/checks";
@@ -55,6 +56,13 @@ type Detail = {
 
 const LINKABLE = ["consented", "live", "paused"];
 
+// Today plus six months, as yyyy-mm-dd: the usual founding offer.
+function sixMonthsOn(): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 6);
+  return d.toISOString().slice(0, 10);
+}
+
 type ProDetail = {
   is_pro: boolean;
   subscriptions: {
@@ -74,12 +82,14 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { supabase } = await requireAdmin();
-  const [{ data }, { data: categories }, { data: enquiries }, { data: proData }] = await Promise.all([
+  const [{ data }, { data: categories }, { data: enquiries }, { data: proData }, { data: grantData }] = await Promise.all([
     supabase.rpc("admin_get_provider", { p_id: id }),
     supabase.from("categories").select("id, name").order("name"),
     supabase.rpc("admin_enquiry_stats", { p_provider: id }),
     supabase.rpc("admin_provider_pro", { p_provider: id }),
+    supabase.rpc("admin_pro_grant", { p_provider: id }),
   ]);
+  const grant = grantData as { until: string; note: string | null; active: boolean } | null;
   const p = data as Detail | null;
   const pro = proData as ProDetail | null;
   if (!p) notFound();
@@ -110,8 +120,16 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
       {pro && (
         <section aria-label="Pro" className="a-card">
           <h2>Pro</h2>
+          <h3>Founding Pro</h3>
+          <p className="text-ink-2" data-testid="grant-state">
+            {grant
+              ? `Free Pro until ${dayMonthYear(grant.until)}${grant.active ? "" : " (ended)"}${grant.note ? ` · ${grant.note}` : ""}`
+              : "No founding Pro. Switch it on to give this trader Pro free, without Stripe."}
+          </p>
+          <FoundingProForm providerId={p.id} grant={grant} suggestedUntil={sixMonthsOn()} />
+          <h3>Paid Pro</h3>
           {pro.subscriptions.length === 0 ? (
-            <p className="text-ink-2">Never had Pro.</p>
+            <p className="text-ink-2">Never had a Stripe subscription.</p>
           ) : (
             <>
               <p className="flex flex-wrap items-center gap-2">

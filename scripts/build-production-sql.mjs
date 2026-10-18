@@ -18,8 +18,10 @@
 //     --out docs/launch/price-guides-production.sql
 //   node scripts/build-production-sql.mjs --preset consent-link --from 20261012000033 --to 20261012000033 \
 //     --out docs/launch/consent-link-production.sql
-//   node scripts/build-production-sql.mjs --preset one-listing --from 20261012000034 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset one-listing --from 20261012000034 --to 20261012000034 \
 //     --out docs/launch/one-listing-production.sql
+//   node scripts/build-production-sql.mjs --preset pro-jobs --from 20261012000035 --to <newest> \
+//     --out docs/launch/pro-jobs-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -394,6 +396,45 @@ end
 $verify$;
 `;
 
+// Pro, part 2 (migration 000035 onwards): founding Pro, alerts, job requests, Ask Bolton alerts.
+const VERIFY_PRO_JOBS = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+declare
+  f text;
+  t text;
+begin
+  foreach f in array array['admin_grant_pro', 'admin_revoke_pro_grant', 'my_alert_settings', 'set_my_alert_settings',
+                           'submit_job_request', 'claim_job_request_alerts', 'my_job_requests', 'claim_question_alerts',
+                           'mark_notification'] loop
+    if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                   where n.nspname = 'public' and p.proname = f) then
+      raise exception 'Pro jobs check failed: function public.% is missing', f;
+    end if;
+  end loop;
+  foreach t in array array['pro_grants', 'trader_alert_settings', 'notifications', 'job_requests'] loop
+    if not (select relrowsecurity from pg_class where oid = ('public.' || t)::regclass) then
+      raise exception 'Pro jobs check failed: row level security is off on public.%', t;
+    end if;
+    if has_table_privilege('anon', 'public.' || t, 'select') or has_table_privilege('authenticated', 'public.' || t, 'select') then
+      raise exception 'Pro jobs check failed: public.% is readable without the server', t;
+    end if;
+  end loop;
+  if position('pro_grants' in pg_get_functiondef('private.is_pro(uuid)'::regprocedure)) = 0 then
+    raise exception 'Pro jobs check failed: is_pro does not count founding Pro';
+  end if;
+  if not exists (select 1 from information_schema.columns
+                 where table_schema = 'public' and table_name = 'provider_public' and column_name = 'takes_requests') then
+    raise exception 'Pro jobs check failed: provider_public has no column takes_requests';
+  end if;
+  if has_function_privilege('anon', 'public.submit_job_request(text, text, text, text, text, text, text)', 'execute')
+     or not has_function_privilege('service_role', 'public.submit_job_request(text, text, text, text, text, text, text)', 'execute') then
+    raise exception 'Pro jobs check failed: submit_job_request is not server only';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -460,6 +501,13 @@ const PRESETS = {
     done: "One listing per number database changes applied",
     requires: { version: "20261012000033", what: "the consent link script (docs/launch/consent-link-production.sql)" },
     verify: VERIFY_ONE_LISTING,
+  },
+  "pro-jobs": {
+    title: "Pro part 2 (founding Pro, job requests, alerts by text and email)",
+    done: "Pro jobs database changes applied",
+    // Re-creates provider_public (000030's body plus takes_requests) and private.is_pro.
+    requires: { version: "20261012000034", what: "the one listing per number script (docs/launch/one-listing-production.sql)" },
+    verify: VERIFY_PRO_JOBS,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

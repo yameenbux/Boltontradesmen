@@ -847,6 +847,17 @@ h1,h2,h3{text-wrap:balance}
   .q-contact{display:grid; grid-template-columns:1fr 1fr; gap:8px}
   .q-contact.one{grid-template-columns:1fr}
   .q-contact .btn{min-height:48px; font-size:16px}
+  /* Pro: "Request a quote" on the profile, and the trader's job requests */
+  .quote-card{display:grid; gap:10px}
+  .quote-card p{margin:0; color:var(--ink-2)}
+  .job-list{display:grid; gap:12px}
+  .job{display:grid; gap:10px; padding:14px; border:1px solid var(--line); border-radius:var(--r-lg); background:var(--surface)}
+  .job[data-status="won"]{border-color:var(--sage)}
+  .job[data-status="lost"], .job[data-status="spam"]{opacity:.7}
+  .job-head{display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 10px}
+  .job-head span{color:var(--ink-2); font-size:14px}
+  .job-body{margin:0; white-space:pre-line; overflow-wrap:anywhere}
+  .job-status{margin:0}
   .rec-report{font-size:14px; color:var(--ink-3)}
   .rec-report summary{display:inline-flex; align-items:center; min-height:40px; cursor:pointer; text-decoration:underline; text-underline-offset:3px}
   .rec-report ul{margin:0; padding:0; list-style:none}

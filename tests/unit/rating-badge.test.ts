@@ -29,6 +29,7 @@ const provider = (over: Partial<PublicProvider> = {}): PublicProvider => ({
   availability: null,
   idChecked: false,
   photos: [],
+  takesRequests: false,
   ...over,
 });
 

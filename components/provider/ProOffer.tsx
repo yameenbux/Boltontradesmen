@@ -5,6 +5,8 @@ import { PRO_ENQUIRY_THRESHOLD } from "@/lib/enquiries";
 // text, and never repeated anywhere else.
 
 const WHAT_PRO_ADDS = [
+  "“Request a quote” on your page: customers describe the job, and you get a text and an email straight away.",
+  "A text when someone in your areas asks Bolton for your trade, so you can be first to say you can help.",
   "An ID check: once we've seen your photo ID, your page shows “ID checked”.",
   "Up to 6 photos of your work on your page.",
   "A monthly report of your enquiries, here on your dashboard.",

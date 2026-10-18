@@ -51,7 +51,7 @@ test("the review policy explains the quick check and Verified job", async ({ pag
 test("the privacy notice covers signed-in people: Google, Resend and the 12 months", async ({ page }) => {
   await page.goto("/privacy");
   const main = page.locator("main");
-  await expect(main).toContainText("Resend sends our sign-in emails.");
+  await expect(main).toContainText("Resend sends our sign-in emails and Pro traders' alert emails.");
   await expect(main).toContainText("scrambled fingerprint of your sign-in");
   await expect(main).toContainText("12 months");
   await expect(main).toContainText("Proof files are deleted 12 months after we check them.");
@@ -123,12 +123,14 @@ test("policies are precise about same-trade reviews, sign-in details and reporti
 });
 
 // Plan 2b: sign-in moved to Google and email codes; the privacy notice names the new processors.
-test("the privacy notice names Google and Resend, and not Twilio", async ({ page }) => {
+// Pro's alerts (000035) brought Twilio back, for traders' alert texts only.
+test("the privacy notice names Google and Resend, and Twilio only for Pro traders' alert texts", async ({ page }) => {
   await page.goto("/privacy");
   const main = page.getByRole("main");
   await expect(main).toContainText("Resend");
   await expect(main).toContainText("Google account ID");
-  await expect(main).not.toContainText("Twilio");
+  await expect(main).toContainText("Twilio sends Pro traders' alert texts.");
+  expect(((await main.textContent()) ?? "").match(/Twilio/g)).toHaveLength(2);
 });
 
 test("the fake reviews policy says email-only reviews are checked first", async ({ page }) => {
@@ -198,7 +200,7 @@ test("no horizontal scroll at 360px on /cookies", async ({ page }) => {
 test("the privacy notice covers Cloudflare, local storage and listing requests", async ({ page }) => {
   await page.goto("/privacy");
   const main = page.getByRole("main");
-  await expect(main).toContainText("Supabase, Resend, Cloudflare and Stripe act for us as processors");
+  await expect(main).toContainText("Supabase, Resend, Twilio, Cloudflare and Stripe act for us as processors");
   await expect(main).toContainText("local storage");
   await expect(main.getByRole("link", { name: "cookies page" })).toHaveAttribute("href", "/cookies");
   await expect(main).toContainText("Traders who ask to be listed");

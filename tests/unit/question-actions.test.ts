@@ -13,6 +13,11 @@ const serviceRpc = vi.fn();
 vi.mock("@/lib/supabase/service", () => ({ createServiceClient: () => ({ rpc: serviceRpc }) }));
 const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath: (...a: unknown[]) => revalidatePath(...a) }));
+// A question that goes up straight away tells Pro traders after the response.
+const afterCalls: (() => unknown)[] = [];
+vi.mock("next/server", () => ({ after: (fn: () => unknown) => afterCalls.push(fn) }));
+const deliverQuestionAlerts = vi.fn();
+vi.mock("@/lib/notify", () => ({ deliverQuestionAlerts: (id: string) => deliverQuestionAlerts(id) }));
 
 import { askQuestion } from "@/app/platform/ask/new/actions";
 import { answerQuestion } from "@/app/platform/ask/[id]/answer/actions";
@@ -46,6 +51,8 @@ function signedIn(result: { data?: unknown; error?: unknown }) {
 }
 
 beforeEach(() => {
+  afterCalls.length = 0;
+  deliverQuestionAlerts.mockReset();
   auth.getUser.mockReset();
   rpc.mockReset();
   serviceRpc.mockReset();
@@ -74,12 +81,17 @@ describe("askQuestion", () => {
     });
     expect(revalidatePath).toHaveBeenCalledWith("/platform/ask");
     expect(revalidatePath).toHaveBeenCalledWith(`/platform/ask/${Q}`);
+    // Pro traders are told after the response.
+    expect(afterCalls).toHaveLength(1);
+    await afterCalls[0]();
+    expect(deliverQuestionAlerts).toHaveBeenCalledWith(Q);
   });
 
   it("says a held question is waiting for a check, without refreshing anything public", async () => {
     signedIn({ data: { id: Q, status: "pending" } });
     expect(await askQuestion({}, form(question))).toEqual({ ok: true, held: true });
     expect(revalidatePath).not.toHaveBeenCalled();
+    expect(afterCalls).toHaveLength(0);
   });
 
   it("checks the question before the database does", async () => {
