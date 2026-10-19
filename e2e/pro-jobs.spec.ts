@@ -131,7 +131,7 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   const asker = await newPage(browser, testInfo);
   await signInAsGoogle(asker, `pj-asker@${E2E_EMAIL_DOMAIN}`, { first: "Pia", surname: "Asker", next: "/platform/ask/new?category=man-and-van" });
   const ask = asker.getByRole("form", { name: "Your question" });
-  await expect(ask.getByLabel("What do you need?")).toHaveValue(/[0-9a-f-]{36}/);
+  await expect(ask.getByLabel("Which trade?")).toHaveValue(/[0-9a-f-]{36}/);
   await ask.getByLabel("Where?").selectOption("BL6");
   const body = `Anyone know a man and van for a wardrobe in BL6? ${tag()}`;
   await ask.getByRole("textbox", { name: /^Your question/ }).fill(body);
