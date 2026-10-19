@@ -2,9 +2,6 @@
 // migration 000029). An enquiry is a call or WhatsApp tap, one per person or device per Bolton day; the trader's own
 // taps and the admin's don't count. Profile views aren't recorded, so there are none to show.
 
-/** Enquiries before Pro is offered. Pro never changes ranking or badges. (settings.enquiry_threshold holds the same.) */
-export const PRO_ENQUIRY_THRESHOLD = 5;
-
 export type EnquiryCounts = { enquiries: number; calls: number; whatsapps: number };
 export type EnquiryMonth = EnquiryCounts & { month: string };
 export type EnquiryStats = {
@@ -76,19 +73,4 @@ export function chartBars(months: EnquiryMonth[]): ChartBar[] {
       current: i === months.length - 1,
     };
   });
-}
-
-export type ProProgress = {
-  /** Enquiries so far, capped at the threshold: "3 of 5". */
-  count: number;
-  of: number;
-  reached: boolean;
-  /** 0 to 100. */
-  percent: number;
-};
-
-/** Progress towards Pro, counted on all-time enquiries. */
-export function proProgress(allTime: number, threshold: number = PRO_ENQUIRY_THRESHOLD): ProProgress {
-  const count = Math.min(Math.max(0, Math.floor(allTime)), threshold);
-  return { count, of: threshold, reached: count >= threshold, percent: Math.round((count / threshold) * 100) };
 }

@@ -41,6 +41,10 @@ export default async function GetListedPage() {
             A basic listing is free and stays free. Tell us who you are and we&apos;ll WhatsApp or call you within 2
             working days. Nothing goes live until you&apos;ve seen your listing and agreed to it.
           </p>
+          <p className="lede">
+            Want job requests by text and quotes and invoices from your phone? <a href="/for-traders">See Pro</a>: you
+            can switch it on once you&apos;re listed.
+          </p>
         </div>
         <GetListedForm
           started={formStartToken()}

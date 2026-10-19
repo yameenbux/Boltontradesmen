@@ -87,16 +87,24 @@ export default function TermsPage() {
 
       <H2>Pro, for listed traders</H2>
       <p>
-        Being listed is free. Traders who have had 5 enquiries through the site can choose Pro, an optional paid extra,
-        for £10 a month or £100 a year. There is no VAT to add. Pro includes:
+        Being listed is free, and stays free. Any listed trader can choose Pro, an optional paid extra, for £10 a
+        month or £100 a year. There is no VAT to add. Pro includes:
       </p>
       <List
         items={[
+          "“Request a quote” on your page, with a text and an email to you for each request. Requests are for you only: we never pass them to anyone else.",
+          "Texts and emails when someone in your areas asks Bolton for your trade (up to 10 texts a day; you can turn them off).",
+          "Quotes and invoices you make on the site and send to your customers. You're responsible for what they say, including prices, and for your own records: we delete them after 2 years. Payment goes from your customer to your bank account; it never passes through us.",
+          "When you mark an invoice paid, one message from us to your customer asking for an honest review (you can switch this off for any invoice), and up to two payment reminders for an unpaid invoice.",
           "An ID check: we look at a photo of your passport or driving licence, and when we've checked it your page shows “ID checked”.",
           "Up to 6 photos of your own work on your page. They must be your work, and must not show anyone's personal details (including phone numbers) or anyone who hasn't agreed to be in them.",
           "A monthly report of your enquiries on your dashboard.",
         ]}
       />
+      <p>
+        We may also switch Pro on free for a set time (for example for our first traders). It ends on the date we give
+        you, and nothing is charged unless you choose to pay for Pro yourself.
+      </p>
       <p>
         Pro never changes where you are listed, your scores or your badges, and there is no way to filter lists by it.
       </p>

@@ -149,7 +149,7 @@ export const FAQ: Faq[] = [
         "Yes for residents: free to use, nothing to download, and no sign-up to look or call. You only sign in, with Google or your email, to leave a review.",
       ],
       [
-        "For traders, a basic listing is free and stays free. Later we'll offer an optional paid upgrade for extra features; you'll never be removed for not taking it, and it never moves anyone up the list.",
+        "For traders, a basic listing is free and stays free. Pro is an optional upgrade (£10 a month) with job requests by text, quotes and invoices, and more: see For traders. You'll never be removed for not taking it, and it never moves anyone up the list.",
       ],
     ],
   },

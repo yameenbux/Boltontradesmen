@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chartBars, plural, PRO_ENQUIRY_THRESHOLD, proProgress, toEnquiryStats } from "@/lib/enquiries";
+import { chartBars, plural, toEnquiryStats } from "@/lib/enquiries";
 
 const month = (m: string, enquiries: number, calls = enquiries, whatsapps = 0) => ({ month: m, enquiries, calls, whatsapps });
 
@@ -66,18 +66,5 @@ describe("chartBars", () => {
 
   it("an all-quiet half-year has no bars at all", () => {
     expect(chartBars(months.map((m) => ({ ...m, enquiries: 0 }))).every((b) => b.height === 0)).toBe(true);
-  });
-});
-
-describe("proProgress", () => {
-  it("counts towards the threshold, a named constant of 5", () => {
-    expect(PRO_ENQUIRY_THRESHOLD).toBe(5);
-    expect(proProgress(3)).toEqual({ count: 3, of: 5, reached: false, percent: 60 });
-    expect(proProgress(0)).toEqual({ count: 0, of: 5, reached: false, percent: 0 });
-  });
-
-  it("is reached at 5 and stays at 5 of 5 past it", () => {
-    expect(proProgress(5)).toEqual({ count: 5, of: 5, reached: true, percent: 100 });
-    expect(proProgress(12)).toEqual({ count: 5, of: 5, reached: true, percent: 100 });
   });
 });

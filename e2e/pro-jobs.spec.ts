@@ -213,3 +213,23 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   expect(await alertsFor("review_request", `'${invoiceId}'`)).toEqual(["sms:sent"]);
   await expect(trader.getByTestId("doc-status")).toHaveText("Paid");
 });
+
+test("For traders: the free listing and Pro, side by side, linked from the site", async ({ page }) => {
+  const res = await page.goto("/for-traders");
+  expect(res?.headers()["set-cookie"]).toBeUndefined();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("More work from Bolton, without paying per lead");
+  const free = page.getByRole("region", { name: "Free listing" });
+  await expect(free).toContainText("no lead fees");
+  const pro = page.getByRole("region", { name: "Pro" });
+  await expect(pro).toContainText("£10 a month, or £100 a year");
+  await expect(pro).toContainText("Quotes and invoices from your phone");
+  await expect(pro.getByRole("link", { name: "Get listed, then go Pro" })).toHaveAttribute("href", "/get-listed");
+  // Stripe isn't set up in E2E: nothing claims it can be bought today.
+  await expect(pro.getByRole("link", { name: /Already listed\? Your listing/ })).toHaveAttribute("href", "/platform/provider");
+  await expect(page.getByRole("main")).toContainText("Pro never moves you up the list");
+
+  await page.goto("/get-listed");
+  await expect(page.getByRole("link", { name: "See Pro" })).toHaveAttribute("href", "/for-traders");
+  await page.goto("/terms");
+  await expect(page.getByRole("main")).toContainText("Any listed trader can choose Pro");
+});

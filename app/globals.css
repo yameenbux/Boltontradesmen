@@ -670,6 +670,19 @@ h1,h2,h3{text-wrap:balance}
   .pro-card .pro-title{font-size:16.5px; font-weight:700; color:color-mix(in srgb,var(--sage) 70%,var(--ink))}
   .pro-list{display:grid; gap:4px; margin:0; padding-left:20px; list-style:disc; font-size:15px; color:var(--ink-2)}
   .pro-list li::marker{color:var(--sage)}
+  /* "For traders": free listing and Pro */
+  .trade-plans .plan{gap:14px}
+  .plan-head{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:4px 12px}
+  .plan-head h2{margin:0}
+  .plan-price{margin:0; color:var(--ink-2)}
+  .plan-price b{font-family:var(--display); font-size:32px; color:var(--ink)}
+  .plan-pro{border:2px solid var(--brick)}
+  .plan-sub, .plan-note{margin:0; color:var(--ink-2)}
+  .plan-list{display:grid; gap:10px; margin:0; padding:0; list-style:none}
+  .plan-list li{display:grid; grid-template-columns:22px 1fr; gap:10px; align-items:start; line-height:1.45}
+  .plan-list svg{width:20px; height:20px; margin-top:2px; color:var(--sage)}
+  .plan-steps{display:grid; gap:6px; margin:0; padding-left:22px; list-style:decimal; color:var(--ink-2)}
+  .plan-ctas{display:grid; gap:8px}
   .pro-card .pro-list{color:var(--ink)}
   .pro-offer{gap:10px}
   .pro-upgrade-form{gap:12px; margin-top:4px}
