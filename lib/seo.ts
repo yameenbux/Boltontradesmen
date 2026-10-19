@@ -28,7 +28,9 @@ export const DISALLOWED_PATHS = ["/admin", "/api/", "/platform/consent/", "/plat
 
 export const POLICY_PATHS = ["/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy", "/cookies"] as const;
 
-export function buildRobots(base: string = siteUrl()): MetadataRoute.Robots {
+export function buildRobots(base: string = siteUrl(), locked: boolean = !!process.env.SITE_LOCK_PASSWORD?.trim()): MetadataRoute.Robots {
+  // Before launch (lib/site-lock.ts) nothing may be crawled.
+  if (locked) return { rules: { userAgent: "*", disallow: "/" } };
   return {
     rules: { userAgent: "*", allow: "/", disallow: [...DISALLOWED_PATHS] },
     sitemap: `${base}/sitemap.xml`,
