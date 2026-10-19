@@ -22,13 +22,15 @@ import { saveAlertSettings } from "@/app/platform/provider/jobs-actions";
 import { saveBilling } from "@/app/platform/provider/docs/actions";
 import type { Billing, TradeDoc } from "@/lib/trade-docs";
 import { nationalNumber } from "@/lib/alert-text";
-import { requireMember } from "@/lib/auth";
+import { requireAccount } from "@/lib/auth";
 import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
 import { dayMonthYear } from "@/lib/checks";
 import { toEnquiryStats } from "@/lib/enquiries";
 import { platformPath } from "@/lib/paths";
 import { stripeConfig, toProStatus } from "@/lib/pro";
 import { stillOpen } from "@/lib/review-form";
+import { tradeNames } from "@/lib/trade-names";
+import type { MyListingRequest } from "@/lib/trader-setup";
 import { reviewShare } from "@/lib/review-link";
 import { badgeShare, pageShare } from "@/lib/share";
 import {
@@ -156,14 +158,31 @@ export default async function ProviderArea({
 }: {
   searchParams: Promise<{ withdrawn?: string; pro?: string }>;
 }) {
-  const { supabase } = await requireMember(platformPath("provider"));
+  // No Welcome here: a new trader's account gets its name from the trader form.
+  const { supabase, account } = await requireAccount(platformPath("provider"));
   const { withdrawn, pro: proParam } = await searchParams;
-  const { data, error } = await supabase.rpc("provider_my_reviews");
-  if (error) throw new Error(`provider_my_reviews failed: ${error.message}`);
-  const listings = (data ?? []) as Listing[];
+  let listings: Listing[] = [];
+  if (account?.displayName) {
+    const { data, error } = await supabase.rpc("provider_my_reviews");
+    if (error) throw new Error(`provider_my_reviews failed: ${error.message}`);
+    listings = (data ?? []) as Listing[];
+  }
 
   if (listings.length === 0) {
-    if (withdrawn !== "1") return <TraderStart />;
+    if (withdrawn !== "1") {
+      const [{ data: req, error: reqError }, trades] = await Promise.all([
+        supabase.rpc("my_listing_request"),
+        tradeNames(),
+      ]);
+      if (reqError) throw new Error(`my_listing_request failed: ${reqError.message}`);
+      return (
+        <TraderStart
+          needsName={!account?.displayName}
+          trades={trades}
+          request={(req as MyListingRequest | null) ?? null}
+        />
+      );
+    }
     return (
       <main className="auth">
         <section className="auth-card" aria-labelledby="provider-title">

@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { TRADER_START } from "@/lib/account-intent";
 import { safeNext } from "@/lib/safe-next";
 import { createServerAuthClient } from "@/lib/supabase/server";
 
@@ -19,7 +20,7 @@ export type Account = {
   email: string | null;
 };
 
-type AccountRow = {
+export type AccountRow = {
   user_id: string;
   display_name: string | null;
   postcode_district: string | null;
@@ -55,8 +56,11 @@ export function signInPath(next: string): string {
   return `/platform/sign-in?next=${encodeURIComponent(safeNext(next))}`;
 }
 
+/** Welcome, coming back to `next`. A trader's start skips it: the trader form asks for the name itself. */
 export function welcomePath(next: string): string {
-  return `/platform/welcome?next=${encodeURIComponent(safeNext(next))}`;
+  const to = safeNext(next);
+  if (to === TRADER_START) return to;
+  return `/platform/welcome?next=${encodeURIComponent(to)}`;
 }
 
 /** The signed-in person's client and user, or a redirect to sign-in that comes back to `next`. */
@@ -67,8 +71,8 @@ export async function requireSignedIn(next: string) {
   return { supabase, user: data.user };
 }
 
-/** As requireSignedIn, plus a finished profile: no profile → Welcome; a deleted account is signed out. */
-export async function requireMember(next: string) {
+/** As requireSignedIn, plus the account (null, or without a name, before Welcome); a deleted account is signed out. */
+export async function requireAccount(next: string) {
   const { supabase, user } = await requireSignedIn(next);
   const { data, error } = await supabase.rpc("my_account");
   if (error) throw new Error(`my_account failed: ${error.message}`);
@@ -77,6 +81,12 @@ export async function requireMember(next: string) {
     await supabase.auth.signOut();
     redirect(signInPath(next));
   }
+  return { supabase, user, account };
+}
+
+/** As requireAccount, plus a finished profile: no profile → Welcome. */
+export async function requireMember(next: string) {
+  const { supabase, user, account } = await requireAccount(next);
   if (!account || !account.displayName) redirect(welcomePath(next));
   return { supabase, user, account };
 }

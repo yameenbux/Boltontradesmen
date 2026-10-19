@@ -78,7 +78,7 @@ test("a trader links their listing with the admin's sign-in link, replies, and t
   await section.getByRole("button", { name: "Unlink" }).click();
   await expect(section.getByRole("button", { name: "Trader sign-in link" })).toBeVisible();
   await trader.goto("/platform/provider");
-  await expect(trader.getByRole("heading", { name: "Let's get your business on Bolton Vouched" })).toBeVisible();
+  await expect(trader.getByRole("heading", { name: "Tell us about your business" })).toBeVisible();
 });
 
 test("a malformed trader link says it isn't valid", async ({ page }) => {

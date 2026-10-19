@@ -3,9 +3,9 @@ import { ChatIcon, LockIcon } from "@/components/auth/icons";
 import { GetListedForm } from "@/components/listing/GetListedForm";
 import { TRADER_SIGN_IN } from "@/lib/account-intent";
 import { BL_DISTRICTS } from "@/lib/districts";
-import { listCategoryGroups } from "@/lib/directory";
 import { formStartToken } from "@/lib/form-timing";
 import { pageMetadata } from "@/lib/seo";
+import { tradeNames } from "@/lib/trade-names";
 import { turnstileSiteKey } from "@/lib/turnstile";
 
 // Rendered per request, like the sign-in page: the Turnstile site key is read at request time and the form carries
@@ -18,17 +18,6 @@ export const metadata: Metadata = pageMetadata({
     "Ask to be listed on Bolton Vouched, the free local directory of recommended trades and services in Bolton. Tell us your business, trade and number and we'll be in touch within 2 working days.",
   path: "/get-listed",
 });
-
-/** Category names for the trade field's suggestions. Public data; the form works without them. */
-async function tradeNames(): Promise<string[]> {
-  try {
-    const groups = await listCategoryGroups();
-    return [...new Set(groups.flatMap((g) => g.categories.map((c) => c.name)))].sort((a, b) => a.localeCompare(b));
-  } catch (err) {
-    console.error("get-listed: could not load the trade suggestions:", err);
-    return [];
-  }
-}
 
 export default async function GetListedPage() {
   const trades = await tradeNames();
@@ -47,7 +36,7 @@ export default async function GetListedPage() {
             can switch it on once you&apos;re listed.
           </p>
           <p className="lede">
-            Already listed? <a href={TRADER_SIGN_IN}>Trader sign in</a>
+            Quicker with an account: <a href={TRADER_SIGN_IN}>log in or join as a trader</a> and fill in one short form.
           </p>
         </div>
         <GetListedForm

@@ -22,8 +22,10 @@
 //     --out docs/launch/one-listing-production.sql
 //   node scripts/build-production-sql.mjs --preset pro-jobs --from 20261012000035 --to 20261012000035 \
 //     --out docs/launch/pro-jobs-production.sql
-//   node scripts/build-production-sql.mjs --preset quotes-invoices --from 20261012000036 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset quotes-invoices --from 20261012000036 --to 20261012000036 \
 //     --out docs/launch/quotes-invoices-production.sql
+//   node scripts/build-production-sql.mjs --preset trader-sign-up --from 20261012000037 --to <newest> \
+//     --out docs/launch/trader-sign-up-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -468,6 +470,35 @@ end
 $verify$;
 `;
 
+const VERIFY_TRADER_SIGN_UP = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+declare
+  f text;
+begin
+  foreach f in array array['plan', 'user_id'] loop
+    if not exists (select 1 from information_schema.columns
+                   where table_schema = 'public' and table_name = 'listing_requests' and column_name = f) then
+      raise exception 'Trader sign-up check failed: listing_requests.% is missing', f;
+    end if;
+  end loop;
+  foreach f in array array['my_listing_request', 'admin_approve_listing_request'] loop
+    if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                   where n.nspname = 'public' and p.proname = f) then
+      raise exception 'Trader sign-up check failed: function public.% is missing', f;
+    end if;
+  end loop;
+  if has_function_privilege('anon', 'public.submit_listing_request(text, text, text, text, text, text, text, text, uuid, text)', 'execute')
+     or not has_function_privilege('service_role', 'public.submit_listing_request(text, text, text, text, text, text, text, text, uuid, text)', 'execute') then
+    raise exception 'Trader sign-up check failed: submit_listing_request is not server only';
+  end if;
+  if has_function_privilege('anon', 'public.admin_approve_listing_request(uuid, uuid)', 'execute') then
+    raise exception 'Trader sign-up check failed: admin_approve_listing_request is open to anyone';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -547,6 +578,12 @@ const PRESETS = {
     done: "Quotes and invoices database changes applied",
     requires: { version: "20261012000035", what: "the Pro jobs script (docs/launch/pro-jobs-production.sql)" },
     verify: VERIFY_QUOTES,
+  },
+  "trader-sign-up": {
+    title: "trader sign-up (one form, Free or Pro, approve and notify)",
+    done: "Trader sign-up database changes applied",
+    requires: { version: "20261012000036", what: "the quotes and invoices script (docs/launch/quotes-invoices-production.sql)" },
+    verify: VERIFY_TRADER_SIGN_UP,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

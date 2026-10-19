@@ -20,9 +20,9 @@ export const metadata: Metadata = {
 function heading(next: string) {
   if (/^\/platform\/p\/[^/]+\/review/.test(next)) return "Sign in to leave a review";
   if (next.startsWith("/platform/report/")) return "Sign in to report a review";
-  if (next.startsWith("/platform/provider")) return "Trader sign in";
+  if (next.startsWith("/platform/provider")) return "Log in or join as a trader";
   if (next.startsWith("/platform/link/")) return "Sign in to link your listing";
-  return "Sign in to Bolton Vouched";
+  return "Log in or create an account";
 }
 
 function Divider({ children }: { children: string }) {
@@ -93,8 +93,8 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           </span>
           {trader ? (
             <span>
-              Not listed yet? Sign in and we&apos;ll show you how to get listed. It&apos;s free. Already listed? Use the
-              email or mobile number you gave us.
+              New to Bolton Vouched? Next is one short form about your business, with Free or Pro. Already listed?
+              Use the email or mobile number you gave us.
             </span>
           ) : (
             <span>Looking and calling never needs an account. You only sign in to ask, review or reply.</span>

@@ -1,5 +1,8 @@
 import "server-only";
 import {
+  approvalEmail,
+  approvalSms,
+  type Approval,
   docEmail,
   jobAlertEmail,
   jobAlertSms,
@@ -164,4 +167,20 @@ export async function deliverQuoteAnswerAlert(docId: string): Promise<void> {
   } catch (err) {
     console.error("notify: quote answer alert failed:", err);
   }
+}
+
+/**
+ * Tells a trader their listing is approved, by email (the account's) and text (the request's mobile). Pro choosers
+ * land on the Pro offer on their listing page, where they pay. Best effort: a failure is logged, never thrown.
+ */
+export async function deliverApproval(to: { email: string | null; phone: string | null }, a: Approval): Promise<{ email: boolean; sms: boolean }> {
+  // Signed out, the listing page sends them through sign-in and back; the browser keeps the #pro.
+  const link = `${absoluteUrl(platformPath("provider"))}${a.pro ? "#pro" : ""}`;
+  const [email, sms] = await Promise.all([
+    to.email ? sendEmail(to.email, approvalEmail(a, link)) : Promise.resolve({ ok: false as const, reason: "no email" }),
+    to.phone ? sendSms(to.phone, approvalSms(a, link)) : Promise.resolve({ ok: false as const, reason: "no mobile" }),
+  ]);
+  if (!email.ok) console.error("notify: approval email not sent:", email.reason);
+  if (!sms.ok) console.error("notify: approval text not sent:", sms.reason);
+  return { email: email.ok, sms: sms.ok };
 }

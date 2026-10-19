@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { WelcomeForm } from "@/components/auth/WelcomeForm";
-import { asksIntent } from "@/lib/account-intent";
 import { requireSignedIn } from "@/lib/auth";
 import { safeNext } from "@/lib/safe-next";
 
@@ -30,7 +29,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
             A couple of quick details. We show your first name and the first letter of your surname, like <b>Sarah K.</b>
           </p>
         </div>
-        <WelcomeForm next={next} askIntent={asksIntent(next)} />
+        <WelcomeForm next={next} />
       </section>
     </main>
   );

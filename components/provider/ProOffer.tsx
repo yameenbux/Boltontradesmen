@@ -20,7 +20,7 @@ function Includes() {
 /** Stripe is set up: choose monthly or yearly, then pay on Stripe's page. */
 export function ProUpgradeCard({ providerId, ended = false }: { providerId: string; ended?: boolean }) {
   return (
-    <div className="pro-card pro-offer" data-testid="pro-upgrade">
+    <div className="pro-card pro-offer" id="pro" data-testid="pro-upgrade">
       <p className="pro-title">{ended ? "Restart Pro" : "Upgrade to Pro"}</p>
       <p>
         {ended

@@ -1,60 +1,109 @@
-import { ChatIcon, ChevronRight, ShopIcon } from "@/components/auth/icons";
-import { GET_LISTED, SUPPORT_WHATSAPP_DISPLAY, whatsappTicket } from "@/components/site/content";
+import { TickIcon } from "@/components/auth/icons";
+import { TraderSetupForm } from "@/components/provider/TraderSetupForm";
+import { SUPPORT_WHATSAPP_DISPLAY, whatsappTicket } from "@/components/site/content";
 import { Button } from "@/components/ui/Button";
 import { platformPath } from "@/lib/paths";
+import { FREE_FEATURES, PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";
+import type { MyListingRequest } from "@/lib/trader-setup";
 
 export const LINK_ME_WHATSAPP = whatsappTicket(
   "Hi, I'm already listed on Bolton Vouched. Please send me the link to connect my listing to my account. Business name: …",
 );
 
+/** What was sent and what happens next: approval, then a notification (and, for Pro, the payment link). */
+function SentForReview({ request }: { request: MyListingRequest }) {
+  const pro = request.plan === "pro";
+  return (
+    <main className="auth">
+      <section className="auth-card" aria-labelledby="provider-title" data-testid="sent-for-review">
+        <div>
+          <p className="eyebrow">Sent for review</p>
+          <h1 id="provider-title">Thanks, we&apos;ve got your details</h1>
+          <p className="lede">
+            <b>{request.business_name}</b> is with us for review. Once it&apos;s approved, you&apos;ll get a notification by
+            email and text, usually within 2 working days.
+          </p>
+        </div>
+      </section>
+
+      <section className={`auth-card plan${pro ? " plan-pro" : ""}`} aria-labelledby="your-plan-title">
+        <div className="plan-head">
+          <h2 id="your-plan-title">Your listing: {pro ? "Pro" : "Free"}</h2>
+          <p className="plan-price">
+            {pro ? (
+              <>
+                <b>£10</b> a month, or {PRO_PRICE.annual}
+              </>
+            ) : (
+              <>
+                <b>£0</b> for good
+              </>
+            )}
+          </p>
+        </div>
+        {pro && <p className="plan-sub">Everything in Free, plus:</p>}
+        <ul className="plan-list">
+          {(pro ? PRO_FEATURES.map((f) => f.title) : FREE_FEATURES).map((f) => (
+            <li key={f}>
+              <TickIcon />
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="plan-note">
+          {pro
+            ? "Nothing to pay yet. When you're approved, your notification takes you straight to pay by card, and Pro switches on as soon as you do. Cancel any time."
+            : "Free, for good: no card, nothing to pay. You can add Pro any time from your listing page."}
+        </p>
+      </section>
+
+      <p className="lede">
+        Got something wrong? WhatsApp us on{" "}
+        <a href={whatsappTicket(`Hi, about my Bolton Vouched request for ${request.business_name}: …`)}>
+          {SUPPORT_WHATSAPP_DISPLAY}
+        </a>
+        .
+      </p>
+      <Button href={platformPath()} variant="secondary">
+        Browse Bolton Vouched
+      </Button>
+    </main>
+  );
+}
+
 /**
- * The trader start, for a signed-in account with no listing linked yet: get listed (free), or have an existing
- * listing linked (we send a one-time trader link). Replaces a bare "No listing found".
+ * The trader start, for a signed-in account with no listing linked: one form (business, area, mobile, Free or Pro),
+ * or, once it's sent, "sent for review". An existing listing is linked by the one-time link we send.
  */
-export function TraderStart() {
+export function TraderStart({
+  needsName,
+  trades,
+  request,
+}: {
+  needsName: boolean;
+  trades: string[];
+  request: MyListingRequest | null;
+}) {
+  if (request) return <SentForReview request={request} />;
   return (
     <main className="auth">
       <section className="auth-card" aria-labelledby="provider-title">
         <div>
           <p className="eyebrow">For traders</p>
-          <h1 id="provider-title">Let&apos;s get your business on Bolton Vouched</h1>
+          <h1 id="provider-title">Tell us about your business</h1>
           <p className="lede">
-            You&apos;re signed in, but no listing is linked to this account yet. Choose the one that fits you.
-          </p>
-          <p className="lede">
-            Want job requests by text, and quotes and invoices from your phone? <a href="/for-traders">See Pro</a>.
+            One short form. We check every listing by hand, then you&apos;ll get a notification when you&apos;re approved.
           </p>
         </div>
+        <TraderSetupForm needsName={needsName} trades={trades} />
       </section>
-
-      <a href={GET_LISTED} className="account-link press lift" data-testid="trader-start-get-listed">
-        <span className="ai">
-          <ShopIcon />
-        </span>
-        <span>
-          <b>I&apos;m not listed yet</b>
-          <small>Get listed for free. Tell us your trade and areas and we&apos;ll be in touch within 2 working days.</small>
-        </span>
-        <ChevronRight />
-      </a>
-
-      <a href={LINK_ME_WHATSAPP} className="account-link press lift" data-testid="trader-start-link">
-        <span className="ai">
-          <ChatIcon />
-        </span>
-        <span>
-          <b>I&apos;m already listed</b>
-          <small>
-            WhatsApp us on {SUPPORT_WHATSAPP_DISPLAY} and we&apos;ll send a link that connects your listing to this
-            account.
-          </small>
-        </span>
-        <ChevronRight />
-      </a>
-
-      <Button href={platformPath()} variant="secondary">
-        I&apos;m not a trader: find a trader instead
-      </Button>
+      <p className="lede">
+        Already listed? <a href={LINK_ME_WHATSAPP}>WhatsApp us</a> and we&apos;ll send the link that connects it to this
+        account.
+      </p>
+      <p className="lede">
+        Not a trader? <a href={platformPath()}>Find a trader instead</a>.
+      </p>
     </main>
   );
 }

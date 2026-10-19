@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { afterWelcome, asksIntent, isIntent } from "@/lib/account-intent";
 import { signInPath } from "@/lib/auth";
 import type { FormState } from "@/lib/admin-shared";
 import { formatDisplayName, InvalidNameError } from "@/lib/display-name";
@@ -14,13 +13,12 @@ function field(fd: FormData, name: string): string {
   return typeof v === "string" ? v : "";
 }
 
-/** Welcome: first name + surname (stored only as "Sarah K."), area, and (with no set destination) customer or trader. */
+/** Welcome: first name + surname (stored only as "Sarah K."), and area. */
 export async function completeOnboarding(_prev: FormState, fd: FormData): Promise<FormState> {
   const values = {
     first_name: field(fd, "first_name"),
     surname: field(fd, "surname"),
     district: field(fd, "district"),
-    intent: field(fd, "intent"),
     next: field(fd, "next"),
   };
   const next = safeNext(values.next);
@@ -39,7 +37,6 @@ export async function completeOnboarding(_prev: FormState, fd: FormData): Promis
     else errors.first_name = msg;
   }
   if (!isDistrictChoice(values.district)) errors.district = "Choose your area";
-  if (asksIntent(next) && !isIntent(values.intent)) errors.intent = "Choose one";
   if (Object.keys(errors).length) return { errors, values };
 
   const { data, error } = await supabase.rpc("complete_onboarding", {
@@ -60,5 +57,5 @@ export async function completeOnboarding(_prev: FormState, fd: FormData): Promis
     console.error("welcome: complete_onboarding refused:", refused);
     return { message: "Something went wrong saving your details. Please try again.", values };
   }
-  redirect(afterWelcome(next, isIntent(values.intent) ? values.intent : null));
+  redirect(next);
 }

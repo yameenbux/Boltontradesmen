@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { GET_LISTED } from "@/components/site/content";
 import { Button } from "@/components/ui/Button";
 import { TRADER_SIGN_IN } from "@/lib/account-intent";
 import { platformPath } from "@/lib/paths";
@@ -37,9 +36,9 @@ export default function ForTradersPage() {
             and your enquiries are never sold to anyone else.
           </p>
         </div>
-        <Button href={GET_LISTED}>Get listed free</Button>
+        <Button href={TRADER_SIGN_IN}>Get listed free</Button>
         <p className="lede">
-          Already listed? <a href={TRADER_SIGN_IN}>Trader sign in</a>
+          Already have an account? <a href={TRADER_SIGN_IN}>Log in</a>
         </p>
       </section>
 
@@ -58,7 +57,7 @@ export default function ForTradersPage() {
             </li>
           ))}
         </ul>
-        <Button href={GET_LISTED} variant="secondary">
+        <Button href={TRADER_SIGN_IN} variant="secondary">
           Get listed free
         </Button>
       </section>
@@ -83,12 +82,12 @@ export default function ForTradersPage() {
         </ul>
         <p className="plan-note">Cancel any time. No VAT to add.</p>
         <ol className="plan-steps" aria-label="How to get Pro">
-          <li>Get listed (free): we check your details and you see your page before it goes live.</li>
-          <li>Sign in to your listing page.</li>
-          <li>{buyable ? "Choose Pro, monthly or yearly, and pay by card. It switches on straight away." : "Choose Pro there as soon as it opens."}</li>
+          <li>Log in or join as a trader, and fill in one short form. Choose Pro there.</li>
+          <li>We check your details by hand and you get a notification when you&apos;re approved.</li>
+          <li>{buyable ? "Pay by card, monthly or yearly, from that notification. Pro switches on straight away." : "Pay for Pro from your listing page as soon as it opens."}</li>
         </ol>
         <div className="plan-ctas">
-          <Button href={GET_LISTED}>Get listed, then go Pro</Button>
+          <Button href={TRADER_SIGN_IN}>Join as a trader with Pro</Button>
           <Button href={platformPath("provider")} variant="secondary">
             Already listed? {buyable ? "Upgrade now" : "Your listing"}
           </Button>
