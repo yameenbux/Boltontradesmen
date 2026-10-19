@@ -49,7 +49,7 @@ export default async function AskNewPage({
         <AskForm
           groups={groups.map(({ group, categories }) => ({
             name: group.name,
-            categories: categories.map((c) => ({ id: c.id, name: c.name })),
+            categories: categories.map((c) => ({ id: c.id, slug: c.slug, name: c.name })),
           }))}
           defaultCategory={defaultCategory}
           defaultDistrict={account.district && isDistrict(account.district) ? account.district : ""}
