@@ -256,7 +256,7 @@ describe("completeOnboarding", () => {
     await expect(
       completeOnboarding(
         {},
-        form({ first_name: "sarah", surname: "Khan", district: "BL3", group_code: "Bolton", next: "/platform/account" }),
+        form({ first_name: "sarah", surname: "Khan", district: "BL3", group_code: "Bolton", intent: "customer", next: "/platform/account" }),
       ),
     ).rejects.toThrow("REDIRECT /platform/account");
     expect(rpc).toHaveBeenCalledWith("complete_onboarding", {
@@ -270,7 +270,7 @@ describe("completeOnboarding", () => {
     rpc.mockResolvedValue({ data: { error: "bad_group_code" }, error: null });
     const res = await completeOnboarding(
       {},
-      form({ first_name: "sarah", surname: "Khan", district: "BL3", next: "/platform/account" }),
+      form({ first_name: "sarah", surname: "Khan", district: "BL3", intent: "customer", next: "/platform/account" }),
     );
     expect(res.errors).toBeUndefined();
     expect(res.message).toBe("Something went wrong saving your details. Please try again.");
@@ -313,6 +313,32 @@ describe("completeOnboarding", () => {
       p_district: "BL3",
       p_group_code: "",
     });
+  });
+
+  it("asks customer or trader when the sign-in had no particular destination", async () => {
+    const res = await completeOnboarding({}, form({ first_name: "Sarah", surname: "Khan", district: "BL3", next: "" }));
+    expect(res.errors?.intent).toBe("Choose one");
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("sends a trader to the trader start", async () => {
+    rpc.mockResolvedValue({ data: ACCOUNT, error: null });
+    await expect(
+      completeOnboarding(
+        {},
+        form({ first_name: "Tom", surname: "Trades", district: "BL3", intent: "trader", next: "/platform" }),
+      ),
+    ).rejects.toThrow("REDIRECT /platform/provider");
+  });
+
+  it("keeps a set destination for a trader too (a trader link, a review)", async () => {
+    rpc.mockResolvedValue({ data: ACCOUNT, error: null });
+    await expect(
+      completeOnboarding(
+        {},
+        form({ first_name: "Tom", surname: "Trades", district: "BL3", intent: "trader", next: "/platform/link/abc" }),
+      ),
+    ).rejects.toThrow("REDIRECT /platform/link/abc");
   });
 
   it("sends a signed-out person to sign in", async () => {

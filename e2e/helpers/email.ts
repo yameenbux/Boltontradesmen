@@ -4,7 +4,7 @@ import { latestCode } from "./mailbox";
 
 const DB_URL = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
-type Options = { first?: string; surname?: string; district?: string; next?: string };
+type Options = { first?: string; surname?: string; district?: string; next?: string; intent?: "customer" | "trader" };
 
 /**
  * Signs in on /platform/sign-in with a 6-digit email code read from the local inbox. If Welcome appears
@@ -26,6 +26,9 @@ export async function signInWithEmail(page: Page, email: string, opts: Options =
     await page.getByLabel("First name").fill(opts.first ?? "Test");
     await page.getByLabel("Surname").fill(opts.surname ?? "Resident");
     await page.getByLabel("Your area").selectOption(opts.district ?? "BL1");
+    // Asked only when the sign-in had no particular destination.
+    const intent = page.getByRole("radio", { name: opts.intent === "trader" ? /I'm a trader/ : /looking for a trader/ });
+    if (await intent.count()) await intent.check();
     await page.getByRole("button", { name: "Save and continue" }).click();
     await page.waitForURL((u) => u.pathname !== "/platform/welcome");
   }

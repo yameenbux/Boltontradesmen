@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ChatIcon, LockIcon } from "@/components/auth/icons";
 import { GetListedForm } from "@/components/listing/GetListedForm";
+import { TRADER_SIGN_IN } from "@/lib/account-intent";
 import { BL_DISTRICTS } from "@/lib/districts";
 import { listCategoryGroups } from "@/lib/directory";
 import { formStartToken } from "@/lib/form-timing";
@@ -44,6 +45,9 @@ export default async function GetListedPage() {
           <p className="lede">
             Want job requests by text and quotes and invoices from your phone? <a href="/for-traders">See Pro</a>: you
             can switch it on once you&apos;re listed.
+          </p>
+          <p className="lede">
+            Already listed? <a href={TRADER_SIGN_IN}>Trader sign in</a>
           </p>
         </div>
         <GetListedForm

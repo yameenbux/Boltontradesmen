@@ -6,9 +6,9 @@ import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
 
 test("someone with no listing sees how to find theirs", async ({ page }) => {
   await signInWithEmail(page, `val@${E2E_EMAIL_DOMAIN}`, { first: "Val", surname: "Moor", next: "/platform/provider" });
-  await expect(
-    page.getByText("We couldn't find a listing linked to your account. If you're listed, ask us for your trader sign-in link."),
-  ).toBeVisible();
+  await expect(page.getByText("You're signed in, but no listing is linked to this account yet.")).toBeVisible();
+  await expect(page.getByRole("link", { name: /I'm not listed yet/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /I'm already listed/ })).toBeVisible();
 });
 
 test("a resident reports a review; the admin sees it under Flags", async ({ page }) => {

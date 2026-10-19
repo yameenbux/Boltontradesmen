@@ -20,17 +20,50 @@ function initialsOf(name: string): string {
   return (Array.from(first)[0] + (last ? Array.from(last)[0] : "")).toLocaleUpperCase("en-GB");
 }
 
-export function WelcomeForm({ next }: { next: string }) {
+/** `askIntent`: show "looking for a trader / I'm a trader" (only when the sign-in had no particular destination). */
+export function WelcomeForm({ next, askIntent }: { next: string; askIntent: boolean }) {
   const [state, action, pending] = useActionState(completeOnboarding, {} as FormState);
   const v = (k: string) => (typeof state.values?.[k] === "string" ? (state.values[k] as string) : "");
   const [first, setFirst] = useState(v("first_name"));
   const [surname, setSurname] = useState(v("surname"));
+  const [intent, setIntent] = useState(v("intent"));
   const shown = preview(first, surname);
   const err = state.errors ?? {};
 
   return (
     <form action={action} className="auth-form">
       <input type="hidden" name="next" value={next} />
+      {askIntent && (
+        <fieldset className="avail-opts intent-opts" aria-describedby={err.intent ? "intent-err" : undefined}>
+          <legend className="avail-legend">What brings you to Bolton Vouched?</legend>
+          <label className="avail-opt">
+            <input
+              type="radio"
+              name="intent"
+              value="customer"
+              required
+              checked={intent === "customer"}
+              onChange={() => setIntent("customer")}
+            />
+            <span>
+              I&apos;m looking for a trader
+              <small>Find someone, ask Bolton, leave reviews</small>
+            </span>
+          </label>
+          <label className="avail-opt">
+            <input type="radio" name="intent" value="trader" checked={intent === "trader"} onChange={() => setIntent("trader")} />
+            <span>
+              I&apos;m a trader
+              <small>Get listed, or manage your listing</small>
+            </span>
+          </label>
+          {err.intent && (
+            <span id="intent-err" className="field-err">
+              {err.intent}
+            </span>
+          )}
+        </fieldset>
+      )}
       <label className="field">
         First name
         <input

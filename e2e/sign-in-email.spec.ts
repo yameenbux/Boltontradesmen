@@ -17,6 +17,9 @@ test("a new resident signs in with an email code and sets up their name", async 
   await page.getByLabel("First name").fill("Sarah");
   await page.getByLabel("Surname").fill("Khan");
   await page.getByLabel("Your area").selectOption("BL3");
+  // Customer or trader: required when the sign-in had no particular destination.
+  await expect(page.getByRole("radio", { name: /looking for a trader/ })).toHaveAttribute("required", "");
+  await page.getByRole("radio", { name: /looking for a trader/ }).check();
   await page.getByRole("button", { name: "Save and continue" }).click();
 
   // Signed in: straight to the directory, greeted by name (the account page is behind the profile icon).

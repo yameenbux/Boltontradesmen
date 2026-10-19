@@ -29,6 +29,7 @@ test("a new resident signs in with a code and sets up their name", async ({ page
   await page.getByLabel("Surname").fill("Khan");
   await page.getByLabel("Your area").selectOption("BL3");
   await expect(page.getByLabel(/Group code/)).toHaveCount(0);
+  await page.getByRole("radio", { name: /looking for a trader/ }).check();
   await page.getByRole("button", { name: "Save and continue" }).click();
 
   // Signed in: straight to the directory, greeted by name (the account page is behind the profile icon).

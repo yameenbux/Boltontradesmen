@@ -11,6 +11,7 @@ import { ListingStatus } from "@/components/provider/ListingStatus";
 import { ProSoonCard, ProUpgradeCard } from "@/components/provider/ProOffer";
 import { ProPanel } from "@/components/provider/ProPanel";
 import { ReplyForm } from "@/components/provider/ReplyForm";
+import { TraderStart } from "@/components/provider/TraderStart";
 import { ShareReviewLink } from "@/components/review-card/ShareReviewLink";
 import { WebsiteBadge } from "@/components/share/WebsiteBadge";
 import { CONTACT_EMAIL, MAILTO } from "@/components/site/content";
@@ -162,28 +163,18 @@ export default async function ProviderArea({
   const listings = (data ?? []) as Listing[];
 
   if (listings.length === 0) {
+    if (withdrawn !== "1") return <TraderStart />;
     return (
       <main className="auth">
         <section className="auth-card" aria-labelledby="provider-title">
-          {withdrawn === "1" ? (
-            <div>
-              <p className="eyebrow">Your listing</p>
-              <h1 id="provider-title">Your listing is withdrawn</h1>
-              <p className="lede">
-                It&apos;s off Bolton Vouched now. Thanks for being part of it. If you&apos;d like to be listed again,
-                email <a href={MAILTO}>{CONTACT_EMAIL}</a> and we&apos;ll send you a new invite.
-              </p>
-            </div>
-          ) : (
-            <div>
-              <p className="eyebrow">Your listing</p>
-              <h1 id="provider-title">No listing found</h1>
-              <p className="lede">
-                We couldn&apos;t find a listing linked to your account. If you&apos;re listed, ask us for your trader
-                sign-in link.
-              </p>
-            </div>
-          )}
+          <div>
+            <p className="eyebrow">Your listing</p>
+            <h1 id="provider-title">Your listing is withdrawn</h1>
+            <p className="lede">
+              It&apos;s off Bolton Vouched now. Thanks for being part of it. If you&apos;d like to be listed again, email{" "}
+              <a href={MAILTO}>{CONTACT_EMAIL}</a> and we&apos;ll send you a new invite.
+            </p>
+          </div>
           <Button href={platformPath("account")} variant="secondary">
             Back to your account
           </Button>

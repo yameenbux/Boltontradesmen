@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { GET_LISTED } from "@/components/site/content";
 import { Button } from "@/components/ui/Button";
+import { TRADER_SIGN_IN } from "@/lib/account-intent";
 import { platformPath } from "@/lib/paths";
 import { FREE_FEATURES, PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";
 import { stripeConfig } from "@/lib/pro";
@@ -37,6 +38,9 @@ export default function ForTradersPage() {
           </p>
         </div>
         <Button href={GET_LISTED}>Get listed free</Button>
+        <p className="lede">
+          Already listed? <a href={TRADER_SIGN_IN}>Trader sign in</a>
+        </p>
       </section>
 
       <section className="auth-card plan" aria-labelledby="free-title">

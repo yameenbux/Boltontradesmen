@@ -3,6 +3,7 @@ import { ChevronRight, ShopIcon } from "@/components/auth/icons";
 import { DeleteAccountForm } from "@/components/account/DeleteAccountForm";
 import { MyReviews } from "@/components/account/MyReviews";
 import { Button } from "@/components/ui/Button";
+import { TRADER_START } from "@/lib/account-intent";
 import { type MyReviewRow, SIGN_IN_RETENTION_TEXT } from "@/lib/account-text";
 import { requireMember } from "@/lib/auth";
 import { OTHER_DISTRICT } from "@/lib/districts";
@@ -47,7 +48,7 @@ export default async function AccountPage() {
         </div>
       </section>
 
-      {listings.length > 0 && (
+      {listings.length > 0 ? (
         <a href={platformPath("provider")} className="account-link press lift">
           <span className="ai">
             <ShopIcon />
@@ -55,6 +56,17 @@ export default async function AccountPage() {
           <span>
             <b>Your listing</b>
             <small>{listings.map((l) => l.businessName).join(", ")}: see and reply to your reviews</small>
+          </span>
+          <ChevronRight />
+        </a>
+      ) : (
+        <a href={TRADER_START} className="account-link press lift" data-testid="account-trader-start">
+          <span className="ai">
+            <ShopIcon />
+          </span>
+          <span>
+            <b>Are you a trader?</b>
+            <small>Get your business listed for free, or link the listing you already have</small>
           </span>
           <ChevronRight />
         </a>
