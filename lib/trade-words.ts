@@ -1,0 +1,89 @@
+// Picks the trade a question is about from its words, for the Ask form ("fix my boiler" -> Gas & boilers).
+// A fixed list rather than a guess: every match is predictable and tested, and a job that needs a registered trade
+// (a gas boiler needs a Gas Safe engineer) never lands on one that can't legally do it.
+
+type Named = { slug: string; name: string };
+
+/** Words people use for a job, by category slug. Whole words only; plurals are handled in `words`. */
+const WORDS: Record<string, readonly string[]> = {
+  "gas-boilers": ["boiler", "combi", "gas", "hob", "gas safe", "gas engineer", "gas fire"],
+  "heating-repair": ["radiator", "heating", "central heating", "underfloor"],
+  plumber: ["plumber", "plumbing", "leak", "leaking", "tap", "toilet", "sink", "pipe", "drain", "blocked", "shower", "bath", "cistern"],
+  electrician: ["electrician", "electrics", "electrical", "socket", "fuse", "fuse box", "consumer unit", "wiring", "rewire", "light fitting", "ev charger"],
+  joiner: ["joiner", "carpenter", "joinery", "kitchen fitting", "skirting", "worktop"],
+  plasterer: ["plasterer", "plaster", "plastering", "skim", "rendering", "render"],
+  "painter-decorator": ["painter", "decorator", "decorating", "painting", "wallpaper"],
+  roofer: ["roofer", "roof", "roofing", "gutter", "guttering", "slates", "chimney", "flat roof"],
+  handyman: ["handyman", "odd jobs", "flat pack", "flatpack", "shelves", "curtain"],
+  tiler: ["tiler", "tiling", "tiles", "grout"],
+  locksmith: ["locksmith", "locked out", "lock", "locks"],
+  gardener: ["gardener", "garden", "gardening", "lawn", "hedge", "grass", "tree", "turf"],
+  cleaner: ["cleaner", "cleaning", "end of tenancy", "deep clean", "carpet clean", "oven clean"],
+  bricklayer: ["bricklayer", "brickwork", "bricks", "pointing", "repointing"],
+  "pest-control": ["pest", "pests", "mice", "rats", "wasps", "wasp nest", "bed bugs", "ants"],
+  "appliance-repair": ["washing machine", "dishwasher", "fridge", "freezer", "tumble dryer", "oven", "cooker", "appliance"],
+  "phone-computer-repair": ["phone", "laptop", "computer", "iphone", "tablet"],
+  "window-door-repair": ["window", "windows", "door", "doors", "double glazing", "misted", "upvc"],
+  "rubbish-removal": ["rubbish", "junk", "waste", "tip run"],
+  "man-and-van": ["man and van", "van", "removals", "removal", "moving house", "move house"],
+  "skip-hire": ["skip"],
+  "house-clearance": ["house clearance", "clearance", "clear out"],
+  caterer: ["caterer", "catering", "buffet"],
+  "bouncy-castles": ["bouncy castle", "bouncy castles", "inflatable"],
+  dj: ["dj"],
+  cakes: ["cake", "cakes", "cupcakes"],
+  decor: ["decor", "balloons", "backdrop"],
+  photographer: ["photographer", "photography", "photos", "photoshoot"],
+  entertainer: ["entertainer", "magician", "face painter", "clown"],
+  florist: ["florist", "flowers", "bouquet"],
+  "mobile-hair-beauty": ["hairdresser", "hair", "barber", "nails", "makeup", "lashes", "beauty"],
+  tutors: ["tutor", "tutoring", "tuition", "maths", "gcse", "eleven plus", "11 plus"],
+  "driving-instructors": ["driving instructor", "driving lessons", "driving lesson", "learner"],
+  fitness: ["personal trainer", "fitness"],
+  "music-lessons": ["piano", "guitar", "singing", "music lessons", "drums"],
+  "dog-walking-grooming": ["dog walker", "dog walking", "dog groomer", "grooming", "dog"],
+  mechanic: ["mechanic", "car repair", "brakes", "clutch", "car service", "garage"],
+  valeting: ["valet", "valeting", "car wash", "detailing"],
+  mot: ["mot"],
+  "mobile-tyre-fitting": ["tyre", "tyres", "puncture"],
+  "taxi-private-hire": ["taxi", "cab", "private hire"],
+  "airport-transfers": ["airport", "airport run", "airport transfer", "manchester airport"],
+  "minibus-hire": ["minibus"],
+};
+
+// Lowercase words, "&" as "and", punctuation as spaces, and a trailing plural "s" dropped so "taps" finds "tap".
+function words(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => (w.length > 3 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w));
+}
+
+const phrase = (s: string) => ` ${words(s).join(" ")} `;
+
+/**
+ * The category a question is about, or null when its words don't name one. Only categories in `categories` count
+ * (so a retired trade never comes back). The longest matching phrase wins, so "gas fire" beats "fire" and
+ * "man and van" beats "van"; a tie goes to the phrase that appears first in the question.
+ */
+export function guessTrade<T extends Named>(text: string, categories: readonly T[]): T | null {
+  const hay = phrase(text);
+  if (hay.trim() === "") return null;
+  let best: { cat: T; len: number; at: number } | null = null;
+  for (const cat of categories) {
+    // A category's own name counts too ("Plasterer", "Skip hire").
+    for (const term of [...(WORDS[cat.slug] ?? []), cat.name]) {
+      const needle = phrase(term);
+      if (needle.trim() === "") continue;
+      const at = hay.indexOf(needle);
+      if (at < 0) continue;
+      const len = needle.length;
+      if (!best || len > best.len || (len === best.len && at < best.at)) best = { cat, len, at };
+    }
+  }
+  return best?.cat ?? null;
+}
