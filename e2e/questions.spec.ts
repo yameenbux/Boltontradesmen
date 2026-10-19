@@ -34,7 +34,7 @@ async function newPage(browser: Browser, testInfo: TestInfo, userAgent?: string)
 async function ask(page: Page, body: string, district = "BL3") {
   await page.goto("/platform/ask/new?category=man-and-van");
   const form = page.getByRole("form", { name: "Your question" });
-  await expect(form.getByLabel("What do you need?")).toHaveValue(/[0-9a-f-]{36}/);
+  await expect(form.getByLabel("Which trade?")).toHaveValue(/[0-9a-f-]{36}/);
   await form.getByLabel("Where?").selectOption(district);
   await form.getByRole("textbox", { name: /^Your question/ }).fill(body);
   await form.getByRole("button", { name: "Post question" }).click();
@@ -152,6 +152,33 @@ test("a resident asks, neighbours recommend, the trader says they can help, and 
     "href",
     "/api/contact/e2e-hilltop-vans?via=whatsapp",
   );
+});
+
+test("typing the question picks the trade and shows who's already listed for the area", async ({ page }) => {
+  await signInAsGoogle(page, `matcher-q@${E2E_EMAIL_DOMAIN}`, { first: "Mo", surname: "Match", next: "/platform/ask/new" });
+  const form = page.getByRole("form", { name: "Your question" });
+  const trade = form.getByLabel("Which trade?");
+  await expect(trade).toHaveValue("");
+
+  // "man and van" in the words picks Man & van; Hill Top covers BL5, so the panel lists traders with Call buttons.
+  await form.getByRole("textbox", { name: /^Your question/ }).fill("Anyone know a man and van for Saturday?");
+  await expect(trade.locator("option:checked")).toHaveText("Man & van");
+  await expect(form.getByTestId("trade-guessed")).toBeVisible();
+  await form.getByLabel("Where?").selectOption("BL5");
+  const matches = form.getByTestId("ask-matches");
+  await expect(matches.getByRole("heading", { name: /^Already listed for BL5: \d+ traders?$/ })).toBeVisible();
+  await expect(matches.getByRole("link", { name: /^Call / }).first()).toHaveAttribute("href", /^\/api\/contact\/e2e-/);
+
+  // A trade nobody covers says so, and posting is the way on.
+  await form.getByRole("textbox", { name: /^Your question/ }).fill("Who does a cheap MOT round here?");
+  await expect(trade.locator("option:checked")).toHaveText("MOT");
+  await expect(matches).toContainText("Nobody listed covers BL5 for MOT yet.");
+
+  // Once the person picks a trade themselves, the words no longer change it.
+  await trade.selectOption({ label: "Plumber" });
+  await expect(form.getByTestId("trade-guessed")).toHaveCount(0);
+  await form.getByRole("textbox", { name: /^Your question/ }).fill("Anyone know a man and van?");
+  await expect(trade.locator("option:checked")).toHaveText("Plumber");
 });
 
 test("a question from an email-code account waits for the admin, then goes up", async ({ page, browser }, testInfo) => {

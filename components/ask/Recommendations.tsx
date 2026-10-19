@@ -19,7 +19,7 @@ const WhatsAppIcon = () => (
  * Call and WhatsApp through /api/contact, exactly as on the profile: each tap counts as an enquiry, and no number
  * ever reaches the page. Plain `<a rel="nofollow">`, so prefetchers and crawlers never log one.
  */
-function ContactButtons({ slug, businessName, hasWhatsapp }: { slug: string; businessName: string; hasWhatsapp: boolean }) {
+export function ContactButtons({ slug, businessName, hasWhatsapp }: { slug: string; businessName: string; hasWhatsapp: boolean }) {
   return (
     <div className={hasWhatsapp ? "q-contact" : "q-contact one"}>
       <Button href={`/api/contact/${slug}?via=call`} rel="nofollow" aria-label={`Call ${businessName}`}>
