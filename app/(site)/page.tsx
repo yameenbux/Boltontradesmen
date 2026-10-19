@@ -382,6 +382,10 @@ export default function ShowcasePage() {
                     <Icon name="mail" /> Email a ticket
                   </a>
                 </div>
+                <p>
+                  A listing is free for good. <Link href="/for-traders">See what Pro adds</Link>: job requests by text,
+                  quotes and invoices from your phone, and more, for £10 a month.
+                </p>
               </div>
             </div>
           </div>

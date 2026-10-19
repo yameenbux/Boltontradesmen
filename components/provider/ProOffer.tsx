@@ -1,22 +1,17 @@
 import { ProUpgradeForm } from "@/components/provider/ProForms";
-import { PRO_ENQUIRY_THRESHOLD } from "@/lib/enquiries";
+import { PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";
 
-// The Pro offer on the trader's dashboard, once they've had enough enquiries: shown in place, never sent by email or
-// text, and never repeated anywhere else.
+// The Pro offer on the trader's dashboard (and the public "For traders" page says the same). Shown in place, never
+// sent by email or text.
 
-const WHAT_PRO_ADDS = [
-  "“Request a quote” on your page: customers describe the job, and you get a text and an email straight away.",
-  "A text when someone in your areas asks Bolton for your trade, so you can be first to say you can help.",
-  "An ID check: once we've seen your photo ID, your page shows “ID checked”.",
-  "Up to 6 photos of your work on your page.",
-  "A monthly report of your enquiries, here on your dashboard.",
-];
 
 function Includes() {
   return (
     <ul className="pro-list">
-      {WHAT_PRO_ADDS.map((t) => (
-        <li key={t}>{t}</li>
+      {PRO_FEATURES.map((f) => (
+        <li key={f.title}>
+          <b>{f.title}.</b> {f.text}
+        </li>
       ))}
     </ul>
   );
@@ -30,7 +25,7 @@ export function ProUpgradeCard({ providerId, ended = false }: { providerId: stri
       <p>
         {ended
           ? "Pick up where you left off: your photos and the ID checked mark come back as soon as you restart."
-          : `You've had ${PRO_ENQUIRY_THRESHOLD} enquiries through Bolton Vouched. Pro is optional:`}
+          : `Pro is optional, ${PRO_PRICE.monthly} or ${PRO_PRICE.annual}, and you can cancel any time:`}
       </p>
       {!ended && <Includes />}
       <p>
@@ -46,8 +41,8 @@ export function ProUpgradeCard({ providerId, ended = false }: { providerId: stri
 export function ProSoonCard() {
   return (
     <div className="pro-card" data-testid="pro-soon">
-      <p className="pro-title">You&apos;ve reached {PRO_ENQUIRY_THRESHOLD} enquiries — Pro opens soon</p>
-      <p>Pro will be £10 a month or £100 a year, and adds:</p>
+      <p className="pro-title">Pro opens soon</p>
+      <p>{`Pro will be ${PRO_PRICE.monthly} or ${PRO_PRICE.annual}, and adds:`}</p>
       <Includes />
       <p>
         It never changes where you&apos;re listed or your badges, and your listing stays free either way. It&apos;ll

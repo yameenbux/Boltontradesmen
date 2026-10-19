@@ -67,7 +67,7 @@ export function sitemapQuestions(questions: SitemapQuestion[], now: Date = new D
 export type SitemapPriceGuide = { slug: string; latestJobMonth: string };
 
 /**
- * "/", "/get-listed", "/platform", categories with live providers, every live provider, the Ask page and its
+ * "/", "/get-listed", "/for-traders", "/platform", categories with live providers, every live provider, the Ask page and its
  * answered questions (when there are any), the price guides and their index (when there are any), then the policy
  * pages.
  */
@@ -95,6 +95,7 @@ export function buildSitemap(
   const entries: MetadataRoute.Sitemap = [
     { url: url("/"), changeFrequency: "monthly", priority: 1 },
     { url: url("/get-listed"), changeFrequency: "yearly", priority: 0.5 },
+    { url: url("/for-traders"), changeFrequency: "monthly", priority: 0.5 },
     withDate({ url: url(platformPath()), changeFrequency: "daily", priority: 0.9 }, allUpdated),
   ];
 

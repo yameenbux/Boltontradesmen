@@ -53,6 +53,7 @@ describe("buildSitemap", () => {
     expect(urls).toEqual([
       `${BASE}/`,
       `${BASE}/get-listed`,
+      `${BASE}/for-traders`,
       `${BASE}/platform`,
       `${BASE}/platform/c/plumber`,
       `${BASE}/platform/c/electrician`,
@@ -86,6 +87,7 @@ describe("buildSitemap", () => {
     expect(buildSitemap({ categories, providers: [] }, BASE).map((e) => e.url)).toEqual([
       `${BASE}/`,
       `${BASE}/get-listed`,
+      `${BASE}/for-traders`,
       `${BASE}/platform`,
       `${BASE}/platform/c/plumber`,
       `${BASE}/platform/c/electrician`,

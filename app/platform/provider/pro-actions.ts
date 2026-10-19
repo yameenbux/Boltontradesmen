@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireMember } from "@/lib/auth";
 import type { FormState } from "@/lib/admin-shared";
-import { PRO_ENQUIRY_THRESHOLD, toEnquiryStats } from "@/lib/enquiries";
 import { platformPath } from "@/lib/paths";
 import { DOCUMENT_KINDS, isPlan, PRO_ERRORS, stripeConfig, toProStatus, type DocumentKind } from "@/lib/pro";
 import { ProofError, prepareProof, uploadProof } from "@/lib/proofs";
@@ -56,11 +55,6 @@ export async function startProCheckout(_prev: FormState, fd: FormData): Promise<
   const r = await myPro(fd);
   if ("fail" in r) return r.fail as FormState;
   if (r.pro.isPro) return { message: "Pro is already on for this listing." };
-  const { data: stats, error } = await r.supabase.rpc("my_enquiry_stats", { p_provider: r.id });
-  if (error) return proFail(error.message, "my_enquiry_stats");
-  if (toEnquiryStats(stats).allTime.enquiries < PRO_ENQUIRY_THRESHOLD) {
-    return { message: `Pro opens once you've had ${PRO_ENQUIRY_THRESHOLD} enquiries.` };
-  }
 
   let url: string | null;
   try {

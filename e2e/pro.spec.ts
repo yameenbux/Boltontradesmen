@@ -68,7 +68,7 @@ test("Pro: opens soon without Stripe; then the ID check, a work photo, the publi
   test.skip(!WEBHOOK_SECRET, "the server needs STRIPE_WEBHOOK_SECRET (playwright.config.ts sets a local one)");
   const trader = await linkedTrader(page, browser, testInfo);
 
-  // 5 enquiries and no Stripe: the quiet card, nothing to buy, and no Pro panel.
+  // No Stripe: the quiet card, nothing to buy, and no Pro panel.
   const stats = trader.getByRole("region", { name: "Enquiries" });
   await expect(stats.getByTestId("pro-soon")).toContainText("Pro opens soon");
   await expect(stats.getByTestId("pro-soon").getByRole("button")).toHaveCount(0);
@@ -82,7 +82,7 @@ test("Pro: opens soon without Stripe; then the ID check, a work photo, the publi
   await trader.reload();
   const pro = trader.getByRole("region", { name: "Pro", exact: true });
   await expect(pro.getByTestId("pro-status")).toContainText("Pro is on (£10 a month). It renews on");
-  await expect(stats.getByTestId("pro-progress")).toHaveCount(0);
+  await expect(stats.getByTestId("pro-soon")).toHaveCount(0);
   // Stripe isn't set up, so there's no billing portal to open.
   await expect(pro.getByRole("button", { name: "Manage billing" })).toHaveCount(0);
 

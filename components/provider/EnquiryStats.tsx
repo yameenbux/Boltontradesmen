@@ -1,7 +1,7 @@
-import { chartBars, plural, proProgress, type EnquiryStats as Stats } from "@/lib/enquiries";
+import { chartBars, plural, type EnquiryStats as Stats } from "@/lib/enquiries";
 
 // The trader's dashboard numbers (and the admin's copy of them): a "This month" strip, all time, six months of
-// enquiries as bars, and progress towards the Pro offer. Server-rendered; every number is in the text, so the bars
+// enquiries as bars, and the Pro offer until Pro is on. Server-rendered; every number is in the text, so the bars
 // are decoration for screen readers.
 
 function Strip({ stats }: { stats: Stats }) {
@@ -49,59 +49,10 @@ function Chart({ stats, id }: { stats: Stats; id: string }) {
   );
 }
 
-/**
- * "3 of 5 enquiries", then, once reached, the trader's offer (components/provider/ProOffer.tsx: "Upgrade to Pro", or
- * "Pro opens soon" while Stripe isn't set up). Hidden while Pro is on. The admin sees a one-line summary.
- */
-export function ProProgress({
-  allTime,
-  admin = false,
-  offer = null,
-  isPro = false,
-}: {
-  allTime: number;
-  admin?: boolean;
-  offer?: React.ReactNode;
-  isPro?: boolean;
-}) {
-  const p = proProgress(allTime);
-  if (admin) {
-    return (
-      <p className="a-hint" data-testid="pro-progress">
-        Upgrade progress: {p.count} of {p.of} enquiries{p.reached ? " (reached, so Pro is offered on their dashboard)" : ""}.
-      </p>
-    );
-  }
-  if (isPro) return null;
-  return (
-    <div className={`pro-progress${p.reached ? " is-reached" : ""}`} data-testid="pro-progress">
-      <p className="pro-head">
-        <b>Upgrade progress</b>
-        <span>
-          {p.count} of {p.of} enquiries
-        </span>
-      </p>
-      <div
-        className="pro-meter"
-        role="progressbar"
-        aria-label="Upgrade progress"
-        aria-valuemin={0}
-        aria-valuemax={p.of}
-        aria-valuenow={p.count}
-        aria-valuetext={`${p.count} of ${p.of} enquiries`}
-      >
-        <span style={{ width: `${p.percent}%` }} />
-      </div>
-      {p.reached ? (
-        offer
-      ) : (
-        <p className="pro-note">
-          Pro opens to traders who&apos;ve had {p.of} enquiries through Bolton Vouched. Your listing stays free either
-          way.
-        </p>
-      )}
-    </div>
-  );
+/** The trader's Pro offer (components/provider/ProOffer.tsx), until Pro is on. Not shown to the admin. */
+function ProOfferSlot({ admin, offer, isPro }: { admin: boolean; offer: React.ReactNode; isPro: boolean }) {
+  if (admin || isPro || !offer) return null;
+  return <div className="pro-progress is-reached">{offer}</div>;
 }
 
 export function EnquiryStats({
@@ -114,7 +65,7 @@ export function EnquiryStats({
   stats: Stats;
   id: string;
   admin?: boolean;
-  /** The trader's Pro offer, shown once the threshold is reached. */
+  /** The trader's Pro offer, shown until Pro is on. */
   offer?: React.ReactNode;
   isPro?: boolean;
 }) {
@@ -135,7 +86,7 @@ export function EnquiryStats({
         day, and {admin ? "the trader's own taps and yours" : "your own taps"} don&apos;t count. Page views aren&apos;t
         counted.
       </p>
-      <ProProgress allTime={all.enquiries} admin={admin} offer={offer} isPro={isPro} />
+      <ProOfferSlot admin={admin} offer={offer} isPro={isPro} />
     </div>
   );
 }

@@ -23,6 +23,7 @@ export function ShowcaseFooter() {
           <Link href="/fake-reviews-policy">Fake reviews</Link>
           <Link href="/cookies">Cookies</Link>
           <Link href={GET_LISTED}>Get listed</Link>
+          <Link href="/for-traders">For traders: free and Pro</Link>
           <Link href={PLATFORM}>Open the platform</Link>
         </nav>
         <p>{COMPANY_LINE}</p>
