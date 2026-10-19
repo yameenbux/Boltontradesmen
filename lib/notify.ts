@@ -1,5 +1,21 @@
 import "server-only";
-import { jobAlertEmail, jobAlertSms, questionAlertEmail, questionAlertSms, type Email } from "@/lib/alert-text";
+import {
+  docEmail,
+  jobAlertEmail,
+  jobAlertSms,
+  paymentReminderEmail,
+  paymentReminderSms,
+  questionAlertEmail,
+  questionAlertSms,
+  quoteAnsweredEmail,
+  quoteAnsweredSms,
+  reviewRequestEmail,
+  reviewRequestSms,
+  type DocMessage,
+  type Email,
+} from "@/lib/alert-text";
+import { reviewLink } from "@/lib/review-link";
+import { docNumber, money, publicDocPath, type TradeDoc } from "@/lib/trade-docs";
 import { platformPath } from "@/lib/paths";
 import { absoluteUrl } from "@/lib/seo";
 import { sendSms } from "@/lib/sms-hook";
@@ -84,5 +100,68 @@ export async function deliverQuestionAlerts(questionId: string): Promise<void> {
     await sendAll(send, questionAlertSms(q, link), questionAlertEmail(q, link));
   } catch (err) {
     console.error("notify: question alerts failed:", err);
+  }
+}
+
+type DocClaim = { doc: TradeDoc; business_name: string; slug: string | null; send: Claimed[] };
+
+function docMessage(c: { doc: TradeDoc; business_name: string }, link: string): DocMessage {
+  return {
+    business: c.business_name,
+    customer: c.doc.customer_name,
+    label: docNumber(c.doc.kind, c.doc.number),
+    total: money(c.doc.total_pence),
+    link,
+  };
+}
+
+export type CustomerMessage = "review_request" | "payment_reminder_1" | "payment_reminder_2" | "doc_email";
+
+/**
+ * A message to a trader's customer about a quote or invoice: the review request after it's paid, a payment
+ * reminder, or the trader's "Email it". Returns how many went. Never throws.
+ */
+export async function deliverCustomerMessage(kind: CustomerMessage, docId: string): Promise<number> {
+  try {
+    const { data, error } = await createServiceClient().rpc("claim_customer_message", { p_kind: kind, p_doc: docId });
+    if (error) throw new Error(error.message);
+    if (!data) return 0;
+    const c = data as DocClaim;
+    if (c.send.length === 0) return 0;
+    let sms: string;
+    let email: Email;
+    if (kind === "review_request") {
+      // Only a live listing can be reviewed.
+      if (!c.slug) return 0;
+      const link = reviewLink(c.slug);
+      sms = reviewRequestSms(c.business_name, link);
+      email = reviewRequestEmail(c.business_name, c.doc.customer_name, link);
+    } else {
+      const m = docMessage(c, absoluteUrl(publicDocPath(c.doc.token)));
+      const second = kind === "payment_reminder_2";
+      sms = paymentReminderSms(m, second);
+      email = kind === "doc_email" ? docEmail(c.doc.kind, m) : paymentReminderEmail(m, second);
+    }
+    await sendAll(c.send, sms, email);
+    return c.send.length;
+  } catch (err) {
+    console.error(`notify: ${kind} failed:`, err);
+    return 0;
+  }
+}
+
+/** Tells the trader their quote was accepted or declined. Never throws. */
+export async function deliverQuoteAnswerAlert(docId: string): Promise<void> {
+  try {
+    const { data, error } = await createServiceClient().rpc("claim_quote_answer_alert", { p_doc: docId });
+    if (error) throw new Error(error.message);
+    if (!data) return;
+    const c = data as { doc: TradeDoc; send: Claimed[] };
+    if (c.send.length === 0) return;
+    const m = docMessage({ doc: c.doc, business_name: "" }, absoluteUrl(platformPath("provider", "docs", c.doc.id)));
+    const accepted = c.doc.status === "accepted";
+    await sendAll(c.send, quoteAnsweredSms(m, accepted), quoteAnsweredEmail(m, accepted));
+  } catch (err) {
+    console.error("notify: quote answer alert failed:", err);
   }
 }

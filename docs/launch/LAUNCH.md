@@ -207,6 +207,15 @@ Until all four Stripe variables are set in Railway, traders who reach 5 enquirie
 
 Every alert is recorded in `public.notifications` (sent or failed, and why), so you can check one went.
 
+## Pro part 3 — quotes and invoices (about 15 minutes)
+
+1. Run `docs/launch/quotes-invoices-production.sql` in Supabase (after the Pro jobs script).
+2. **Payment reminders (daily):** make a long random secret, put it in Railway → web → Variables as `CRON_SECRET`, then
+   add a Railway cron service (schedule `0 9 * * *`) that runs:
+   `curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://boltonvouched.ysbdesigns.uk/api/cron/payment-reminders`.
+   Without it, invoices still work; customers just don't get reminders.
+3. Review requests after "Mark as paid" and emailed quotes use the same Resend and Twilio settings as Pro part 2.
+
 ## Every month — delete old proof files (until Plan 5)
 
 The privacy notice says proof files are deleted 12 months after they're checked. Until Plan 5 adds scheduled jobs, do it by hand once a month: **admin → Proofs → Old proof files → Delete proof files due now**. It deletes the files from Storage and keeps each review's Verified job label. (Plan 5: run this on a schedule, along with the other retention purges.)

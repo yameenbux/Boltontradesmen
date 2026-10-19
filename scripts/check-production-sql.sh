@@ -4,8 +4,8 @@
 # docs/launch/review-source-production.sql, docs/launch/availability-production.sql,
 # docs/launch/trader-dashboard-production.sql, docs/launch/pro-tier-production.sql,
 # docs/launch/community-questions-production.sql, docs/launch/price-guides-production.sql,
-# docs/launch/consent-link-production.sql, docs/launch/one-listing-production.sql and docs/launch/pro-jobs-production.sql
-# after it (and that each
+# docs/launch/consent-link-production.sql, docs/launch/one-listing-production.sql, docs/launch/pro-jobs-production.sql and
+# docs/launch/quotes-invoices-production.sql after it (and that each
 # later one refuses to run first), each twice, then runs every pgTAP test on the result. Local databases only.
 #   npm run db:check-prod
 # On the local stack (psql reset, postgres is a superuser) and on the Supabase CLI stack (SUPABASE_CLI_STACK=1, as
@@ -38,6 +38,8 @@ SCRIPT10=docs/launch/one-listing-production.sql
 UNTIL10=20261012000033
 SCRIPT11=docs/launch/pro-jobs-production.sql
 UNTIL11=20261012000034
+SCRIPT12=docs/launch/quotes-invoices-production.sql
+UNTIL12=20261012000035
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
 echo "[check-prod] database at $UNTIL"
@@ -218,10 +220,25 @@ if "${PSQL[@]}" -f "$SCRIPT11" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT1
 echo "[check-prod] applying $SCRIPT11"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT11")"
 echo "$out" | tail -1
-expected11="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL11" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+expected11="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; v="${b%%_*}"; if [[ "$v" > "$UNTIL11" && ! "$v" > "$UNTIL12" ]]; then echo "$b"; fi; done | wc -l | tr -d ' ')"
 echo "$out" | grep -q "^Pro jobs database changes applied|$expected11\$" || { echo "[check-prod] the closing check did not report $expected11 migrations"; exit 1; }
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT11" | tail -1
+
+echo "[check-prod] the quotes script refuses to run before the Pro jobs one"
+"${PSQL[@]}" -c "delete from supabase_migrations.schema_migrations where version = '$UNTIL12'"
+if "${PSQL[@]}" -f "$SCRIPT12" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT12 ran before $SCRIPT11"; exit 1; fi
+"${PSQL[@]}" -A -t -c "select to_regclass('public.trade_docs') is null" | grep -qx t \
+  || { echo "[check-prod] the refused quotes script left something behind"; exit 1; }
+"${PSQL[@]}" -A -t -f "$SCRIPT11" | tail -1
+
+echo "[check-prod] applying $SCRIPT12"
+out="$("${PSQL[@]}" -A -t -f "$SCRIPT12")"
+echo "$out" | tail -1
+expected12="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL12" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^Quotes and invoices database changes applied|$expected12\$" || { echo "[check-prod] the closing check did not report $expected12 migrations"; exit 1; }
+echo "[check-prod] applying it a second time (a re-run must not fail)"
+"${PSQL[@]}" -A -t -f "$SCRIPT12" | tail -1
 
 # The pgTAP tests expect only their own fixtures.
 "${PSQL[@]}" -c "delete from public.providers where slug in ('prod-check-travel', 'prod-check-paused', 'prod-check-live', 'prod-check-dupe');

@@ -5,6 +5,8 @@ import { EditListingForm } from "@/components/provider/EditListingForm";
 import { AlertSettingsForm, type AlertSettings } from "@/components/provider/AlertSettingsForm";
 import { EnquiryStats } from "@/components/provider/EnquiryStats";
 import { JobRequests, type JobRequestRow } from "@/components/provider/JobRequests";
+import { BillingForm } from "@/components/docs/BillingForm";
+import { DocList } from "@/components/docs/DocList";
 import { ListingStatus } from "@/components/provider/ListingStatus";
 import { ProSoonCard, ProUpgradeCard } from "@/components/provider/ProOffer";
 import { ProPanel } from "@/components/provider/ProPanel";
@@ -16,6 +18,8 @@ import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { setMyAvailability } from "@/app/platform/provider/actions";
 import { saveAlertSettings } from "@/app/platform/provider/jobs-actions";
+import { saveBilling } from "@/app/platform/provider/docs/actions";
+import type { Billing, TradeDoc } from "@/lib/trade-docs";
 import { nationalNumber } from "@/lib/alert-text";
 import { requireMember } from "@/lib/auth";
 import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
@@ -209,13 +213,22 @@ export default async function ProviderArea({
   const jobs = await Promise.all(
     listings.map(async ({ provider: p }, i) => {
       if (!pros[i].isPro) return null;
-      const [req, set] = await Promise.all([
+      const [req, set, docs, bank] = await Promise.all([
         supabase.rpc("my_job_requests", { p_provider: p.id }),
         supabase.rpc("my_alert_settings", { p_provider: p.id }),
+        supabase.rpc("my_docs", { p_provider: p.id }),
+        supabase.rpc("my_billing", { p_provider: p.id }),
       ]);
       if (req.error) throw new Error(`my_job_requests failed: ${req.error.message}`);
       if (set.error) throw new Error(`my_alert_settings failed: ${set.error.message}`);
-      return { requests: (req.data ?? []) as JobRequestRow[], settings: set.data as AlertSettings };
+      if (docs.error) throw new Error(`my_docs failed: ${docs.error.message}`);
+      if (bank.error) throw new Error(`my_billing failed: ${bank.error.message}`);
+      return {
+        requests: (req.data ?? []) as JobRequestRow[],
+        settings: set.data as AlertSettings,
+        docs: (docs.data ?? []) as TradeDoc[],
+        billing: (bank.data ?? null) as Billing | null,
+      };
     }),
   );
   // Without all four Stripe settings the offer says "Pro opens soon" and nothing can be bought.
@@ -283,6 +296,29 @@ export default async function ProviderArea({
                 <p className="lede">From &ldquo;Request a quote&rdquo; on your page. Only you see these.</p>
               </div>
               <JobRequests requests={jobs[i].requests} business={p.business_name} />
+            </section>
+          )}
+          {jobs[i] && (
+            <section className="auth-card" id="docs" aria-labelledby={`docs-${p.id}`}>
+              <div>
+                <h2 id={`docs-${p.id}`}>Quotes and invoices</h2>
+                <p className="lede">
+                  Make one on your phone, send it on WhatsApp, and your customer accepts or pays from the link. When
+                  you mark an invoice paid, we ask them for an honest review.
+                </p>
+              </div>
+              <div className="doc-new">
+                <Button href={`${platformPath("provider", "docs", "new")}?kind=quote&listing=${p.id}`}>New quote</Button>
+                <Button href={`${platformPath("provider", "docs", "new")}?kind=invoice&listing=${p.id}`} variant="secondary">
+                  New invoice
+                </Button>
+              </div>
+              <DocList docs={jobs[i].docs} />
+              <div className="doc-bank">
+                <h3>Your bank details for invoices</h3>
+                <p className="avail-hint">Printed on your invoices so customers can pay you by bank transfer.</p>
+                <BillingForm action={saveBilling.bind(null, p.id)} billing={jobs[i].billing} />
+              </div>
             </section>
           )}
           {jobs[i] && (

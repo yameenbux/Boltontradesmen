@@ -74,3 +74,90 @@ export function questionAlertEmail(q: QuestionAlert, link: string): Email {
     html: html(lines, { href: link, label }),
   };
 }
+
+// ---------------------------------------------------------------- quotes, invoices and the customer's messages
+// To the customer, from the trader through Bolton Vouched. The review request follows the review-link rule
+// (lib/review-link.ts): it goes after every paid invoice, and asks for an honest review, never a good one.
+
+export type DocMessage = { business: string; customer: string; label: string; total: string; link: string };
+
+function customerHtml(paragraphs: string[], link: { href: string; label: string }, footer: string): string {
+  const body = paragraphs.map((p) => `<p style="margin:0 0 14px">${escape(p).replace(/\n/g, "<br>")}</p>`).join("");
+  return (
+    `<div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:16px;line-height:1.5;color:#231A15;max-width:520px">` +
+    body +
+    `<p style="margin:20px 0"><a href="${escape(link.href)}" style="background:#9C3A25;color:#FFF5E9;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:700">${escape(link.label)}</a></p>` +
+    `<p style="margin:0;color:#6B5D53;font-size:14px">${escape(footer)}</p>` +
+    `</div>`
+  );
+}
+
+const FROM_TRADER = (business: string) =>
+  `Sent for ${business} by Bolton Vouched, Bolton's directory of trades vouched for by locals.`;
+
+export function reviewRequestSms(business: string, link: string): string {
+  return `Thanks for using ${clip(business, 40)}. Could you leave an honest review on Bolton Vouched? It helps neighbours choose: ${link}`;
+}
+
+export function reviewRequestEmail(business: string, customer: string, link: string): Email {
+  const lines = [
+    `Hi ${customer},`,
+    `Thanks for using ${business}. Could you take a minute to leave an honest review on Bolton Vouched? Whatever your experience, it helps your neighbours choose a trade.`,
+  ];
+  const label = "Leave a review";
+  return {
+    subject: `How did ${business} do?`,
+    text: `${lines.join("\n\n")}\n\n${label}: ${link}\n\n${FROM_TRADER(business)}\n`,
+    html: customerHtml(lines, { href: link, label }, FROM_TRADER(business)),
+  };
+}
+
+export function paymentReminderSms(m: DocMessage, second: boolean): string {
+  return `${second ? "Second reminder" : "Reminder"}: invoice ${m.label} from ${clip(m.business, 40)} for ${m.total} is now due. Details and how to pay: ${m.link}`;
+}
+
+export function paymentReminderEmail(m: DocMessage, second: boolean): Email {
+  const lines = [
+    `Hi ${m.customer},`,
+    `${second ? "A second reminder" : "A reminder"} that invoice ${m.label} from ${m.business}, for ${m.total}, is now due.`,
+    "If you've already paid, thank you, and please ignore this.",
+  ];
+  const label = "See the invoice";
+  return {
+    subject: `${second ? "Second reminder" : "Reminder"}: invoice ${m.label} from ${m.business}`,
+    text: `${lines.join("\n\n")}\n\n${label}: ${m.link}\n\n${FROM_TRADER(m.business)}\n`,
+    html: customerHtml(lines, { href: m.link, label }, FROM_TRADER(m.business)),
+  };
+}
+
+export function docEmail(kind: "quote" | "invoice", m: DocMessage): Email {
+  const what = kind === "quote" ? "quote" : "invoice";
+  const lines = [
+    `Hi ${m.customer},`,
+    `${m.business} has sent you ${what} ${m.label}, for ${m.total}.`,
+    kind === "quote" ? "You can accept or decline it online." : "It shows how to pay.",
+  ];
+  const label = kind === "quote" ? "See the quote" : "See the invoice";
+  return {
+    subject: `${kind === "quote" ? "Quote" : "Invoice"} ${m.label} from ${m.business}`,
+    text: `${lines.join("\n\n")}\n\n${label}: ${m.link}\n\n${FROM_TRADER(m.business)}\n`,
+    html: customerHtml(lines, { href: m.link, label }, FROM_TRADER(m.business)),
+  };
+}
+
+export function quoteAnsweredSms(m: DocMessage, accepted: boolean): string {
+  return `Bolton Vouched: ${clip(m.customer, 30)} ${accepted ? "ACCEPTED" : "declined"} quote ${m.label} (${m.total}). ${m.link}`;
+}
+
+export function quoteAnsweredEmail(m: DocMessage, accepted: boolean): Email {
+  const lines = [
+    `${m.customer} has ${accepted ? "accepted" : "declined"} quote ${m.label}, for ${m.total}.`,
+    accepted ? "Turn it into an invoice in one tap when the job's done." : "Nothing more to do.",
+  ];
+  const label = "See the quote";
+  return {
+    subject: `Quote ${m.label} ${accepted ? "accepted" : "declined"} by ${m.customer}`,
+    text: `${lines.join("\n\n")}\n\n${label}: ${m.link}\n`,
+    html: html(lines, { href: m.link, label }),
+  };
+}

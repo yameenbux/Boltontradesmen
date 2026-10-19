@@ -61,6 +61,16 @@ export default function PrivacyPage() {
           "Only that trader sees them, to reply about the job; we send them to the trader by text and email. Requests are deleted after 180 days.",
         ]}
       />
+      <p>Customers of Pro traders (quotes and invoices a trader makes on Bolton Vouched):</p>
+      <List
+        items={[
+          "What the trader enters: your name, and your mobile and email if they add them, and the job, prices and dates. The trader decides what to send; we keep it so they can send it and you can open it from the link.",
+          "Whether you accepted a quote, and when an invoice was marked paid.",
+          "We text or email you only about that quote or invoice: a copy if the trader asks us to, up to two payment reminders after an invoice is due, and once it's paid, one request for an honest review of the trader (never more than one in 90 days per trader). The trader can turn the review request off.",
+          "Quotes and invoices are deleted 2 years after they're made.",
+        ]}
+      />
+      <p>Pro traders&apos; bank details: the name, sort code and account number printed on your invoices. Only you, and anyone with one of your invoice links, can see them.</p>
       <p>Pro traders&apos; alerts:</p>
       <List
         items={[
@@ -104,6 +114,7 @@ export default function PrivacyPage() {
           "Counting enquiries and keeping the site secure and free of abuse: legitimate interests. We keep this to what is needed and it does not identify visitors by name.",
           "Your account, your reviews, your replies, and your questions and answers: contract (providing the service you signed up for).",
           "Sign-in attempt records, the sign-in fingerprint we keep after deletion, device signatures and proof files: legitimate interests in preventing fraud and fake reviews.",
+          "Quotes, invoices and the messages about them: legitimate interests, for the trader and their customer to agree and settle a job. The review request after payment: legitimate interests in honest local reviews, and the trader can switch it off.",
           "A request for a quote: legitimate interests in passing your request to the trader you chose, as you asked. Pro traders' alerts: contract, providing the service.",
           "A request to be listed: legitimate interests in answering it, and taking the steps you asked for before you agree to be listed. The connection signature: legitimate interests in stopping spam.",
           "The security check on forms (Cloudflare Turnstile), counting page views and the home page search words: legitimate interests in keeping the site secure, knowing which pages are used and which trades are missing.",
