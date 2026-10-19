@@ -53,3 +53,28 @@ describe("question alerts", () => {
     expect(e.text).toContain(question.body);
   });
 });
+
+describe("messages to a trader's customers", () => {
+  const m = { business: "Brook Removals", customer: "Rosa", label: "INV-0001", total: "£165.00", link: "https://x.test/d/abc" };
+
+  it("asks for an honest review, never a good one (review-link rule)", async () => {
+    const { reviewRequestEmail, reviewRequestSms } = await import("@/lib/alert-text");
+    const all = [reviewRequestSms("Brook Removals", "https://x.test/r/brook"), ...Object.values(reviewRequestEmail("Brook Removals", "Rosa", "https://x.test/r/brook"))].join(" ").toLowerCase();
+    expect(all).toContain("honest review");
+    expect(all).not.toMatch(/5[- ]star|five[- ]star|good review|positive|happy/);
+    expect(reviewRequestSms("Brook Removals", "https://x.test/r/brook").length).toBeLessThanOrEqual(160);
+  });
+
+  it("reminds about an invoice with its number, amount and link", async () => {
+    const { paymentReminderSms, paymentReminderEmail } = await import("@/lib/alert-text");
+    expect(paymentReminderSms(m, false)).toBe(
+      "Reminder: invoice INV-0001 from Brook Removals for £165.00 is now due. Details and how to pay: https://x.test/d/abc",
+    );
+    expect(paymentReminderEmail(m, true).subject).toBe("Second reminder: invoice INV-0001 from Brook Removals");
+  });
+
+  it("tells the trader a quote was answered", async () => {
+    const { quoteAnsweredSms } = await import("@/lib/alert-text");
+    expect(quoteAnsweredSms({ ...m, label: "Q-0001" }, true)).toContain("Rosa ACCEPTED quote Q-0001 (£165.00)");
+  });
+});

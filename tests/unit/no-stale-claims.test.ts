@@ -77,8 +77,8 @@ describe("no claims that sign-in needs a mobile number", () => {
         ALERT_TEXTS.reduce(
           (text, allowed) => text.split(allowed).join(""),
           readFileSync(f, "utf8")
-            // LAUNCH.md's Pro alerts section sets up the texts' Twilio account; it's not about sign-in.
-            .replace(/## Pro part 2[\s\S]*?(?=\n## )/, "")
+            // LAUNCH.md's Pro sections set up the alert and reminder texts' Twilio account; not sign-in.
+            .replace(/## Pro part \d[\s\S]*?(?=\n## )/g, "")
             .replace(/’/g, "'")
             .replace(/&apos;/g, "'")
             .toLowerCase(),

@@ -14,7 +14,7 @@ test("robots.txt allows the site, blocks private paths and names the sitemap", a
   const body = await res.text();
   expect(body).toMatch(/User-Agent: \*/i);
   expect(body).toContain("Allow: /");
-  for (const path of ["/admin", "/api/", "/platform/consent/", "/platform/link/"]) expect(body).toContain(`Disallow: ${path}`);
+  for (const path of ["/admin", "/api/", "/platform/consent/", "/platform/link/", "/platform/d/"]) expect(body).toContain(`Disallow: ${path}`);
   expect(body).toContain(`Sitemap: ${ORIGIN}/sitemap.xml`);
 });
 

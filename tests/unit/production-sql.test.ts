@@ -99,9 +99,17 @@ const SCRIPTS = [
     file: "docs/launch/pro-jobs-production.sql",
     preset: "pro-jobs",
     from: "20261012000035",
-    to: NEWEST,
+    to: "20261012000035",
     functions: ["admin_grant_pro", "submit_job_request", "claim_question_alerts", "takes_requests"],
     requires: "20261012000034",
+  },
+  {
+    file: "docs/launch/quotes-invoices-production.sql",
+    preset: "quotes-invoices",
+    from: "20261012000036",
+    to: NEWEST,
+    functions: ["save_my_doc", "public_doc", "answer_quote", "claim_customer_message"],
+    requires: "20261012000035",
   },
 ];
 

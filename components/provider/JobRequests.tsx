@@ -65,6 +65,9 @@ function RequestCard({ r, business }: { r: JobRequestRow; business: string }) {
           </Button>
         )}
       </div>
+      <Button href={`/platform/provider/docs/new?kind=quote&request=${r.id}`} variant="secondary">
+        Write a quote
+      </Button>
       {r.email && (
         <a className="link" href={`mailto:${r.email}`}>
           {r.email}

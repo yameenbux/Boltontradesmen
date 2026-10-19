@@ -20,8 +20,10 @@
 //     --out docs/launch/consent-link-production.sql
 //   node scripts/build-production-sql.mjs --preset one-listing --from 20261012000034 --to 20261012000034 \
 //     --out docs/launch/one-listing-production.sql
-//   node scripts/build-production-sql.mjs --preset pro-jobs --from 20261012000035 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset pro-jobs --from 20261012000035 --to 20261012000035 \
 //     --out docs/launch/pro-jobs-production.sql
+//   node scripts/build-production-sql.mjs --preset quotes-invoices --from 20261012000036 --to <newest> \
+//     --out docs/launch/quotes-invoices-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -435,6 +437,37 @@ end
 $verify$;
 `;
 
+// Pro, part 3 (migration 000036 onwards): quotes, invoices and the messages to customers.
+const VERIFY_QUOTES = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+declare
+  f text;
+  t text;
+begin
+  foreach f in array array['save_my_doc', 'my_docs', 'my_doc', 'set_my_doc_status', 'invoice_from_quote', 'set_my_billing',
+                           'public_doc', 'answer_quote', 'claim_customer_message', 'due_payment_reminders'] loop
+    if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                   where n.nspname = 'public' and p.proname = f) then
+      raise exception 'Quotes check failed: function public.% is missing', f;
+    end if;
+  end loop;
+  foreach t in array array['trade_docs', 'trader_billing'] loop
+    if not (select relrowsecurity from pg_class where oid = ('public.' || t)::regclass) then
+      raise exception 'Quotes check failed: row level security is off on public.%', t;
+    end if;
+    if has_table_privilege('anon', 'public.' || t, 'select') or has_table_privilege('authenticated', 'public.' || t, 'select') then
+      raise exception 'Quotes check failed: public.% is readable without the server', t;
+    end if;
+  end loop;
+  if has_function_privilege('anon', 'public.public_doc(uuid)', 'execute')
+     or not has_function_privilege('service_role', 'public.public_doc(uuid)', 'execute') then
+    raise exception 'Quotes check failed: public_doc is not server only';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -508,6 +541,12 @@ const PRESETS = {
     // Re-creates provider_public (000030's body plus takes_requests) and private.is_pro.
     requires: { version: "20261012000034", what: "the one listing per number script (docs/launch/one-listing-production.sql)" },
     verify: VERIFY_PRO_JOBS,
+  },
+  "quotes-invoices": {
+    title: "Pro part 3 (quotes, invoices and review requests)",
+    done: "Quotes and invoices database changes applied",
+    requires: { version: "20261012000035", what: "the Pro jobs script (docs/launch/pro-jobs-production.sql)" },
+    verify: VERIFY_QUOTES,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

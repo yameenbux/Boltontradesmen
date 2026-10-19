@@ -27,7 +27,7 @@ async function newPage(browser: Browser, testInfo: TestInfo) {
   return (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
 }
 
-// The alert rows for one item, as "channel:status", once the after-response sender has marked them.
+// The alert (or customer message) rows for one item, as "channel:status", once the sender has marked them.
 async function alertsFor(kind: string, like: string): Promise<string[]> {
   let rows: string[] = [];
   await expect(async () => {
@@ -145,4 +145,71 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
               and channel = 'email' and ref_id = (select id from public.questions where body = '${body}')`)).toBe(
     `brook-alerts@${E2E_EMAIL_DOMAIN}`,
   );
+
+  // Quotes and invoices. Bank details first, so the invoice shows how to pay.
+  await trader.goto("/platform/provider");
+  const bank = trader.getByRole("form", { name: "Bank details for invoices" });
+  await bank.getByLabel("Name on the account").fill("Brook Removals");
+  await bank.getByLabel("Sort code").fill("12-34-5");
+  await bank.getByLabel("Account number").fill("12345678");
+  await bank.getByRole("button", { name: "Save bank details" }).click();
+  await expect(bank.getByText("Enter the 6-digit sort code")).toBeVisible();
+  await bank.getByLabel("Sort code").fill("12-34-56");
+  await bank.getByRole("button", { name: "Save bank details" }).click();
+  await expect(bank.getByRole("status")).toHaveText("Saved. They'll show on your invoices.");
+
+  // "Write a quote" from the job request: the customer's details come with it; the trader adds the prices.
+  await trader.getByRole("article", { name: "Request from Rosa Requester" }).getByRole("link", { name: "Write a quote" }).click();
+  const editor = trader.getByRole("form", { name: "Quote details" });
+  await expect(editor.getByLabel("Customer's name")).toHaveValue("Rosa Requester");
+  await expect(editor.getByLabel(/Their mobile/)).toHaveValue("07700 900341");
+  await editor.getByRole("group", { name: "Line 1" }).getByLabel("Description").fill("Man and van, 3 hours");
+  await editor.getByRole("group", { name: "Line 1" }).getByLabel("Qty").fill("3");
+  await editor.getByRole("group", { name: "Line 1" }).getByLabel("Price (£)").fill("45");
+  await editor.getByRole("button", { name: "+ Add a line" }).click();
+  await editor.getByRole("group", { name: "Line 2" }).getByLabel("Description").fill("Fuel");
+  await editor.getByRole("group", { name: "Line 2" }).getByLabel("Price (£)").fill("12.50");
+  await expect(editor.getByText("Total £147.50")).toBeVisible();
+  await editor.getByRole("button", { name: "Save quote" }).click();
+  await expect(trader.getByRole("heading", { level: 1, name: /^Q-\d{4}$/ })).toBeVisible();
+  await expect(trader.getByTestId("doc-total")).toHaveText("£147.50");
+
+  // Sent on WhatsApp from the trader's own phone (a new tab), which marks the quote sent.
+  const [wa] = await Promise.all([trader.waitForEvent("popup"), trader.getByRole("link", { name: "Send on WhatsApp" }).click()]);
+  expect(wa.url()).toMatch(/^https:\/\/(wa\.me|api\.whatsapp\.com)\//);
+  await wa.close();
+  const quoteId = new URL(trader.url()).pathname.split("/").pop()!;
+  await expect(async () => {
+    expect(sql(`select status from public.trade_docs where id = '${quoteId}'`)).toBe("sent");
+  }).toPass({ timeout: 10_000 });
+
+  // The customer opens their copy (no sign-in) and accepts; the trader is told.
+  const token = sql(`select token from public.trade_docs where id = '${quoteId}'`);
+  const customer = await newPage(browser, testInfo);
+  await customer.goto(`/platform/d/${token}`);
+  await expect(customer.getByTestId("doc-total")).toHaveText("£147.50");
+  await expect(customer.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  await expect(customer.getByText("07700 900341")).toHaveCount(0);
+  await customer.getByRole("button", { name: "Accept this quote" }).click();
+  await expect(customer.getByRole("status")).toHaveText(/^(Accepted. We've let them know.|You accepted this quote. Brook Removals has been told.)$/);
+  await customer.reload();
+  await expect(customer.getByRole("button", { name: "Accept this quote" })).toHaveCount(0);
+  expect(await alertsFor("quote_answered", `'${quoteId}'`)).toEqual(["email:sent", "sms:sent"]);
+
+  // One tap to an invoice; the customer's copy shows how to pay.
+  await trader.reload();
+  await trader.getByRole("button", { name: "Turn into an invoice" }).click();
+  await expect(trader.getByRole("heading", { level: 1, name: /^INV-\d{4}$/ })).toBeVisible();
+  const invoiceId = new URL(trader.url()).pathname.split("/").pop()!;
+  await customer.goto(`/platform/d/${sql(`select token from public.trade_docs where id = '${invoiceId}'`)}`);
+  const pay = customer.getByRole("region", { name: "How to pay" });
+  await expect(pay).toContainText("12-34-56");
+  await expect(pay).toContainText("12345678");
+  await expect(pay).toContainText(/INV-\d{4}/);
+
+  // Marked paid: the customer is asked for an honest review, by text (they gave no email), once.
+  await trader.getByRole("button", { name: "Mark as paid" }).click();
+  await expect(trader.getByRole("status")).toHaveText("Marked paid. We've asked them for a review.");
+  expect(await alertsFor("review_request", `'${invoiceId}'`)).toEqual(["sms:sent"]);
+  await expect(trader.getByTestId("doc-status")).toHaveText("Paid");
 });
