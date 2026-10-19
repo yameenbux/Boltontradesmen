@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
 import type { FormState } from "@/lib/admin-shared";
+import { deliverQuestionAlerts } from "@/lib/notify";
 import { revalidateQuestionPages } from "@/lib/revalidate-public";
 import { ID_PATTERN } from "@/lib/review-form";
 
@@ -44,6 +46,9 @@ export async function approveQuestion(_prev: FormState, fd: FormData): Promise<F
   const { data, error } = await supabase.rpc("admin_approve_question", { p_question: q.data });
   if (error) return refused("admin_approve_question", error);
   refresh(data);
+  // It's public now: tell Pro traders in the trade who cover the area.
+  const questionId = q.data;
+  after(() => deliverQuestionAlerts(questionId));
   return { ok: true, message: "Approved. It's up now and open for 14 days." };
 }
 

@@ -52,7 +52,14 @@ const PHONE_EXEMPT = new Set([
   "lib/line-type.ts",
   "lib/sms-hook.ts",
   "components/auth/SignInForm.tsx",
+  // Pro's job requests and alerts: a resident's contact number and the trader's alert mobile, not sign-in.
+  "lib/job-request.ts",
+  "lib/notify.ts",
+  "app/platform/p/[slug]/request/actions.ts",
+  "app/platform/provider/jobs-actions.ts",
 ]);
+// Twilio sends Pro traders' alert texts, and the privacy notice says so; that's the only mention allowed.
+const ALERT_TEXTS = ["twilio sends pro traders' alert texts", "resend, twilio, cloudflare and stripe"];
 const PHONE_SIGN_IN = ["uk mobile", "sign in with your mobile", "signing in with your number", "with the number on your listing", "twilio"];
 
 describe("no claims that sign-in needs a mobile number", () => {
@@ -66,7 +73,17 @@ describe("no claims that sign-in needs a mobile number", () => {
 
   for (const phrase of PHONE_SIGN_IN) {
     it(`nothing says "${phrase}"`, () => {
-      const hits = all.filter((f) => readFileSync(f, "utf8").replace(/’/g, "'").toLowerCase().includes(phrase));
+      const hits = all.filter((f) =>
+        ALERT_TEXTS.reduce(
+          (text, allowed) => text.split(allowed).join(""),
+          readFileSync(f, "utf8")
+            // LAUNCH.md's Pro alerts section sets up the texts' Twilio account; it's not about sign-in.
+            .replace(/## Pro part 2[\s\S]*?(?=\n## )/, "")
+            .replace(/’/g, "'")
+            .replace(/&apos;/g, "'")
+            .toLowerCase(),
+        ).includes(phrase),
+      );
       expect(hits.map((f) => path.relative(process.cwd(), f))).toEqual([]);
     });
   }

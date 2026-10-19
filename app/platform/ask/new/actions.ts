@@ -1,8 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { requireMember } from "@/lib/auth";
 import type { FormState } from "@/lib/admin-shared";
+import { deliverQuestionAlerts } from "@/lib/notify";
 import { platformPath } from "@/lib/paths";
 import {
   bodyProblem,
@@ -53,6 +55,9 @@ export async function askQuestion(_prev: AskState, fd: FormData): Promise<AskSta
   }
   const row = (data ?? {}) as { id?: string; status?: string };
   if (row.status === "pending") return { ok: true, held: true };
+  // Public straight away: tell Pro traders in the trade who cover the area.
+  const questionId = row.id;
+  if (questionId) after(() => deliverQuestionAlerts(questionId));
   revalidateQuestionPages(row.id);
   redirect(row.id ? platformPath("ask", row.id) : platformPath("ask"));
 }

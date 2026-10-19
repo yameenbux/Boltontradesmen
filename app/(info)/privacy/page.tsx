@@ -53,6 +53,20 @@ export default function PrivacyPage() {
           "If you choose the light or dark look, that choice is saved in your browser's own storage (local storage), not sent to us.",
         ]}
       />
+      <p>People who ask a trader for a quote (Request a quote, on a Pro trader&apos;s page):</p>
+      <List
+        items={[
+          "Your name, your phone number, your email address if you add it, your postcode district and the job you describe.",
+          "A scrambled signature of your connection (a keyed hash, not your IP address), to limit how many requests one connection can send.",
+          "Only that trader sees them, to reply about the job; we send them to the trader by text and email. Requests are deleted after 180 days.",
+        ]}
+      />
+      <p>Pro traders&apos; alerts:</p>
+      <List
+        items={[
+          "The mobile number and email address your alerts go to, which alerts are on, and a record of each alert we send (where to, when, and whether it went), kept for 180 days to stop duplicates and keep to the daily limits.",
+        ]}
+      />
       <p>Traders who ask to be listed (the Get listed form):</p>
       <List
         items={[
@@ -90,6 +104,7 @@ export default function PrivacyPage() {
           "Counting enquiries and keeping the site secure and free of abuse: legitimate interests. We keep this to what is needed and it does not identify visitors by name.",
           "Your account, your reviews, your replies, and your questions and answers: contract (providing the service you signed up for).",
           "Sign-in attempt records, the sign-in fingerprint we keep after deletion, device signatures and proof files: legitimate interests in preventing fraud and fake reviews.",
+          "A request for a quote: legitimate interests in passing your request to the trader you chose, as you asked. Pro traders' alerts: contract, providing the service.",
           "A request to be listed: legitimate interests in answering it, and taking the steps you asked for before you agree to be listed. The connection signature: legitimate interests in stopping spam.",
           "The security check on forms (Cloudflare Turnstile), counting page views and the home page search words: legitimate interests in keeping the site secure, knowing which pages are used and which trades are missing.",
         ]}
@@ -98,9 +113,9 @@ export default function PrivacyPage() {
       <H2>Where it is stored</H2>
       <p>
         Data is stored in the UK, in a Supabase database hosted in London. Supabase also runs our sign-in. Resend sends our
-        sign-in emails. Cloudflare runs the security check (Turnstile) on the sign-in page, the admin login and the Get
-        listed form, which may look at signals from your device and browser, and, if it&apos;s switched on, counts page
-        views without cookies or a profile of you (Cloudflare Web Analytics). Stripe takes Pro payments. Supabase, Resend, Cloudflare and Stripe act for
+        sign-in emails and Pro traders&apos; alert emails. Twilio sends Pro traders&apos; alert texts. Cloudflare runs the security check (Turnstile) on the sign-in page, the admin login, the Get
+        listed form and the Request a quote form, which may look at signals from your device and browser, and, if it&apos;s switched on, counts page
+        views without cookies or a profile of you (Cloudflare Web Analytics). Stripe takes Pro payments. Supabase, Resend, Twilio, Cloudflare and Stripe act for
         us as processors (Stripe also has its own legal duties for payments, such as preventing fraud, under its own
         privacy policy). Railway hosts the website; the home page search words are kept only in its server logs, which are deleted automatically. If you choose Continue with Google, Google is an
         independent controller for your Google account, under its own terms, and only tells us who you are.

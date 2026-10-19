@@ -198,6 +198,7 @@ describe("the chip on cards and profiles", () => {
     availability: null,
     idChecked: false,
     photos: [],
+    takesRequests: false,
     ...over,
   });
   const header = (availability?: PublicProvider["availability"]) =>

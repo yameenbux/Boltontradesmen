@@ -193,6 +193,20 @@ Until all four Stripe variables are set in Railway, traders who reach 5 enquirie
 
 **Every month — delete old ID documents:** **admin → Pro → Old ID documents → Delete documents due now** (the privacy notice says ID documents go 30 days after you decide on them).
 
+## Pro part 2 — founding Pro, job requests and alerts (about 20 minutes)
+
+1. Run `docs/launch/pro-jobs-production.sql` in Supabase (after the one-listing script). It stops, changing nothing,
+   if that one hasn't been run.
+2. **Alert emails:** Resend → API Keys → Create (sending access, domain ysbdesigns.uk). Paste it straight into Railway
+   → web → Variables as `RESEND_API_KEY`. Never paste it anywhere else.
+3. **Alert texts:** set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_MESSAGING_SERVICE_SID` in Railway (a
+   Twilio account with a UK Messaging Service; about 4p a text, at most 10 a day per trader). Without them texts are
+   logged as failed and only the email goes.
+4. **Founding Pro:** /admin → the provider → Pro → "Switch on founding Pro" (6 months is filled in). Their page shows
+   "Request a quote" within a minute, and their dashboard shows Job requests and Alerts.
+
+Every alert is recorded in `public.notifications` (sent or failed, and why), so you can check one went.
+
 ## Every month — delete old proof files (until Plan 5)
 
 The privacy notice says proof files are deleted 12 months after they're checked. Until Plan 5 adds scheduled jobs, do it by hand once a month: **admin → Proofs → Old proof files → Delete proof files due now**. It deletes the files from Storage and keeps each review's Verified job label. (Plan 5: run this on a schedule, along with the other retention purges.)

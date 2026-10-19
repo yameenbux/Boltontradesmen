@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { ShopIcon } from "@/components/auth/icons";
 import { AvailabilityForm } from "@/components/provider/AvailabilityForm";
 import { EditListingForm } from "@/components/provider/EditListingForm";
+import { AlertSettingsForm, type AlertSettings } from "@/components/provider/AlertSettingsForm";
 import { EnquiryStats } from "@/components/provider/EnquiryStats";
+import { JobRequests, type JobRequestRow } from "@/components/provider/JobRequests";
 import { ListingStatus } from "@/components/provider/ListingStatus";
 import { ProSoonCard, ProUpgradeCard } from "@/components/provider/ProOffer";
 import { ProPanel } from "@/components/provider/ProPanel";
@@ -13,6 +15,8 @@ import { CONTACT_EMAIL, MAILTO } from "@/components/site/content";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { setMyAvailability } from "@/app/platform/provider/actions";
+import { saveAlertSettings } from "@/app/platform/provider/jobs-actions";
+import { nationalNumber } from "@/lib/alert-text";
 import { requireMember } from "@/lib/auth";
 import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
 import { dayMonthYear } from "@/lib/checks";
@@ -201,6 +205,19 @@ export default async function ProviderArea({
       }),
     ),
   ]);
+  // Pro's job requests and alert settings, for listings with Pro on.
+  const jobs = await Promise.all(
+    listings.map(async ({ provider: p }, i) => {
+      if (!pros[i].isPro) return null;
+      const [req, set] = await Promise.all([
+        supabase.rpc("my_job_requests", { p_provider: p.id }),
+        supabase.rpc("my_alert_settings", { p_provider: p.id }),
+      ]);
+      if (req.error) throw new Error(`my_job_requests failed: ${req.error.message}`);
+      if (set.error) throw new Error(`my_alert_settings failed: ${set.error.message}`);
+      return { requests: (req.data ?? []) as JobRequestRow[], settings: set.data as AlertSettings };
+    }),
+  );
   // Without all four Stripe settings the offer says "Pro opens soon" and nothing can be bought.
   const stripeReady = stripeConfig() !== null;
 
@@ -256,6 +273,36 @@ export default async function ProviderArea({
               }
             />
           </section>
+
+          {jobs[i] && (
+            <section className="auth-card" id="requests" aria-labelledby={`requests-${p.id}`}>
+              <div>
+                <h2 id={`requests-${p.id}`}>
+                  Job requests {jobs[i].requests.length > 0 && <em>{jobs[i].requests.length}</em>}
+                </h2>
+                <p className="lede">From &ldquo;Request a quote&rdquo; on your page. Only you see these.</p>
+              </div>
+              <JobRequests requests={jobs[i].requests} business={p.business_name} />
+            </section>
+          )}
+          {jobs[i] && (
+            <section className="auth-card" aria-labelledby={`alerts-${p.id}`}>
+              <div>
+                <h2 id={`alerts-${p.id}`}>Alerts</h2>
+                <p className="lede">
+                  We text and email you when a job request comes in, and when someone in your areas asks Bolton for
+                  your trade. Up to 10 texts a day.
+                </p>
+              </div>
+              <AlertSettingsForm
+                action={saveAlertSettings.bind(null, p.id)}
+                settings={jobs[i].settings}
+                defaultSms={
+                  jobs[i].settings.sms && !jobs[i].settings.custom_sms ? nationalNumber(jobs[i].settings.sms) : null
+                }
+              />
+            </section>
+          )}
 
           {(pros[i].subscription || pros[i].photos.length > 0 || pros[i].documents.length > 0) && (
             <ProPanel

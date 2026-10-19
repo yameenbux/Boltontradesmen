@@ -34,6 +34,8 @@ export type PublicProvider = {
   idChecked: boolean;
   /** Up to 6 work photos, while the trader has Pro (empty otherwise). Never ranks or badges. */
   photos: PublicPhoto[];
+  /** Pro is on, so the page offers "Request a quote". Never ranks or badges. */
+  takesRequests: boolean;
 };
 
 export type Group = { id: string; name: string; slug: string; sort: number };
@@ -75,6 +77,7 @@ function toProvider(r: any): PublicProvider {
         : null,
     idChecked: r.id_checked === true,
     photos: toPublicPhotos(r.photos),
+    takesRequests: r.takes_requests === true,
   };
 }
 

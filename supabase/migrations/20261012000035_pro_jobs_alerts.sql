@@ -1,0 +1,570 @@
+-- Pro, part 2: founding Pro granted by the admin, alerts by text and email, job requests, and Ask Bolton alerts.
+--
+-- * public.pro_grants: Pro switched on by the admin without Stripe ("Founding trader, free until 1 May"). One live
+--   grant per listing; it runs to the end of its last day (London). private.is_pro is now "a Stripe subscription
+--   (as before) or a live grant", so everything Pro already does (ID check shown, work photos) follows it.
+-- * public.trader_alert_settings: where a Pro trader's alerts go. With no row (or an empty field), texts go to the
+--   listing's number when it's a mobile, and emails to the linked account's address.
+-- * public.notifications: one row per alert per channel, written before it's sent and marked after, so an alert is
+--   never sent twice (one row per kind, item, listing and channel) and the daily caps can be counted. Kept 180 days.
+-- * public.job_requests: "Request a quote" from a Pro trader's public page: the resident's name, number, optional
+--   email, area and the job. Only the trader (and the admin) ever sees it. Kept 180 days.
+-- * Ask Bolton alerts: when a question goes public, Pro traders in that trade who cover its area are told.
+-- * provider_public gains takes_requests (Pro is on), appended last, so the page can show "Request a quote".
+-- * No table access for anon, authenticated or the service role: everything goes through functions. The public
+--   form and the alert sender are service role; the trader's functions check the caller owns the listing.
+-- Re-runnable.
+
+-- ---------------------------------------------------------------- founding Pro
+create table if not exists public.pro_grants (
+  id uuid primary key default gen_random_uuid(),
+  provider_id uuid not null references public.providers (id) on delete cascade,
+  until date not null,
+  note text check (note is null or char_length(note) between 1 and 200),
+  granted_by uuid references auth.users (id) on delete set null,
+  created_at timestamptz not null default now(),
+  revoked_at timestamptz,
+  revoked_by uuid references auth.users (id) on delete set null
+);
+create unique index if not exists pro_grants_one_live on public.pro_grants (provider_id) where revoked_at is null;
+alter table public.pro_grants enable row level security;
+revoke all on public.pro_grants from public, anon, authenticated, service_role;
+
+-- Today in Bolton: a grant "until 1 May" lasts all of 1 May.
+create or replace function private.london_today() returns date
+language sql stable set search_path = ''
+as $$ select (now() at time zone 'Europe/London')::date; $$;
+revoke execute on function private.london_today() from public;
+
+-- Same as 000030, plus a live grant.
+create or replace function private.is_pro(p_provider uuid) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.subscriptions s
+    where s.provider_id = p_provider
+      and (s.status in ('active', 'trialing')
+           or (s.status = 'past_due' and s.past_due_since is not null
+               and now() < s.past_due_since + interval '14 days'))
+  ) or exists (
+    select 1 from public.pro_grants g
+    where g.provider_id = p_provider and g.revoked_at is null and g.until >= private.london_today()
+  );
+$$;
+revoke execute on function private.is_pro(uuid) from public;
+grant execute on function private.is_pro(uuid) to anon, authenticated, service_role;
+
+-- The listing's live (or most recent) grant, as {until, note, active}, or null.
+create or replace function private.pro_grant_json(p_provider uuid) returns jsonb
+language sql stable security definer set search_path = ''
+as $$
+  select jsonb_build_object('until', g.until, 'note', g.note, 'active', g.until >= private.london_today())
+  from public.pro_grants g
+  where g.provider_id = p_provider and g.revoked_at is null
+  limit 1;
+$$;
+revoke execute on function private.pro_grant_json(uuid) from public, anon, authenticated;
+
+-- Grants (or replaces) founding Pro until p_until. Raises bad_date (not in the future, or over 2 years away) or
+-- note_too_long. Returns the listing's slug.
+create or replace function public.admin_grant_pro(p_provider uuid, p_until date, p_note text) returns text
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_note text := nullif(btrim(coalesce(p_note, '')), '');
+  v_slug text;
+begin
+  if not public.is_admin() then
+    raise exception 'not admin' using errcode = '42501';
+  end if;
+  if p_until is null or p_until < private.london_today() or p_until > private.london_today() + 731 then
+    raise exception 'bad_date';
+  end if;
+  if char_length(v_note) > 200 then
+    raise exception 'note_too_long';
+  end if;
+  select slug into v_slug from public.providers where id = p_provider and status <> 'removed' for update;
+  if v_slug is null then
+    raise exception 'provider not found' using errcode = 'P0002';
+  end if;
+  update public.pro_grants set revoked_at = now(), revoked_by = auth.uid()
+  where provider_id = p_provider and revoked_at is null;
+  insert into public.pro_grants (provider_id, until, note, granted_by) values (p_provider, p_until, v_note, auth.uid());
+  insert into public.audit_log (actor_id, action, target_type, target_id, reason)
+  values (auth.uid(), 'pro_granted', 'provider', p_provider::text, 'until ' || p_until || coalesce(': ' || v_note, ''));
+  return v_slug;
+end;
+$$;
+
+-- Ends founding Pro now. Returns the listing's slug (null when there was nothing to end).
+create or replace function public.admin_revoke_pro_grant(p_provider uuid) returns text
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_n int;
+begin
+  if not public.is_admin() then
+    raise exception 'not admin' using errcode = '42501';
+  end if;
+  update public.pro_grants set revoked_at = now(), revoked_by = auth.uid()
+  where provider_id = p_provider and revoked_at is null;
+  get diagnostics v_n = row_count;
+  if v_n = 0 then
+    return null;
+  end if;
+  insert into public.audit_log (actor_id, action, target_type, target_id, reason)
+  values (auth.uid(), 'pro_grant_ended', 'provider', p_provider::text, null);
+  return (select slug from public.providers where id = p_provider);
+end;
+$$;
+
+create or replace function public.admin_pro_grant(p_provider uuid) returns jsonb
+language plpgsql stable security definer set search_path = ''
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'not admin' using errcode = '42501';
+  end if;
+  return private.pro_grant_json(p_provider);
+end;
+$$;
+
+-- 000030 body, plus the grant.
+create or replace function public.my_pro_status(p_provider uuid) returns jsonb
+language plpgsql stable security definer set search_path = ''
+as $$
+declare
+  v_sub public.subscriptions;
+  v_id public.pro_documents;
+begin
+  if auth.uid() is null or not exists (
+    select 1 from public.providers where id = p_provider and user_id = auth.uid() and status <> 'removed'
+  ) then
+    raise exception 'not_your_listing';
+  end if;
+  select * into v_sub from public.subscriptions where provider_id = p_provider
+  order by (status in ('active', 'trialing', 'past_due')) desc, updated_at desc, created_at desc limit 1;
+  select * into v_id from public.pro_documents where provider_id = p_provider and kind = 'photo_id'
+  order by (status = 'approved') desc, created_at desc limit 1;
+  return jsonb_build_object(
+    'is_pro', private.is_pro(p_provider),
+    'subscription', case when v_sub.id is null then null else jsonb_build_object(
+      'plan', v_sub.plan, 'status', v_sub.status, 'current_period_end', v_sub.current_period_end,
+      'cancel_at_period_end', v_sub.cancel_at_period_end,
+      'grace_until', case when v_sub.status = 'past_due' then v_sub.past_due_since + interval '14 days' end) end,
+    'id_check', jsonb_build_object('status', coalesce(v_id.status, 'none'),
+      'reason', v_id.reason, 'decided_at', v_id.decided_at),
+    'documents', coalesce((
+      select jsonb_agg(jsonb_build_object('id', d.id, 'kind', d.kind, 'status', d.status, 'reason', d.reason,
+                                          'created_at', d.created_at, 'decided_at', d.decided_at)
+                       order by d.created_at desc)
+      from public.pro_documents d where d.provider_id = p_provider), '[]'::jsonb),
+    'photos', coalesce((
+      select jsonb_agg(jsonb_build_object('id', w.id, 'path', w.storage_path, 'width', w.width, 'height', w.height,
+                                          'position', w.position) order by w.position, w.created_at)
+      from public.work_photos w where w.provider_id = p_provider and w.removed_at is null), '[]'::jsonb),
+    'grant', private.pro_grant_json(p_provider)
+  );
+end;
+$$;
+
+-- ---------------------------------------------------------------- alert settings
+create table if not exists public.trader_alert_settings (
+  provider_id uuid primary key references public.providers (id) on delete cascade,
+  sms_to text check (sms_to is null or sms_to ~ '^\+447[1-9][0-9]{8}$'),
+  email_to text check (email_to is null or (char_length(email_to) <= 254 and email_to ~ '^[^\s@]+@[^\s@]+\.[^\s@]+$')),
+  sms_on boolean not null default true,
+  email_on boolean not null default true,
+  question_alerts boolean not null default true,
+  updated_at timestamptz not null default now()
+);
+alter table public.trader_alert_settings enable row level security;
+revoke all on public.trader_alert_settings from public, anon, authenticated, service_role;
+
+-- Where alerts for a listing go: {sms, email, sms_on, email_on, question_alerts}; sms and email after the defaults.
+create or replace function private.alert_targets(p_provider uuid) returns jsonb
+language sql stable security definer set search_path = ''
+as $$
+  select jsonb_build_object(
+    'sms', coalesce(s.sms_to, case when p.phone_e164 ~ '^\+447[1-9][0-9]{8}$' then p.phone_e164 end),
+    'email', coalesce(s.email_to, u.email),
+    'sms_on', coalesce(s.sms_on, true),
+    'email_on', coalesce(s.email_on, true),
+    'question_alerts', coalesce(s.question_alerts, true)
+  )
+  from public.providers p
+  left join public.trader_alert_settings s on s.provider_id = p.id
+  left join auth.users u on u.id = p.user_id
+  where p.id = p_provider;
+$$;
+revoke execute on function private.alert_targets(uuid) from public, anon, authenticated;
+
+-- The caller's own listing (not removed), or raises not_your_listing.
+create or replace function private.my_listing_id(p_provider uuid) returns uuid
+language plpgsql stable security definer set search_path = ''
+as $$
+begin
+  if auth.uid() is null or not exists (
+    select 1 from public.providers where id = p_provider and user_id = auth.uid() and status <> 'removed'
+  ) then
+    raise exception 'not_your_listing';
+  end if;
+  return p_provider;
+end;
+$$;
+revoke execute on function private.my_listing_id(uuid) from public, anon, authenticated;
+
+create or replace function public.my_alert_settings(p_provider uuid) returns jsonb
+language plpgsql stable security definer set search_path = ''
+as $$
+declare
+  v_id uuid := private.my_listing_id(p_provider);
+  v_s public.trader_alert_settings;
+begin
+  select * into v_s from public.trader_alert_settings where provider_id = v_id;
+  return private.alert_targets(v_id) || jsonb_build_object('custom_sms', v_s.sms_to, 'custom_email', v_s.email_to);
+end;
+$$;
+
+-- Saves where alerts go. Empty sms or email: back to the default. Raises bad_mobile or bad_email.
+create or replace function public.set_my_alert_settings(
+  p_provider uuid, p_sms text, p_email text, p_sms_on boolean, p_email_on boolean, p_question_alerts boolean
+) returns void
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_id uuid := private.my_listing_id(p_provider);
+  v_sms text := nullif(btrim(coalesce(p_sms, '')), '');
+  v_email text := lower(nullif(btrim(coalesce(p_email, '')), ''));
+begin
+  if v_sms is not null and v_sms !~ '^\+447[1-9][0-9]{8}$' then
+    raise exception 'bad_mobile';
+  end if;
+  if v_email is not null and (char_length(v_email) > 254 or v_email !~ '^[^\s@]+@[^\s@]+\.[^\s@]+$') then
+    raise exception 'bad_email';
+  end if;
+  insert into public.trader_alert_settings (provider_id, sms_to, email_to, sms_on, email_on, question_alerts, updated_at)
+  values (v_id, v_sms, v_email, coalesce(p_sms_on, true), coalesce(p_email_on, true), coalesce(p_question_alerts, true), now())
+  on conflict (provider_id) do update set
+    sms_to = excluded.sms_to, email_to = excluded.email_to, sms_on = excluded.sms_on, email_on = excluded.email_on,
+    question_alerts = excluded.question_alerts, updated_at = now();
+end;
+$$;
+
+-- ---------------------------------------------------------------- the alert log (outbox)
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  provider_id uuid not null references public.providers (id) on delete cascade,
+  kind text not null check (kind in ('job_request', 'question')),
+  ref_id uuid not null,
+  channel text not null check (channel in ('sms', 'email')),
+  to_addr text not null,
+  status text not null default 'queued' check (status in ('queued', 'sent', 'failed')),
+  reason text check (reason is null or char_length(reason) <= 200),
+  created_at timestamptz not null default now(),
+  sent_at timestamptz
+);
+create unique index if not exists notifications_once on public.notifications (kind, ref_id, provider_id, channel);
+create index if not exists notifications_provider_day on public.notifications (provider_id, channel, created_at);
+alter table public.notifications enable row level security;
+revoke all on public.notifications from public, anon, authenticated, service_role;
+
+-- Most alerts per listing per 24 hours: texts cost money, and nobody wants 30 emails a day.
+create or replace function private.alert_cap(p_channel text) returns int
+language sql immutable set search_path = ''
+as $$ select case p_channel when 'sms' then 10 else 30 end; $$;
+revoke execute on function private.alert_cap(text) from public;
+
+-- Claims the alerts for one item: for each listing to tell and each channel that's on, has an address and is under
+-- the day's cap, a 'queued' row (never a second one for the same item). Returns
+-- [{id, provider_id, channel, to}] for the app to send, then mark with mark_notification.
+create or replace function private.claim_alerts(p_kind text, p_ref uuid, p_providers uuid[]) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_out jsonb := '[]'::jsonb;
+  v_pid uuid;
+  v_t jsonb;
+  v_ch text;
+  v_to text;
+  v_id uuid;
+begin
+  delete from public.notifications where created_at < now() - interval '180 days';
+  foreach v_pid in array coalesce(p_providers, '{}'::uuid[]) loop
+    -- One claim at a time per listing, so two items can't both slip under the cap.
+    perform pg_advisory_xact_lock(hashtext('claim_alerts:' || v_pid::text));
+    v_t := private.alert_targets(v_pid);
+    foreach v_ch in array array['sms', 'email'] loop
+      v_to := v_t ->> v_ch;
+      continue when v_to is null or not (v_t ->> (v_ch || '_on'))::boolean;
+      continue when (select count(*) from public.notifications n
+                     where n.provider_id = v_pid and n.channel = v_ch and n.created_at > now() - interval '24 hours')
+                    >= private.alert_cap(v_ch);
+      insert into public.notifications (provider_id, kind, ref_id, channel, to_addr)
+      values (v_pid, p_kind, p_ref, v_ch, v_to)
+      on conflict (kind, ref_id, provider_id, channel) do nothing
+      returning id into v_id;
+      if v_id is not null then
+        v_out := v_out || jsonb_build_array(jsonb_build_object('id', v_id, 'provider_id', v_pid, 'channel', v_ch, 'to', v_to));
+      end if;
+      v_id := null;
+    end loop;
+  end loop;
+  return v_out;
+end;
+$$;
+revoke execute on function private.claim_alerts(text, uuid, uuid[]) from public, anon, authenticated;
+
+create or replace function public.mark_notification(p_id uuid, p_ok boolean, p_reason text) returns void
+language sql security definer set search_path = ''
+as $$
+  update public.notifications
+  set status = case when p_ok then 'sent' else 'failed' end,
+      sent_at = case when p_ok then now() end,
+      reason = left(nullif(btrim(coalesce(p_reason, '')), ''), 200)
+  where id = p_id and status = 'queued';
+$$;
+
+-- ---------------------------------------------------------------- job requests
+create table if not exists public.job_requests (
+  id uuid primary key default gen_random_uuid(),
+  provider_id uuid not null references public.providers (id) on delete cascade,
+  name text not null check (char_length(name) between 2 and 60),
+  phone_e164 text not null check (phone_e164 ~ '^\+44[1-9][0-9]{8,9}$'),
+  email text check (email is null or (char_length(email) <= 254 and email ~ '^[^\s@]+@[^\s@]+\.[^\s@]+$')),
+  district text not null,
+  body text not null check (char_length(body) between 10 and 1000),
+  ip_hash text,
+  status text not null default 'new' check (status in ('new', 'contacted', 'won', 'lost', 'spam')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists job_requests_provider_idx on public.job_requests (provider_id, created_at desc);
+create index if not exists job_requests_ip_idx on public.job_requests (ip_hash, created_at);
+create index if not exists job_requests_phone_idx on public.job_requests (phone_e164, created_at);
+alter table public.job_requests enable row level security;
+revoke all on public.job_requests from public, anon, authenticated, service_role;
+
+-- The public form (service role, called by the app's server). Returns {result, id, business_name, slug}:
+-- result 'ok', 'limited' (too many from this connection or number), or 'unavailable' (not live, or not Pro).
+-- The app checks the fields first; the same rules hold here.
+create or replace function public.submit_job_request(
+  p_slug text, p_name text, p_phone_e164 text, p_email text, p_district text, p_body text, p_ip_hash text
+) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_p public.providers;
+  v_ip text := coalesce(nullif(btrim(p_ip_hash), ''), 'unknown');
+  v_phone text := btrim(coalesce(p_phone_e164, ''));
+  v_id uuid;
+begin
+  delete from public.job_requests where created_at < now() - interval '180 days';
+  select * into v_p from public.providers where slug = p_slug and status = 'live';
+  if v_p.id is null or not private.is_pro(v_p.id) then
+    return jsonb_build_object('result', 'unavailable');
+  end if;
+  if not (upper(btrim(coalesce(p_district, ''))) = any (private.trader_districts())) then
+    raise exception 'bad_district';
+  end if;
+  perform pg_advisory_xact_lock(hashtext('submit_job_request:' || v_phone));
+  if (select count(*) from public.job_requests where ip_hash = v_ip and created_at > now() - interval '24 hours') >= 5
+     or (select count(*) from public.job_requests where phone_e164 = v_phone and created_at > now() - interval '24 hours') >= 5
+     or exists (select 1 from public.job_requests where phone_e164 = v_phone and provider_id = v_p.id
+                and created_at > now() - interval '24 hours') then
+    return jsonb_build_object('result', 'limited');
+  end if;
+  insert into public.job_requests (provider_id, name, phone_e164, email, district, body, ip_hash)
+  values (v_p.id, btrim(p_name), v_phone, lower(nullif(btrim(coalesce(p_email, '')), '')),
+          upper(btrim(p_district)), btrim(p_body), v_ip)
+  returning id into v_id;
+  return jsonb_build_object('result', 'ok', 'id', v_id, 'business_name', v_p.business_name, 'slug', v_p.slug);
+end;
+$$;
+
+-- Alerts for a new job request (service role): claims them and returns what to send, with the request.
+create or replace function public.claim_job_request_alerts(p_request uuid) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v public.job_requests;
+begin
+  select * into v from public.job_requests where id = p_request;
+  if v.id is null then
+    return null;
+  end if;
+  return jsonb_build_object(
+    'request', jsonb_build_object('id', v.id, 'name', v.name, 'phone', v.phone_e164, 'district', v.district,
+                                  'body', v.body, 'provider_id', v.provider_id),
+    'send', private.claim_alerts('job_request', v.id, array[v.provider_id])
+  );
+end;
+$$;
+
+-- The trader's requests, newest first (the last 180 days).
+create or replace function public.my_job_requests(p_provider uuid) returns jsonb
+language plpgsql stable security definer set search_path = ''
+as $$
+declare
+  v_id uuid := private.my_listing_id(p_provider);
+begin
+  return coalesce((
+    select jsonb_agg(jsonb_build_object('id', j.id, 'name', j.name, 'phone', j.phone_e164, 'email', j.email,
+                                        'district', j.district, 'body', j.body, 'status', j.status,
+                                        'created_at', j.created_at) order by j.created_at desc)
+    from public.job_requests j
+    where j.provider_id = v_id and j.created_at > now() - interval '180 days'
+  ), '[]'::jsonb);
+end;
+$$;
+
+-- Raises bad_status or not_found.
+create or replace function public.set_my_job_request_status(p_request uuid, p_status text) returns void
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v public.job_requests;
+begin
+  if p_status is null or p_status not in ('new', 'contacted', 'won', 'lost', 'spam') then
+    raise exception 'bad_status';
+  end if;
+  select * into v from public.job_requests where id = p_request for update;
+  if v.id is null then
+    raise exception 'not_found';
+  end if;
+  perform private.my_listing_id(v.provider_id);
+  update public.job_requests set status = p_status, updated_at = now() where id = v.id;
+end;
+$$;
+
+-- ---------------------------------------------------------------- Ask Bolton alerts
+-- Alerts for a question that's public (service role): Pro traders, live, listed in its trade (where they may show
+-- it) and covering its area, with question alerts on, never the asker's own listing. Returns {question, send} or
+-- null when the question isn't public or is past its 14 days.
+create or replace function public.claim_question_alerts(p_question uuid) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  q public.questions;
+  v_providers uuid[];
+begin
+  select * into q from public.questions where id = p_question and status = 'published';
+  if q.id is null or q.published_at < now() - interval '14 days' then
+    return null;
+  end if;
+  select coalesce(array_agg(p.id), '{}'::uuid[]) into v_providers
+  from public.providers p
+  join public.provider_categories pc on pc.provider_id = p.id and pc.category_id = q.category_id
+  where p.status = 'live'
+    and q.district = any (p.areas)
+    and private.category_visible(p.id, q.category_id)
+    and private.is_pro(p.id)
+    and (p.user_id is null or p.user_id <> q.asker_id)
+    and coalesce((private.alert_targets(p.id) ->> 'question_alerts')::boolean, true);
+  return jsonb_build_object(
+    'question', jsonb_build_object('id', q.id, 'district', q.district, 'body', q.body,
+                                   'category', (select name from public.categories where id = q.category_id)),
+    'send', private.claim_alerts('question', q.id, v_providers)
+  );
+end;
+$$;
+
+-- ---------------------------------------------------------------- provider_public (000030 body + takes_requests)
+create or replace view public.provider_public
+with (security_barrier = true) as
+select
+  p.id,
+  p.slug,
+  p.business_name,
+  p.contact_name,
+  p.areas,
+  p.bio,
+  (p.verified_at is not null) as is_verified,
+  (p.whatsapp_e164 is not null) as has_whatsapp,
+  coalesce((
+    select array_agg(c.slug order by c.slug)
+    from public.provider_categories pc
+    join public.categories c on c.id = pc.category_id
+    where pc.provider_id = p.id
+      and c.active
+      and private.category_visible(p.id, c.id)
+  ), '{}'::text[]) as category_slugs,
+  coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'kind', ck.kind,
+      'expires_on', ck.expires_on,
+      'checked_at', ck.checked_at
+    ) order by ck.checked_at, ck.kind)
+    from public.provider_checks ck
+    where ck.provider_id = p.id
+      and (ck.expires_on is null or ck.expires_on >= current_date)
+  ), '[]'::jsonb) as checks,
+  s.review_count,
+  s.use_again_pct,
+  s.on_time_pct,
+  s.on_price_pct,
+  s.tidy_pct,
+  s.score,
+  (
+    select max(r.created_at) from public.reviews r
+    where r.provider_id = p.id and r.status in ('published', 'under_check')
+  ) as last_review_at,
+  p.created_at,
+  (
+    select count(*)::int from public.reviews r
+    where r.provider_id = p.id and r.status in ('published', 'under_check')
+      and exists (select 1 from public.review_proofs pr where pr.review_id = r.id and pr.outcome = 'accepted')
+  ) as verified_job_count,
+  a.status as availability_status,
+  case when a.status is not null then p.available_until end as availability_until,
+  case when a.status is not null then p.availability_set_at end as availability_set_at,
+  (pro.active and exists (
+    select 1 from public.pro_documents d
+    where d.provider_id = p.id and d.kind = 'photo_id' and d.status = 'approved'
+  )) as id_checked,
+  case when pro.active then coalesce((
+    select jsonb_agg(jsonb_build_object('path', w.storage_path, 'width', w.width, 'height', w.height)
+                     order by w.position, w.created_at)
+    from public.work_photos w
+    where w.provider_id = p.id and w.removed_at is null
+  ), '[]'::jsonb) else '[]'::jsonb end as photos,
+  pro.active as takes_requests
+from public.providers p
+cross join lateral private.provider_stats(p.id) s
+cross join lateral (select private.availability_now(p.availability, p.available_until, p.availability_set_at) as status) a
+cross join lateral (select private.is_pro(p.id) as active) pro
+where p.status = 'live';
+
+alter view public.provider_public owner to postgres;
+grant select on public.provider_public to anon, authenticated;
+
+-- ---------------------------------------------------------------- grants
+do $$
+declare
+  f text;
+begin
+  -- The app's server only (service role).
+  foreach f in array array[
+    'public.submit_job_request(text, text, text, text, text, text, text)',
+    'public.claim_job_request_alerts(uuid)',
+    'public.claim_question_alerts(uuid)',
+    'public.mark_notification(uuid, boolean, text)'
+  ] loop
+    execute format('revoke execute on function %s from public, anon, authenticated', f);
+    execute format('grant execute on function %s to service_role', f);
+  end loop;
+  -- Signed-in accounts (each checks the caller: the linked trader, or the admin).
+  foreach f in array array[
+    'public.my_pro_status(uuid)',
+    'public.my_alert_settings(uuid)',
+    'public.set_my_alert_settings(uuid, text, text, boolean, boolean, boolean)',
+    'public.my_job_requests(uuid)',
+    'public.set_my_job_request_status(uuid, text)',
+    'public.admin_grant_pro(uuid, date, text)',
+    'public.admin_revoke_pro_grant(uuid)',
+    'public.admin_pro_grant(uuid)'
+  ] loop
+    execute format('revoke execute on function %s from public, anon', f);
+    execute format('grant execute on function %s to authenticated', f);
+  end loop;
+end $$;
