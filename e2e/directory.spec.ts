@@ -101,6 +101,9 @@ test("profile shows the header, stat card, checks list and about card", async ({
   await expect(stat.getByText("Would use again")).toBeVisible();
   await expect(stat.getByTestId("headline")).toHaveText("100%");
   await expect(stat.getByText("From 4 reviews by Bolton residents")).toBeVisible();
+  // The card's own look, not the trader dashboard's number boxes (which once shared the .stat class).
+  await expect(stat).toHaveCSS("margin-top", "22px");
+  await expect(stat).toHaveCSS("flex-direction", "row");
   // Fixture reviews answer on time and on price but not tidiness, so only those two bars show.
   await expect(stat.getByTestId("bar-row")).toHaveText([/Turned up when they said\s*100%/, /Stuck to the quote\s*100%/]);
   await expect(stat.getByText("Quality of work")).toBeVisible();
@@ -218,6 +221,9 @@ test("profile without WhatsApp or reviews: one call button, and what's needed fo
   const stat = page.getByRole("region", { name: "What people say" });
   await expect(stat.getByText("3 reviews needed for a score")).toBeVisible();
   await expect(stat.getByText("No reviews yet")).toBeVisible();
+  // Stacked and centred: the heading above "No reviews yet", never side by side.
+  await expect(stat).toHaveCSS("display", "grid");
+  await expect(stat).toHaveCSS("text-align", "center");
   await expect(page.getByRole("region", { name: "What we've checked" }).getByRole("listitem")).toHaveText([
     /Trade accreditations\s*None provided/,
   ]);
