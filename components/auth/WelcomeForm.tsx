@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { AlertIcon, ChevronDown } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
-import { completeOnboarding } from "@/app/platform/welcome/actions";
+import { completeOnboarding } from "@/app/(platform)/welcome/actions";
 import type { FormState } from "@/lib/admin-shared";
 import { BL_DISTRICTS, OTHER_DISTRICT } from "@/lib/districts";
 

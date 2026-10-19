@@ -30,7 +30,7 @@ describe("siteUrl", () => {
 describe("buildRobots", () => {
   it("allows everything except admin, the API and private token links, and points at the sitemap", () => {
     expect(buildRobots(BASE)).toEqual({
-      rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/api/", "/platform/consent/", "/platform/link/", "/platform/d/"] },
+      rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/api/", "/consent/", "/link/", "/d/"] },
       sitemap: `${BASE}/sitemap.xml`,
     });
   });
@@ -49,16 +49,15 @@ describe("buildSitemap", () => {
   const map = buildSitemap({ categories, providers }, BASE);
   const urls = map.map((e) => e.url);
 
-  it("lists home, the Get listed form, the directory, live categories, live providers and policy pages", () => {
+  it("lists home (the directory), the Get listed form, live categories, live providers and policy pages", () => {
     expect(urls).toEqual([
       `${BASE}/`,
       `${BASE}/get-listed`,
       `${BASE}/for-traders`,
-      `${BASE}/platform`,
-      `${BASE}/platform/c/plumber`,
-      `${BASE}/platform/c/electrician`,
-      `${BASE}/platform/p/ace`,
-      `${BASE}/platform/p/fresh`,
+      `${BASE}/c/plumber`,
+      `${BASE}/c/electrician`,
+      `${BASE}/p/ace`,
+      `${BASE}/p/fresh`,
       `${BASE}/privacy`,
       `${BASE}/terms`,
       `${BASE}/how-ratings-work`,
@@ -75,11 +74,11 @@ describe("buildSitemap", () => {
 
   it("dates entries from the newest provider activity", () => {
     const at = (u: string) => (map.find((e) => e.url === `${BASE}${u}`)?.lastModified as Date | undefined)?.toISOString();
-    expect(at("/platform")).toBe("2026-03-01T00:00:00.000Z");
-    expect(at("/platform/c/plumber")).toBe("2026-03-01T00:00:00.000Z");
-    expect(at("/platform/c/electrician")).toBe("2026-02-01T00:00:00.000Z");
-    expect(at("/platform/p/ace")).toBe("2026-03-01T00:00:00.000Z");
-    expect(at("/platform/p/fresh")).toBe("2026-02-01T00:00:00.000Z");
+    expect(at("/")).toBe("2026-03-01T00:00:00.000Z");
+    expect(at("/c/plumber")).toBe("2026-03-01T00:00:00.000Z");
+    expect(at("/c/electrician")).toBe("2026-02-01T00:00:00.000Z");
+    expect(at("/p/ace")).toBe("2026-03-01T00:00:00.000Z");
+    expect(at("/p/fresh")).toBe("2026-02-01T00:00:00.000Z");
     expect(at("/privacy")).toBeUndefined();
   });
 
@@ -88,9 +87,8 @@ describe("buildSitemap", () => {
       `${BASE}/`,
       `${BASE}/get-listed`,
       `${BASE}/for-traders`,
-      `${BASE}/platform`,
-      `${BASE}/platform/c/plumber`,
-      `${BASE}/platform/c/electrician`,
+      `${BASE}/c/plumber`,
+      `${BASE}/c/electrician`,
       `${BASE}/privacy`,
       `${BASE}/terms`,
       `${BASE}/how-ratings-work`,
@@ -141,7 +139,7 @@ describe("page metadata", () => {
     expect(m.title).toEqual({ absolute: "Plumbers in Bolton | Bolton Vouched" });
     expect(m.description).toContain("BL1 to BL7");
     expect(m.description).toContain("3 local pros");
-    expect(m.alternates?.canonical).toBe("/platform/c/plumber");
+    expect(m.alternates?.canonical).toBe("/c/plumber");
     expect(JSON.stringify(m.openGraph)).toContain("/social.png");
     expect(m.robots).toBeUndefined();
   });
@@ -165,7 +163,7 @@ describe("page metadata", () => {
     expect(m.description).toContain("BL1 and BL3");
     expect(m.description).toContain("Boilers and leaks.");
     expect(m.description).not.toMatch(/\d{6}/);
-    expect(m.alternates?.canonical).toBe("/platform/p/ace");
+    expect(m.alternates?.canonical).toBe("/p/ace");
   });
 
   it("provider: no generic social image, so the profile's own opengraph-image is used", () => {
@@ -195,7 +193,7 @@ describe("JSON-LD", () => {
 
   it("provider is a LocalBusiness with areas but no phone, address or rating", () => {
     const ld = providerJsonLd({ slug: "ace", businessName: "Ace </script>", areas: ["BL1", "BL3"], trade: "Plumber" }, BASE);
-    expect(ld).toMatchObject({ "@type": "LocalBusiness", name: "Ace </script>", url: `${BASE}/platform/p/ace` });
+    expect(ld).toMatchObject({ "@type": "LocalBusiness", name: "Ace </script>", url: `${BASE}/p/ace` });
     expect(ld.areaServed).toEqual([
       { "@type": "Place", name: "BL1, Bolton" },
       { "@type": "Place", name: "BL3, Bolton" },
@@ -210,9 +208,9 @@ describe("breadcrumbJsonLd", () => {
   it("numbers the trail from 1 with absolute URLs, and serializes safely", () => {
     const ld = breadcrumbJsonLd(
       [
-        { name: "Trades", path: "/platform" },
-        { name: "Plumber", path: "/platform/c/plumber" },
-        { name: "Ace </script>", path: "/platform/p/ace" },
+        { name: "Trades", path: "/" },
+        { name: "Plumber", path: "/c/plumber" },
+        { name: "Ace </script>", path: "/p/ace" },
       ],
       BASE,
     );
@@ -220,9 +218,9 @@ describe("breadcrumbJsonLd", () => {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Trades", item: `${BASE}/platform` },
-        { "@type": "ListItem", position: 2, name: "Plumber", item: `${BASE}/platform/c/plumber` },
-        { "@type": "ListItem", position: 3, name: "Ace </script>", item: `${BASE}/platform/p/ace` },
+        { "@type": "ListItem", position: 1, name: "Trades", item: `${BASE}/` },
+        { "@type": "ListItem", position: 2, name: "Plumber", item: `${BASE}/c/plumber` },
+        { "@type": "ListItem", position: 3, name: "Ace </script>", item: `${BASE}/p/ace` },
       ],
     });
     expect(serializeJsonLd(ld)).not.toContain("</script");
@@ -246,16 +244,16 @@ describe("community questions in the sitemap and metadata", () => {
 
   it("lists the Ask page and only answered questions that are open or recent", () => {
     const urls = buildSitemap({ categories: [], providers: [], questions, now }, BASE).map((e) => e.url);
-    expect(urls.filter((u) => u.includes("/platform/ask"))).toEqual([
-      `${BASE}/platform/ask`,
-      `${BASE}/platform/ask/00000000-0000-0000-0000-0000000000a1`,
-      `${BASE}/platform/ask/00000000-0000-0000-0000-0000000000a3`,
+    expect(urls.filter((u) => u.includes("/ask"))).toEqual([
+      `${BASE}/ask`,
+      `${BASE}/ask/00000000-0000-0000-0000-0000000000a1`,
+      `${BASE}/ask/00000000-0000-0000-0000-0000000000a3`,
     ]);
   });
 
   it("leaves the Ask page out while nothing is answered", () => {
     const urls = buildSitemap({ categories: [], providers: [], questions: [questions[1]], now }, BASE).map((e) => e.url);
-    expect(urls.some((u) => u.includes("/platform/ask"))).toBe(false);
+    expect(urls.some((u) => u.includes("/ask"))).toBe(false);
   });
 
   it("indexes a question page only once it has a recommendation, with no phone number in the title", () => {
@@ -266,7 +264,7 @@ describe("community questions in the sitemap and metadata", () => {
     expect(answered.robots).toBeUndefined();
     expect((answered.title as { absolute: string }).absolute).not.toMatch(/\d{5}/);
     expect(answered.description).toContain("Electrician in BL3, Bolton. 2 recommendations from local people");
-    expect(answered.alternates?.canonical).toBe("/platform/ask/00000000-0000-0000-0000-0000000000a1");
+    expect(answered.alternates?.canonical).toBe("/ask/00000000-0000-0000-0000-0000000000a1");
   });
 });
 
@@ -290,7 +288,7 @@ describe("price guides in the sitemap and metadata", () => {
     const urls = (priceGuides: { slug: string; latestJobMonth: string }[]) =>
       buildSitemap({ categories: [], providers: [], priceGuides }, BASE).map((e) => e.url);
     expect(urls([{ slug: "gardener", latestJobMonth: "2026-09-01" }])).toEqual(
-      expect.arrayContaining([`${BASE}/platform/prices`, `${BASE}/platform/prices/gardener`]),
+      expect.arrayContaining([`${BASE}/prices`, `${BASE}/prices/gardener`]),
     );
     expect(urls([]).filter((u) => u.includes("/prices"))).toEqual([]);
   });
@@ -298,7 +296,7 @@ describe("price guides in the sitemap and metadata", () => {
   it("titles the guide as the question, with a canonical and no noindex", () => {
     const m = priceGuideMetadata(guide);
     expect(m.title).toEqual({ absolute: "How much does a gardener cost in Bolton? | Bolton Vouched" });
-    expect(m.alternates?.canonical).toBe("/platform/prices/gardener");
+    expect(m.alternates?.canonical).toBe("/prices/gardener");
     expect(m.robots).toBeUndefined();
     expect(String(m.description)).toMatch(/^What Bolton residents paid, from 10 reviews of gardener jobs since April 2025\. 70% said the price matched the quote\. Most often: Under £250 and £250–£1,000\.$/);
     expect(String(m.description).length).toBeLessThanOrEqual(160);

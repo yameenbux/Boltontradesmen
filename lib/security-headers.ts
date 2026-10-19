@@ -65,7 +65,7 @@ export function contentSecurityPolicy(env: Env = process.env): string {
 }
 
 /** Pages whose URL carries a private token: no Referer leaves them, and they stay out of search results. */
-export const TOKEN_PATHS = ["/platform/consent/:path*", "/platform/link/:path*"] as const;
+export const TOKEN_PATHS = ["/consent/:path*", "/link/:path*"] as const;
 
 export function securityHeaders(env: Env = process.env) {
   const all: Header[] = [

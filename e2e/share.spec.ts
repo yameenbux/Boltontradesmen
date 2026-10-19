@@ -25,8 +25,8 @@ test("without a share sheet, Share opens a menu with WhatsApp and Copy link", as
     Object.defineProperty(Navigator.prototype, "share", { value: undefined, configurable: true });
   });
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-  await page.goto("/platform/p/e2e-ace-plumbing");
-  const url = `${ORIGIN}/platform/p/e2e-ace-plumbing`;
+  await page.goto("/p/e2e-ace-plumbing");
+  const url = `${ORIGIN}/p/e2e-ace-plumbing`;
 
   const share = page.locator(".prof-head").getByRole("button", { name: "Share" });
   await expect(share).toHaveAttribute("aria-expanded", "false");
@@ -59,19 +59,19 @@ test("with a share sheet, Share hands it the title and link", async ({ page }) =
       configurable: true,
     });
   });
-  await page.goto("/platform/p/e2e-pine-joinery");
+  await page.goto("/p/e2e-pine-joinery");
   await page.locator(".prof-head").getByRole("button", { name: "Share" }).click();
   await expect
     .poll(() => page.evaluate(() => (window as unknown as { shareCalls: unknown[] }).shareCalls))
-    .toEqual([{ title: "Pine Joinery on Bolton Vouched", url: `${ORIGIN}/platform/p/e2e-pine-joinery` }]);
+    .toEqual([{ title: "Pine Joinery on Bolton Vouched", url: `${ORIGIN}/p/e2e-pine-joinery` }]);
   await expect(page.getByRole("group", { name: "Share this page" })).toHaveCount(0);
 });
 
 test("the profile's social image is its own, and ?utm_source=badge keeps the clean canonical", async ({ page, request }) => {
-  await page.goto("/platform/p/e2e-pine-joinery?utm_source=badge");
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${ORIGIN}/platform/p/e2e-pine-joinery`);
+  await page.goto("/p/e2e-pine-joinery?utm_source=badge");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${ORIGIN}/p/e2e-pine-joinery`);
   const og = await page.locator('meta[property="og:image"]').getAttribute("content");
-  expect(og).toMatch(new RegExp(`^${ORIGIN}/platform/p/e2e-pine-joinery/opengraph-image`));
+  expect(og).toMatch(new RegExp(`^${ORIGIN}/p/e2e-pine-joinery/opengraph-image`));
   await expect(page.locator('meta[property="og:image"]')).toHaveCount(1);
   await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute("content", "1200");
   await expect(page.locator('meta[name="twitter:image"]')).not.toHaveAttribute("content", /social\.png/);
@@ -85,7 +85,7 @@ test("the profile's social image is its own, and ?utm_source=badge keeps the cle
   expect((await img.body()).subarray(1, 4).toString()).toBe("PNG");
 
   // Other pages keep the site-wide image.
-  await page.goto("/platform/c/joiner");
+  await page.goto("/c/joiner");
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", `${ORIGIN}/social.png`);
 });
 
@@ -138,7 +138,7 @@ test("a linked trader copies their badge's embed code and shares their page; the
 }, testInfo) => {
   const slug = "e2e-shaw-vans";
   const embed =
-    `<a href="${ORIGIN}/platform/p/${slug}?utm_source=badge"><img src="${ORIGIN}/badge/${slug}.svg" ` +
+    `<a href="${ORIGIN}/p/${slug}?utm_source=badge"><img src="${ORIGIN}/badge/${slug}.svg" ` +
     `alt="Shaw &amp; Daughters Removals — vouched in Bolton on Bolton Vouched" width="240" height="80"></a>`;
 
   await adminSignIn(page);
@@ -156,7 +156,7 @@ test("a linked trader copies their badge's embed code and shares their page; the
   const trader = await context.newPage();
   await signInWithEmail(trader, `shaw-trader@${E2E_EMAIL_DOMAIN}`, { first: "Sam", surname: "Shaw", next: path });
   await trader.getByRole("button", { name: "Yes, this is my business" }).click();
-  await expect(trader).toHaveURL(/\/platform\/provider$/);
+  await expect(trader).toHaveURL(/\/provider$/);
 
   const badge = trader.getByRole("region", { name: "Your website badge" });
   const preview = badge.getByTestId("badge-preview");
@@ -171,7 +171,7 @@ test("a linked trader copies their badge's embed code and shares their page; the
   await expect(png).toHaveAttribute("download", `bolton-vouched-${slug}.png`);
 
   const share = trader.getByRole("region", { name: "Share your page" });
-  const url = `${ORIGIN}/platform/p/${slug}`;
+  const url = `${ORIGIN}/p/${slug}`;
   await expect(share.getByTestId("page-link")).toHaveText(url.replace(/^https?:\/\//, ""));
   await share.getByRole("button", { name: "Copy link" }).click();
   expect(await trader.evaluate(() => navigator.clipboard.readText())).toBe(url);

@@ -18,7 +18,7 @@ for (const { path, heading } of policies) {
   });
 }
 
-for (const start of ["/", "/platform", "/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy", "/cookies", "/admin/login"]) {
+for (const start of ["/", "/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy", "/cookies", "/admin/login"]) {
   test(`footer on ${start} links to the policy pages`, async ({ page }) => {
     await page.goto(start);
     const footer = page.getByRole("contentinfo");

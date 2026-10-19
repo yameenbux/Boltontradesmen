@@ -26,20 +26,20 @@ test("a trader links their listing with the admin's sign-in link, replies, and t
   await expect(section.getByText(/^Link copied\./)).toBeVisible();
   await expect(section.getByText(/^Expires on \d{1,2} \w+ \d{4}\. Works once\.$/)).toBeVisible();
   const url = await section.getByRole("textbox", { name: "Trader sign-in link" }).inputValue();
-  expect(url).toMatch(/^http:\/\/localhost:3000\/platform\/link\/[0-9a-f-]{36}$/);
+  expect(url).toMatch(/^http:\/\/localhost:3000\/link\/[0-9a-f-]{36}$/);
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(url);
   const path = new URL(url).pathname;
 
   // The trader, signed out, opens the link: sign in first, then confirm.
   const trader = await (await browser.newContext()).newPage();
   await trader.goto(path);
-  await expect(trader).toHaveURL(/\/platform\/sign-in\?next=%2Fplatform%2Flink%2F/);
+  await expect(trader).toHaveURL(/\/sign-in\?next=%2Flink%2F/);
   await expect(trader.getByRole("heading", { name: "Sign in to link your listing" })).toBeVisible();
   await signInWithEmail(trader, `ace@${E2E_EMAIL_DOMAIN}`, { first: "Alan", surname: "Ace", next: path });
   await expect(trader).toHaveURL(new RegExp(`${path}$`));
   await expect(trader.getByRole("heading", { level: 1 })).toHaveText("Link Ace Plumbing to your account?");
   await trader.getByRole("button", { name: "Yes, this is my business" }).click();
-  await expect(trader).toHaveURL(/\/platform\/provider$/);
+  await expect(trader).toHaveURL(/\/provider$/);
   await expect(trader.getByRole("heading", { level: 1 })).toContainText("Ace Plumbing");
   for (const name of ["Pat P.", "Jo B.", "Sam T.", "Ali R."]) {
     await expect(trader.getByRole("article", { name: `Review by ${name}` })).toBeVisible();
@@ -52,12 +52,12 @@ test("a trader links their listing with the admin's sign-in link, replies, and t
   await pat.getByRole("button", { name: "Post reply" }).click();
   await expect(pat.getByText("Reply posted")).toBeVisible();
 
-  await trader.goto("/platform/p/e2e-ace-plumbing");
+  await trader.goto("/p/e2e-ace-plumbing");
   const onProfile = trader.getByRole("article", { name: "Review by Pat P." });
   await expect(onProfile.getByText("Reply from Ace Plumbing")).toBeVisible();
   await expect(onProfile).toContainText("Thanks Pat, glad the boiler's behaving.");
 
-  await trader.goto("/platform/p/e2e-fresh-pipes/review");
+  await trader.goto("/p/e2e-fresh-pipes/review");
   await expect(trader.getByText("You can't review someone who works in the same trade as you.")).toBeVisible();
   await expect(trader.getByRole("form", { name: "Your review" })).toHaveCount(0);
 
@@ -77,13 +77,13 @@ test("a trader links their listing with the admin's sign-in link, replies, and t
   await section.getByLabel(/Reason for unlinking/).fill("Wrong person opened the link");
   await section.getByRole("button", { name: "Unlink" }).click();
   await expect(section.getByRole("button", { name: "Trader sign-in link" })).toBeVisible();
-  await trader.goto("/platform/provider");
+  await trader.goto("/provider");
   await expect(trader.getByRole("heading", { name: "Tell us about your business" })).toBeVisible();
 });
 
 test("a malformed trader link says it isn't valid", async ({ page }) => {
   await signInWithEmail(page, `linkless@${E2E_EMAIL_DOMAIN}`, { first: "Lin", surname: "Less" });
-  await page.goto("/platform/link/not-a-token");
+  await page.goto("/link/not-a-token");
   await expect(page.getByText("This link isn't valid. Ask us for a new one.")).toBeVisible();
   await expect(page.getByRole("link", { name: "support@ysbdesigns.uk" })).toBeVisible();
 });

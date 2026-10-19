@@ -5,7 +5,7 @@ import { platformPath } from "@/lib/paths";
 import { displayLink, whatsappShareUrl } from "@/lib/review-link";
 import { absoluteUrl, SITE_NAME, siteUrl } from "@/lib/seo";
 
-/** The profile's full link, e.g. https://boltonvouched.ysbdesigns.uk/platform/p/ace-plumbing. */
+/** The profile's full link, e.g. https://boltonvouched.ysbdesigns.uk/p/ace-plumbing. */
 export function profileUrl(slug: string, base: string = siteUrl()): string {
   return absoluteUrl(platformPath("p", slug), base);
 }

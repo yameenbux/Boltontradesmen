@@ -72,12 +72,12 @@ describe("securityHeaders", () => {
 
   it("keeps admin and token links out of search, and token links send no Referer", () => {
     expect(value("/admin/:path*", "X-Robots-Tag")).toBe("noindex");
-    for (const p of ["/platform/consent/:path*", "/platform/link/:path*"]) {
+    for (const p of ["/consent/:path*", "/link/:path*"]) {
       expect(value(p, "X-Robots-Tag")).toBe("noindex");
       expect(value(p, "Referrer-Policy")).toBe("no-referrer");
     }
     // Next applies every matching rule in order, the last one winning, so the override must follow the catch-all.
     const order = rules.map((r) => r.source);
-    expect(order.indexOf("/platform/consent/:path*")).toBeGreaterThan(order.indexOf("/:path*"));
+    expect(order.indexOf("/consent/:path*")).toBeGreaterThan(order.indexOf("/:path*"));
   });
 });

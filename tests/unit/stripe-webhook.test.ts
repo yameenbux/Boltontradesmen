@@ -180,7 +180,7 @@ describe("POST /api/stripe/webhook", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ received: true, outcome: "applied" });
     expect(rpc).toHaveBeenCalledWith("stripe_apply_event", expect.objectContaining({ p_event_id: "evt_route" }));
-    expect(revalidated).toContain("/platform/p/ace");
+    expect(revalidated).toContain("/p/ace");
   });
 
   it("500 when the database fails, so Stripe sends it again", async () => {

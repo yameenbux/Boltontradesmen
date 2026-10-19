@@ -5,7 +5,7 @@ import { safeNext } from "@/lib/safe-next";
 export const GOOGLE_SIGN_IN_ERROR = "We couldn't sign you in with Google. Please try again, or use an email code. If you've signed in with an email code before, use that.";
 
 export function googleErrorPath(next: string | null | undefined): string {
-  return `/platform/sign-in?error=google&next=${encodeURIComponent(safeNext(next))}`;
+  return `/sign-in?error=google&next=${encodeURIComponent(safeNext(next))}`;
 }
 
 type CallbackDeps = {
@@ -15,7 +15,7 @@ type CallbackDeps = {
 };
 
 /**
- * Where /platform/auth/callback sends someone back from Google. Cancelled at Google, refused by the
+ * Where /auth/callback sends someone back from Google. Cancelled at Google, refused by the
  * database (GoTrue reports the auth.users guard as error=server_error, "Database error saving new user"),
  * or a failed exchange → the sign-in page with the Google copy. A new or deleted account → Welcome.
  * Otherwise `next`. `next` always passes safeNext.

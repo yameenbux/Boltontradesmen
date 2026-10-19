@@ -53,14 +53,14 @@ export function toAccount(row: AccountRow | null | undefined): Account | null {
 }
 
 export function signInPath(next: string): string {
-  return `/platform/sign-in?next=${encodeURIComponent(safeNext(next))}`;
+  return `/sign-in?next=${encodeURIComponent(safeNext(next))}`;
 }
 
 /** Welcome, coming back to `next`. A trader's start skips it: the trader form asks for the name itself. */
 export function welcomePath(next: string): string {
   const to = safeNext(next);
   if (to === TRADER_START) return to;
-  return `/platform/welcome?next=${encodeURIComponent(to)}`;
+  return `/welcome?next=${encodeURIComponent(to)}`;
 }
 
 /** The signed-in person's client and user, or a redirect to sign-in that comes back to `next`. */

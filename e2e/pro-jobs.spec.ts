@@ -55,7 +55,7 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   const trader = await newPage(browser, testInfo);
   await signInWithEmail(trader, `brook-trader@${E2E_EMAIL_DOMAIN}`, { first: "Bri", surname: "Brook", next: linkPath });
   await trader.getByRole("button", { name: "Yes, this is my business" }).click();
-  await expect(trader).toHaveURL(/\/platform\/provider$/);
+  await expect(trader).toHaveURL(/\/provider$/);
   await expect(trader.getByRole("heading", { name: /^Job requests/ })).toHaveCount(0);
 
   await page.goto(`/admin/providers/${BROOK}`);
@@ -71,11 +71,11 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   // The public page now offers "Request a quote" (ISR: revalidated on the grant; reload until it shows).
   const visitor = await newPage(browser, testInfo);
   await expect(async () => {
-    await visitor.goto("/platform/p/e2e-brook-vans");
+    await visitor.goto("/p/e2e-brook-vans");
     await expect(visitor.getByRole("region", { name: "Request a quote" })).toBeVisible({ timeout: 1000 });
   }).toPass({ timeout: 15_000 });
   await visitor.getByRole("region", { name: "Request a quote" }).getByRole("link", { name: "Request a quote" }).click();
-  await expect(visitor).toHaveURL(/\/platform\/p\/e2e-brook-vans\/request$/);
+  await expect(visitor).toHaveURL(/\/p\/e2e-brook-vans\/request$/);
 
   const job = `Sofa and two boxes from BL6 to Chorley, Saturday morning ${tag()}`;
   const form = visitor.getByRole("form", { name: "Request a quote" });
@@ -93,7 +93,7 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   expect(await alertsFor("job_request", ids)).toEqual(["email:sent", "sms:sent"]);
 
   // A second request from the same number to the same trader the same day is refused.
-  await visitor.goto("/platform/p/e2e-brook-vans/request");
+  await visitor.goto("/p/e2e-brook-vans/request");
   await form.getByLabel("The job").fill(`Another job please ${tag()}`);
   await form.getByLabel("Where?").selectOption("BL6");
   await form.getByLabel("Your name").fill("Rosa Requester");
@@ -129,14 +129,14 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
 
   // Ask Bolton: a resident asks for a man & van in BL6, and Brook (Pro, covers BL6) is told.
   const asker = await newPage(browser, testInfo);
-  await signInAsGoogle(asker, `pj-asker@${E2E_EMAIL_DOMAIN}`, { first: "Pia", surname: "Asker", next: "/platform/ask/new?category=man-and-van" });
+  await signInAsGoogle(asker, `pj-asker@${E2E_EMAIL_DOMAIN}`, { first: "Pia", surname: "Asker", next: "/ask/new?category=man-and-van" });
   const ask = asker.getByRole("form", { name: "Your question" });
   await expect(ask.getByLabel("Which trade?")).toHaveValue(/[0-9a-f-]{36}/);
   await ask.getByLabel("Where?").selectOption("BL6");
   const body = `Anyone know a man and van for a wardrobe in BL6? ${tag()}`;
   await ask.getByRole("textbox", { name: /^Your question/ }).fill(body);
   await ask.getByRole("button", { name: "Post question" }).click();
-  await asker.waitForURL(/\/platform\/ask\/[0-9a-f-]{36}$/);
+  await asker.waitForURL(/\/ask\/[0-9a-f-]{36}$/);
   expect(await alertsFor("question", `select id from public.questions where body = '${body}'`)).toEqual([
     "email:sent",
     "sms:sent",
@@ -147,7 +147,7 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   );
 
   // Quotes and invoices. Bank details first, so the invoice shows how to pay.
-  await trader.goto("/platform/provider");
+  await trader.goto("/provider");
   const bank = trader.getByRole("form", { name: "Bank details for invoices" });
   await bank.getByLabel("Name on the account").fill("Brook Removals");
   await bank.getByLabel("Sort code").fill("12-34-5");
@@ -186,7 +186,7 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   // The customer opens their copy (no sign-in) and accepts; the trader is told.
   const token = sql(`select token from public.trade_docs where id = '${quoteId}'`);
   const customer = await newPage(browser, testInfo);
-  await customer.goto(`/platform/d/${token}`);
+  await customer.goto(`/d/${token}`);
   await expect(customer.getByTestId("doc-total")).toHaveText("£147.50");
   await expect(customer.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   await expect(customer.getByText("07700 900341")).toHaveCount(0);
@@ -201,7 +201,7 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   await trader.getByRole("button", { name: "Turn into an invoice" }).click();
   await expect(trader.getByRole("heading", { level: 1, name: /^INV-\d{4}$/ })).toBeVisible();
   const invoiceId = new URL(trader.url()).pathname.split("/").pop()!;
-  await customer.goto(`/platform/d/${sql(`select token from public.trade_docs where id = '${invoiceId}'`)}`);
+  await customer.goto(`/d/${sql(`select token from public.trade_docs where id = '${invoiceId}'`)}`);
   const pay = customer.getByRole("region", { name: "How to pay" });
   await expect(pay).toContainText("12-34-56");
   await expect(pay).toContainText("12345678");
@@ -223,9 +223,9 @@ test("For traders: the free listing and Pro, side by side, linked from the site"
   const pro = page.getByRole("region", { name: "Pro" });
   await expect(pro).toContainText("£10 a month, or £100 a year");
   await expect(pro).toContainText("Quotes and invoices from your phone");
-  await expect(pro.getByRole("link", { name: "Join as a trader with Pro" })).toHaveAttribute("href", "/platform/sign-in?next=%2Fplatform%2Fprovider");
+  await expect(pro.getByRole("link", { name: "Join as a trader with Pro" })).toHaveAttribute("href", "/sign-in?next=%2Fprovider");
   // Stripe isn't set up in E2E: nothing claims it can be bought today.
-  await expect(pro.getByRole("link", { name: /Already listed\? Your listing/ })).toHaveAttribute("href", "/platform/provider");
+  await expect(pro.getByRole("link", { name: /Already listed\? Your listing/ })).toHaveAttribute("href", "/provider");
   await expect(page.getByRole("main")).toContainText("Pro never moves you up the list");
 
   await page.goto("/get-listed");

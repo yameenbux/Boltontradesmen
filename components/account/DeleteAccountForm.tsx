@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { AlertIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
-import { deleteAccount } from "@/app/platform/account/actions";
+import { deleteAccount } from "@/app/(platform)/account/actions";
 import type { FormState } from "@/lib/admin-shared";
 
 /** The confirm step of Delete account: one checkbox, then the button. */

@@ -242,7 +242,7 @@ export async function verifyEmailCode(prev: EmailSignInState, fd: FormData): Pro
 
 /**
  * "Continue with Google": starts Supabase's Google OAuth with PKCE (the cookie client stores the code verifier)
- * and sends the browser to it. Google comes back through Supabase to /platform/auth/callback, built on
+ * and sends the browser to it. Google comes back through Supabase to /auth/callback, built on
  * NEXT_PUBLIC_SITE_URL (never the Host header), carrying `next`.
  */
 export async function startGoogleSignIn(fd: FormData): Promise<void> {
@@ -254,7 +254,7 @@ export async function startGoogleSignIn(fd: FormData): Promise<void> {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${site}/platform/auth/callback?next=${encodeURIComponent(next)}`,
+        redirectTo: `${site}/auth/callback?next=${encodeURIComponent(next)}`,
         skipBrowserRedirect: true,
         queryParams: { prompt: "select_account" },
       },

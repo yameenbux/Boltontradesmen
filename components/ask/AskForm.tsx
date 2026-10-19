@@ -4,7 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import { AlertIcon, ChevronDown, ClockIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
 import { AskMatches } from "@/components/ask/AskMatches";
-import { askQuestion, type AskState } from "@/app/platform/ask/new/actions";
+import { askQuestion, type AskState } from "@/app/(platform)/ask/new/actions";
 import { BL_DISTRICTS } from "@/lib/districts";
 import { platformPath } from "@/lib/paths";
 import { QUESTION_MAX, tidyText } from "@/lib/questions";

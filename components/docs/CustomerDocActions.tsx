@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
-import { answerQuote } from "@/app/platform/d/[token]/actions";
+import { answerQuote } from "@/app/(platform)/d/[token]/actions";
 
 /** Accept or decline a quote, from the customer's link. */
 export function CustomerDocActions({ token }: { token: string }) {

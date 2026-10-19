@@ -18,7 +18,7 @@ const mobile = () => `07700 900${String(Date.now() % 1000).padStart(3, "0")}`;
 
 test("a new trader: trader side of sign-in, one form with Pro, sent for review, approved and linked", async ({ page, browser }, testInfo) => {
   await page.setExtraHTTPHeaders(ip(41));
-  await page.goto("/platform/sign-in");
+  await page.goto("/sign-in");
   await page.getByTestId("trader-sign-in").click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Log in or join as a trader");
   await expect(page.getByTestId("trader-sign-in")).toHaveAttribute("aria-current", "page");
@@ -26,9 +26,9 @@ test("a new trader: trader side of sign-in, one form with Pro, sent for review, 
   const email = `new-trader-${Date.now()}@${E2E_EMAIL_DOMAIN}`;
   const business = `E2E Trader ${Date.now()}`;
   const phone = mobile();
-  await signInWithEmail(page, email, { next: "/platform/provider" });
+  await signInWithEmail(page, email, { next: "/provider" });
   // No separate welcome step: straight to the one form, which asks the name too.
-  await expect(page).toHaveURL(/\/platform\/provider$/);
+  await expect(page).toHaveURL(/\/provider$/);
   await expect(page.getByRole("heading", { name: "Tell us about your business" })).toBeVisible();
   const form = page.getByTestId("trader-setup");
   await form.getByLabel("First name").fill("Tom");
@@ -76,24 +76,24 @@ test("a new trader: trader side of sign-in, one form with Pro, sent for review, 
 });
 
 test("a customer: same sign-in page, says they're looking for a trader, lands on the directory", async ({ page }) => {
-  await page.goto("/platform/sign-in");
+  await page.goto("/sign-in");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Log in or create an account");
   await signInWithEmail(page, `new-customer-${Date.now()}@${E2E_EMAIL_DOMAIN}`, { first: "Cara", surname: "Lee" });
-  await expect(page).toHaveURL(/\/platform$/);
+  await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId("greeting")).toHaveText(/Cara$/);
 });
 
 test("a customer account can still become a trader's: the account page offers the trader form", async ({ page }) => {
   await signInWithEmail(page, `later-trader-${Date.now()}@${E2E_EMAIL_DOMAIN}`, { first: "Wes", surname: "Lee" });
-  await page.goto("/platform/account");
+  await page.goto("/account");
   await page.getByTestId("account-trader-start").click();
-  await expect(page).toHaveURL(/\/platform\/provider$/);
+  await expect(page).toHaveURL(/\/provider$/);
   await expect(page.getByRole("heading", { name: "Tell us about your business" })).toBeVisible();
   // The account already has a name: the form doesn't ask for it again.
   await expect(page.getByTestId("trader-setup").getByLabel("First name")).toHaveCount(0);
 });
 
 test("a sign-in with a set destination shows no customer-or-trader switch", async ({ page }) => {
-  await page.goto(`/platform/sign-in?next=${encodeURIComponent("/platform/ask/new")}`);
+  await page.goto(`/sign-in?next=${encodeURIComponent("/ask/new")}`);
   await expect(page.getByTestId("trader-sign-in")).toHaveCount(0);
 });

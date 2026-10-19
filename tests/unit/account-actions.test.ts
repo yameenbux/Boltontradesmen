@@ -16,7 +16,7 @@ vi.mock("next/navigation", () => ({
 const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath: (...a: unknown[]) => revalidatePath(...a) }));
 
-import { deleteAccount } from "@/app/platform/account/actions";
+import { deleteAccount } from "@/app/(platform)/account/actions";
 import { DELETE_RETRY_MESSAGE } from "@/lib/account-text";
 
 function form(entries: Record<string, string>) {
@@ -53,14 +53,14 @@ describe("deleteAccount", () => {
   });
 
   it("takes the reviews down, soft-deletes the sign-in, signs out, refreshes the pages and goes home", async () => {
-    await expect(deleteAccount({}, form({ confirm: "on" }))).rejects.toThrow("REDIRECT /platform/account/deleted");
+    await expect(deleteAccount({}, form({ confirm: "on" }))).rejects.toThrow("REDIRECT /account/deleted");
     expect(calls).toEqual(["delete_my_account", "deleteUser", "signOut"]);
     expect(deleteUser).toHaveBeenCalledWith("u1", true);
     expect(auth.signOut).toHaveBeenCalledWith({ scope: "local" });
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/e2e-neat-sparks");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/e2e-neat-sparks");
     // Their community questions and answers came down too.
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/ask");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/ask/[id]", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/ask");
+    expect(revalidatePath).toHaveBeenCalledWith("/(platform)/ask/[id]", "page");
   });
 
   it("asks for a retry when the sign-in can't be deleted after the reviews are down", async () => {
@@ -90,7 +90,7 @@ describe("deleteAccount", () => {
   it("sends a signed-out person to sign in", async () => {
     auth.getUser.mockResolvedValue({ data: { user: null } });
     await expect(deleteAccount({}, form({ confirm: "on" }))).rejects.toThrow(
-      "REDIRECT /platform/sign-in?next=%2Fplatform%2Faccount",
+      "REDIRECT /sign-in?next=%2Faccount",
     );
   });
 });

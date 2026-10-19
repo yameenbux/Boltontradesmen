@@ -52,7 +52,7 @@ export async function deleteAccount(_prev: FormState, fd: FormData): Promise<For
   for (const slug of (data ?? []) as string[]) revalidatePublicPages(slug);
   // Their community questions and answers came down too: the Ask list and every question page.
   revalidateQuestionPages();
-  revalidatePath("/platform/ask/[id]", "page");
-  revalidatePath("/platform/account");
+  revalidatePath("/(platform)/ask/[id]", "page");
+  revalidatePath("/account");
   redirect(platformPath("account", "deleted"));
 }

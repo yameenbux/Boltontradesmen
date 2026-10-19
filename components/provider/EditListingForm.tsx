@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { AlertIcon, TickIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
-import { saveMyListing } from "@/app/platform/provider/actions";
+import { saveMyListing } from "@/app/(platform)/provider/actions";
 import type { FormState } from "@/lib/admin-shared";
 import { BL_DISTRICTS } from "@/lib/districts";
 import { BIO_MAX } from "@/lib/listing-edit";

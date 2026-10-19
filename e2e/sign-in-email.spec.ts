@@ -4,7 +4,7 @@ import { latestCode, E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
 const SARAH = `sarah@${E2E_EMAIL_DOMAIN}`;
 
 test("a new resident signs in with an email code and sets up their name", async ({ page }) => {
-  await page.goto("/platform/sign-in");
+  await page.goto("/sign-in");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Log in or create an account");
   const after = new Date(Date.now() - 1000);
   await page.getByLabel("Your email address").fill(SARAH);
@@ -13,22 +13,22 @@ test("a new resident signs in with an email code and sets up their name", async 
   await page.getByLabel("6-digit code").fill(await latestCode(SARAH, after));
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
 
-  await expect(page).toHaveURL(/\/platform\/welcome/);
+  await expect(page).toHaveURL(/\/welcome/);
   await page.getByLabel("First name").fill("Sarah");
   await page.getByLabel("Surname").fill("Khan");
   await page.getByLabel("Your area").selectOption("BL3");
   await page.getByRole("button", { name: "Save and continue" }).click();
 
   // Signed in: straight to the directory, greeted by name (the account page is behind the profile icon).
-  await expect(page).toHaveURL(/\/platform$/);
+  await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId("greeting")).toHaveText(/^Good (morning|afternoon|evening), Sarah$/);
-  await page.goto("/platform/account");
+  await page.goto("/account");
   await expect(page.getByRole("main").getByText("Signed in as Sarah K.")).toBeVisible();
 });
 
 test("a wrong email code shows a plain message and keeps the code step", async ({ page }) => {
   const email = `wrong-code@${E2E_EMAIL_DOMAIN}`;
-  await page.goto("/platform/sign-in");
+  await page.goto("/sign-in");
   await page.getByLabel("Your email address").fill(email);
   await page.getByRole("button", { name: "Email me a code" }).click();
   await expect(page.getByText(`We've sent a 6-digit code to ${email}`)).toBeVisible();
@@ -44,7 +44,7 @@ test("a wrong email code shows a plain message and keeps the code step", async (
 });
 
 test("a throwaway address is refused before any code is sent", async ({ page }) => {
-  await page.goto("/platform/sign-in");
+  await page.goto("/sign-in");
   await page.getByLabel("Your email address").fill("x@mailinator.com");
   await page.getByRole("button", { name: "Email me a code" }).click();
   await expect(page.getByRole("main").getByRole("alert")).toHaveText(
@@ -54,7 +54,7 @@ test("a throwaway address is refused before any code is sent", async ({ page }) 
 });
 
 test("the sign-in page offers Google, then email under the 'or use your email' divider, and no phone", async ({ page }) => {
-  await page.goto("/platform/sign-in");
+  await page.goto("/sign-in");
   const card = page.locator(".auth-card");
   const divider = card.locator(".or-divider");
   await expect(divider).toHaveCount(1);
@@ -72,7 +72,7 @@ test("the sign-in page offers Google, then email under the 'or use your email' d
 // Final review I2: Turnstile is off when its keys are unset (local and CI): no widget, no Cloudflare script, and
 // the code is still sent (the first test above). Production sets both keys (docs/launch/LAUNCH.md Step 3d).
 test("without Turnstile keys there is no widget or Cloudflare script on the sign-in page", async ({ page }) => {
-  await page.goto("/platform/sign-in");
+  await page.goto("/sign-in");
   await expect(page.getByRole("button", { name: "Email me a code" })).toBeVisible();
   await expect(page.getByTestId("turnstile")).toHaveCount(0);
   await expect(page.locator('script[src*="challenges.cloudflare.com"]')).toHaveCount(0);

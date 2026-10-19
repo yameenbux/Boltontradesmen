@@ -4,11 +4,12 @@ import { CategoryGroups } from "@/components/home/CategoryGroups";
 import { CategoryTile } from "@/components/home/CategoryTile";
 import { Hero } from "@/components/home/Hero";
 import { TrustStrip } from "@/components/home/TrustStrip";
+import { JsonLd } from "@/components/JsonLd";
 import { popularCategories } from "@/lib/category-search";
 import { listCategoryGroups } from "@/lib/directory";
 import { isQuestionOpen } from "@/lib/questions";
 import { listRecentQuestions } from "@/lib/questions-public";
-import { pageMetadata } from "@/lib/seo";
+import { homeJsonLd, pageMetadata } from "@/lib/seo";
 
 // Categories plus live-provider counts and the latest community questions; cached and refreshed every 5 minutes (and
 // when a question is posted or answered), no cookies.
@@ -18,7 +19,7 @@ export const metadata = pageMetadata({
   title: "Find trusted local trades in Bolton | Bolton Vouched",
   description:
     "Plumbers, electricians, cleaners and more across Bolton (BL1 to BL7), recommended by local people. See residents' reviews and the checks on each listing, then call or WhatsApp them. Free, no sign-up to look.",
-  path: "/platform",
+  path: "/",
 });
 
 export default async function Home() {
@@ -31,6 +32,8 @@ export default async function Home() {
 
   return (
     <main className="home">
+      {/* Who runs the site and its search box, for Google (the home page is the directory). */}
+      <JsonLd data={homeJsonLd()} />
       <Hero categories={searchable} />
       <TrustStrip />
       <AskCard latest={latest} />

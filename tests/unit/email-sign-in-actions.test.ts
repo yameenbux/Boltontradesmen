@@ -20,7 +20,7 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
-import { requestEmailCode, verifyEmailCode } from "@/app/platform/sign-in/actions";
+import { requestEmailCode, verifyEmailCode } from "@/app/(platform)/sign-in/actions";
 import { EMAIL_SIGN_IN_ERRORS } from "@/lib/email-gate";
 import { ipHash } from "@/lib/ip-hash";
 
@@ -59,10 +59,10 @@ describe("requestEmailCode", () => {
     );
     auth.signInWithOtp.mockResolvedValue({ data: {}, error: null });
     const res = await requestEmailCode(
-      { step: "email", next: "/platform/account" },
-      form({ email: " Sarah@Example.com ", next: "/platform/p/ace/review" }),
+      { step: "email", next: "/account" },
+      form({ email: " Sarah@Example.com ", next: "/p/ace/review" }),
     );
-    expect(res).toEqual({ step: "code", email: "sarah@example.com", next: "/platform/p/ace/review" });
+    expect(res).toEqual({ step: "code", email: "sarah@example.com", next: "/p/ace/review" });
     expect(serviceRpc).toHaveBeenCalledWith("email_gate", { p_email: "sarah@example.com", p_ip_hash: ipHash("10.0.0.1") });
     expect(auth.signInWithOtp).toHaveBeenCalledWith({
       email: "sarah@example.com",
@@ -79,13 +79,13 @@ describe("requestEmailCode", () => {
 
   it("stays on the email step with the copy and keeps what was typed", async () => {
     const res = await requestEmailCode(
-      { step: "email", next: "/platform/account" },
-      form({ email: "x@mailinator.com", next: "/platform/account" }),
+      { step: "email", next: "/account" },
+      form({ email: "x@mailinator.com", next: "/account" }),
     );
     expect(res).toEqual({
       step: "email",
       email: "x@mailinator.com",
-      next: "/platform/account",
+      next: "/account",
       error: EMAIL_SIGN_IN_ERRORS.blocked_domain,
     });
     expect(serviceRpc).not.toHaveBeenCalled();
@@ -94,7 +94,7 @@ describe("requestEmailCode", () => {
 });
 
 describe("verifyEmailCode", () => {
-  const base = { step: "code" as const, email: "sarah@example.com", next: "/platform/p/ace/review" };
+  const base = { step: "code" as const, email: "sarah@example.com", next: "/p/ace/review" };
 
   function gate(verdict: string, attemptId = 9) {
     serviceRpc.mockImplementation(async (name: string) =>
@@ -148,7 +148,7 @@ describe("verifyEmailCode", () => {
     auth.verifyOtp.mockResolvedValue({ data: { session: {}, user: { id: "u1" } }, error: null });
     rpc.mockResolvedValue({ data: null, error: null });
     await expect(verifyEmailCode(base, form({ email: base.email, code: "123456", next: base.next }))).rejects.toThrow(
-      "REDIRECT /platform/welcome?next=%2Fplatform%2Fp%2Face%2Freview",
+      "REDIRECT /welcome?next=%2Fp%2Face%2Freview",
     );
     expect(auth.verifyOtp).toHaveBeenCalledWith({ email: "sarah@example.com", token: "123456", type: "email" });
     expect(serviceRpc).toHaveBeenCalledWith("otp_verify_record", { p_attempt_id: 9, p_ok: true });
@@ -159,7 +159,7 @@ describe("verifyEmailCode", () => {
     rpc.mockImplementation(async (name: string) => ({ data: name === "my_account" ? ACCOUNT : 0, error: null }));
     await expect(
       verifyEmailCode(base, form({ email: base.email, code: "123 456", next: "//evil.example" })),
-    ).rejects.toThrow(/REDIRECT \/platform$/);
+    ).rejects.toThrow(/REDIRECT \/$/);
     expect(rpc).not.toHaveBeenCalledWith("claim_provider_listings");
   });
 
@@ -167,7 +167,7 @@ describe("verifyEmailCode", () => {
     auth.verifyOtp.mockResolvedValue({ data: { session: {}, user: { id: "u1" } }, error: null });
     rpc.mockResolvedValue({ data: { ...ACCOUNT, deleted: true }, error: null });
     await expect(verifyEmailCode(base, form({ email: base.email, code: "123456", next: base.next }))).rejects.toThrow(
-      "REDIRECT /platform/welcome",
+      "REDIRECT /welcome",
     );
   });
 });
@@ -188,7 +188,7 @@ describe("requestEmailCode with Turnstile", () => {
     vi.unstubAllEnvs();
   });
   const ask = (extra: Record<string, string> = {}) =>
-    requestEmailCode({ step: "email", next: "/platform/account" }, form({ email: "sarah@example.com", next: "/platform/account", ...extra }));
+    requestEmailCode({ step: "email", next: "/account" }, form({ email: "sarah@example.com", next: "/account", ...extra }));
 
   it("is skipped when the keys are unset (local and CI)", async () => {
     vi.stubEnv("TURNSTILE_SITE_KEY", "");
@@ -203,7 +203,7 @@ describe("requestEmailCode with Turnstile", () => {
     expect(await ask()).toEqual({
       step: "email",
       email: "sarah@example.com",
-      next: "/platform/account",
+      next: "/account",
       error: EMAIL_SIGN_IN_ERRORS.captcha,
     });
     expect(serviceRpc).not.toHaveBeenCalled();

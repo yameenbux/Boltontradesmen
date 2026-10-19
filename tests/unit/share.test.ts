@@ -16,22 +16,22 @@ const BASE = "https://boltonvouched.ysbdesigns.uk";
 
 describe("profile sharing", () => {
   it("builds the profile link from the slug", () => {
-    expect(profileUrl("ace-plumbing", BASE)).toBe(`${BASE}/platform/p/ace-plumbing`);
-    expect(profileUrl("ace-plumbing")).toMatch(/^https?:\/\/[^/]+\/platform\/p\/ace-plumbing$/);
+    expect(profileUrl("ace-plumbing", BASE)).toBe(`${BASE}/p/ace-plumbing`);
+    expect(profileUrl("ace-plumbing")).toMatch(/^https?:\/\/[^/]+\/p\/ace-plumbing$/);
   });
 
   it("names the business and the site, nothing more", () => {
-    expect(profileShareText(" Ace Plumbing ", `${BASE}/platform/p/ace`)).toBe(
-      `Ace Plumbing on Bolton Vouched: ${BASE}/platform/p/ace`,
+    expect(profileShareText(" Ace Plumbing ", `${BASE}/p/ace`)).toBe(
+      `Ace Plumbing on Bolton Vouched: ${BASE}/p/ace`,
     );
   });
 
   it("gives the Web Share title and link, and a WhatsApp link with the message encoded", () => {
     const s = profileShare("smith-sons", "Smith & Sons", BASE);
-    expect(s.url).toBe(`${BASE}/platform/p/smith-sons`);
+    expect(s.url).toBe(`${BASE}/p/smith-sons`);
     expect(s.title).toBe("Smith & Sons on Bolton Vouched");
     expect(s.whatsapp).toBe(
-      `https://wa.me/?text=${encodeURIComponent(`Smith & Sons on Bolton Vouched: ${BASE}/platform/p/smith-sons`)}`,
+      `https://wa.me/?text=${encodeURIComponent(`Smith & Sons on Bolton Vouched: ${BASE}/p/smith-sons`)}`,
     );
     // The ampersand can't end the text parameter early.
     expect(s.whatsapp).toContain("Smith%20%26%20Sons");
@@ -39,9 +39,9 @@ describe("profile sharing", () => {
 
   it("gives the trader's Share your page buttons the link as printed", () => {
     expect(pageShare("ace", "Ace", BASE)).toEqual({
-      link: `${BASE}/platform/p/ace`,
-      display: "boltonvouched.ysbdesigns.uk/platform/p/ace",
-      whatsapp: `https://wa.me/?text=${encodeURIComponent(`Ace on Bolton Vouched: ${BASE}/platform/p/ace`)}`,
+      link: `${BASE}/p/ace`,
+      display: "boltonvouched.ysbdesigns.uk/p/ace",
+      whatsapp: `https://wa.me/?text=${encodeURIComponent(`Ace on Bolton Vouched: ${BASE}/p/ace`)}`,
     });
   });
 });
@@ -64,7 +64,7 @@ describe("badge paths", () => {
 describe("embed code", () => {
   it("links the badge image to the profile with utm_source=badge, at 240×80", () => {
     expect(badgeEmbedCode("ace", "Ace Plumbing", BASE)).toBe(
-      `<a href="${BASE}/platform/p/ace?utm_source=badge"><img src="${BASE}/badge/ace.svg" ` +
+      `<a href="${BASE}/p/ace?utm_source=badge"><img src="${BASE}/badge/ace.svg" ` +
         `alt="Ace Plumbing — vouched in Bolton on Bolton Vouched" width="240" height="80"></a>`,
     );
   });

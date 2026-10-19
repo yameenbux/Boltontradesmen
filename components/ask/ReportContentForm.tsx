@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { AlertIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
-import { reportQuestionContent } from "@/app/platform/ask/[id]/report/actions";
+import { reportQuestionContent } from "@/app/(platform)/ask/[id]/report/actions";
 import type { FormState } from "@/lib/admin-shared";
 
 /** The report form for a question or an answer (as components/review/ReportForm.tsx is for a review). */

@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: "Bolton Vouched",
   description: "Local people, vouched for by Bolton.",
-  // Home-screen icon for iOS on every page (the showcase, the app, policies, the 404).
+  // Home-screen icon for iOS on every page (the directory, policies, admin, the 404).
   icons: { apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }] },
   ...(googleVerification ? { verification: { google: googleVerification } } : {}),
 };
@@ -55,7 +55,7 @@ export default function RootLayout({
         {/* Static string, no user input: applies a stored light/dark choice before first paint. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      {/* Bare on purpose: each section (platform, admin, policies, showcase) brings its own chrome. */}
+      {/* Bare on purpose: each section (directory, admin, policies) brings its own chrome. */}
       <body className="min-h-dvh">{children}</body>
     </html>
   );

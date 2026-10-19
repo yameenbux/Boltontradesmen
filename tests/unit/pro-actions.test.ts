@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 const rpc = vi.fn();
 vi.mock("@/lib/supabase/service", () => ({ createServiceClient: () => ({ rpc }) }));
 
-import { openBillingPortal, startProCheckout } from "@/app/platform/provider/pro-actions";
+import { openBillingPortal, startProCheckout } from "@/app/(platform)/provider/pro-actions";
 
 const fd = (entries: Record<string, string>) => {
   const f = new FormData();

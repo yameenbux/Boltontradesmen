@@ -19,9 +19,9 @@ vi.mock("next/server", () => ({ after: (fn: () => unknown) => afterCalls.push(fn
 const deliverQuestionAlerts = vi.fn();
 vi.mock("@/lib/notify", () => ({ deliverQuestionAlerts: (id: string) => deliverQuestionAlerts(id) }));
 
-import { askQuestion } from "@/app/platform/ask/new/actions";
-import { answerQuestion } from "@/app/platform/ask/[id]/answer/actions";
-import { reportQuestionContent } from "@/app/platform/ask/[id]/report/actions";
+import { askQuestion } from "@/app/(platform)/ask/new/actions";
+import { answerQuestion } from "@/app/(platform)/ask/[id]/answer/actions";
+import { reportQuestionContent } from "@/app/(platform)/ask/[id]/report/actions";
 
 const ACCOUNT = {
   user_id: "u1",
@@ -66,21 +66,21 @@ describe("askQuestion", () => {
   it("sends anyone signed out to sign in, and back to the form", async () => {
     auth.getUser.mockResolvedValue({ data: { user: null } });
     await expect(askQuestion({}, form(question))).rejects.toThrow(
-      `REDIRECT /platform/sign-in?next=${encodeURIComponent("/platform/ask/new")}`,
+      `REDIRECT /sign-in?next=${encodeURIComponent("/ask/new")}`,
     );
   });
 
   it("posts through submit_question with the session's user id, refreshes the pages and opens the question", async () => {
     signedIn({ data: { id: Q, status: "published" } });
-    await expect(askQuestion({}, form(question))).rejects.toThrow(`REDIRECT /platform/ask/${Q}`);
+    await expect(askQuestion({}, form(question))).rejects.toThrow(`REDIRECT /ask/${Q}`);
     expect(serviceRpc).toHaveBeenCalledWith("submit_question", {
       p_uid: "u1",
       p_category: CAT,
       p_district: "BL3",
       p_body: "Anyone know a good electrician in BL3?",
     });
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/ask");
-    expect(revalidatePath).toHaveBeenCalledWith(`/platform/ask/${Q}`);
+    expect(revalidatePath).toHaveBeenCalledWith("/ask");
+    expect(revalidatePath).toHaveBeenCalledWith(`/ask/${Q}`);
     // Pro traders are told after the response.
     expect(afterCalls).toHaveLength(1);
     await afterCalls[0]();
@@ -119,7 +119,7 @@ describe("answerQuestion", () => {
 
   it("recommends through submit_question_answer as the server, then shows the question", async () => {
     signedIn({ data: { id: "a1", question_id: Q } });
-    await expect(answerQuestion({}, form(rec))).rejects.toThrow(`REDIRECT /platform/ask/${Q}`);
+    await expect(answerQuestion({}, form(rec))).rejects.toThrow(`REDIRECT /ask/${Q}`);
     expect(serviceRpc).toHaveBeenCalledWith("submit_question_answer", {
       p_uid: "u1",
       p_question: Q,
@@ -127,7 +127,7 @@ describe("answerQuestion", () => {
       p_provider: PROVIDER,
       p_note: "Sorted my fuse box.",
     });
-    expect(revalidatePath).toHaveBeenCalledWith(`/platform/ask/${Q}`);
+    expect(revalidatePath).toHaveBeenCalledWith(`/ask/${Q}`);
   });
 
   it("passes \"I can help\" through as its own kind, with no note", async () => {

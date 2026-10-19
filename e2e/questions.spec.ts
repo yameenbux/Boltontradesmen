@@ -30,9 +30,9 @@ async function newPage(browser: Browser, testInfo: TestInfo, userAgent?: string)
   return ctx.newPage();
 }
 
-/** Asks on /platform/ask/new (man & van by default) and returns the new question's id. */
+/** Asks on /ask/new (man & van by default) and returns the new question's id. */
 async function ask(page: Page, body: string, district = "BL3") {
-  await page.goto("/platform/ask/new?category=man-and-van");
+  await page.goto("/ask/new?category=man-and-van");
   const form = page.getByRole("form", { name: "Your question" });
   await expect(form.getByLabel("Which trade?")).toHaveValue(/[0-9a-f-]{36}/);
   await form.getByLabel("Where?").selectOption(district);
@@ -47,21 +47,21 @@ test("a resident asks, neighbours recommend, the trader says they can help, and 
   const body = `Anyone know a good man and van for a sofa in BL3? ${tag()}`;
 
   // Entry points: the directory home and the category page.
-  await page.goto("/platform");
+  await page.goto("/");
   const card = page.getByRole("region", { name: "Ask Bolton" });
-  await expect(card.getByRole("link", { name: "Ask a question" })).toHaveAttribute("href", "/platform/ask/new");
-  await page.goto("/platform/c/man-and-van");
+  await expect(card.getByRole("link", { name: "Ask a question" })).toHaveAttribute("href", "/ask/new");
+  await page.goto("/c/man-and-van");
   await expect(page.getByRole("link", { name: /Can't decide\? Ask Bolton/ })).toHaveAttribute(
     "href",
-    "/platform/ask/new?category=man-and-van",
+    "/ask/new?category=man-and-van",
   );
 
   // Asking needs sign-in; the form refuses a phone number, then posts.
-  await signInAsGoogle(page, `asker-q1@${E2E_EMAIL_DOMAIN}`, { first: "Asha", surname: "Asker", next: "/platform/ask/new" });
+  await signInAsGoogle(page, `asker-q1@${E2E_EMAIL_DOMAIN}`, { first: "Asha", surname: "Asker", next: "/ask/new" });
   await ask(page, "Ring me on 07700 900 123 for a sofa move");
   await expect(page.getByText("Please leave phone numbers out.", { exact: false })).toBeVisible();
   await ask(page, body);
-  await page.waitForURL(/\/platform\/ask\/[0-9a-f-]{36}$/);
+  await page.waitForURL(/\/ask\/[0-9a-f-]{36}$/);
   const id = new URL(page.url()).pathname.split("/").pop()!;
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(body);
   await expect(page.getByText("Asked by Asha A. on")).toBeVisible();
@@ -69,7 +69,7 @@ test("a resident asks, neighbours recommend, the trader says they can help, and 
 
   // On the public list, cookie-free, with the trade and area chips.
   const visitor = await newPage(browser, testInfo, "E2E question visitor");
-  const res = await visitor.goto("/platform/ask");
+  const res = await visitor.goto("/ask");
   expect(res?.headers()["set-cookie"]).toBeUndefined();
   const list = visitor.getByTestId("question-list");
   await expect(list.getByRole("link", { name: new RegExp(body.slice(0, 40).replace(/[?]/g, "\\?")) })).toBeVisible();
@@ -86,18 +86,18 @@ test("a resident asks, neighbours recommend, the trader says they can help, and 
   ] as const) {
     const p = await newPage(browser, testInfo);
     const signIn = who === "cy" ? signInWithEmail : signInAsGoogle;
-    await signIn(p, `${who}-q1@${E2E_EMAIL_DOMAIN}`, { first: who, surname: who === "dot" ? "Doe" : "Bee", next: `/platform/ask/${id}/answer` });
+    await signIn(p, `${who}-q1@${E2E_EMAIL_DOMAIN}`, { first: who, surname: who === "dot" ? "Doe" : "Bee", next: `/ask/${id}/answer` });
     const form = p.getByRole("form", { name: "Recommend someone" });
     await form.getByRole("searchbox").fill(pick.split(" ")[0]);
     await expect(form.getByTestId("provider-picker").getByRole("radio")).toHaveCount(1);
     await form.getByRole("radio", { name: new RegExp(pick) }).check();
     if (note) await form.getByLabel(/Why them\?/).fill(note);
     await form.getByRole("button", { name: "Recommend them" }).click();
-    await p.waitForURL(new RegExp(`/platform/ask/${id}$`));
+    await p.waitForURL(new RegExp(`/ask/${id}$`));
     await p.context().close();
   }
 
-  await visitor.goto(`/platform/ask/${id}`);
+  await visitor.goto(`/ask/${id}`);
   const recs = visitor.getByTestId("recommendations").getByRole("article");
   await expect(recs).toHaveCount(2);
   const hill = recs.first();
@@ -114,7 +114,7 @@ test("a resident asks, neighbours recommend, the trader says they can help, and 
   await signInAsGoogle(trader, `helper-trader@${E2E_EMAIL_DOMAIN}`, { first: "Hel", surname: "Helper" });
   sql(`update public.providers set user_id = (select id from auth.users where email = 'helper-trader@${E2E_EMAIL_DOMAIN}')
        where id = '${HELPER}'`);
-  await trader.goto(`/platform/ask/${id}/answer`);
+  await trader.goto(`/ask/${id}/answer`);
   const recForm = trader.getByRole("form", { name: "Recommend someone" });
   await expect(recForm.getByRole("radio", { name: /Helper Removals/ })).toHaveCount(0);
   await expect(trader.getByText("Your own listing isn't in the list.")).toBeVisible();
@@ -128,7 +128,7 @@ test("a resident asks, neighbours recommend, the trader says they can help, and 
   const help = trader.getByRole("form", { name: "I can help" });
   await help.getByLabel(/A short note/).fill("Free this week, BL3 is fine.");
   await help.getByRole("button", { name: "I can help (as Helper Removals)" }).click();
-  await trader.waitForURL(new RegExp(`/platform/ask/${id}$`));
+  await trader.waitForURL(new RegExp(`/ask/${id}$`));
 
   await visitor.reload();
   const self = visitor.getByTestId("can-help").getByRole("article", { name: "Helper Removals says they can help" });
@@ -155,7 +155,7 @@ test("a resident asks, neighbours recommend, the trader says they can help, and 
 });
 
 test("typing the question picks the trade and shows who's already listed for the area", async ({ page }) => {
-  await signInAsGoogle(page, `matcher-q@${E2E_EMAIL_DOMAIN}`, { first: "Mo", surname: "Match", next: "/platform/ask/new" });
+  await signInAsGoogle(page, `matcher-q@${E2E_EMAIL_DOMAIN}`, { first: "Mo", surname: "Match", next: "/ask/new" });
   const form = page.getByRole("form", { name: "Your question" });
   const trade = form.getByLabel("Which trade?");
   await expect(trade).toHaveValue("");
@@ -183,13 +183,13 @@ test("typing the question picks the trade and shows who's already listed for the
 
 test("a question from an email-code account waits for the admin, then goes up", async ({ page, browser }, testInfo) => {
   const body = `Need a man and van for a fridge freezer please ${tag()}`;
-  await signInWithEmail(page, `held-q@${E2E_EMAIL_DOMAIN}`, { first: "Holly", surname: "Held", next: "/platform/ask/new" });
+  await signInWithEmail(page, `held-q@${E2E_EMAIL_DOMAIN}`, { first: "Holly", surname: "Held", next: "/ask/new" });
   await expect(page.getByText("we'll give your question a quick check before it goes up")).toBeVisible();
   await ask(page, body, "BL2");
   await expect(page.getByRole("heading", { name: "Question sent" })).toBeVisible();
 
   const visitor = await newPage(browser, testInfo);
-  await visitor.goto("/platform/ask");
+  await visitor.goto("/ask");
   await expect(visitor.getByText(body)).toHaveCount(0);
 
   await adminSignIn(page);
@@ -218,7 +218,7 @@ test("a reported recommendation is removed by the admin and disappears", async (
        values ('${id}', '00000000-0000-0000-0000-00000000e303', 'recommend', '00000000-0000-0000-0000-00000000e222', '${note}')`);
 
   await signInAsGoogle(page, `reporter-q@${E2E_EMAIL_DOMAIN}`, { first: "Rory", surname: "Report" });
-  await page.goto(`/platform/ask/${id}`);
+  await page.goto(`/ask/${id}`);
   const brook = page.getByTestId("recommendations").getByRole("article", { name: "Brook Removals" });
   await expect(brook).toContainText(note);
   await brook.getByText("Report", { exact: true }).click();
@@ -241,21 +241,21 @@ test("a reported recommendation is removed by the admin and disappears", async (
   await expect(admin.getByRole("article").filter({ hasText: note })).toHaveCount(0);
   expect(sql(`select count(*) from public.audit_log where action = 'remove_question_answer' and reason = 'Advert for a friend''s firm'`)).toBe("1");
 
-  await page.goto(`/platform/ask/${id}`);
+  await page.goto(`/ask/${id}`);
   await expect(page.getByText(note)).toHaveCount(0);
   await expect(page.getByTestId("recommendations")).toHaveCount(0);
   await expect(page.getByText("No recommendations yet.")).toBeVisible();
 });
 
 test("a question closes 14 days after it was asked: still readable, no new answers", async ({ page }) => {
-  await page.goto(`/platform/ask/${CLOSED}`);
+  await page.goto(`/ask/${CLOSED}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Anyone know a man and van for a piano? Closed fixture question.");
   await expect(page.locator(".qhead .qstate")).toHaveText("Closed");
   await expect(page.getByText(/This question closed on .+, so it can't take new answers\./)).toBeVisible();
   await expect(page.getByRole("link", { name: "Recommend someone" })).toHaveCount(0);
   await expect(page.getByTestId("recommendations")).toContainText("Recommended by 1 person: Kim D.");
 
-  await signInAsGoogle(page, `late-q@${E2E_EMAIL_DOMAIN}`, { first: "Lee", surname: "Late", next: `/platform/ask/${CLOSED}/answer` });
+  await signInAsGoogle(page, `late-q@${E2E_EMAIL_DOMAIN}`, { first: "Lee", surname: "Late", next: `/ask/${CLOSED}/answer` });
   await expect(page.getByText("This question has closed, so it can't take new answers.")).toBeVisible();
   await expect(page.getByRole("form", { name: "Recommend someone" })).toHaveCount(0);
 });

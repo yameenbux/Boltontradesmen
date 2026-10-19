@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { ChevronDown } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
-import { setJobRequestStatus } from "@/app/platform/provider/jobs-actions";
+import { setJobRequestStatus } from "@/app/(platform)/provider/jobs-actions";
 import { nationalNumber } from "@/lib/alert-text";
 import { JOB_STATUS_TEXT, JOB_STATUSES, type JobStatus } from "@/lib/job-request";
 
@@ -65,7 +65,7 @@ function RequestCard({ r, business }: { r: JobRequestRow; business: string }) {
           </Button>
         )}
       </div>
-      <Button href={`/platform/provider/docs/new?kind=quote&request=${r.id}`} variant="secondary">
+      <Button href={`/provider/docs/new?kind=quote&request=${r.id}`} variant="secondary">
         Write a quote
       </Button>
       {r.email && (

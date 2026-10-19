@@ -21,16 +21,16 @@ import {
 
 const SESSION_PATHS = [
   /^\/admin(\/|$)/,
-  /^\/platform\/sign-in$/,
-  /^\/platform\/welcome$/,
-  /^\/platform\/account(\/|$)/,
-  /^\/platform\/p\/[^/]+\/review$/,
-  /^\/platform\/report(\/|$)/,
-  /^\/platform\/provider(\/|$)/,
-  /^\/platform\/auth\/callback$/,
-  /^\/platform\/link(\/|$)/,
-  /^\/platform\/ask\/new$/,
-  /^\/platform\/ask\/[^/]+\/(answer|report)$/,
+  /^\/sign-in$/,
+  /^\/welcome$/,
+  /^\/account(\/|$)/,
+  /^\/p\/[^/]+\/review$/,
+  /^\/report(\/|$)/,
+  /^\/provider(\/|$)/,
+  /^\/auth\/callback$/,
+  /^\/link(\/|$)/,
+  /^\/ask\/new$/,
+  /^\/ask\/[^/]+\/(answer|report)$/,
 ];
 
 async function withSession(request: NextRequest, response: NextResponse): Promise<NextResponse> {

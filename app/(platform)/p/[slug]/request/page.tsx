@@ -4,7 +4,7 @@ import { LockIcon } from "@/components/auth/icons";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JobRequestForm } from "@/components/profile/JobRequestForm";
 import { Button } from "@/components/ui/Button";
-import { requestJob } from "@/app/platform/p/[slug]/request/actions";
+import { requestJob } from "@/app/(platform)/p/[slug]/request/actions";
 import { getProvider } from "@/lib/directory";
 import { BL_DISTRICTS } from "@/lib/districts";
 import { formStartToken } from "@/lib/form-timing";

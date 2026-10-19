@@ -1,6 +1,6 @@
 import { BRAND_MARK } from "@/lib/brand-mark";
 
-// The house-and-tick mark inside the brick tile (header, showcase nav and footer). Decorative: the link names the brand.
+// The house-and-tick mark inside the brick tile (header). Decorative: the link names the brand.
 export function BrandMark({ className }: { className?: string }) {
   return (
     <svg

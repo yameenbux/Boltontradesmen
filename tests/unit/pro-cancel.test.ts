@@ -16,7 +16,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { setStatus } from "@/app/admin/(protected)/providers/actions";
-import { withdrawMyListing } from "@/app/platform/provider/actions";
+import { withdrawMyListing } from "@/app/(platform)/provider/actions";
 import { cancelProForListing } from "@/lib/pro-cancel";
 
 const PID = "11111111-1111-4111-8111-111111111111";
@@ -75,7 +75,7 @@ describe("cancelProForListing", () => {
 describe("withdrawing and removing a listing", () => {
   it("the trader's withdrawal cancels Pro at the period end, then goes to the withdrawn page", async () => {
     await expect(withdrawMyListing({}, form({ provider_id: PID, confirm: "on" }))).rejects.toThrow(
-      "REDIRECT /platform/provider?withdrawn=1",
+      "REDIRECT /provider?withdrawn=1",
     );
     expect(update).toHaveBeenCalledTimes(2);
   });

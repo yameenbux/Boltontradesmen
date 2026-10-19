@@ -19,7 +19,7 @@ async function adminSignIn(page: import("@playwright/test").Page) {
 }
 
 test("the admin removes a review under check with a reason; it leaves the profile and is audited", async ({ page }) => {
-  await page.goto("/platform/p/e2e-calm-carpentry");
+  await page.goto("/p/e2e-calm-carpentry");
   await expect(page.getByText("Hung three doors, all perfect.")).toBeVisible();
 
   await adminSignIn(page);
@@ -38,7 +38,7 @@ test("the admin removes a review under check with a reason; it leaves the profil
   await card.getByRole("button", { name: "Remove review" }).click();
   await expect(page.getByRole("article").filter({ hasText: "Hung three doors, all perfect." })).toHaveCount(0);
 
-  await page.goto("/platform/p/e2e-calm-carpentry");
+  await page.goto("/p/e2e-calm-carpentry");
   await expect(page.getByText("Hung three doors, all perfect.")).toHaveCount(0);
   expect(
     sql(
@@ -102,7 +102,7 @@ test("held reviews: the admin approves one (it appears on the profile) and remov
   for (const [i, r] of residents.entries()) {
     const context = await browser.newContext({ baseURL, userAgent: `E2E held reviewer ${i + 1}` });
     const p = await context.newPage();
-    await signInWithEmail(p, r.email, { first: r.first, surname: "Held", next: "/platform/p/e2e-oak-joinery/review" });
+    await signInWithEmail(p, r.email, { first: r.first, surname: "Held", next: "/p/e2e-oak-joinery/review" });
     await answer(p, { quality: "4", comment: r.comment });
     await p.getByRole("button", { name: "Post review" }).click();
     await expect(p.getByRole("heading", { name: HELD })).toBeVisible();
@@ -133,11 +133,11 @@ test("held reviews: the admin approves one (it appears on the profile) and remov
   expect(sql(`select count(*) from audit_log where action = 'approve_review'`)).not.toBe("0");
   expect(sql(`select count(*) from audit_log where action = 'remove_review' and reason = 'Spam'`)).toBe("1");
 
-  await page.goto("/platform/p/e2e-oak-joinery");
+  await page.goto("/p/e2e-oak-joinery");
   await expect(page.getByText(residents[0].comment)).toBeVisible();
   await expect(page.getByText(residents[1].comment)).toHaveCount(0);
 
-  await pages[1].goto("/platform/account");
+  await pages[1].goto("/account");
   await expect(pages[1].getByRole("region", { name: /^My reviews/ })).toContainText("Removed: Spam");
   for (const p of pages) await p.context().close();
 });

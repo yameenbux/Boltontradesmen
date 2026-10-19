@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { AlertIcon, ChevronDown, TickIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
-import { submitTraderSetup } from "@/app/platform/provider/setup-actions";
+import { submitTraderSetup } from "@/app/(platform)/provider/setup-actions";
 import { BL_DISTRICTS, OTHER_DISTRICT } from "@/lib/districts";
 import { LISTING_LIMITS } from "@/lib/listing-request";
 import { FREE_FEATURES, PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";

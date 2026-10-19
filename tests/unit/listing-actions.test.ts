@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({
 const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath: (...a: unknown[]) => revalidatePath(...a) }));
 
-import { pauseMyListing, saveMyListing, unpauseMyListing, withdrawMyListing } from "@/app/platform/provider/actions";
+import { pauseMyListing, saveMyListing, unpauseMyListing, withdrawMyListing } from "@/app/(platform)/provider/actions";
 import { LISTING_ERRORS } from "@/lib/listing-edit";
 
 const ACCOUNT = {
@@ -51,9 +51,9 @@ describe("saveMyListing", () => {
     const res = await saveMyListing({}, form([["provider_id", PID], ["bio", " Leaks fixed. "], ["areas", "BL3"], ["areas", "BL1"]]));
     expect(res).toMatchObject({ ok: true, message: "Saved. It's on your page now." });
     expect(calls("update_my_listing")).toEqual([{ p_provider: PID, p_bio: "Leaks fixed.", p_areas: ["BL1", "BL3"] }]);
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/e2e-ace-plumbing");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/c/[category]", "page");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/provider");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/e2e-ace-plumbing");
+    expect(revalidatePath).toHaveBeenCalledWith("/(platform)/c/[category]", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/provider");
   });
 
   it("checks the form before the database, keeping what was typed", async () => {
@@ -92,7 +92,7 @@ describe("pause, unpause and withdraw", () => {
     const res = await pauseMyListing({}, form([["provider_id", PID]]));
     expect(res).toMatchObject({ ok: true });
     expect(calls("pause_my_listing")).toEqual([{ p_provider: PID }]);
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/e2e-ace-plumbing");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/e2e-ace-plumbing");
   });
 
   it("explains an admin's pause can't be undone here", async () => {
@@ -111,9 +111,9 @@ describe("pause, unpause and withdraw", () => {
   it("withdraws, refreshes the pages and goes to the withdrawn page", async () => {
     signedIn({ data: "e2e-ace-plumbing" });
     await expect(withdrawMyListing({}, form([["provider_id", PID], ["confirm", "on"]]))).rejects.toThrow(
-      "REDIRECT /platform/provider?withdrawn=1",
+      "REDIRECT /provider?withdrawn=1",
     );
     expect(calls("withdraw_my_listing")).toEqual([{ p_provider: PID }]);
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/e2e-ace-plumbing");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/e2e-ace-plumbing");
   });
 });

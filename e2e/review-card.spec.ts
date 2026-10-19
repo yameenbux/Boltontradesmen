@@ -24,12 +24,12 @@ async function adminSignIn(page: Page) {
 test("/r/<slug> is a permanent redirect to the review form, marked as from the card", async ({ request, page }) => {
   const res = await request.get(`/r/${SLUG}`, { maxRedirects: 0 });
   expect(res.status()).toBe(308);
-  expect(res.headers()["location"]).toBe(`/platform/p/${SLUG}/review?ref=card`);
+  expect(res.headers()["location"]).toBe(`/p/${SLUG}/review?ref=card`);
   expect(res.headers()["set-cookie"]).toBeUndefined();
 
   // Signed out, it lands on sign-in, which comes back to the form with ref=card.
   await page.goto(`/r/${SLUG}`);
-  await expect(page).toHaveURL(/\/platform\/sign-in\?next=%2Fplatform%2Fp%2Fe2e-card-vans%2Freview%3Fref%3Dcard$/);
+  await expect(page).toHaveURL(/\/sign-in\?next=%2Fp%2Fe2e-card-vans%2Freview%3Fref%3Dcard$/);
 });
 
 test("a review that starts from the card is recorded as from the card, for the admin only", async ({
@@ -42,9 +42,9 @@ test("a review that starts from the card is recorded as from the card, for the a
   const resident = await context.newPage();
   await resident.goto(`/r/${SLUG}`);
   const next = new URL(resident.url()).searchParams.get("next")!;
-  expect(next).toBe(`/platform/p/${SLUG}/review?ref=card`);
+  expect(next).toBe(`/p/${SLUG}/review?ref=card`);
   await signInWithEmail(resident, `card-review@${E2E_EMAIL_DOMAIN}`, { first: "Cora", surname: "Scan", next });
-  await expect(resident).toHaveURL(/\/platform\/p\/e2e-card-vans\/review\?ref=card$/);
+  await expect(resident).toHaveURL(/\/p\/e2e-card-vans\/review\?ref=card$/);
   await answer(resident, { quality: "3", comment });
   await resident.getByRole("button", { name: "Post review" }).click();
   // An email-code account's review waits for the admin.
@@ -53,7 +53,7 @@ test("a review that starts from the card is recorded as from the card, for the a
   expect(sql(`select source from public.reviews where comment = '${lit}'`)).toBe("card");
 
   // Not on the public profile or anywhere public.
-  await resident.goto(`/platform/p/${SLUG}`);
+  await resident.goto(`/p/${SLUG}`);
   await expect(resident.getByText("via review card")).toHaveCount(0);
 
   await adminSignIn(page);
@@ -95,11 +95,11 @@ test("a linked trader shares their review link and prints their card; the admin 
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   const trader = await context.newPage();
   // The card page is for signed-in traders only.
-  await trader.goto("/platform/provider/card");
-  await expect(trader).toHaveURL(/\/platform\/sign-in\?next=%2Fplatform%2Fprovider%2Fcard$/);
+  await trader.goto("/provider/card");
+  await expect(trader).toHaveURL(/\/sign-in\?next=%2Fprovider%2Fcard$/);
   await signInWithEmail(trader, `card-trader@${E2E_EMAIL_DOMAIN}`, { first: "Cath", surname: "Card", next: path });
   await trader.getByRole("button", { name: "Yes, this is my business" }).click();
-  await expect(trader).toHaveURL(/\/platform\/provider$/);
+  await expect(trader).toHaveURL(/\/provider$/);
 
   const ask = trader.getByRole("region", { name: "Ask for reviews" });
   await expect(ask).toContainText("Ask every customer, not just the happy ones");
@@ -113,7 +113,7 @@ test("a linked trader shares their review link and prints their card; the admin 
   );
 
   await ask.getByRole("link", { name: "Print a review card with a QR code" }).click();
-  await expect(trader).toHaveURL(/\/platform\/provider\/card$/);
+  await expect(trader).toHaveURL(/\/provider\/card$/);
   await expect(trader.getByRole("heading", { level: 1 })).toHaveText("Card Removals");
   await expect(
     trader.getByText("Ask every customer, not just the happy ones — that's the rule, and it's what makes your reviews count."),
@@ -135,6 +135,6 @@ test("a linked trader shares their review link and prints their card; the admin 
 
   // Someone with no listing gets no card.
   const other = await (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
-  await signInWithEmail(other, `card-nobody@${E2E_EMAIL_DOMAIN}`, { first: "Nell", surname: "Body", next: "/platform/provider/card" });
+  await signInWithEmail(other, `card-nobody@${E2E_EMAIL_DOMAIN}`, { first: "Nell", surname: "Body", next: "/provider/card" });
   await expect(other.getByRole("heading", { name: "No listing found" })).toBeVisible();
 });

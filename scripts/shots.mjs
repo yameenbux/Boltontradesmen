@@ -1,4 +1,4 @@
-// Screenshots of the live platform for the showcase site at "/", plus its social preview image.
+// Screenshots of the live platform for docs, plus its social preview image.
 //   PW_CHROMIUM_PATH=/path/to/chrome node scripts/shots.mjs            reset the LOCAL db, load fixtures, build, start, capture
 //   PW_CHROMIUM_PATH=/path/to/chrome node scripts/shots.mjs --social   only re-render public/social.png from the saved shots
 //   SHOTS_URL=http://localhost:3000 node scripts/shots.mjs             capture from a server you already started (no reset/build)
@@ -22,19 +22,19 @@ const INVITED_TOKEN = "00000000-0000-0000-0000-0000000dc0de"; // the invited lis
 
 // [file, path, prepare(page)]. Each prepare leaves the page where the picture should be taken.
 const SHOTS = [
-  ["home", "/platform", async () => {}],
-  ["home-howto", "/platform", async (page) => scrollTo(page, ".howto", 160)],
-  ["category", "/platform/c/plumber", async () => {}],
-  ["category-area", "/platform/c/plumber", async (page) => {
+  ["home", "/", async () => {}],
+  ["home-howto", "/", async (page) => scrollTo(page, ".howto", 160)],
+  ["category", "/c/plumber", async () => {}],
+  ["category-area", "/c/plumber", async (page) => {
     await page.getByRole("button", { name: "BL3", exact: true }).click();
     await page.waitForTimeout(150);
   }],
-  ["profile", "/platform/p/demo-halliwell-plumbing", async () => {}],
-  ["profile-checks", "/platform/p/demo-halliwell-plumbing", async (page) => scrollTo(page, "#checks-title, .checks", 220)],
-  ["profile-reviews", "/platform/p/demo-halliwell-plumbing", async (page) => scrollTo(page, "#reviews-title", 90)],
-  ["profile-contact", "/platform/p/demo-spark-right", async () => {}],
+  ["profile", "/p/demo-halliwell-plumbing", async () => {}],
+  ["profile-checks", "/p/demo-halliwell-plumbing", async (page) => scrollTo(page, "#checks-title, .checks", 220)],
+  ["profile-reviews", "/p/demo-halliwell-plumbing", async (page) => scrollTo(page, "#reviews-title", 90)],
+  ["profile-contact", "/p/demo-spark-right", async () => {}],
   ["ratings", "/how-ratings-work", async () => {}],
-  ["consent", `/platform/consent/${INVITED_TOKEN}`, async () => {}],
+  ["consent", `/consent/${INVITED_TOKEN}`, async () => {}],
 ];
 
 async function scrollTo(page, selector, offset) {
@@ -80,7 +80,7 @@ async function startServer() {
   };
   for (let i = 0; i < 60; i++) {
     try {
-      if ((await fetch(`${url}/platform`)).ok) {
+      if ((await fetch(`${url}/`)).ok) {
         return { url, stop: () => (kill(), clearFetchCache()) };
       }
     } catch {}

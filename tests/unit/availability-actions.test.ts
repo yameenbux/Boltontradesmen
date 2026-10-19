@@ -12,7 +12,7 @@ vi.mock("next/navigation", () => ({
 const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath: (...a: unknown[]) => revalidatePath(...a) }));
 
-import { setMyAvailability } from "@/app/platform/provider/actions";
+import { setMyAvailability } from "@/app/(platform)/provider/actions";
 import { setProviderAvailability } from "@/app/admin/(protected)/providers/actions";
 import { addDays, endOfWeek, londonToday } from "@/lib/availability";
 
@@ -55,9 +55,9 @@ describe("setMyAvailability (the trader)", () => {
     const res = await setMyAvailability({}, form({ choice: "taking" }));
     expect(res).toMatchObject({ ok: true, message: "Saved. It's on your page now." });
     expect(calls("set_my_availability")).toEqual([{ p_status: "taking", p_until: null }]);
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/e2e-ace-plumbing");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/c/[category]", "page");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/provider");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/e2e-ace-plumbing");
+    expect(revalidatePath).toHaveBeenCalledWith("/(platform)/c/[category]", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/provider");
   });
 
   it("this week is the Sunday that ends this week in Bolton", async () => {
@@ -108,7 +108,7 @@ describe("setMyAvailability (the trader)", () => {
 
   it("sends someone signed out to sign in", async () => {
     auth.getUser.mockResolvedValue({ data: { user: null } });
-    await expect(setMyAvailability({}, form({ choice: "taking" }))).rejects.toThrow(/REDIRECT \/platform\/sign-in/);
+    await expect(setMyAvailability({}, form({ choice: "taking" }))).rejects.toThrow(/REDIRECT \/sign-in/);
     expect(calls("set_my_availability")).toEqual([]);
   });
 });
@@ -120,7 +120,7 @@ describe("setProviderAvailability (the admin)", () => {
     const res = await setProviderAvailability({}, form({ provider_id: PID, choice: "booked", until }));
     expect(res).toMatchObject({ ok: true, message: "Availability saved" });
     expect(rpc).toHaveBeenCalledWith("admin_set_availability", { p_provider: PID, p_status: "booked", p_until: until });
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/e2e-ace-plumbing");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/e2e-ace-plumbing");
     expect(revalidatePath).toHaveBeenCalledWith(`/admin/providers/${PID}`);
   });
 

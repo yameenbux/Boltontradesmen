@@ -7,21 +7,21 @@ import { expect, test } from "@playwright/test";
 const ORIGIN = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 test("a trade with 10 counted reviews has a guide built from them", async ({ page }) => {
-  expect((await page.goto("/platform/prices/gardener"))?.status()).toBe(200);
+  expect((await page.goto("/prices/gardener"))?.status()).toBe(200);
   await expect(page).toHaveTitle("How much does a gardener cost in Bolton? | Bolton Vouched");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("How much does a gardener cost in Bolton?");
   await expect(page.getByTestId("guide-source")).toHaveText(
     "What Bolton residents told us they paid, from 10 reviews of gardener jobs since September 2025.",
   );
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${ORIGIN}/platform/prices/gardener`);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${ORIGIN}/prices/gardener`);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /^What Bolton residents paid, from 10 reviews of gardener jobs since September 2025\. 70% said the price matched the quote\./);
   await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
   // No structured data on a price page.
   await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
 
   const crumbs = page.getByRole("navigation", { name: "Breadcrumb" });
-  await expect(crumbs.getByRole("link", { name: "Trades" })).toHaveAttribute("href", "/platform");
-  await expect(crumbs.getByRole("link", { name: "Prices" })).toHaveAttribute("href", "/platform/prices");
+  await expect(crumbs.getByRole("link", { name: "Trades" })).toHaveAttribute("href", "/");
+  await expect(crumbs.getByRole("link", { name: "Prices" })).toHaveAttribute("href", "/prices");
   await expect(crumbs.locator('[aria-current="page"]')).toHaveText("Gardener");
 
   const bands = page.getByTestId("price-band");
@@ -41,42 +41,42 @@ test("a trade with 10 counted reviews has a guide built from them", async ({ pag
   for (const word of ["average", "per hour", "national"]) expect(body).not.toContain(word);
   expect(body).not.toMatch(/7700/);
 
-  await expect(page.getByRole("link", { name: "See gardeners in Bolton" })).toHaveAttribute("href", "/platform/c/gardener");
-  await expect(page.getByRole("link", { name: /Not sure who to ask\? Ask Bolton/ })).toHaveAttribute("href", "/platform/ask/new?category=gardener");
+  await expect(page.getByRole("link", { name: "See gardeners in Bolton" })).toHaveAttribute("href", "/c/gardener");
+  await expect(page.getByRole("link", { name: /Not sure who to ask\? Ask Bolton/ })).toHaveAttribute("href", "/ask/new?category=gardener");
 });
 
 test("a trade with 9 counted reviews has no guide and isn't in the sitemap", async ({ page, request }) => {
-  expect((await page.goto("/platform/prices/roofer"))?.status()).toBe(404);
-  expect((await page.goto("/platform/prices/no-such-trade"))?.status()).toBe(404);
+  expect((await page.goto("/prices/roofer"))?.status()).toBe(404);
+  expect((await page.goto("/prices/no-such-trade"))?.status()).toBe(404);
 
   const res = await request.get("/sitemap.xml");
   const locs = [...(await res.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-  expect(locs).toContain(`${ORIGIN}/platform/prices`);
-  expect(locs).toContain(`${ORIGIN}/platform/prices/gardener`);
-  expect(locs).not.toContain(`${ORIGIN}/platform/prices/roofer`);
+  expect(locs).toContain(`${ORIGIN}/prices`);
+  expect(locs).toContain(`${ORIGIN}/prices/gardener`);
+  expect(locs).not.toContain(`${ORIGIN}/prices/roofer`);
 });
 
 test("the prices index lists only trades with a guide", async ({ page }) => {
-  await page.goto("/platform/prices");
+  await page.goto("/prices");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("What locals paid");
   await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
   const list = page.getByTestId("price-guides");
   const gardener = list.getByRole("link", { name: /How much does a gardener cost in Bolton\?/ });
-  await expect(gardener).toHaveAttribute("href", "/platform/prices/gardener");
+  await expect(gardener).toHaveAttribute("href", "/prices/gardener");
   await expect(gardener).toContainText("from 10 reviews");
-  await expect(list.locator('a[href="/platform/prices/roofer"]')).toHaveCount(0);
+  await expect(list.locator('a[href="/prices/roofer"]')).toHaveCount(0);
   await expect(page.getByText("More guides appear as more reviews come in.")).toBeVisible();
 });
 
 test("a trade page links to its guide only when there is one", async ({ page }) => {
-  await page.goto("/platform/c/gardener");
+  await page.goto("/c/gardener");
   const link = page.getByTestId("price-guide-link");
-  await expect(link).toHaveAttribute("href", "/platform/prices/gardener");
+  await expect(link).toHaveAttribute("href", "/prices/gardener");
   await expect(link).toContainText("What locals paid");
   await link.click();
-  await expect(page).toHaveURL(/\/platform\/prices\/gardener$/);
+  await expect(page).toHaveURL(/\/prices\/gardener$/);
 
-  await page.goto("/platform/c/roofer");
+  await page.goto("/c/roofer");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Roofer");
   await expect(page.getByTestId("price-guide-link")).toHaveCount(0);
 });

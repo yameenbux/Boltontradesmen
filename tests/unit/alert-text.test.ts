@@ -3,7 +3,7 @@ import { clip, jobAlertEmail, jobAlertSms, nationalNumber, questionAlertEmail, q
 
 const job = { name: "Ash Patel", phone: "+447700900981", district: "BL3", body: "Kitchen tap leaking under the sink.\nAny day this week." };
 const question = { district: "BL3", body: "Anyone know a good plumber in BL3? Need a new toilet fitted.", category: "Plumber" };
-const link = "https://boltonvouched.ysbdesigns.uk/platform/provider#requests";
+const link = "https://boltonvouched.ysbdesigns.uk/provider#requests";
 
 describe("nationalNumber", () => {
   it("writes mobiles and landlines the way people do", () => {

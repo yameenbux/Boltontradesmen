@@ -3,7 +3,7 @@
 import { useActionState, useId, useState } from "react";
 import { AlertIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
-import { answerQuestion } from "@/app/platform/ask/[id]/answer/actions";
+import { answerQuestion } from "@/app/(platform)/ask/[id]/answer/actions";
 import type { FormState } from "@/lib/admin-shared";
 import { ANSWER_NOTE_MAX, tidyText } from "@/lib/questions";
 

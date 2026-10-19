@@ -12,7 +12,7 @@ test("a resident attaches a photo of the invoice; it is stored privately and the
   await signInAsGoogle(page, `jan@${E2E_EMAIL_DOMAIN}`, {
     first: "Jan",
     surname: "Price",
-    next: "/platform/p/e2e-tidy-vans/review",
+    next: "/p/e2e-tidy-vans/review",
   });
   const form = page.getByRole("form", { name: "Your review" });
   await form.getByLabel("When was the job?").selectOption({ index: 1 });
@@ -39,12 +39,12 @@ test("a resident attaches a photo of the invoice; it is stored privately and the
   await expect(page.getByText(/the proof didn't upload/)).toHaveCount(0);
 
   // Opening the form again shows the proof is in, and offers no second upload.
-  await page.goto("/platform/p/e2e-tidy-vans/review");
+  await page.goto("/p/e2e-tidy-vans/review");
   await expect(page.getByText("Proof sent")).toBeVisible();
   await expect(page.getByLabel(/Proof of the job/)).toHaveCount(0);
 
   // The account page lists the review with its proof state.
-  await page.goto("/platform/account");
+  await page.goto("/account");
   const item = page.getByRole("region", { name: "My reviews" }).getByRole("listitem").filter({ hasText: "Tidy Vans" });
   await expect(item).toContainText("Proof sent for checking");
 });

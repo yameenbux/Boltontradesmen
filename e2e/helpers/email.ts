@@ -7,12 +7,12 @@ const DB_URL = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@12
 type Options = { first?: string; surname?: string; district?: string; next?: string };
 
 /**
- * Signs in on /platform/sign-in with a 6-digit email code read from the local inbox. If Welcome appears
+ * Signs in on /sign-in with a 6-digit email code read from the local inbox. If Welcome appears
  * (no profile yet), completes it with the given names and area (BL1 by default). Ends wherever the app
  * sends the person next. Use addresses at E2E_EMAIL_DOMAIN (db:reset deletes their accounts).
  */
 export async function signInWithEmail(page: Page, email: string, opts: Options = {}) {
-  const url = opts.next ? `/platform/sign-in?next=${encodeURIComponent(opts.next)}` : "/platform/sign-in";
+  const url = opts.next ? `/sign-in?next=${encodeURIComponent(opts.next)}` : "/sign-in";
   await page.goto(url);
   const sentAfter = new Date(Date.now() - 1000);
   await page.getByLabel("Your email address").fill(email);
@@ -21,13 +21,13 @@ export async function signInWithEmail(page: Page, email: string, opts: Options =
   const code = await latestCode(email, sentAfter);
   await page.getByLabel("6-digit code").fill(code);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await page.waitForURL((u) => !u.pathname.startsWith("/platform/sign-in"));
-  if (new URL(page.url()).pathname === "/platform/welcome") {
+  await page.waitForURL((u) => !u.pathname.startsWith("/sign-in"));
+  if (new URL(page.url()).pathname === "/welcome") {
     await page.getByLabel("First name").fill(opts.first ?? "Test");
     await page.getByLabel("Surname").fill(opts.surname ?? "Resident");
     await page.getByLabel("Your area").selectOption(opts.district ?? "BL1");
     await page.getByRole("button", { name: "Save and continue" }).click();
-    await page.waitForURL((u) => u.pathname !== "/platform/welcome");
+    await page.waitForURL((u) => u.pathname !== "/welcome");
   }
 }
 

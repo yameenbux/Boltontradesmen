@@ -10,7 +10,7 @@ const DB_URL = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@12
 const sql = (query: string) =>
   execFileSync("psql", [DB_URL, "-X", "-A", "-t", "-q", "-v", "ON_ERROR_STOP=1", "-c", query]).toString().trim();
 
-const CATEGORY = "/platform/c/man-and-van";
+const CATEGORY = "/c/man-and-van";
 const card = (page: Page, name: string) => page.getByRole("link", { name: new RegExp(name) });
 // The category page is ISR. Another spec's visit can start regenerating it just before a status change and store
 // the older list just after the change's revalidation, so reload until the change shows (it always does at once
@@ -41,7 +41,7 @@ async function linkedTrader(page: Page, browser: Browser, testInfo: TestInfo, pr
   const trader = await (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
   await signInWithEmail(trader, `${who}-trader@${E2E_EMAIL_DOMAIN}`, { first: who, surname: "Trader", next: path });
   await trader.getByRole("button", { name: "Yes, this is my business" }).click();
-  await expect(trader).toHaveURL(/\/platform\/provider$/);
+  await expect(trader).toHaveURL(/\/provider$/);
   return trader;
 }
 
@@ -107,7 +107,7 @@ test("a trader sees their enquiries, edits their listing, pauses and unpauses it
   );
 
   const visitor = await (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
-  await visitor.goto("/platform/p/e2e-dash-vans");
+  await visitor.goto("/p/e2e-dash-vans");
   await expect(visitor.getByRole("region", { name: "About" })).toContainText("Blankets and straps on every job.");
   await expect(visitor.locator(".prof-head")).toContainText("Covers BL3, M26");
 
@@ -120,7 +120,7 @@ test("a trader sees their enquiries, edits their listing, pauses and unpauses it
   await expect(edit.getByRole("button", { name: "Unpause my listing" })).toBeVisible();
   await expect(trader.getByText("Your listing is paused, so customers can't see it.")).toBeVisible();
   await categoryShows(visitor, "Dash Removals", 0);
-  expect((await visitor.goto("/platform/p/e2e-dash-vans"))?.status()).toBe(404);
+  expect((await visitor.goto("/p/e2e-dash-vans"))?.status()).toBe(404);
   expect(sql(`select status || '/' || paused_by from public.providers where slug = 'e2e-dash-vans'`)).toBe("paused/trader");
 
   await edit.getByRole("button", { name: "Unpause my listing" }).click();
@@ -153,7 +153,7 @@ test("a trader withdraws their listing after confirming", async ({ page, browser
   await dialog.getByRole("checkbox", { name: "I understand I can only come back with a new invite" }).check();
   await dialog.getByRole("button", { name: "Withdraw my listing" }).click();
   await expect(trader.getByRole("heading", { level: 1 })).toHaveText("Your listing is withdrawn");
-  await expect(trader).toHaveURL(/\/platform\/provider\?withdrawn=1$/);
+  await expect(trader).toHaveURL(/\/provider\?withdrawn=1$/);
 
   expect(sql(`select status from public.providers where slug = 'e2e-gone-vans'`)).toBe("removed");
   expect(sql(`select reason from public.audit_log where action = 'set_provider_status'
@@ -161,7 +161,7 @@ test("a trader withdraws their listing after confirming", async ({ page, browser
     "removed: Withdrawn by trader",
   );
   const visitor = await (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
-  expect((await visitor.goto("/platform/p/e2e-gone-vans"))?.status()).toBe(404);
+  expect((await visitor.goto("/p/e2e-gone-vans"))?.status()).toBe(404);
   await categoryShows(visitor, "Gone Removals", 0);
 
   // The admin sees it removed, and only Re-invite brings it back.

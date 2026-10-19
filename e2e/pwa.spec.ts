@@ -1,43 +1,40 @@
 import { expect, test } from "@playwright/test";
 
-// The platform lives under /platform so the root can become a showcase site; old links redirect permanently.
+// The directory is the home page (it used to live under /platform: old links redirect permanently).
 
-test("/platform shows the directory home", async ({ page }) => {
-  const res = await page.goto("/platform");
+test("the home page is the directory", async ({ page }) => {
+  const res = await page.goto("/");
   expect(res?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Trades your neighbours vouch for.");
   await expect(page.getByRole("banner").getByRole("link", { name: /^Bolton Vouched Local trades/ })).toHaveAttribute(
     "href",
-    "/platform",
+    "/",
   );
 });
 
 for (const [from, to] of [
-  ["/c/plumber", "/platform/c/plumber"],
-  ["/p/e2e-ace-plumbing", "/platform/p/e2e-ace-plumbing"],
-  ["/consent/00000000-0000-0000-0000-000000000000", "/platform/consent/00000000-0000-0000-0000-000000000000"],
+  ["/platform", "/"],
+  ["/platform/c/plumber", "/c/plumber"],
+  ["/platform/p/e2e-ace-plumbing", "/p/e2e-ace-plumbing"],
+  ["/platform/consent/00000000-0000-0000-0000-000000000000", "/consent/00000000-0000-0000-0000-000000000000"],
+  ["/platform/c/plumber?area=BL3", "/c/plumber?area=BL3"],
 ]) {
-  test(`${from} redirects permanently to ${to}`, async ({ request }) => {
+  test(`old link ${from} redirects permanently to ${to}`, async ({ request }) => {
     const res = await request.get(from, { maxRedirects: 0 });
     expect(res.status()).toBe(308);
     expect(res.headers()["location"]).toBe(to);
   });
 }
 
-test("the root is the showcase site, not a redirect", async ({ request }) => {
-  const res = await request.get("/", { maxRedirects: 0 });
-  expect(res.status()).toBe(200);
-});
-
-test("the manifest makes /platform an installable standalone app", async ({ request }) => {
+test("the manifest makes the site an installable standalone app", async ({ request }) => {
   const res = await request.get("/manifest.webmanifest");
   expect(res.status()).toBe(200);
   const m = await res.json();
   expect(m).toMatchObject({
     name: "Bolton Vouched",
     short_name: "Vouched",
-    start_url: "/platform",
-    scope: "/platform",
+    start_url: "/",
+    scope: "/",
     display: "standalone",
     theme_color: "#9C3A25",
   });
@@ -56,8 +53,8 @@ test("the manifest makes /platform an installable standalone app", async ({ requ
   }
 });
 
-test("/platform head has the home-screen metadata", async ({ request }) => {
-  const html = await (await request.get("/platform")).text();
+test("the home page head has the home-screen metadata", async ({ request }) => {
+  const html = await (await request.get("/")).text();
   expect(html).toMatch(/<link[^>]+rel="apple-touch-icon"[^>]+href="\/icons\/apple-touch-icon\.png"/);
   expect(html).toContain('<meta name="apple-mobile-web-app-capable" content="yes"/>');
   expect(html).toMatch(/<meta name="theme-color"[^>]+content="#9C3A25"/);
@@ -67,7 +64,7 @@ test("/platform head has the home-screen metadata", async ({ request }) => {
   expect(touch.status()).toBe(200);
 });
 
-test("admin consent links point at /platform/consent/", async ({ page }) => {
+test("admin consent links point at /consent/", async ({ page }) => {
   await page.goto("/admin/login");
   await page.getByLabel("Email").fill("admin@example.test");
   await page.getByLabel("Password").fill("e2e-admin-password");
@@ -78,5 +75,5 @@ test("admin consent links point at /platform/consent/", async ({ page }) => {
   await page.getByRole("button", { name: "Add provider" }).click();
   await expect(page.getByTestId("provider-status")).toHaveText("invited");
   await page.getByRole("button", { name: "New consent link" }).click();
-  await expect(page.getByRole("textbox", { name: "Consent link" })).toHaveValue(/\/platform\/consent\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("textbox", { name: "Consent link" })).toHaveValue(/\/consent\/[0-9a-f-]{36}$/);
 });

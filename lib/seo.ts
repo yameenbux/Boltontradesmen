@@ -24,7 +24,7 @@ export function absoluteUrl(path: string, base: string = siteUrl()): string {
 }
 
 /** Paths crawlers must not visit. Consent and link URLs carry private tokens; admin and the API are not content. */
-export const DISALLOWED_PATHS = ["/admin", "/api/", "/platform/consent/", "/platform/link/", "/platform/d/"] as const;
+export const DISALLOWED_PATHS = ["/admin", "/api/", "/consent/", "/link/", "/d/"] as const;
 
 export const POLICY_PATHS = ["/privacy", "/terms", "/how-ratings-work", "/review-policy", "/fake-reviews-policy", "/cookies"] as const;
 
@@ -69,7 +69,7 @@ export function sitemapQuestions(questions: SitemapQuestion[], now: Date = new D
 export type SitemapPriceGuide = { slug: string; latestJobMonth: string };
 
 /**
- * "/", "/get-listed", "/for-traders", "/platform", categories with live providers, every live provider, the Ask page and its
+ * "/", "/get-listed", "/for-traders", categories with live providers, every live provider, the Ask page and its
  * answered questions (when there are any), the price guides and their index (when there are any), then the policy
  * pages.
  */
@@ -95,10 +95,10 @@ export function buildSitemap(
 
   const allUpdated = latest(providers.map((p) => providerUpdated(p)?.toISOString()));
   const entries: MetadataRoute.Sitemap = [
-    { url: url("/"), changeFrequency: "monthly", priority: 1 },
+    // The home page is the directory.
+    withDate({ url: url(platformPath()), changeFrequency: "daily", priority: 1 }, allUpdated),
     { url: url("/get-listed"), changeFrequency: "yearly", priority: 0.5 },
     { url: url("/for-traders"), changeFrequency: "monthly", priority: 0.5 },
-    withDate({ url: url(platformPath()), changeFrequency: "daily", priority: 0.9 }, allUpdated),
   ];
 
   const live = categories.filter((c) => c.liveCount > 0);
@@ -249,7 +249,7 @@ export function providerMetadata(p: {
   const lead = `${p.businessName}: ${p.trade ? p.trade.toLowerCase() : "local pro"} in Bolton${areas}.`;
   const bio = p.bio ? stripPhoneNumbers(p.bio) : "";
   const description = truncate(bio ? `${lead} ${bio}` : `${lead} Recommended on ${SITE_NAME}.`, 160);
-  // The image comes from app/platform/p/[slug]/opengraph-image.tsx.
+  // The image comes from app/p/[slug]/opengraph-image.tsx.
   return pageMetadata({ title, description, path: platformPath("p", p.slug), type: "profile", ownImage: true });
 }
 

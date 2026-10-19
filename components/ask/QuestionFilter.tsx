@@ -6,7 +6,7 @@ import { BL_DISTRICTS } from "@/lib/districts";
 import type { PublicQuestion } from "@/lib/questions";
 
 /**
- * Trade and area chips over the questions list. Filters client-side, so /platform/ask stays static (no searchParams)
+ * Trade and area chips over the questions list. Filters client-side, so /ask stays static (no searchParams)
  * and cacheable, as the category page's area filter does. The order is the server's (newest first), unchanged.
  */
 export function QuestionFilter({ questions, renderedAt }: { questions: PublicQuestion[]; renderedAt: string }) {
