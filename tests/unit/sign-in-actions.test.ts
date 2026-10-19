@@ -82,7 +82,7 @@ describe("phone sign-in switched off", () => {
       { step: "code", phone: "+447700900401", next: "/platform/p/ace/review" },
       form({ phone: "+447700900401", code: "123456", next: "//evil.example" }),
     );
-    expect(res).toEqual({ step: "phone", next: "/platform/account", error: SIGN_IN_ERRORS.phone_off });
+    expect(res).toEqual({ step: "phone", next: "/platform", error: SIGN_IN_ERRORS.phone_off });
     expect(auth.verifyOtp).not.toHaveBeenCalled();
     expect(serviceRpc).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
@@ -193,7 +193,7 @@ describe("verifyCode", () => {
     rpc.mockImplementation(async (name: string) => ({ data: name === "my_account" ? ACCOUNT : 0, error: null }));
     await expect(
       verifyCode(base, form({ phone: "+447700900401", code: "123456", next: "//evil.example" })),
-    ).rejects.toThrow("REDIRECT /platform/account");
+    ).rejects.toThrow(/REDIRECT \/platform$/);
   });
 });
 

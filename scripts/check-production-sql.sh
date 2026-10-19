@@ -3,8 +3,8 @@
 # up to 20261012000017, with production-like rows), then docs/launch/launch-checklist-production.sql,
 # docs/launch/review-source-production.sql, docs/launch/availability-production.sql,
 # docs/launch/trader-dashboard-production.sql, docs/launch/pro-tier-production.sql,
-# docs/launch/community-questions-production.sql, docs/launch/price-guides-production.sql and
-# docs/launch/consent-link-production.sql after it (and that each
+# docs/launch/community-questions-production.sql, docs/launch/price-guides-production.sql,
+# docs/launch/consent-link-production.sql and docs/launch/one-listing-production.sql after it (and that each
 # later one refuses to run first), each twice, then runs every pgTAP test on the result. Local databases only.
 #   npm run db:check-prod
 # On the local stack (psql reset, postgres is a superuser) and on the Supabase CLI stack (SUPABASE_CLI_STACK=1, as
@@ -33,6 +33,8 @@ SCRIPT8=docs/launch/price-guides-production.sql
 UNTIL8=20261012000031
 SCRIPT9=docs/launch/consent-link-production.sql
 UNTIL9=20261012000032
+SCRIPT10=docs/launch/one-listing-production.sql
+UNTIL10=20261012000033
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
 echo "[check-prod] database at $UNTIL"
@@ -183,13 +185,28 @@ echo "[check-prod] applying it a second time (a re-run must not fail)"
 echo "[check-prod] applying $SCRIPT9"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT9")"
 echo "$out" | tail -1
-expected9="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL9" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+expected9="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; v="${b%%_*}"; if [[ "$v" > "$UNTIL9" && ! "$v" > "$UNTIL10" ]]; then echo "$b"; fi; done | wc -l | tr -d ' ')"
 echo "$out" | grep -q "^Consent link database changes applied|$expected9\$" || { echo "[check-prod] the closing check did not report $expected9 migrations"; exit 1; }
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT9" | tail -1
 
+echo "[check-prod] the one-listing script stops, changing nothing, while two listings share a number"
+"${PSQL[@]}" -c "insert into public.providers (slug, business_name, phone_e164) values ('prod-check-dupe', 'Prod Check Dupe', '+447700900990')"
+if "${PSQL[@]}" -f "$SCRIPT10" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT10 ran with a duplicate number"; exit 1; fi
+"${PSQL[@]}" -A -t -c "select count(*) = 0 from pg_indexes where indexname = 'providers_one_listing_per_phone'" | grep -qx t \
+  || { echo "[check-prod] the refused one-listing script left something behind"; exit 1; }
+"${PSQL[@]}" -c "update public.providers set status = 'removed' where slug = 'prod-check-dupe'"
+
+echo "[check-prod] applying $SCRIPT10"
+out="$("${PSQL[@]}" -A -t -f "$SCRIPT10")"
+echo "$out" | tail -1
+expected10="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL10" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^One listing per number database changes applied|$expected10\$" || { echo "[check-prod] the closing check did not report $expected10 migrations"; exit 1; }
+echo "[check-prod] applying it a second time (a re-run must not fail)"
+"${PSQL[@]}" -A -t -f "$SCRIPT10" | tail -1
+
 # The pgTAP tests expect only their own fixtures.
-"${PSQL[@]}" -c "delete from public.providers where slug in ('prod-check-travel', 'prod-check-paused', 'prod-check-live');
+"${PSQL[@]}" -c "delete from public.providers where slug in ('prod-check-travel', 'prod-check-paused', 'prod-check-live', 'prod-check-dupe');
   delete from public.profiles where user_id = '00000000-0000-0000-0000-0000000fad01';
   delete from auth.users where id = '00000000-0000-0000-0000-0000000fad01';
   update public.settings set value = value - 'prod-check-admin@example.com' where key = 'admin_emails';"

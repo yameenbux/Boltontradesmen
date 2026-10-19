@@ -31,7 +31,10 @@ test("a new resident signs in with a code and sets up their name", async ({ page
   await expect(page.getByLabel(/Group code/)).toHaveCount(0);
   await page.getByRole("button", { name: "Save and continue" }).click();
 
-  await expect(page).toHaveURL(/\/platform\/account$/);
+  // Signed in: straight to the directory, greeted by name (the account page is behind the profile icon).
+  await expect(page).toHaveURL(/\/platform$/);
+  await expect(page.getByTestId("greeting")).toHaveText(/^Good (morning|afternoon|evening), Sarah$/);
+  await page.goto("/platform/account");
   await expect(page.getByRole("main").getByText("Signed in as Sarah K.")).toBeVisible();
 });
 
@@ -62,12 +65,12 @@ for (const [number, copy] of [
 
 test("a crafted next never leaves the platform", async ({ page }) => {
   await signInWithPhone(page, "07700 900403", { next: "//evil.example" });
-  await expect(page).toHaveURL(/^http:\/\/localhost:3001\/platform\/account$/);
+  await expect(page).toHaveURL(/^http:\/\/localhost:3001\/platform$/);
 });
 
-test("signed-out visitors to the account page are sent to sign in", async ({ page }) => {
+test("signed-out visitors to the account page are sent to sign in, then on to the directory", async ({ page }) => {
   await page.goto("/platform/account");
-  await expect(page).toHaveURL(/\/platform\/sign-in\?next=%2Fplatform%2Faccount$/);
+  await expect(page).toHaveURL(/\/platform\/sign-in\?next=%2Fplatform$/);
 });
 
 test("the brand bar links to the account page", async ({ page }) => {

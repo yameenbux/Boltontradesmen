@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ID_PATTERN } from "@/lib/review-form";
 import { requireAdmin } from "@/lib/admin";
+import { duplicateMessage, listingForPhone } from "@/lib/listing-duplicates";
 import { CHECK_KINDS, SETTABLE_STATUSES, type FormState } from "@/lib/admin-shared";
 import { AVAILABILITY_ERRORS, parseAvailabilityForm } from "@/lib/availability";
 import { InvalidPhoneError, toE164 } from "@/lib/phone";
@@ -80,6 +81,17 @@ export async function saveProvider(_prev: FormState, formData: FormData): Promis
   if (!parsed.success) return { errors: fieldErrors(parsed.error), values };
   const v = parsed.data;
 
+  // One listing per number (migration 000034): say which listing already has it, before the database refuses.
+  let existing;
+  try {
+    existing = v.phone ? await listingForPhone(v.phone, v.id) : null;
+  } catch (err) {
+    console.error("admin: duplicate number check failed:", err);
+    return { message: "Could not save the provider. Try again.", values };
+  }
+  const duplicate = duplicateMessage(existing, !v.id);
+  if (duplicate) return { errors: { phone: duplicate }, values };
+
   const { data, error } = await supabase.rpc("admin_upsert_provider", {
     p: {
       id: v.id,
@@ -93,6 +105,9 @@ export async function saveProvider(_prev: FormState, formData: FormData): Promis
     },
   });
   if (error) {
+    if (error.message.includes("providers_one_listing_per_phone")) {
+      return { errors: { phone: "This number is already on another listing. Open that listing instead." }, values };
+    }
     if (error.message.includes("max 3 categories"))
       return { errors: { category_ids: "Choose at most 3 categories" }, values };
     const req = /category requires (\w+) check/.exec(error.message);

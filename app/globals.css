@@ -240,6 +240,7 @@ h1,h2,h3{text-wrap:balance}
 
   /* ---------- home ---------- */
   .hero{margin-top:14px}
+  .hero .greeting{margin:0 0 6px; max-width:none; font-family:var(--display); font-size:22px; line-height:1.2; color:var(--brick); animation:rise .5s var(--ease) both}
   .hero h1{font-family:var(--display); font-weight:400; font-size:clamp(38px,11vw,48px); line-height:1.04; margin:0 0 12px; letter-spacing:-.015em; color:var(--ink)}
   .hero > p{margin:0 0 20px; font-size:17px; color:var(--ink-2); max-width:34ch}
   .search{display:flex; align-items:center; gap:10px; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:18px; padding:6px 6px 6px 16px; box-shadow:0 10px 30px -16px rgba(60,30,15,.35); transition:box-shadow .3s var(--ease), transform .3s var(--ease)}

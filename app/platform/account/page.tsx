@@ -22,7 +22,7 @@ function initialsOf(name: string): string {
 }
 
 export default async function AccountPage() {
-  const { supabase, account } = await requireMember("/platform/account");
+  const { supabase, account } = await requireMember("/platform");
   const name = account.displayName ?? "";
   const { data, error } = await supabase.rpc("my_reviews");
   if (error) throw new Error(`my_reviews failed: ${error.message}`);

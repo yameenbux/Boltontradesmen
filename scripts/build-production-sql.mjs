@@ -16,8 +16,10 @@
 //     --out docs/launch/community-questions-production.sql
 //   node scripts/build-production-sql.mjs --preset price-guides --from 20261012000032 --to 20261012000032 \
 //     --out docs/launch/price-guides-production.sql
-//   node scripts/build-production-sql.mjs --preset consent-link --from 20261012000033 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset consent-link --from 20261012000033 --to 20261012000033 \
 //     --out docs/launch/consent-link-production.sql
+//   node scripts/build-production-sql.mjs --preset one-listing --from 20261012000034 --to <newest> \
+//     --out docs/launch/one-listing-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -381,6 +383,17 @@ end
 $verify$;
 `;
 
+const VERIFY_ONE_LISTING = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if not exists (select 1 from pg_indexes where schemaname = 'public' and indexname = 'providers_one_listing_per_phone') then
+    raise exception 'One listing per number check failed: index providers_one_listing_per_phone is missing';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -441,6 +454,12 @@ const PRESETS = {
     done: "Consent link database changes applied",
     requires: { version: "20261012000032", what: "the price guides script (docs/launch/price-guides-production.sql)" },
     verify: VERIFY_CONSENT_LINK,
+  },
+  "one-listing": {
+    title: "one listing per phone number",
+    done: "One listing per number database changes applied",
+    requires: { version: "20261012000033", what: "the consent link script (docs/launch/consent-link-production.sql)" },
+    verify: VERIFY_ONE_LISTING,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

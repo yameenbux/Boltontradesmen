@@ -19,7 +19,7 @@ describe("safeNext (Review Focus 5)", () => {
     undefined,
     "",
   ])("rejects %s", (path) => {
-    expect(safeNext(path)).toBe("/platform/account");
+    expect(safeNext(path)).toBe("/platform");
   });
 
   it("uses the given fallback", () => {

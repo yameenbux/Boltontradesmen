@@ -45,7 +45,7 @@ describe("startGoogleSignIn", () => {
     auth.signInWithOAuth.mockResolvedValue({ data: { url: "https://accounts.google.com/x" }, error: null });
     await expect(startGoogleSignIn(form({ next: "https://evil.example" }))).rejects.toThrow("REDIRECT");
     expect(auth.signInWithOAuth.mock.calls[0][0].options.redirectTo).toBe(
-      "http://localhost:3000/platform/auth/callback?next=%2Fplatform%2Faccount",
+      "http://localhost:3000/platform/auth/callback?next=%2Fplatform",
     );
   });
 
@@ -59,7 +59,7 @@ describe("startGoogleSignIn", () => {
   it("treats a missing URL as an error", async () => {
     auth.signInWithOAuth.mockResolvedValue({ data: { url: null }, error: null });
     await expect(startGoogleSignIn(form({}))).rejects.toThrow(
-      "REDIRECT /platform/sign-in?error=google&next=%2Fplatform%2Faccount",
+      "REDIRECT /platform/sign-in?error=google&next=%2Fplatform",
     );
   });
 });
