@@ -62,7 +62,10 @@ export function EmailCodeForm({
             spam folder too.
           </p>
         ) : (
-          <p className="lede">Continue with Google, or we&apos;ll email you a code. No password to remember.</p>
+          <p className="lede">
+            New or returning, it&apos;s the same: continue with Google, or we&apos;ll email you a code. No password to
+            remember.
+          </p>
         )}
       </div>
 

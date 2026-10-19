@@ -3,7 +3,9 @@ import { AlertIcon, ChatIcon, LockIcon } from "@/components/auth/icons";
 import { EmailCodeForm } from "@/components/auth/EmailCodeForm";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { SignInForm } from "@/components/auth/SignInForm";
+import { asksIntent, TRADER_SIGN_IN, TRADER_START } from "@/lib/account-intent";
 import { GOOGLE_SIGN_IN_ERROR } from "@/lib/google-callback";
+import { platformPath } from "@/lib/paths";
 import { safeNext } from "@/lib/safe-next";
 import { phoneSignInEnabled } from "@/lib/sign-in-methods";
 import { turnstileSiteKey } from "@/lib/turnstile";
@@ -18,9 +20,9 @@ export const metadata: Metadata = {
 function heading(next: string) {
   if (/^\/platform\/p\/[^/]+\/review/.test(next)) return "Sign in to leave a review";
   if (next.startsWith("/platform/report/")) return "Sign in to report a review";
-  if (next.startsWith("/platform/provider")) return "Sign in to reply to reviews";
+  if (next.startsWith("/platform/provider")) return "Log in or join as a trader";
   if (next.startsWith("/platform/link/")) return "Sign in to link your listing";
-  return "Sign in to Bolton Vouched";
+  return "Log in or create an account";
 }
 
 function Divider({ children }: { children: string }) {
@@ -39,8 +41,20 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
   const googleFailed = (Array.isArray(params.error) ? params.error[0] : params.error) === "google";
   // Read at request time (SIGN_IN_PHONE): only enabled methods are shown.
   const phoneOn = phoneSignInEnabled();
+  const trader = next.startsWith(TRADER_START);
   return (
     <main className="auth">
+      {/* One account works for both: this only decides where you land after signing in, and the wording. */}
+      {(trader || asksIntent(next)) && (
+        <nav className="who-switch" aria-label="Who are you signing in as?">
+          <a href={platformPath("sign-in")} aria-current={trader ? undefined : "page"}>
+            I need a trader
+          </a>
+          <a href={TRADER_SIGN_IN} aria-current={trader ? "page" : undefined} data-testid="trader-sign-in">
+            I&apos;m a trader
+          </a>
+        </nav>
+      )}
       <section className="auth-card" aria-labelledby="signin-title">
         <EmailCodeForm
           next={next}
@@ -77,7 +91,14 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           <span className="ri">
             <ChatIcon />
           </span>
-          <span>Looking and calling never needs an account. You only sign in to leave or reply to a review.</span>
+          {trader ? (
+            <span>
+              New to Bolton Vouched? Next is one short form about your business, with Free or Pro. Already listed?
+              Use the email or mobile number you gave us.
+            </span>
+          ) : (
+            <span>Looking and calling never needs an account. You only sign in to ask, review or reply.</span>
+          )}
         </li>
       </ul>
     </main>

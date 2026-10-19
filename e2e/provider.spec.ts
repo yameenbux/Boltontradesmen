@@ -6,9 +6,8 @@ import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
 
 test("someone with no listing sees how to find theirs", async ({ page }) => {
   await signInWithEmail(page, `val@${E2E_EMAIL_DOMAIN}`, { first: "Val", surname: "Moor", next: "/platform/provider" });
-  await expect(
-    page.getByText("We couldn't find a listing linked to your account. If you're listed, ask us for your trader sign-in link."),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tell us about your business" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "WhatsApp us" })).toHaveAttribute("href", /^https:\/\/wa\.me\/447466487591\?text=/);
 });
 
 test("a resident reports a review; the admin sees it under Flags", async ({ page }) => {

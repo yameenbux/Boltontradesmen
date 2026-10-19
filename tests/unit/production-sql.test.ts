@@ -107,9 +107,17 @@ const SCRIPTS = [
     file: "docs/launch/quotes-invoices-production.sql",
     preset: "quotes-invoices",
     from: "20261012000036",
-    to: NEWEST,
+    to: "20261012000036",
     functions: ["save_my_doc", "public_doc", "answer_quote", "claim_customer_message"],
     requires: "20261012000035",
+  },
+  {
+    file: "docs/launch/trader-sign-up-production.sql",
+    preset: "trader-sign-up",
+    from: "20261012000037",
+    to: NEWEST,
+    functions: ["my_listing_request", "admin_approve_listing_request"],
+    requires: "20261012000036",
   },
 ];
 

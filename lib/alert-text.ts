@@ -161,3 +161,31 @@ export function quoteAnsweredEmail(m: DocMessage, accepted: boolean): Email {
     html: html(lines, { href: m.link, label }),
   };
 }
+
+// ---------------------------------------------------------------- a trader's listing approved
+
+export type Approval = { name: string; business: string; pro: boolean };
+
+const FROM_US = "Bolton Vouched, Bolton's directory of trades vouched for by locals.";
+
+export function approvalSms(a: Approval, link: string): string {
+  return a.pro
+    ? `Bolton Vouched: ${clip(a.business, 40)} is approved. Start Pro here (£10 a month or £100 a year, cancel any time): ${link}`
+    : `Bolton Vouched: ${clip(a.business, 40)} is approved. See your listing: ${link}`;
+}
+
+export function approvalEmail(a: Approval, link: string): Email {
+  const lines = [
+    `Hi ${a.name},`,
+    `Good news: ${a.business} is approved on Bolton Vouched.`,
+    a.pro
+      ? "You chose Pro. Tap below to pay by card (£10 a month or £100 a year) and Pro switches on straight away: job requests by text, Ask Bolton alerts, quotes and invoices, and more. Cancel any time."
+      : "Your free listing is ready. Sign in to see your page, reply to reviews and share your review link. You can add Pro any time.",
+  ];
+  const label = a.pro ? "Start Pro" : "See your listing";
+  return {
+    subject: `${a.business} is approved on Bolton Vouched`,
+    text: `${lines.join("\n\n")}\n\n${label}: ${link}\n\n${FROM_US}\n`,
+    html: customerHtml(lines, { href: link, label }, FROM_US),
+  };
+}

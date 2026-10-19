@@ -49,11 +49,11 @@ select throws_ok($$select * from public.listing_requests$$, '42501', null, 'a si
 reset role;
 
 -- ---------------------------------------------------------------- who may submit
-select ok(not has_function_privilege('anon', 'public.submit_listing_request(text, text, text, text, text, text, text, text)', 'execute'),
+select ok(not has_function_privilege('anon', 'public.submit_listing_request(text, text, text, text, text, text, text, text, uuid, text)', 'execute'),
   'anon cannot submit directly');
-select ok(not has_function_privilege('authenticated', 'public.submit_listing_request(text, text, text, text, text, text, text, text)', 'execute'),
+select ok(not has_function_privilege('authenticated', 'public.submit_listing_request(text, text, text, text, text, text, text, text, uuid, text)', 'execute'),
   'authenticated cannot submit directly');
-select ok(has_function_privilege('service_role', 'public.submit_listing_request(text, text, text, text, text, text, text, text)', 'execute'),
+select ok(has_function_privilege('service_role', 'public.submit_listing_request(text, text, text, text, text, text, text, text, uuid, text)', 'execute'),
   'the service role can submit');
 select ok(not has_function_privilege('anon', 'public.admin_list_listing_requests(text)', 'execute'), 'anon cannot list');
 select ok(not has_function_privilege('anon', 'public.admin_set_listing_request_status(uuid, text)', 'execute'),

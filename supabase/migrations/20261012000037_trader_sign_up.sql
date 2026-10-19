@@ -1,0 +1,177 @@
+-- Trader sign-up in one go: a trader signs in (or creates an account) on the trader side of the sign-in page, then
+-- fills in one form about their business. The request is tied to that account, so:
+--
+-- * public.listing_requests.user_id: the account that sent it (null for the public "Get listed" form). One open
+--   request per account. listing_requests.plan: 'free' or 'pro', what the trader picked. Nothing is charged until
+--   they're approved: Pro is paid for (Stripe) from their listing page afterwards.
+-- * public.submit_listing_request gains p_user_id and p_plan (defaults null and 'free', so the public form's call is
+--   unchanged).
+-- * public.my_listing_request(): the signed-in account's latest request (status, business, when), for "sent for
+--   review" on the trader's page.
+-- * public.admin_approve_listing_request(request, listing): the admin's approval. Links the listing (agreed to, live
+--   or paused; never one already linked) to the account that asked, marks the request done and returns the
+--   account's email so the app can tell the trader. Audit-logged.
+-- * admin_list_listing_requests adds has_account and linked.
+-- Re-runnable.
+
+alter table public.listing_requests add column if not exists user_id uuid references auth.users (id) on delete set null;
+alter table public.listing_requests add column if not exists plan text not null default 'free';
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'listing_requests_plan_check') then
+    alter table public.listing_requests add constraint listing_requests_plan_check check (plan in ('free', 'pro'));
+  end if;
+end;
+$$;
+create index if not exists listing_requests_user_idx on public.listing_requests (user_id, created_at desc)
+  where user_id is not null;
+
+-- ---------------------------------------------------------------- submitting
+drop function if exists public.submit_listing_request(text, text, text, text, text, text, text, text);
+create or replace function public.submit_listing_request(
+  p_business_name text, p_contact_name text, p_trade text, p_area text, p_phone_e164 text, p_email text,
+  p_message text, p_ip_hash text, p_user_id uuid default null, p_plan text default 'free'
+) returns text
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_business text := nullif(btrim(coalesce(p_business_name, '')), '');
+  v_name text := nullif(btrim(coalesce(p_contact_name, '')), '');
+  v_trade text := nullif(btrim(coalesce(p_trade, '')), '');
+  v_area text := nullif(btrim(coalesce(p_area, '')), '');
+  v_phone text := nullif(btrim(coalesce(p_phone_e164, '')), '');
+  v_email text := nullif(lower(btrim(coalesce(p_email, ''))), '');
+  v_message text := nullif(btrim(coalesce(p_message, '')), '');
+  v_ip text := coalesce(nullif(btrim(p_ip_hash), ''), 'unknown');
+  v_day_start timestamptz;
+begin
+  if v_business is null or char_length(v_business) > 80
+     or v_name is null or char_length(v_name) > 60
+     or v_trade is null or char_length(v_trade) > 60
+     or char_length(coalesce(v_area, '')) > 60
+     or v_phone is null or v_phone !~ '^\+44[0-9]{9,10}$'
+     or (v_email is not null and (char_length(v_email) > 254 or v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'))
+     or char_length(coalesce(v_message, '')) > 500
+     or coalesce(p_plan, '') not in ('free', 'pro') then
+    return 'invalid';
+  end if;
+
+  -- One request at a time, so concurrent ones can't overshoot the limits.
+  perform pg_advisory_xact_lock(hashtext('listing_requests'));
+  perform private.tidy_listing_requests();
+
+  if p_user_id is not null
+     and exists (select 1 from public.listing_requests where user_id = p_user_id and status = 'new') then
+    return 'already';
+  end if;
+
+  v_day_start := date_trunc('day', now() at time zone 'Europe/London') at time zone 'Europe/London';
+  if (select count(*) from public.listing_requests where ip_hash = v_ip and created_at > now() - interval '24 hours') >= 3
+     or (select count(*) from public.listing_requests where phone_e164 = v_phone and created_at > now() - interval '7 days') >= 2
+     or (select count(*) from public.listing_requests where created_at >= v_day_start) >= 50 then
+    return 'limited';
+  end if;
+
+  insert into public.listing_requests (business_name, contact_name, trade, area, phone_e164, email, message, ip_hash, user_id, plan)
+  values (v_business, v_name, v_trade, v_area, v_phone, v_email, v_message, v_ip, p_user_id, p_plan);
+  return 'ok';
+end;
+$$;
+revoke execute on function public.submit_listing_request(text, text, text, text, text, text, text, text, uuid, text)
+  from public, anon, authenticated;
+grant execute on function public.submit_listing_request(text, text, text, text, text, text, text, text, uuid, text)
+  to service_role;
+
+-- ---------------------------------------------------------------- the trader's own request
+create or replace function public.my_listing_request() returns jsonb
+language sql stable security definer set search_path = ''
+as $$
+  select jsonb_build_object('status', r.status, 'business_name', r.business_name, 'phone_e164', r.phone_e164,
+                            'plan', r.plan, 'created_at', r.created_at)
+  from public.listing_requests r
+  where r.user_id = auth.uid() and auth.uid() is not null and r.status <> 'spam'
+  order by r.created_at desc
+  limit 1;
+$$;
+revoke execute on function public.my_listing_request() from public, anon;
+grant execute on function public.my_listing_request() to authenticated;
+
+-- ---------------------------------------------------------------- admin
+create or replace function public.admin_list_listing_requests(p_status text) returns jsonb
+language plpgsql stable security definer set search_path = ''
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'not admin' using errcode = '42501';
+  end if;
+  if p_status is not null and p_status not in ('new', 'done', 'spam') then
+    raise exception 'status must be new, done or spam' using errcode = 'check_violation';
+  end if;
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'id', r.id, 'created_at', r.created_at, 'business_name', r.business_name, 'contact_name', r.contact_name,
+      'trade', r.trade, 'area', r.area, 'phone_e164', r.phone_e164, 'email', r.email, 'message', r.message,
+      'status', r.status, 'handled_at', r.handled_at, 'plan', r.plan,
+      'has_account', r.user_id is not null,
+      'linked', r.user_id is not null and exists (select 1 from public.providers p where p.user_id = r.user_id))
+      order by r.created_at desc, r.id)
+    from (
+      select * from public.listing_requests
+      where p_status is null or status = p_status
+      order by created_at desc, id
+      limit 200
+    ) r
+  ), '[]'::jsonb);
+end;
+$$;
+
+-- Approve a trader's request: link their listing to the account that asked. Returns the account's email and name
+-- for the app's "you're approved" message.
+create or replace function public.admin_approve_listing_request(p_id uuid, p_provider uuid) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  r public.listing_requests;
+  v_owner uuid;
+  v_status public.provider_status;
+  v_slug text;
+  v_business text;
+  v_email text;
+begin
+  if not public.is_admin() then
+    raise exception 'not admin' using errcode = '42501';
+  end if;
+  select * into r from public.listing_requests where id = p_id for update;
+  if not found then
+    raise exception 'listing request not found' using errcode = 'P0002';
+  end if;
+  if r.user_id is null then
+    raise exception 'no_account';
+  end if;
+  select user_id, status, slug, business_name into v_owner, v_status, v_slug, v_business
+  from public.providers where id = p_provider for update;
+  if not found then
+    raise exception 'provider not found' using errcode = 'P0002';
+  end if;
+  if v_status not in ('consented', 'live', 'paused') then
+    raise exception 'not_agreed';
+  end if;
+  if v_owner is not null and v_owner <> r.user_id then
+    raise exception 'already_linked';
+  end if;
+  select email into v_email from auth.users where id = r.user_id and deleted_at is null;
+  if not found or not exists (select 1 from public.profiles where user_id = r.user_id and deleted_at is null) then
+    raise exception 'account_gone';
+  end if;
+
+  update public.providers set user_id = r.user_id where id = p_provider;
+  update public.profiles set role = 'provider' where user_id = r.user_id and role = 'resident';
+  update public.listing_requests set status = 'done', handled_at = now() where id = p_id;
+  insert into public.audit_log (actor_id, action, target_type, target_id, reason)
+  values (auth.uid(), 'approve_listing_request', 'provider', p_provider::text, p_id::text);
+  return jsonb_build_object('email', v_email, 'contact_name', r.contact_name, 'business_name', v_business,
+                            'slug', v_slug, 'plan', r.plan);
+end;
+$$;
+revoke execute on function public.admin_approve_listing_request(uuid, uuid) from public, anon;
+grant execute on function public.admin_approve_listing_request(uuid, uuid) to authenticated;

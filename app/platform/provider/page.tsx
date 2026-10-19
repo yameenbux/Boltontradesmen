@@ -11,6 +11,7 @@ import { ListingStatus } from "@/components/provider/ListingStatus";
 import { ProSoonCard, ProUpgradeCard } from "@/components/provider/ProOffer";
 import { ProPanel } from "@/components/provider/ProPanel";
 import { ReplyForm } from "@/components/provider/ReplyForm";
+import { TraderStart } from "@/components/provider/TraderStart";
 import { ShareReviewLink } from "@/components/review-card/ShareReviewLink";
 import { WebsiteBadge } from "@/components/share/WebsiteBadge";
 import { CONTACT_EMAIL, MAILTO } from "@/components/site/content";
@@ -21,13 +22,15 @@ import { saveAlertSettings } from "@/app/platform/provider/jobs-actions";
 import { saveBilling } from "@/app/platform/provider/docs/actions";
 import type { Billing, TradeDoc } from "@/lib/trade-docs";
 import { nationalNumber } from "@/lib/alert-text";
-import { requireMember } from "@/lib/auth";
+import { requireAccount } from "@/lib/auth";
 import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
 import { dayMonthYear } from "@/lib/checks";
 import { toEnquiryStats } from "@/lib/enquiries";
 import { platformPath } from "@/lib/paths";
 import { stripeConfig, toProStatus } from "@/lib/pro";
 import { stillOpen } from "@/lib/review-form";
+import { tradeNames } from "@/lib/trade-names";
+import type { MyListingRequest } from "@/lib/trader-setup";
 import { reviewShare } from "@/lib/review-link";
 import { badgeShare, pageShare } from "@/lib/share";
 import {
@@ -155,35 +158,42 @@ export default async function ProviderArea({
 }: {
   searchParams: Promise<{ withdrawn?: string; pro?: string }>;
 }) {
-  const { supabase } = await requireMember(platformPath("provider"));
+  // No Welcome here: a new trader's account gets its name from the trader form.
+  const { supabase, account } = await requireAccount(platformPath("provider"));
   const { withdrawn, pro: proParam } = await searchParams;
-  const { data, error } = await supabase.rpc("provider_my_reviews");
-  if (error) throw new Error(`provider_my_reviews failed: ${error.message}`);
-  const listings = (data ?? []) as Listing[];
+  let listings: Listing[] = [];
+  if (account?.displayName) {
+    const { data, error } = await supabase.rpc("provider_my_reviews");
+    if (error) throw new Error(`provider_my_reviews failed: ${error.message}`);
+    listings = (data ?? []) as Listing[];
+  }
 
   if (listings.length === 0) {
+    if (withdrawn !== "1") {
+      const [{ data: req, error: reqError }, trades] = await Promise.all([
+        supabase.rpc("my_listing_request"),
+        tradeNames(),
+      ]);
+      if (reqError) throw new Error(`my_listing_request failed: ${reqError.message}`);
+      return (
+        <TraderStart
+          needsName={!account?.displayName}
+          trades={trades}
+          request={(req as MyListingRequest | null) ?? null}
+        />
+      );
+    }
     return (
       <main className="auth">
         <section className="auth-card" aria-labelledby="provider-title">
-          {withdrawn === "1" ? (
-            <div>
-              <p className="eyebrow">Your listing</p>
-              <h1 id="provider-title">Your listing is withdrawn</h1>
-              <p className="lede">
-                It&apos;s off Bolton Vouched now. Thanks for being part of it. If you&apos;d like to be listed again,
-                email <a href={MAILTO}>{CONTACT_EMAIL}</a> and we&apos;ll send you a new invite.
-              </p>
-            </div>
-          ) : (
-            <div>
-              <p className="eyebrow">Your listing</p>
-              <h1 id="provider-title">No listing found</h1>
-              <p className="lede">
-                We couldn&apos;t find a listing linked to your account. If you&apos;re listed, ask us for your trader
-                sign-in link.
-              </p>
-            </div>
-          )}
+          <div>
+            <p className="eyebrow">Your listing</p>
+            <h1 id="provider-title">Your listing is withdrawn</h1>
+            <p className="lede">
+              It&apos;s off Bolton Vouched now. Thanks for being part of it. If you&apos;d like to be listed again, email{" "}
+              <a href={MAILTO}>{CONTACT_EMAIL}</a> and we&apos;ll send you a new invite.
+            </p>
+          </div>
           <Button href={platformPath("account")} variant="secondary">
             Back to your account
           </Button>

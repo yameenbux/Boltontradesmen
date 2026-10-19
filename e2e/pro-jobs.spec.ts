@@ -223,7 +223,7 @@ test("For traders: the free listing and Pro, side by side, linked from the site"
   const pro = page.getByRole("region", { name: "Pro" });
   await expect(pro).toContainText("£10 a month, or £100 a year");
   await expect(pro).toContainText("Quotes and invoices from your phone");
-  await expect(pro.getByRole("link", { name: "Get listed, then go Pro" })).toHaveAttribute("href", "/get-listed");
+  await expect(pro.getByRole("link", { name: "Join as a trader with Pro" })).toHaveAttribute("href", "/platform/sign-in?next=%2Fplatform%2Fprovider");
   // Stripe isn't set up in E2E: nothing claims it can be bought today.
   await expect(pro.getByRole("link", { name: /Already listed\? Your listing/ })).toHaveAttribute("href", "/platform/provider");
   await expect(page.getByRole("main")).toContainText("Pro never moves you up the list");

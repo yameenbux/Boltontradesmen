@@ -5,7 +5,7 @@ const SARAH = `sarah@${E2E_EMAIL_DOMAIN}`;
 
 test("a new resident signs in with an email code and sets up their name", async ({ page }) => {
   await page.goto("/platform/sign-in");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sign in to Bolton Vouched");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Log in or create an account");
   const after = new Date(Date.now() - 1000);
   await page.getByLabel("Your email address").fill(SARAH);
   await page.getByRole("button", { name: "Email me a code" }).click();
