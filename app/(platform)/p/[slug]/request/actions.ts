@@ -14,7 +14,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { TURNSTILE_FIELD, verifyTurnstile } from "@/lib/turnstile";
 
 // "Request a quote" on a Pro trader's page. Public and cookie-free like "Get listed": the same spam checks, cheapest
-// first (honeypot and fill time, then the fields, Turnstile, then the database's limits). The trader is told by text
+// first (honeypot and fill time, then the fields, Turnstile, then the database's limits). The trader is told by email (and text, once texts are switched on)
 // and email after the response, so the resident never waits on Twilio or Resend.
 
 function field(fd: FormData, name: string): string {

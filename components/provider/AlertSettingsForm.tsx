@@ -23,10 +23,13 @@ export function AlertSettingsForm({
   action,
   settings,
   defaultSms,
+  textsOn,
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   settings: AlertSettings;
   defaultSms: string | null;
+  /** False until texts are switched on (textsAvailable): the text settings are kept, but nothing is texted yet. */
+  textsOn: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, {} as FormState);
   const err = state.errors ?? {};
@@ -34,7 +37,7 @@ export function AlertSettingsForm({
     <form action={formAction} className="auth-form" aria-label="Alert settings">
       <label className="confirm-box">
         <input type="checkbox" name="sms_on" defaultChecked={settings.sms_on} />
-        <span>Text me</span>
+        <span>Text me{textsOn ? "" : " (once texts are switched on)"}</span>
       </label>
       <label className="field">
         <span>

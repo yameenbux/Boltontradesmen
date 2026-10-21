@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = pageMetadata({
   title: "For traders: free listing and Pro | Bolton Vouched",
   description:
-    "List your trade on Bolton Vouched for free: customers call or WhatsApp you direct, with no lead fees. Pro (£10 a month) adds job requests by text, quotes and invoices from your phone, and review requests.",
+    "List your trade on Bolton Vouched for free: customers call or WhatsApp you direct, with no lead fees. Pro (£10 a month) adds job requests sent straight to you, quotes and invoices from your phone, and review requests.",
   path: "/for-traders",
 });
 
