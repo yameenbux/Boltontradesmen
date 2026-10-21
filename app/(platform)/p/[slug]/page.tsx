@@ -81,7 +81,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
       {p.takesRequests && (
         <section className="card quote-card" aria-labelledby="quote-title">
           <h2 id="quote-title">Request a quote</h2>
-          <p>Can&apos;t talk now? Describe the job and {firstName(p.contactName) ?? p.businessName} gets it by text straight away.</p>
+          <p>Can&apos;t talk now? Describe the job and {firstName(p.contactName) ?? p.businessName} gets it straight away.</p>
           <Button href={platformPath("p", p.slug, "request")} variant="secondary">
             Request a quote
           </Button>

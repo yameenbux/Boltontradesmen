@@ -42,7 +42,7 @@ export default async function RequestQuotePage({ params }: { params: Promise<{ s
           <h1 id="rq-title">Tell {p.businessName} about the job</h1>
           <p className="lede">
             {p.takesRequests
-              ? "They get it straight away by text and email, and get back to you on the number you give."
+              ? "They get it straight away, and get back to you on the number you give."
               : "This trader isn't taking requests through the site right now."}
           </p>
         </div>

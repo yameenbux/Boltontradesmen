@@ -86,3 +86,34 @@ describe("no claims that sign-in needs a mobile number", () => {
     });
   }
 });
+
+// Texts only go once Twilio is set up (lib/sms-hook.ts textsAvailable). Until then nothing may promise one outright:
+// pages say "we'll let you know", or ask textsAvailable() first. Only these places may mention texts: the text
+// templates themselves, sign-in by text (shown only when it's on), the privacy notice (it lists what may be sent),
+// the admin area, and the provider page and alert settings (which check textsAvailable()).
+const TEXT_PROMISES = ["by text", "we'll text you", "get a text", "a text when", "gets it by text", "text and email"];
+const MAY_MENTION_TEXTS = [
+  "lib/alert-text.ts",
+  "lib/otp-gate.ts",
+  "lib/sms-hook.ts",
+  "components/auth/SignInForm.tsx",
+  "app/(info)/privacy/page.tsx",
+  "app/(platform)/provider/page.tsx",
+  "components/provider/AlertSettingsForm.tsx",
+  "components/provider/JobRequests.tsx",
+  "app/(platform)/p/[slug]/request/actions.ts",
+];
+
+describe("no promise of a text while texts are off", () => {
+  const all = ["app", "components", "lib"]
+    .flatMap((r) => files(path.join(process.cwd(), r)))
+    .filter((f) => !f.includes(`${path.sep}admin${path.sep}`))
+    .filter((f) => !MAY_MENTION_TEXTS.includes(path.relative(process.cwd(), f)));
+
+  for (const phrase of TEXT_PROMISES) {
+    it(`nothing else says "${phrase}"`, () => {
+      const hits = all.filter((f) => readFileSync(f, "utf8").replace(/’/g, "'").toLowerCase().includes(phrase));
+      expect(hits.map((f) => path.relative(process.cwd(), f))).toEqual([]);
+    });
+  }
+});

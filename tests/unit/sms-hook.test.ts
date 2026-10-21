@@ -1,6 +1,6 @@
 import { createHmac, randomBytes } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { handleSendSmsHook, sendSms, verifyHookSignature, type SmsHookDeps } from "@/lib/sms-hook";
+import { handleSendSmsHook, sendSms, textsAvailable, verifyHookSignature, type SmsHookDeps } from "@/lib/sms-hook";
 
 const KEY = randomBytes(32);
 const SECRET = `v1,whsec_${KEY.toString("base64")}`;
@@ -148,5 +148,17 @@ describe("sendSms", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
     // real numbers are never stubbed
     expect((await sendSms("+447911123456", "x", { TWILIO_SMS_STUB: "1" }, fetchImpl as unknown as typeof fetch)).ok).toBe(false);
+  });
+});
+
+describe("textsAvailable", () => {
+  it("is off until all three Twilio settings are set", () => {
+    expect(textsAvailable({})).toBe(false);
+    expect(textsAvailable({ TWILIO_ACCOUNT_SID: "AC1", TWILIO_AUTH_TOKEN: "t" })).toBe(false);
+    expect(textsAvailable({ TWILIO_ACCOUNT_SID: "AC1", TWILIO_AUTH_TOKEN: "t", TWILIO_MESSAGING_SERVICE_SID: "MG1" })).toBe(true);
+  });
+
+  it("is on with the local stub", () => {
+    expect(textsAvailable({ TWILIO_SMS_STUB: "1" })).toBe(true);
   });
 });
