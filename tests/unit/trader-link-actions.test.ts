@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const auth = { getUser: vi.fn(), signOut: vi.fn() };
+const auth = {
+  // A session that has passed the authenticator step (lib/admin.ts requireAdmin).
+  mfa: { getAuthenticatorAssuranceLevel: vi.fn(async () => ({ data: { currentLevel: "aal2" } })) },
+  getUser: vi.fn(), signOut: vi.fn() };
 const rpc = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({ createServerAuthClient: async () => ({ auth, rpc }) }));
 vi.mock("next/navigation", () => ({

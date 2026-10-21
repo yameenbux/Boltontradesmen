@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
+import { adminSignIn } from "./helpers/admin";
 
 const DB_URL = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
@@ -15,10 +16,7 @@ async function renderedParagraphs(page: Page): Promise<string[]> {
 
 test("provider consents via their link, then the admin sets them live", async ({ page, browser }) => {
   const name = `E2E Consent ${Date.now()}`;
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await adminSignIn(page);
   await page.getByRole("link", { name: "Add provider" }).click();
   await page.getByLabel("Business name").fill(name);
   await page.getByLabel("Contact name").fill("Sam Tester");

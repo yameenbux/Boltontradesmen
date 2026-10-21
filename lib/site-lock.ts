@@ -2,9 +2,11 @@
 // for 30 days), search engines are told to keep out, and nothing is indexed. Clearing the variable in Railway opens
 // the site. Machine traffic still gets through: Stripe's webhook, the cron job and Supabase's SMS hook (/api/*), and
 // the Google sign-in return. Links a trader hands to a customer (a review link, a quote or invoice, a consent link, a
-// trader sign-in link) let that person in too, so a closed beta works end to end.
+// trader sign-in link) let that person in too, so a closed beta works end to end, but only once the link is checked
+// against the database (lib/lock-grant.ts): a made-up /d/x opens nothing.
 // Pure and Node-only (proxy.ts runs on Node): no Next imports, so it's unit-tested directly.
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { isSameSitePath } from "@/lib/safe-next";
 
 type Env = Record<string, string | undefined>;
 
@@ -20,7 +22,9 @@ export function lockPassword(env: Env = process.env): string | null {
 
 /** The cookie value for a password: changing the password signs everyone out of the beta. */
 export function accessToken(password: string, env: Env = process.env): string {
-  const key = env.DEVICE_HASH_SECRET?.trim() || "bv-site-lock";
+  // Keyed with the server secret, so a leaked cookie can't be used to guess the password offline.
+  const key = env.DEVICE_HASH_SECRET?.trim();
+  if (!key) throw new Error("DEVICE_HASH_SECRET is not set; the site lock needs it");
   return createHmac("sha256", key).update(`site-lock:${password}`).digest("base64url");
 }
 
@@ -51,18 +55,30 @@ export function isOpenPath(path: string): boolean {
   );
 }
 
-/** Links a trader shares with someone outside the beta: opening one lets that browser in. */
-export function grantsAccess(path: string): boolean {
-  return (
-    /^\/p\/[^/]+\/review\/?$/.test(path) ||
-    /^\/d\/[^/]+\/?$/.test(path) ||
-    /^\/consent\/[^/]+\/?$/.test(path) ||
-    /^\/link\/[^/]+\/?$/.test(path)
-  );
+/** A link a trader shares with someone outside the beta. Opening a real one lets that browser in. */
+export type LockGrant = { kind: "review" | "doc" | "consent" | "link"; key: string };
+
+const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+const GRANTS: [LockGrant["kind"], RegExp][] = [
+  ["review", /^\/p\/([a-z0-9-]{1,80})\/review\/?$/],
+  ["doc", new RegExp(`^/d/(${UUID})/?$`, "i")],
+  ["consent", new RegExp(`^/consent/(${UUID})/?$`, "i")],
+  ["link", new RegExp(`^/link/(${UUID})/?$`, "i")],
+];
+
+/** The link a path would grant, if it has the right shape. The database still has to confirm it's real. */
+export function grantFor(path: string): LockGrant | null {
+  for (const [kind, re] of GRANTS) {
+    const m = re.exec(path);
+    if (m) return { kind, key: m[1].toLowerCase() };
+  }
+  return null;
 }
 
 /** Where the lock page sends someone back to: only this site's own paths. */
 export function safeReturn(raw: string | null | undefined): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\") || raw.startsWith(LOCK_PATH)) return "/";
+  // The strict same-site shape (lib/safe-next.ts): "/\t/evil.example" and the like are refused, because browsers
+  // strip tabs and newlines and would read them as //evil.example.
+  if (!isSameSitePath(raw) || raw.startsWith(LOCK_PATH) || raw.startsWith("/_next")) return "/";
   return raw;
 }

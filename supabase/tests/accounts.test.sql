@@ -117,7 +117,7 @@ insert into auth.users (id, phone, raw_user_meta_data) values
 insert into public.profiles (user_id, role) values ('00000000-0000-0000-0000-0000000007b2', 'admin');
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007b1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007b1","role":"authenticated","aal":"aal2"}';
 select is(public.my_account(), null, 'my_account is null before onboarding');
 select is(public.complete_onboarding('Sarah K.', 'BL3', 'nope') ->> 'error', 'bad_group_code', 'a wrong group code is refused');
 select throws_ok($$select public.complete_onboarding('Sarah', 'BL3', '')$$, '23514', null, 'a name without an initial is refused');
@@ -136,7 +136,7 @@ select isnt((select group_member_at from public.profiles where user_id = '000000
   'a blank group code later keeps the membership');
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007b2","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007b2","role":"authenticated","aal":"aal2"}';
 select is(public.complete_onboarding('Ada A.', 'BL1', '') ->> 'role', 'admin', 'an existing admin keeps role admin');
 select is(public.set_group_code('nope'), false, 'set_group_code: wrong code is false');
 select is(public.set_group_code(' Bolton'), true, 'set_group_code: right code is true');
@@ -155,7 +155,7 @@ insert into public.providers (id, slug, business_name, phone_e164, status) value
   ('00000000-0000-0000-0000-0000000007c3', 'acc-invited', 'Acc Invited', '+447700900301', 'invited');
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007b3","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007b3","role":"authenticated","aal":"aal2"}';
 select is(public.complete_onboarding('Alan A.', 'BL1', '') -> 'providers' -> 0 ->> 'slug', 'acc-live',
   'my_account lists the linked listing');
 select is(jsonb_array_length(public.my_account() -> 'providers'), 1, 'only the live listing is linked');

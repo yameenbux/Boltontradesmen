@@ -25,12 +25,12 @@ values ('00000000-0000-0000-0000-0000000007c1', '00000000-0000-0000-0000-0000000
   'Quick and tidy');
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007a3","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007a3","role":"authenticated","aal":"aal2"}';
 select throws_ok($$select public.provider_reply('00000000-0000-0000-0000-0000000007c1', 'Thanks')$$,
   'P0001', 'not_your_listing', 'someone not linked to the listing: not_your_listing');
 select is(jsonb_array_length(public.provider_my_reviews()), 0, 'no listings, no reviews');
 
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007a1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007a1","role":"authenticated","aal":"aal2"}';
 select throws_ok(format($$select public.provider_reply('00000000-0000-0000-0000-0000000007c1', %L)$$, repeat('a', 401)),
   'P0001', 'reply_too_long', '401 characters: reply_too_long');
 select throws_ok($$select public.provider_reply('00000000-0000-0000-0000-0000000007c1', '   ')$$,
@@ -59,7 +59,7 @@ reset role;
 create temp table reply_id as select id from public.review_responses where review_id = '00000000-0000-0000-0000-0000000007c1';
 grant select on reply_id to authenticated;
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007a4","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000007a4","role":"authenticated","aal":"aal2"}';
 select is(public.admin_remove_reply((select id from reply_id), 'Abusive'), 'rp-plumb', 'admin removes the reply');
 reset role;
 select is((select reply_body from public.review_public where id = '00000000-0000-0000-0000-0000000007c1'), null,

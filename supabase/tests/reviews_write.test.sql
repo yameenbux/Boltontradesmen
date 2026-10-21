@@ -71,33 +71,33 @@ grant all on res to authenticated;
 set local role authenticated;
 
 -- ---------------------------------------------------------------- who may post
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a5","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a5","role":"authenticated","aal":"aal2"}';
 select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
   'P0001', 'not_member', 'no profile: not_member');
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a6","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a6","role":"authenticated","aal":"aal2"}';
 select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
   'P0001', 'blocked', 'blocked account: blocked');
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated","aal":"aal2"}';
 select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b4', 'plumber'), 'h')$$,
   'P0001', 'provider_not_found', 'paused provider: provider_not_found');
 select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008ff', 'plumber'), 'h')$$,
   'P0001', 'provider_not_found', 'unknown provider: provider_not_found');
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a4","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a4","role":"authenticated","aal":"aal2"}';
 select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b5', 'plumber'), 'h')$$,
   'P0001', 'own_listing', 'own listing: own_listing');
 select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
   'P0001', 'shares_category', 'a plumber reviewing another plumber: shares_category');
 select is((public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b3', 'caterer'), 'h-lee')) ->> 'status',
   'published', 'a plumber may review a caterer');
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a7","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a7","role":"authenticated","aal":"aal2"}';
 select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
   'P0001', 'removed_before', 'a review removed by the admin: removed_before');
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a8","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a8","role":"authenticated","aal":"aal2"}';
 select is((public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h-dee')) ->> 'status',
   'published', 'a removal caused by deleting an account does not block a new review');
 
 -- ---------------------------------------------------------------- field rules
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated","aal":"aal2"}';
 select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'caterer', '{"tidy":null}'), 'h')$$,
   'P0001', 'bad_category', 'a category the provider is not listed in: bad_category');
 select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber',
@@ -151,7 +151,7 @@ select is((select reviewer_id from public.reviews where id = (select (v ->> 'id'
 update public.reviews set created_at = now() - interval '3 days'
 where provider_id = '00000000-0000-0000-0000-0000000008b1' and status <> 'removed';
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a3","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a3","role":"authenticated","aal":"aal2"}';
 select is((public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h-nia')) ->> 'status',
   'published', 'a new account may post one review');
 select throws_ok($$select public.t_submit_review(public.rw_p('00000000-0000-0000-0000-0000000008b2', 'plumber'), 'h')$$,
@@ -163,11 +163,11 @@ select is((public.t_submit_review(public.rw_p('00000000-0000-0000-0000-000000000
   'published', 'allowed once the account is 25 hours old');
 
 -- ---------------------------------------------------------------- edits
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a2","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a2","role":"authenticated","aal":"aal2"}';
 select throws_ok(format($$select public.t_edit_review(%L, public.rw_p('00000000-0000-0000-0000-0000000008b1', 'plumber'), 'h')$$,
     (select v ->> 'id' from res where k = 'amy1')),
   'P0001', 'not_your_review', 'someone else''s review: not_your_review');
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated","aal":"aal2"}';
 reset role;
 update public.reviews set created_at = now() - interval '13 days' where id = (select (v ->> 'id')::uuid from res where k = 'amy1');
 set local role authenticated;
@@ -195,7 +195,7 @@ select is((public.review_form_context('rw-plumb') -> 'existing' ->> 'id'), (sele
 select is((public.review_form_context('rw-plumb') ->> 'blocked'), null, 'nothing blocks Amy');
 select is((public.review_form_context('rw-plumb') -> 'categories' -> 0 ->> 'asks_tidy')::boolean, true, 'plumber asks about tidiness');
 select is((public.review_form_context('rw-paused')), null, 'no context for a provider that is not live');
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a4","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a4","role":"authenticated","aal":"aal2"}';
 select is((public.review_form_context('rw-plumb') ->> 'blocked'), 'shares_category', 'context says why Lee cannot review');
 select is((public.review_form_context('rw-own') ->> 'blocked'), 'own_listing', 'context: own listing');
 reset role;
@@ -204,10 +204,10 @@ reset role;
 create temp view amy2 as select (v ->> 'id') as id from res where k = 'amy2';
 grant select on amy2 to authenticated;
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a2","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a2","role":"authenticated","aal":"aal2"}';
 select throws_ok(format($$select public.t_add_review_proof(%L, %L, 'image/jpeg')$$, (select id from amy2), (select id from amy2) || '/a.jpg'),
   'P0001', 'not_your_review', 'someone else''s review: not_your_review');
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a1","role":"authenticated","aal":"aal2"}';
 select throws_ok(format($$select public.t_add_review_proof(%L, %L, 'image/jpeg')$$, (select id from amy2),
   (select v ->> 'id' from res where k = 'amy1') || '/a.jpg'), 'P0001', 'bad_proof_path', 'a path under another review: bad_proof_path');
 select throws_ok(format($$select public.t_add_review_proof(%L, %L, 'image/heic')$$, (select id from amy2), (select id from amy2) || '/a.heic'),
@@ -236,7 +236,7 @@ select throws_ok($$select public.submit_review(gen_random_uuid(), '{}'::jsonb, '
 select throws_ok($$select public.edit_review(gen_random_uuid(), gen_random_uuid(), '{}'::jsonb, 'h')$$, '42501', null, 'anon cannot call edit_review');
 reset role;
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a2","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000008a2","role":"authenticated","aal":"aal2"}';
 -- Final review 2, I1: the device hash comes from the server, so a signed-in person must not reach these.
 select throws_ok($$select public.submit_review('00000000-0000-0000-0000-0000000008a2',
     public.rw_p('00000000-0000-0000-0000-0000000008b2', 'plumber'), 'forged-hash')$$, '42501', null,

@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { expect, test, type Browser, type Page, type TestInfo } from "@playwright/test";
 import { signInWithEmail } from "./helpers/email";
 import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
+import { adminSignIn } from "./helpers/admin";
 
 // Pro. E2E has no Stripe keys, so the offer says "Pro opens soon"; the subscription is written as the webhook would
 // (public.stripe_apply_event, the service role's function), and Pro's end arrives as a signed webhook event
@@ -19,14 +20,6 @@ const PHOTO = "e2e/fixtures/proof-with-gps.jpg";
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
 test.describe.configure({ mode: "serial" });
-
-async function adminSignIn(page: Page) {
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
-}
 
 async function linkedTrader(page: Page, browser: Browser, testInfo: TestInfo) {
   await adminSignIn(page);

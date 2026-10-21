@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store", "X-Robots-Tag": "noindex" };
 
 // The signed-in person's first name, for the home page greeting. The home page itself stays static and cookie-free;
-// its greeting asks here only when the browser holds a sign-in cookie.
+// its greeting asks here after loading (the sign-in cookie is HttpOnly, so the page itself can't tell).
 export async function GET() {
   try {
     const supabase = await createServerAuthClient();

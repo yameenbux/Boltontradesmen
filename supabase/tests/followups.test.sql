@@ -26,7 +26,7 @@ select throws_ok(
   '23514', 'a removed provider can only return through a new invite', 'removed -> live refused');
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000006a1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000006a1","role":"authenticated","aal":"aal2"}';
 select throws_ok(
   $$select public.admin_reinvite_provider('00000000-0000-0000-0000-0000000006b2', 'come back')$$,
   '23514', null, 're-invite refused for a live provider');
@@ -53,7 +53,7 @@ select throws_ok(
 reset role;
 insert into auth.users (id) values ('00000000-0000-0000-0000-0000000006a3');
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000006a3","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000006a3","role":"authenticated","aal":"aal2"}';
 select throws_ok(
   $$select public.admin_reinvite_provider('00000000-0000-0000-0000-0000000006b1', 'x')$$,
   null, 'not admin', 'non-admin cannot re-invite');
@@ -88,7 +88,7 @@ reset role;
 select is((select status::text from public.providers where id = '00000000-0000-0000-0000-0000000006b4'), 'invited', 'expired token leaves the provider invited');
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000006a1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000006a1","role":"authenticated","aal":"aal2"}';
 insert into ftok select 'rotated', public.admin_new_consent_token('00000000-0000-0000-0000-0000000006b4');
 select ok(
   (public.admin_get_provider('00000000-0000-0000-0000-0000000006b4') ->> 'consent_token_expires_at')::timestamptz

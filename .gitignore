@@ -47,6 +47,8 @@ next-env.d.ts
 
 # playwright
 /test-results/
+# The e2e admin session (e2e/admin.setup.ts)
+/e2e/.auth/
 /playwright-report/
 
 # local Supabase-compatible stack (scripts/local-stack)

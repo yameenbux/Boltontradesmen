@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
 import { signInWithEmail } from "./helpers/email";
 import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
+import { adminSignIn } from "./helpers/admin";
 
 // One account works for both. A trader picks "I'm a trader" on the sign-in page, logs in or creates the account there,
 // then fills in one form (with Free or Pro) and sees "sent for review". The admin approves it onto the listing, which
@@ -58,11 +59,7 @@ test("a new trader: trader side of sign-in, one form with Pro, sent for review, 
   sql(`insert into public.providers (slug, business_name, phone_e164, areas, status, consent_at, consent_evidence)
        values ('e2e-trader-${Date.now()}', '${business}', '${e164}', array['BL3'], 'consented', now(), '{"source":"e2e"}'::jsonb)`);
   const admin = await (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
-  await admin.goto("/admin/login");
-  await admin.getByLabel("Email").fill("admin@example.test");
-  await admin.getByLabel("Password").fill("e2e-admin-password");
-  await admin.getByRole("button", { name: "Sign in" }).click();
-  await expect(admin.getByRole("heading", { name: "Providers" })).toBeVisible();
+  await adminSignIn(admin);
   await admin.goto("/admin/requests");
   const card = admin.getByRole("article", { name: `Request from ${business}` });
   await expect(card).toContainText("Wants Pro");

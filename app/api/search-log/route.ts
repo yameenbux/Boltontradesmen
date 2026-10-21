@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { isLinkPreviewBot } from "@/lib/bots";
+import { clientIpFrom } from "@/lib/client-ip";
+import { ipHash } from "@/lib/ip-hash";
+import { rateAllow } from "@/lib/rate-limit";
 import { searchLogLine } from "@/lib/search-log";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +21,9 @@ export async function POST(request: Request) {
     return done();
   }
   const line = searchLogLine(body);
-  if (line) console.log(JSON.stringify(line));
+  // At most 60 logged searches an hour per connection, so nobody can flood the log or skew the search report.
+  if (line && (await rateAllow("search-log", ipHash(clientIpFrom(request.headers) || "unknown"), 60, 3600, false))) {
+    console.log(JSON.stringify(line));
+  }
   return done();
 }

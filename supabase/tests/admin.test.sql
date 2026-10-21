@@ -18,7 +18,7 @@ select throws_like(
 
 -- ---- unavailable to anon / unauthenticated, and to non-admins
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c2","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c2","role":"authenticated","aal":"aal2"}';
 select throws_ok(
   $$select public.admin_upsert_provider('{"business_name":"X","phone_e164":"+447700900123"}'::jsonb)$$,
   null, 'not admin', 'non-admin cannot upsert provider');
@@ -44,7 +44,7 @@ reset role;
 
 -- ---- admin flow
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated","aal":"aal2"}';
 
 create temp table ids (k text primary key, v uuid);
 grant all on ids to authenticated;
@@ -147,7 +147,7 @@ set local role anon;
 select throws_ok($$select public.accept_consent((select v from t where k = 'a'), '1.2.3.4', 'v', 'h', 'o', 'c')$$, '42501', null, 'anon cannot call accept_consent');
 select throws_ok($$select * from public.consent_preview((select v from t where k = 'a'))$$, '42501', null, 'anon cannot call consent_preview');
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated","aal":"aal2"}';
 select throws_ok($$select public.accept_consent((select v from t where k = 'a'), '1.2.3.4', 'v', 'h', 'o', 'c')$$, '42501', null, 'authenticated (even admin) cannot call accept_consent');
 select throws_ok($$select * from public.consent_preview((select v from t where k = 'a'))$$, '42501', null, 'authenticated cannot call consent_preview');
 reset role;
@@ -210,7 +210,7 @@ select is((select v from res where k = 'new'), 'ok', 'new token works');
 
 -- going live after consent
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated","aal":"aal2"}';
 select lives_ok($$select public.admin_set_provider_status((select v from c where k = 'a'), 'live', 'checked')$$, 'consented provider can go live');
 reset role;
 select is((select count(*)::int from public.provider_public where id = (select v from c where k = 'a')), 1, 'live provider appears in provider_public');

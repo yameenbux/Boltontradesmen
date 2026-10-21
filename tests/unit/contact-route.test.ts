@@ -6,13 +6,16 @@ const state: {
   select: () => Promise<{ data: Row | null; error: unknown }>;
   rpcArgs: unknown[];
   actor: (cookie: string | null) => Promise<string | null>;
+  allowed: boolean;
 } = {
   rpc: async () => ({ data: [], error: null }),
   select: async () => ({ data: null, error: null }),
   rpcArgs: [],
   actor: async () => null,
+  allowed: true,
 };
 
+vi.mock("@/lib/rate-limit", () => ({ rateAllow: async () => state.allowed }));
 vi.mock("@/lib/tap-actor", () => ({ tapActor: (cookie: string | null) => state.actor(cookie) }));
 
 vi.mock("@/lib/supabase/service", () => ({
@@ -46,6 +49,7 @@ beforeEach(() => {
   state.rpc = async () => ({ data: [{ phone_e164: "+447700900123", whatsapp_e164: "+447700900123" }], error: null });
   state.select = async () => ({ data: null, error: null });
   state.actor = async () => null;
+  state.allowed = true;
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -60,7 +64,8 @@ describe("GET /api/contact/[slug]", () => {
     expect(args).toMatchObject({ p_slug: "acme", p_type: "call_tap", p_actor: null });
     expect(args.p_device_hash).toMatch(/^[0-9a-f]{64}$/);
     // the rightmost X-Forwarded-For entry (appended by the trusted proxy), not the spoofable leftmost
-    expect(args.p_device_hash).toBe(deviceHash("10.0.0.1", "UA"));
+    // One enquirer per connection: the user agent isn't part of it, so changing it doesn't count again.
+    expect(args.p_device_hash).toBe(deviceHash("10.0.0.1", ""));
   });
 
   it("logs a signed-in tapper's id (so the trader's own and the admin's taps aren't counted)", async () => {
@@ -124,11 +129,18 @@ describe("GET /api/contact/[slug]", () => {
     expect((await call("acme", "call")).status).toBe(404);
   });
 
-  it("does not log link-preview bots, but still redirects via the direct lookup", async () => {
-    state.select = async () => ({ data: { phone_e164: "+447700900123", whatsapp_e164: null }, error: null });
+  it("gives link-preview bots the trader's page, not the number, and logs nothing", async () => {
     const res = await call("acme", "call", "WhatsApp/2.23.20.0");
     expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toBe("tel:+447700900123");
+    expect(res.headers.get("location")).toBe("http://localhost/p/acme");
+    expect(state.rpcArgs).toHaveLength(0);
+  });
+
+  it("refuses a connection past its hourly limit, without revealing or logging anything", async () => {
+    state.allowed = false;
+    const res = await call("acme", "call");
+    expect(res.status).toBe(429);
+    expect(res.headers.get("location")).toBeNull();
     expect(state.rpcArgs).toHaveLength(0);
   });
 });

@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { expect, test, type Browser, type Page, type TestInfo } from "@playwright/test";
 import { signInAsGoogle, signInWithEmail } from "./helpers/email";
 import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
+import { adminSignIn } from "./helpers/admin";
 
 // Ask Bolton (community questions). Fixture (supabase/tests/fixtures/e2e.sql), all man & van: Hill Top Removals (with
 // WhatsApp) and Brook Removals get recommended; Helper Removals is linked to its trader here, who says "I can help";
@@ -16,14 +17,6 @@ const HELPER = "00000000-0000-0000-0000-00000000e223";
 const CLOSED = "00000000-0000-0000-0000-00000000e401";
 // Letters only: ten or more digits in a row would read as a phone number.
 const tag = () => Math.random().toString(36).replace(/[^a-z]/g, "").slice(0, 6);
-
-async function adminSignIn(page: Page) {
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
-}
 
 async function newPage(browser: Browser, testInfo: TestInfo, userAgent?: string) {
   const ctx = await browser.newContext({ baseURL: testInfo.project.use.baseURL, ...(userAgent ? { userAgent } : {}) });

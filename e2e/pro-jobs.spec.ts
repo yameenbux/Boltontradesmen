@@ -1,7 +1,8 @@
 import { execFileSync } from "node:child_process";
-import { expect, test, type Browser, type Page, type TestInfo } from "@playwright/test";
+import { expect, test, type Browser, type TestInfo } from "@playwright/test";
 import { signInAsGoogle, signInWithEmail } from "./helpers/email";
 import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
+import { adminSignIn } from "./helpers/admin";
 
 // Pro, part 2: founding Pro switched on in /admin, "Request a quote" on the trader's page, the trader's alerts (text
 // and email, stubbed locally: the alert log shows them sent), the trader's job requests, and an Ask Bolton alert.
@@ -14,14 +15,6 @@ const sql = (query: string) =>
 const BROOK = "00000000-0000-0000-0000-00000000e222";
 // Letters only: ten or more digits in a row would read as a phone number.
 const tag = () => Math.random().toString(36).replace(/[^a-z]/g, "").slice(0, 6);
-
-async function adminSignIn(page: Page) {
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
-}
 
 async function newPage(browser: Browser, testInfo: TestInfo) {
   return (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();

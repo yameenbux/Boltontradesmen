@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { addDays, londonToday, shortDate } from "../lib/availability";
 import { signInWithEmail } from "./helpers/email";
 import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
+import { adminSignIn } from "./helpers/admin";
 
 // "Taking on work". Fixture (supabase/tests/fixtures/e2e.sql), all man & van: Keen Removals taking on work (set today),
 // Busy Bee booked up for four weeks, Stale Removals' "taking on work" set 20 days ago (run out); Ready Removals is
@@ -13,14 +14,6 @@ const sql = (query: string) =>
 
 const CATEGORY = "/c/man-and-van";
 const card = (page: Page, name: string) => page.getByRole("link", { name: new RegExp(name) });
-
-async function adminSignIn(page: Page) {
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
-}
 
 test("profiles and cards show availability; one that has run out shows nothing", async ({ page }) => {
   await page.goto("/p/e2e-keen-vans");

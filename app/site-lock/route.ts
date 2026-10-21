@@ -1,4 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { clientIpFrom } from "@/lib/client-ip";
+import { ipHash } from "@/lib/ip-hash";
+import { rateAllow } from "@/lib/rate-limit";
 import {
   accessToken,
   LOCK_COOKIE,
@@ -10,7 +13,8 @@ import {
 } from "@/lib/site-lock";
 
 // The pre-launch password page (lib/site-lock.ts). A route handler, not a page: it stands alone (no layout, no
-// session, no database) so it works whatever else is down. When the site is open it just sends people home.
+// session) so it works whatever else is down. When the site is open it just sends people home. Wrong guesses are
+// limited per connection in the database; if that can't be reached, the password check still runs.
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +82,11 @@ export async function POST(request: NextRequest) {
   const fd = await request.formData();
   const next = safeReturn(typeof fd.get("next") === "string" ? (fd.get("next") as string) : null);
   if (!password) return NextResponse.redirect(new URL(next, request.url), 303);
+  // 10 tries every 15 minutes per connection.
+  if (!(await rateAllow("site-lock", ipHash(clientIpFrom(request.headers) || "unknown"), 10, 900, true))) {
+    await new Promise((r) => setTimeout(r, 800));
+    return page(next, true);
+  }
   const given = fd.get("password");
   if (typeof given !== "string" || !passwordMatches(given, password)) {
     // Slows down guessing.

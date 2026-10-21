@@ -64,9 +64,15 @@ describe("requestEmailSignInCode", () => {
     expect(d.gate).not.toHaveBeenCalled();
   });
 
+  it("answers the admin's address as if a code had gone, and sends nothing", async () => {
+    const d = deps({ gate: vi.fn<EmailGateDeps["gate"]>(async () => ({ requestId: 3, verdict: "admin_address" })) });
+    expect(await requestEmailSignInCode("Boss@Example.com", "1.2.3.4", d)).toEqual({ ok: true, email: "boss@example.com" });
+    expect(d.approve).not.toHaveBeenCalled();
+    expect(d.send).not.toHaveBeenCalled();
+  });
+
   for (const verdict of [
     "invalid",
-    "admin_address",
     "blocked_domain",
     "address_taken",
     "address_limited",

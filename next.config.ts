@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 import { securityHeaders } from "./lib/security-headers";
 
 const nextConfig: NextConfig = {
+  // No "X-Powered-By: Next.js": no need to tell anyone what to look up exploits for.
+  poweredByHeader: false,
   experimental: {
     // The review form can carry a proof file of up to 10 MB (lib/proofs.ts), plus the answers.
     serverActions: { bodySizeLimit: "11mb" },

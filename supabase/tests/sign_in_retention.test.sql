@@ -8,7 +8,7 @@ select plan(26);
 update public.settings set value = '["ret-admin@example.com"]'::jsonb where key = 'admin_emails';
 
 create function public.ret_as(p_uid uuid, p_role text default 'authenticated') returns void language sql as $$
-  select set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', p_role)::text, true);
+  select set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', p_role, 'aal', 'aal2')::text, true);
 $$;
 grant execute on function public.ret_as(uuid, text) to authenticated, service_role, anon;
 

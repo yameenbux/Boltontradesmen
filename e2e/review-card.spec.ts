@@ -1,8 +1,9 @@
 import { execFileSync } from "node:child_process";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { signInWithEmail } from "./helpers/email";
 import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
 import { answer } from "./helpers/review";
+import { adminSignIn } from "./helpers/admin";
 
 // Review request links and the printable QR card. Fixture: Card Removals (e2e-card-vans), live, no reviews, not linked.
 const DB_URL = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
@@ -12,14 +13,6 @@ const sql = (query: string) =>
 const SLUG = "e2e-card-vans";
 const CARD_ADMIN = "/admin/providers/00000000-0000-0000-0000-00000000e210";
 const LINK = `http://localhost:3000/r/${SLUG}`;
-
-async function adminSignIn(page: Page) {
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
-}
 
 test("/r/<slug> is a permanent redirect to the review form, marked as from the card", async ({ request, page }) => {
   const res = await request.get(`/r/${SLUG}`, { maxRedirects: 0 });

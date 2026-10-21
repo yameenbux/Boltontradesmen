@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { expect, test, type Browser, type Page, type TestInfo } from "@playwright/test";
 import { signInWithEmail } from "./helpers/email";
 import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
+import { adminSignIn } from "./helpers/admin";
 
 // The trader dashboard. Fixture (supabase/tests/fixtures/e2e.sql), all man & van: Dash Removals has 3 enquiries
 // (2 this month: a call and a WhatsApp; 1 last month) and is linked, edited, paused and unpaused below; Gone Removals
@@ -21,14 +22,6 @@ async function categoryShows(page: Page, name: string, count: 0 | 1) {
     await expect(card(page, "Keen Removals")).toBeVisible({ timeout: 1000 });
     await expect(card(page, name)).toHaveCount(count, { timeout: 1000 });
   }).toPass({ timeout: 15_000 });
-}
-
-async function adminSignIn(page: Page) {
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
 }
 
 // Links the listing to a new trader account with the admin's single-use link; returns the trader's page.

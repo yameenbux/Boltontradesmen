@@ -1,14 +1,11 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+import { ADMIN_EMAIL as EMAIL, ADMIN_PASSWORD as PASSWORD, ADMIN_TOTP_SECRET, adminSignIn as signIn, CODE_ADMIN_EMAIL, SETUP_ADMIN_EMAIL, totp } from "./helpers/admin";
 
-const EMAIL = "admin@example.test";
-const PASSWORD = "e2e-admin-password";
-
-async function signIn(page: import("@playwright/test").Page) {
+async function passwordOnly(page: Page, email: string = EMAIL) {
   await page.goto("/admin/login");
-  await page.getByLabel("Email").fill(EMAIL);
+  await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
 }
 
 test("signed-out visitors are sent to the login page", async ({ page }) => {
@@ -22,6 +19,28 @@ test("wrong password shows an error", async ({ page }) => {
   await page.getByLabel("Password").fill("nope");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByText("Email or password is wrong")).toBeVisible();
+});
+
+test("the password alone doesn't open the admin area: it asks for the authenticator code", async ({ page }) => {
+  await passwordOnly(page, CODE_ADMIN_EMAIL);
+  await expect(page).toHaveURL(/\/admin\/verify$/);
+  await page.goto("/admin/reviews");
+  await expect(page).toHaveURL(/\/admin\/verify$/);
+  await page.getByLabel("6-digit code").fill(totp(ADMIN_TOTP_SECRET) === "000000" ? "111111" : "000000");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByText("That code didn't work")).toBeVisible();
+});
+
+test("the first sign-in sets up the authenticator: QR code, then its code", async ({ page }) => {
+  await passwordOnly(page, SETUP_ADMIN_EMAIL);
+  await expect(page.getByRole("heading", { name: "Set up two-step sign-in" })).toBeVisible();
+  await page.getByRole("button", { name: "Set up my authenticator" }).click();
+  await expect(page.getByRole("img", { name: "QR code for your authenticator app" })).toBeVisible();
+  const secret = (await page.getByTestId("admin-mfa-secret").textContent())?.trim() ?? "";
+  expect(secret).toMatch(/^[A-Z2-7]{16,}$/);
+  await page.getByLabel("6-digit code").fill(totp(secret));
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
 });
 
 test("admin creates a provider and sees the consent link button", async ({ page }) => {

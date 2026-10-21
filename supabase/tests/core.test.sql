@@ -84,7 +84,7 @@ select is(public.is_admin(), false, 'is_admin false with no auth user');
 
 insert into auth.users (id) values ('00000000-0000-0000-0000-0000000000b1');
 insert into public.profiles (user_id, role) values ('00000000-0000-0000-0000-0000000000b1', 'admin');
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated","aal":"aal2"}';
 select is(public.is_admin(), true, 'is_admin true for admin profile');
 
 select * from finish();

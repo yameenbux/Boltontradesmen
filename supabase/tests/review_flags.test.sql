@@ -38,7 +38,7 @@ declare
   v jsonb;
 begin
   perform set_config('request.jwt.claims',
-    json_build_object('sub', '00000000-0000-0000-0000-0000000009' || lpad(usr::text, 2, '0'), 'role', 'authenticated')::text, true);
+    json_build_object('sub', '00000000-0000-0000-0000-0000000009' || lpad(usr::text, 2, '0'), 'role', 'authenticated', 'aal', 'aal2')::text, true);
   set local role authenticated;
   v := public.t_submit_review(jsonb_build_object(
     'provider_id', '00000000-0000-0000-0000-000000000a' || lpad(prov::text, 2, '0'),
@@ -56,7 +56,7 @@ declare
   v jsonb;
 begin
   perform set_config('request.jwt.claims',
-    json_build_object('sub', '00000000-0000-0000-0000-0000000009' || lpad(usr::text, 2, '0'), 'role', 'authenticated')::text, true);
+    json_build_object('sub', '00000000-0000-0000-0000-0000000009' || lpad(usr::text, 2, '0'), 'role', 'authenticated', 'aal', 'aal2')::text, true);
   set local role authenticated;
   v := public.t_edit_review(p_review, jsonb_build_object(
     'category_id', (select id from public.categories where slug = 'caterer'),
@@ -155,7 +155,7 @@ select is((select count(*)::int from public.flags where rule = 'lone_extreme_new
 
 -- edits re-run the rules
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000922","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000922","role":"authenticated","aal":"aal2"}', true);
 select is(public.t_edit_review((select id from rv where k = 'e4'), jsonb_build_object(
     'category_id', (select id from public.categories where slug = 'caterer'),
     'job_month', to_char(date_trunc('month', now() at time zone 'Europe/London'), 'YYYY-MM-01'),
@@ -185,7 +185,7 @@ select is((select device_hash || '/' || edit_device_hash from public.reviews whe
 set local role authenticated;
 
 -- ---------------------------------------------------------------- report_review
-select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000925","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000925","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(format($$select public.report_review(%L, '   ')$$, (select id from rv where k = 'o3')),
   'P0001', 'report_note_required', 'a blank report note: report_note_required');
 select throws_ok(format($$select public.report_review(%L, %L)$$, (select id from rv where k = 'o3'), repeat('x', 501)),
