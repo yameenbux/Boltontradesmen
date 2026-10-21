@@ -115,9 +115,17 @@ const SCRIPTS = [
     file: "docs/launch/trader-sign-up-production.sql",
     preset: "trader-sign-up",
     from: "20261012000037",
-    to: NEWEST,
+    to: "20261012000037",
     functions: ["my_listing_request", "admin_approve_listing_request"],
     requires: "20261012000036",
+  },
+  {
+    file: "docs/launch/launch-hardening-production.sql",
+    preset: "launch-hardening",
+    from: "20261012000038",
+    to: NEWEST,
+    functions: ["rate_allow", "rate_failures", "lock_grant_valid", "am_i_admin_account"],
+    requires: "20261012000037",
   },
 ];
 

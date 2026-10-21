@@ -1,7 +1,8 @@
 import { execFileSync } from "node:child_process";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { signInWithEmail } from "./helpers/email";
 import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
+import { adminSignIn } from "./helpers/admin";
 
 // Share and embed. Fixture (supabase/tests/fixtures/e2e.sql): Pine Joinery is Top rated, Ace Plumbing has no badge
 // (4 reviews), Shaw & Daughters Removals is linked by its trader below.
@@ -10,14 +11,6 @@ const sql = (query: string) =>
   execFileSync("psql", [DB_URL, "-X", "-A", "-t", "-q", "-v", "ON_ERROR_STOP=1", "-c", query]).toString().trim();
 const ORIGIN = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 const PHONE_DIGITS = /7700\s*900\s*3\d\d|\+44\s*7700/;
-
-async function adminSignIn(page: Page) {
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
-}
 
 test("without a share sheet, Share opens a menu with WhatsApp and Copy link", async ({ page }) => {
   // Desktop Chromium may or may not have navigator.share; take it away so the fallback always shows.

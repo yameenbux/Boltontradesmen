@@ -48,7 +48,7 @@ grant all on out to authenticated;
 set local role authenticated;
 
 -- ---------------------------------------------------------------- not admin
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000009a2","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000009a2","role":"authenticated","aal":"aal2"}';
 select throws_ok($$select public.admin_counts()$$, '42501', 'not admin', 'resident: admin_counts');
 select throws_ok($$select public.admin_list_reviews_under_check()$$, '42501', 'not admin', 'resident: list under check');
 select throws_ok($$select public.admin_list_open_flags()$$, '42501', 'not admin', 'resident: list flags');
@@ -64,7 +64,7 @@ select throws_ok($$select public.admin_remove_reply('00000000-0000-0000-0000-000
   'resident: remove reply');
 
 -- ---------------------------------------------------------------- reads
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000009a1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000009a1","role":"authenticated","aal":"aal2"}';
 select is(public.admin_counts(), '{"pending":0,"under_check":1,"open_flags":2,"pending_proofs":1,"listing_requests":0,"pending_pro_documents":0,"questions":0}'::jsonb, 'counts');
 insert into out select 'uc', public.admin_list_reviews_under_check();
 select is(jsonb_array_length((select v from out where k = 'uc')), 1, 'one review under check');

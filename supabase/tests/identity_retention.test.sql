@@ -44,7 +44,7 @@ $$;
 -- The app's deletion: delete_my_account as the person, then GoTrue's soft delete (obfuscates, drops identities).
 create function pg_temp.delete_account(p_id uuid) returns void language plpgsql as $$
 begin
-  perform set_config('request.jwt.claims', json_build_object('sub', p_id, 'role', 'authenticated')::text, true);
+  perform set_config('request.jwt.claims', json_build_object('sub', p_id, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   set local role authenticated;
   perform public.delete_my_account();
   reset role;

@@ -6,7 +6,10 @@ vi.mock("@/lib/stripe", () => ({ stripeClient: () => ({ subscriptions: { update:
 const serviceRpc = vi.fn();
 vi.mock("@/lib/supabase/service", () => ({ createServiceClient: () => ({ rpc: (...a: unknown[]) => serviceRpc(...a) }) }));
 const userRpc = vi.fn();
-const auth = { getUser: vi.fn(async () => ({ data: { user: { id: "u1", email: "admin@example.test" } } })) };
+const auth = {
+  // A session that has passed the authenticator step (lib/admin.ts requireAdmin).
+  mfa: { getAuthenticatorAssuranceLevel: vi.fn(async () => ({ data: { currentLevel: "aal2" } })) },
+  getUser: vi.fn(async () => ({ data: { user: { id: "u1", email: "admin@example.test" } } })) };
 vi.mock("@/lib/supabase/server", () => ({ createServerAuthClient: async () => ({ auth, rpc: (...a: unknown[]) => userRpc(...a) }) }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {

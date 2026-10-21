@@ -7,7 +7,7 @@ begin;
 select plan(39);
 
 create function public.od_as(p_uid text, p_role text default 'authenticated') returns void language sql as $$
-  select set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', p_role)::text, true);
+  select set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', p_role, 'aal', 'aal2')::text, true);
 $$;
 grant execute on function public.od_as(text, text) to authenticated, service_role, anon;
 

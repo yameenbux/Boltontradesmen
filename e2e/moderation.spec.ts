@@ -3,20 +3,13 @@ import { expect, test } from "@playwright/test";
 import { signInWithEmail } from "./helpers/email";
 import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
 import { answer } from "./helpers/review";
+import { adminSignIn } from "./helpers/admin";
 
 const DB_URL = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 const sql = (query: string) =>
   execFileSync("psql", [DB_URL, "-X", "-A", "-t", "-q", "-v", "ON_ERROR_STOP=1", "-c", query]).toString().trim();
 
 // No count assertions: other specs create under-check reviews and reports in parallel.
-
-async function adminSignIn(page: import("@playwright/test").Page) {
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
-}
 
 test("the admin removes a review under check with a reason; it leaves the profile and is audited", async ({ page }) => {
   await page.goto("/p/e2e-calm-carpentry");

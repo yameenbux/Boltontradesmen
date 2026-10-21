@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
+import { adminSignIn } from "./helpers/admin";
 
 // Launch checklist: the public "Get listed" form. Cookie-free, checked in the browser and on the server, stored
 // through submit_listing_request, and shown to the admin on /admin/requests.
@@ -68,11 +69,7 @@ test("a trader asks to be listed, gets the thank-you page, and the admin sees th
     "+447700900777|new",
   );
 
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
+  await adminSignIn(page);
   await page.getByRole("navigation", { name: "Admin" }).getByRole("link", { name: /Requests/ }).click();
   const card = page.getByRole("article", { name: `Request from ${BUSINESS}` });
   await expect(card).toContainText("Sam Tester");
@@ -95,11 +92,7 @@ test("creating a provider from a request marks the request done", async ({ page 
   sql(
     `insert into public.listing_requests (business_name, contact_name, trade, phone_e164) values ('${business}', 'Pat Tester', 'Joiner', '+447700900779')`,
   );
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
+  await adminSignIn(page);
   await page.goto("/admin/requests");
   const card = page.getByRole("article", { name: `Request from ${business}` });
   await card.getByRole("link", { name: /Create provider from this/ }).click();
@@ -117,11 +110,7 @@ test("one listing per number: the admin can't add a second listing, and requests
   sql(
     `insert into public.listing_requests (business_name, contact_name, trade, phone_e164) values ('${business}', 'Al Again', 'Plumber', '+447700900301')`,
   );
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
+  await adminSignIn(page);
 
   await page.goto("/admin/requests");
   const card = page.getByRole("article", { name: `Request from ${business}` });

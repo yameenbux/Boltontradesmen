@@ -18,7 +18,7 @@ create function public.rs_p(p_provider uuid, p_extra jsonb default '{}') returns
     'comment', 'Review source test') || p_extra;
 $$;
 create function public.rs_as(p_uid uuid) returns void language sql as $$
-  select set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', 'authenticated')::text, true);
+  select set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', 'authenticated', 'aal', 'aal2')::text, true);
 $$;
 grant execute on function public.rs_as(uuid) to authenticated;
 

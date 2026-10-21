@@ -17,6 +17,10 @@ describe("safeNext (Review Focus 5)", () => {
     "/site-lock",
     "/admin/requests",
     "/p/ace#x",
+    // Browsers strip tabs and newlines before parsing: these would turn into //evil.example.
+    "/\t/evil.example",
+    "/?\n",
+    "/c/plumber?q=a b",
     null,
     undefined,
     "",

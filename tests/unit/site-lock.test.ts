@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   accessToken,
-  grantsAccess,
+  grantFor,
   hasAccess,
   isOpenPath,
   lockPassword,
@@ -27,6 +27,8 @@ describe("pre-launch site lock", () => {
     expect(hasAccess(undefined, "beta-2026", env)).toBe(false);
     // A new password signs everyone out.
     expect(hasAccess(token, "new-password", env)).toBe(false);
+    // The cookie is keyed with the server secret: without one there's no lock cookie at all.
+    expect(() => accessToken("beta-2026", { SITE_LOCK_PASSWORD: "beta-2026" })).toThrow(/DEVICE_HASH_SECRET/);
   });
 
   it("never blocks machine traffic or the lock page", () => {
@@ -36,13 +38,16 @@ describe("pre-launch site lock", () => {
     for (const p of ["/", "/c/plumber", "/admin", "/sitemap.xml"]) expect(isOpenPath(p)).toBe(false);
   });
 
-  it("lets in someone a trader sent a link to", () => {
-    expect(grantsAccess("/p/ace-plumbing/review")).toBe(true);
-    expect(grantsAccess("/d/9f0c2b1e-0000-4000-8000-000000000000")).toBe(true);
-    expect(grantsAccess("/consent/abc")).toBe(true);
-    expect(grantsAccess("/link/abc")).toBe(true);
-    expect(grantsAccess("/p/ace-plumbing")).toBe(false);
-    expect(grantsAccess("/provider")).toBe(false);
+  it("knows which links a trader shares (the database then checks they're real)", () => {
+    const id = "9F0C2B1E-0000-4000-8000-000000000000";
+    expect(grantFor("/p/ace-plumbing/review")).toEqual({ kind: "review", key: "ace-plumbing" });
+    expect(grantFor(`/d/${id}`)).toEqual({ kind: "doc", key: id.toLowerCase() });
+    expect(grantFor(`/consent/${id}/`)).toEqual({ kind: "consent", key: id.toLowerCase() });
+    expect(grantFor(`/link/${id}`)).toEqual({ kind: "link", key: id.toLowerCase() });
+    // Not the shape of a real link: no database call, no access.
+    for (const p of ["/consent/abc", "/link/abc", "/d/x", "/p/ace-plumbing", "/provider", "/p/a/b/review"]) {
+      expect(grantFor(p)).toBeNull();
+    }
   });
 
   it("only sends people back to this site", () => {
@@ -51,6 +56,12 @@ describe("pre-launch site lock", () => {
     expect(safeReturn("https://evil.example")).toBe("/");
     expect(safeReturn("/site-lock?next=/x")).toBe("/");
     expect(safeReturn(null)).toBe("/");
+    expect(safeReturn("/admin")).toBe("/admin");
+    // Browsers strip tabs and newlines, so these would become //evil.example.
+    for (const raw of ["/\t/evil.example", "/\n/evil.example", "/\r/evil.example", "/\\evil.example", "/ /evil.example"]) {
+      expect(safeReturn(raw)).toBe("/");
+    }
+    expect(safeReturn("/_next/static/x.js")).toBe("/");
   });
 
   it("robots.txt shuts everything while locked", () => {

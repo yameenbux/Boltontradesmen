@@ -1,8 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { grantIsReal } from "@/lib/lock-grant";
+import { sessionCookieOptions } from "@/lib/supabase/cookie-options";
 import {
   accessToken,
-  grantsAccess,
+  grantFor,
   hasAccess,
   isOpenPath,
   LOCK_COOKIE,
@@ -39,6 +41,7 @@ async function withSession(request: NextRequest, response: NextResponse): Promis
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: sessionCookieOptions(),
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (list) => {
@@ -64,7 +67,9 @@ export async function proxy(request: NextRequest) {
 
   if (password && !isOpenPath(path)) {
     const ok = hasAccess(request.cookies.get(LOCK_COOKIE)?.value, password);
-    if (!ok && !grantsAccess(path)) {
+    // A link a trader shared lets its holder in, once the database confirms it's real (a made-up /d/x opens nothing).
+    const grant = ok ? null : grantFor(path);
+    if (!ok && !(grant && (await grantIsReal(grant)))) {
       const to = new URL(LOCK_PATH, request.url);
       to.searchParams.set("next", path + request.nextUrl.search);
       const r = NextResponse.redirect(to, 303);

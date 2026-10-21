@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { signInWithEmail } from "./helpers/email";
 import { E2E_EMAIL_DOMAIN } from "./helpers/mailbox";
+import { adminSignIn } from "./helpers/admin";
 
 // Linking a listing and replying is in trader-link.spec.ts (a listing can only be linked once per run).
 
@@ -32,11 +33,7 @@ test("a resident reports a review; the admin sees it under Flags", async ({ page
     page.getByText("Thanks. We'll look at this review. Reports don't change a review on their own."),
   ).toBeVisible();
 
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Providers" })).toBeVisible();
+  await adminSignIn(page);
   await page.goto("/admin/flags");
   const flag = page.getByRole("article").filter({ hasText: note });
   await expect(flag).toContainText("user_report");

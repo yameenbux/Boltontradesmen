@@ -48,7 +48,7 @@ values ('00000000-0000-0000-0000-0000000009a2', '+447700900499', now() - interva
 
 -- ---------------------------------------------------------------- my_reviews proof state
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000009a1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000009a1","role":"authenticated","aal":"aal2"}';
 select is(public.my_reviews() -> 0 ->> 'proof', 'pending', 'my_reviews: a pending proof shows as pending');
 select is(public.my_reviews() -> 0 ->> 'business_name', 'AD Plumb', 'my_reviews: names the provider');
 reset role;
@@ -59,11 +59,11 @@ reset role;
 update public.review_proofs set outcome = 'rejected' where review_id = '00000000-0000-0000-0000-0000000009c1';
 set local role authenticated;
 select is(public.my_reviews() -> 0 ->> 'proof', 'rejected', 'my_reviews: a rejected proof');
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000009a2","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000009a2","role":"authenticated","aal":"aal2"}';
 select is(public.my_reviews() -> 0 -> 'proof', 'null'::jsonb, 'my_reviews: no proof is null');
 
 -- ---------------------------------------------------------------- delete_my_account
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000009a1","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000009a1","role":"authenticated","aal":"aal2"}';
 select set_eq($$select unnest(public.delete_my_account())$$, array['ad-plumb', 'ad-della'],
   'returns the slugs of the providers whose pages change');
 reset role;

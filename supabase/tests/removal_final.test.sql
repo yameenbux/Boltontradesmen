@@ -53,11 +53,11 @@ values
 
 -- Each deletes the account (as the app does: delete_my_account, then GoTrue's soft delete).
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa01","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa01","role":"authenticated","aal":"aal2"}';
 select public.delete_my_account();
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa02","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa02","role":"authenticated","aal":"aal2"}';
 select public.delete_my_account();
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa03","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa03","role":"authenticated","aal":"aal2"}';
 select public.delete_my_account();
 reset role;
 update auth.users set deleted_at = now(), phone = 'deleted-' || right(id::text, 4)
@@ -75,18 +75,18 @@ insert into public.profiles (user_id, role, display_name) values
   ('00000000-0000-0000-0000-00000000fa13', 'resident', 'Cal C.');
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa11","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa11","role":"authenticated","aal":"aal2"}';
 select throws_ok($$select public.t_submit_review(public.rf_p('00000000-0000-0000-0000-00000000fb01'), 'h')$$,
   'P0001', 'removed_before', 'a new account on the same number cannot review a provider again after a removal for cause');
 select is((public.review_form_context('rf-final-1') ->> 'blocked'), 'removed_before', 'and the form says so');
 select is((public.t_submit_review(public.rf_p('00000000-0000-0000-0000-00000000fb02'), 'h-rob')) ->> 'status', 'published',
   'other providers are still open to that number');
 
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa12","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa12","role":"authenticated","aal":"aal2"}';
 select throws_ok($$select public.t_submit_review(public.rf_p('00000000-0000-0000-0000-00000000fb01'), 'h')$$,
   'P0001', 'blocked', 'an admin block carries across to a new account on the same number');
 
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa13","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa13","role":"authenticated","aal":"aal2"}';
 select is((public.t_submit_review(public.rf_p('00000000-0000-0000-0000-00000000fb01'), 'h-cal')) ->> 'status', 'published',
   'a removal caused only by deleting the account does not block the same number');
 reset role;
@@ -96,14 +96,14 @@ update public.phone_retention set purge_after = now() - interval '1 day' where p
 -- (Plan 2b: the lookup now uses the hashed key kept alongside it in identity_retention.)
 update public.identity_retention set purge_after = now() - interval '1 day' where user_id = '00000000-0000-0000-0000-00000000fa01';
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa11","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa11","role":"authenticated","aal":"aal2"}';
 select is((public.review_form_context('rf-final-1') ->> 'blocked'), null, 'an expired retention row no longer blocks');
 reset role;
 -- A fixture user with no phone at all is unaffected.
 insert into auth.users (id, created_at) values ('00000000-0000-0000-0000-00000000fa20', now() - interval '3 days');
 insert into public.profiles (user_id, role, display_name) values ('00000000-0000-0000-0000-00000000fa20', 'resident', 'Nod N.');
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa20","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000fa20","role":"authenticated","aal":"aal2"}';
 select is((public.review_form_context('rf-final-1') ->> 'blocked'), null, 'an account without a phone is not matched to anyone');
 reset role;
 select ok(not has_function_privilege('authenticated', 'private.review_block_reason(uuid, uuid)', 'execute'),

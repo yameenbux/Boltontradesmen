@@ -251,7 +251,7 @@ select is(pg_temp.verify_phone('+447700900481', 'vip-4', true), 'ip_locked', 'an
 insert into public.profiles (user_id, role, display_name, postcode_district)
 values ('00000000-0000-0000-0000-0000000ea001', 'resident', 'Sarah K.', 'BL3');
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000ea001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000ea001","role":"authenticated","aal":"aal2"}';
 select is(public.my_account() ->> 'sign_in_kind', 'google', 'my_account says how the person signs in');
 select is(public.my_account() ->> 'email', 'sarah.khan@gmail.com', 'my_account includes the email address');
 select is(public.my_account() ->> 'display_name', 'Sarah K.', 'my_account keeps its shape');

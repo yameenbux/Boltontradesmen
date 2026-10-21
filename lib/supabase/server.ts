@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { sessionCookieOptions } from "@/lib/supabase/cookie-options";
 
 // Anonymous, cookie-less client for public pages. Never reads cookies() or headers(),
 // so pages using it stay cacheable (ISR).
@@ -24,6 +25,7 @@ export async function createServerAuthClient() {
   }
   const cookieStore = await cookies();
   return createServerClient(url, key, {
+    cookieOptions: sessionCookieOptions(),
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (list) => {

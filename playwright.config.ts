@@ -24,9 +24,17 @@ export default defineConfig({
   // Two projects: everything runs with phone sign-in off (production's setting) on :3000; the phone path keeps
   // its own specs on a second server with SIGN_IN_PHONE=on (:3001).
   projects: [
+    // The admin signs in once (password and authenticator code) and the tests share that session: see
+    // e2e/helpers/admin.ts for why they can't each sign in.
+    {
+      name: "admin-setup",
+      testMatch: /admin\.setup\.ts/,
+      use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:3000", launchOptions: { executablePath } },
+    },
     {
       name: "chromium",
       testIgnore: /(sign-in-phone|sms-hook)\.spec\.ts/,
+      dependencies: ["admin-setup"],
       use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:3000", launchOptions: { executablePath } },
     },
     {

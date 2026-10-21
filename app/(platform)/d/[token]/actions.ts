@@ -18,6 +18,9 @@ export async function answerQuote(token: string, accept: boolean): Promise<{ ok:
   }
   const r = (data ?? {}) as { result?: string; status?: string; id?: string };
   if (r.result === "already") return { ok: false, message: `You've already ${r.status} this quote.` };
+  if (r.result === "expired") {
+    return { ok: false, message: "This quote has passed its valid-until date. Ask them for an updated quote." };
+  }
   if (r.result !== "ok" || !r.id) return { ok: false, message: "This quote isn't available." };
   const id = r.id;
   after(() => deliverQuoteAnswerAlert(id));

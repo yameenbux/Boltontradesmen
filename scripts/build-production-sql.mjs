@@ -24,8 +24,10 @@
 //     --out docs/launch/pro-jobs-production.sql
 //   node scripts/build-production-sql.mjs --preset quotes-invoices --from 20261012000036 --to 20261012000036 \
 //     --out docs/launch/quotes-invoices-production.sql
-//   node scripts/build-production-sql.mjs --preset trader-sign-up --from 20261012000037 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset trader-sign-up --from 20261012000037 --to 20261012000037 \
 //     --out docs/launch/trader-sign-up-production.sql
+//   node scripts/build-production-sql.mjs --preset launch-hardening --from 20261012000038 --to <newest> \
+//     --out docs/launch/launch-hardening-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -499,6 +501,37 @@ end
 $verify$;
 `;
 
+const VERIFY_LAUNCH_HARDENING = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+declare
+  f text;
+begin
+  if to_regclass('public.rate_events') is null then
+    raise exception 'Launch hardening check failed: public.rate_events is missing';
+  end if;
+  foreach f in array array['rate_allow', 'rate_failures', 'rate_fail', 'lock_grant_valid', 'am_i_admin_account'] loop
+    if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                   where n.nspname = 'public' and p.proname = f) then
+      raise exception 'Launch hardening check failed: function public.% is missing', f;
+    end if;
+  end loop;
+  if has_function_privilege('anon', 'public.rate_allow(text, text, int, interval)', 'execute')
+     or has_function_privilege('authenticated', 'public.lock_grant_valid(text, text)', 'execute') then
+    raise exception 'Launch hardening check failed: a server-only function is open';
+  end if;
+  if (select prosrc from pg_proc where oid = 'public.is_admin()'::regprocedure) not like '%aal2%' then
+    raise exception 'Launch hardening check failed: is_admin() does not need the authenticator code';
+  end if;
+  if exists (select 1 from pg_proc p where p.pronamespace = 'public'::regnamespace
+             and has_function_privilege('anon', p.oid, 'execute')
+             and not exists (select 1 from pg_depend d where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e')) then
+    raise exception 'Launch hardening check failed: a database function is callable without signing in';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -584,6 +617,12 @@ const PRESETS = {
     done: "Trader sign-up database changes applied",
     requires: { version: "20261012000036", what: "the quotes and invoices script (docs/launch/quotes-invoices-production.sql)" },
     verify: VERIFY_TRADER_SIGN_UP,
+  },
+  "launch-hardening": {
+    title: "launch hardening (two-step admin, rate limits, the lock's link check, trader records on unlink)",
+    done: "Launch hardening database changes applied",
+    requires: { version: "20261012000037", what: "the trader sign-up script (docs/launch/trader-sign-up-production.sql)" },
+    verify: VERIFY_LAUNCH_HARDENING,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

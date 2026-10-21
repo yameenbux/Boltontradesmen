@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { adminSignIn } from "./helpers/admin";
 
 // The directory is the home page (it used to live under /platform: old links redirect permanently).
 
@@ -65,10 +66,7 @@ test("the home page head has the home-screen metadata", async ({ request }) => {
 });
 
 test("admin consent links point at /consent/", async ({ page }) => {
-  await page.goto("/admin/login");
-  await page.getByLabel("Email").fill("admin@example.test");
-  await page.getByLabel("Password").fill("e2e-admin-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await adminSignIn(page);
   await page.getByRole("link", { name: "Add provider" }).click();
   await page.getByLabel("Business name").fill(`E2E PWA Link ${Date.now()}`);
   await page.getByRole("textbox", { name: /^Phone/ }).fill("07700 900131"); // its own number: one listing per number

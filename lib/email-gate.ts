@@ -63,6 +63,9 @@ export async function requestEmailSignInCode(input: string, ip: string, deps: Em
   try {
     const gate = await deps.gate(email, ipHash(ip || "unknown"));
     requestId = gate.requestId;
+    // The admin's address signs in at /admin only. Answer as if a code had gone, so a script can't use this form to
+    // find out which address that is (no email is sent; the gate has recorded the attempt against its limits).
+    if (gate.verdict === "admin_address") return { ok: true, email };
     if (gate.verdict !== "ok") {
       if (GATE_VERDICTS.has(gate.verdict)) return { ok: false, error: EMAIL_SIGN_IN_ERRORS[gate.verdict as GateVerdict] };
       console.error("sign-in: unexpected email gate verdict", gate.verdict);

@@ -19,7 +19,7 @@ create function public.hr_p(p_provider uuid, p_quality int default 4) returns js
     'comment', 'Held review test');
 $$;
 create function public.hr_as(p_uid uuid) returns void language sql as $$
-  select set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', 'authenticated')::text, true);
+  select set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', 'authenticated', 'aal', 'aal2')::text, true);
 $$;
 grant execute on function public.hr_as(uuid) to authenticated;
 
