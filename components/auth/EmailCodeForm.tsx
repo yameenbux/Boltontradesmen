@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, type ReactNode } from "react";
 import { AlertIcon, TickIcon } from "@/components/auth/icons";
 import { Turnstile } from "@/components/auth/Turnstile";
 import { Button } from "@/components/ui/Button";
-import { requestEmailCode, verifyEmailCode, type EmailSignInState } from "@/app/platform/sign-in/actions";
+import { requestEmailCode, verifyEmailCode, type EmailSignInState } from "@/app/(platform)/sign-in/actions";
 
 type State = EmailSignInState & { notice?: string };
 

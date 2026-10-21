@@ -1,4 +1,4 @@
-import { startGoogleSignIn } from "@/app/platform/sign-in/actions";
+import { startGoogleSignIn } from "@/app/(platform)/sign-in/actions";
 
 /** Google's own "G" mark (four colours, unaltered), per Google's sign-in branding guidelines. */
 function GoogleG() {

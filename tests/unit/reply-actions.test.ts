@@ -11,8 +11,8 @@ vi.mock("next/navigation", () => ({
 const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath: (...a: unknown[]) => revalidatePath(...a) }));
 
-import { saveReply } from "@/app/platform/provider/actions";
-import { reportReview } from "@/app/platform/report/[reviewId]/actions";
+import { saveReply } from "@/app/(platform)/provider/actions";
+import { reportReview } from "@/app/(platform)/report/[reviewId]/actions";
 
 const REVIEW = "33333333-3333-4333-8333-333333333333";
 const ACCOUNT = {
@@ -54,8 +54,8 @@ describe("saveReply", () => {
       p_review: REVIEW,
       p_body: "Thanks Pat, glad the boiler's behaving.",
     });
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/e2e-ace-plumbing");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/provider");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/e2e-ace-plumbing");
+    expect(revalidatePath).toHaveBeenCalledWith("/provider");
   });
 
   it("explains a phone number in the reply", async () => {
@@ -80,7 +80,7 @@ describe("saveReply", () => {
   it("sends a signed-out provider to sign in, coming back to their area", async () => {
     auth.getUser.mockResolvedValue({ data: { user: null } });
     await expect(saveReply({}, form({ review_id: REVIEW, body: "Hi" }))).rejects.toThrow(
-      "REDIRECT /platform/sign-in?next=%2Fplatform%2Fprovider",
+      "REDIRECT /sign-in?next=%2Fprovider",
     );
   });
 });
@@ -120,7 +120,7 @@ describe("reportReview", () => {
   it("sends a signed-out person to sign in, coming back to the report page", async () => {
     auth.getUser.mockResolvedValue({ data: { user: null } });
     await expect(reportReview({}, form({ review_id: REVIEW, note: "x" }))).rejects.toThrow(
-      `REDIRECT /platform/sign-in?next=%2Fplatform%2Freport%2F${REVIEW}`,
+      `REDIRECT /sign-in?next=%2Freport%2F${REVIEW}`,
     );
   });
 });

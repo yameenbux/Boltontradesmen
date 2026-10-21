@@ -18,10 +18,10 @@ export const metadata: Metadata = {
 };
 
 function heading(next: string) {
-  if (/^\/platform\/p\/[^/]+\/review/.test(next)) return "Sign in to leave a review";
-  if (next.startsWith("/platform/report/")) return "Sign in to report a review";
-  if (next.startsWith("/platform/provider")) return "Log in or join as a trader";
-  if (next.startsWith("/platform/link/")) return "Sign in to link your listing";
+  if (/^\/p\/[^/]+\/review/.test(next)) return "Sign in to leave a review";
+  if (next.startsWith("/report/")) return "Sign in to report a review";
+  if (next.startsWith("/provider")) return "Log in or join as a trader";
+  if (next.startsWith("/link/")) return "Sign in to link your listing";
   return "Log in or create an account";
 }
 

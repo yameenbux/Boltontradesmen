@@ -30,23 +30,23 @@ describe("pre-launch site lock", () => {
   });
 
   it("never blocks machine traffic or the lock page", () => {
-    for (const p of ["/site-lock", "/api/stripe/webhook", "/api/cron/payment-reminders", "/platform/auth/callback", "/robots.txt"]) {
+    for (const p of ["/site-lock", "/api/stripe/webhook", "/api/cron/payment-reminders", "/auth/callback", "/robots.txt"]) {
       expect(isOpenPath(p)).toBe(true);
     }
-    for (const p of ["/", "/platform", "/platform/c/plumber", "/admin", "/sitemap.xml"]) expect(isOpenPath(p)).toBe(false);
+    for (const p of ["/", "/c/plumber", "/admin", "/sitemap.xml"]) expect(isOpenPath(p)).toBe(false);
   });
 
   it("lets in someone a trader sent a link to", () => {
-    expect(grantsAccess("/platform/p/ace-plumbing/review")).toBe(true);
-    expect(grantsAccess("/platform/d/9f0c2b1e-0000-4000-8000-000000000000")).toBe(true);
-    expect(grantsAccess("/platform/consent/abc")).toBe(true);
-    expect(grantsAccess("/platform/link/abc")).toBe(true);
-    expect(grantsAccess("/platform/p/ace-plumbing")).toBe(false);
-    expect(grantsAccess("/platform/provider")).toBe(false);
+    expect(grantsAccess("/p/ace-plumbing/review")).toBe(true);
+    expect(grantsAccess("/d/9f0c2b1e-0000-4000-8000-000000000000")).toBe(true);
+    expect(grantsAccess("/consent/abc")).toBe(true);
+    expect(grantsAccess("/link/abc")).toBe(true);
+    expect(grantsAccess("/p/ace-plumbing")).toBe(false);
+    expect(grantsAccess("/provider")).toBe(false);
   });
 
   it("only sends people back to this site", () => {
-    expect(safeReturn("/platform/c/plumber?area=BL3")).toBe("/platform/c/plumber?area=BL3");
+    expect(safeReturn("/c/plumber?area=BL3")).toBe("/c/plumber?area=BL3");
     expect(safeReturn("//evil.example")).toBe("/");
     expect(safeReturn("https://evil.example")).toBe("/");
     expect(safeReturn("/site-lock?next=/x")).toBe("/");

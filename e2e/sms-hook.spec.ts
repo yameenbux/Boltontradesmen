@@ -13,7 +13,7 @@ test("the sign-in page's text goes out through the hook, and Supabase can't be a
   page,
   request,
 }) => {
-  await page.goto("/platform/sign-in");
+  await page.goto("/sign-in");
   await page.getByLabel("Your mobile number").fill("07700 900410");
   await page.getByRole("button", { name: "Send me a code" }).click();
   await expect(page.getByText("We've sent a 6-digit code to 07700 900410")).toBeVisible();

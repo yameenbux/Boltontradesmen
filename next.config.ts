@@ -22,13 +22,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // The directory moved under /platform. Old links (shared in WhatsApp, sent as consent links) keep working: 308.
-      { source: "/c/:category", destination: "/platform/c/:category", permanent: true },
-      { source: "/p/:slug", destination: "/platform/p/:slug", permanent: true },
-      { source: "/consent/:token", destination: "/platform/consent/:token", permanent: true },
+      // The directory lived under /platform until it became the home page. Old links (shared in WhatsApp, sent as
+      // consent, review, quote and invoice links, in Google) keep working: 308, query string kept.
+      { source: "/platform", destination: "/", permanent: true },
+      { source: "/platform/:path*", destination: "/:path*", permanent: true },
       // The trader's review link and QR card (lib/review-link.ts): short to type and to scan, 308 to the review form.
       // ref=card records where the review started, for the admin.
-      { source: "/r/:slug([a-z0-9-]+)", destination: "/platform/p/:slug/review?ref=card", permanent: true },
+      { source: "/r/:slug([a-z0-9-]+)", destination: "/p/:slug/review?ref=card", permanent: true },
     ];
   },
 };

@@ -67,8 +67,8 @@ describe("removeReview", () => {
       p_status: "removed",
       p_reason: "Fake: same household as the provider",
     });
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/[slug]", "page");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
+    expect(revalidatePath).toHaveBeenCalledWith("/(platform)/p/[slug]", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/ace");
     expect(revalidatePath).toHaveBeenCalledWith("/admin/reviews");
     expect(revalidatePath).toHaveBeenCalledWith("/admin/flags");
   });
@@ -96,7 +96,7 @@ describe("approveReview", () => {
       p_status: "published",
       p_reason: null,
     });
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/ace");
     expect(revalidatePath).toHaveBeenCalledWith("/admin/reviews");
   });
 
@@ -124,7 +124,7 @@ describe("clearReview", () => {
       p_status: "published",
       p_reason: null,
     });
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/ace");
   });
 });
 
@@ -166,7 +166,7 @@ describe("resolveFlag, checkProof, removeReply", () => {
     const res = await checkProof({}, form({ proof_id: PROOF, outcome: "accepted" }));
     expect(res.ok).toBe(true);
     expect(rpc).toHaveBeenCalledWith("admin_check_proof", { p_proof: PROOF, p_outcome: "accepted", p_note: null });
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/ace");
     expect(revalidatePath).toHaveBeenCalledWith("/admin/proofs");
   });
 

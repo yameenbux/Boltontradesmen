@@ -74,6 +74,6 @@ test("a removed provider can only come back through Re-invite", async ({ page })
   await page.getByRole("button", { name: "Re-invite" }).click();
   await expect(page.getByTestId("provider-status")).toHaveText("invited");
   await expect(page.getByRole("button", { name: "Copy consent link" })).toBeVisible();
-  await expect(page.getByRole("textbox", { name: "Consent link" })).toHaveValue(/\/platform\/consent\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("textbox", { name: "Consent link" })).toHaveValue(/\/consent\/[0-9a-f-]{36}$/);
   await expect(page.getByText(/^Link expires on \d{1,2} [A-Z][a-z]+ \d{4}$/).first()).toBeVisible();
 });

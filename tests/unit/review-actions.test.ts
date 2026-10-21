@@ -23,7 +23,7 @@ vi.mock("@/lib/supabase/service", () => ({
 const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath: (...a: unknown[]) => revalidatePath(...a) }));
 
-import { editReview, submitReview } from "@/app/platform/p/[slug]/review/actions";
+import { editReview, submitReview } from "@/app/(platform)/p/[slug]/review/actions";
 import { deviceHash } from "@/lib/device-hash";
 import sharp from "sharp";
 
@@ -107,8 +107,8 @@ describe("submitReview", () => {
       },
       p_device_hash: deviceHash("10.0.0.1", "Test/1"),
     });
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/account");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/ace");
+    expect(revalidatePath).toHaveBeenCalledWith("/account");
   });
 
   it("passes source card through from the review link, and nothing else", async () => {
@@ -151,7 +151,7 @@ describe("submitReview", () => {
   it("sends a signed-out person to sign in, coming back to the form", async () => {
     auth.getUser.mockResolvedValue({ data: { user: null } });
     await expect(submitReview({}, form(answers))).rejects.toThrow(
-      "REDIRECT /platform/sign-in?next=%2Fplatform%2Fp%2Face%2Freview",
+      "REDIRECT /sign-in?next=%2Fp%2Face%2Freview",
     );
     expect(rpc).not.toHaveBeenCalled();
     expect(serviceRpc).not.toHaveBeenCalled();
@@ -167,7 +167,7 @@ describe("editReview", () => {
       "edit_review",
       expect.objectContaining({ p_uid: "u1", p_id: REVIEW, p_device_hash: deviceHash("10.0.0.1", "Test/1") }),
     );
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/ace");
   });
 
   it("never sends a source with an edit", async () => {

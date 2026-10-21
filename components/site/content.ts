@@ -1,4 +1,4 @@
-// Words and data for the showcase site at "/". Kept in one place so the owner can change wording without touching layout.
+// Contact details and shared wording. Kept in one place so the owner can change wording without touching layout.
 import { platformPath } from "@/lib/paths";
 
 // Every question goes to the support inbox as a ticket, with a subject line so tickets can be sorted.

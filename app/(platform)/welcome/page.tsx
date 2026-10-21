@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function WelcomePage({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
   const raw = (await searchParams).next;
   const next = safeNext(Array.isArray(raw) ? raw[0] : raw);
-  const { supabase } = await requireSignedIn(`/platform/welcome?next=${encodeURIComponent(next)}`);
+  const { supabase } = await requireSignedIn(`/welcome?next=${encodeURIComponent(next)}`);
   const { data } = await supabase.rpc("my_account");
   const row = data as { display_name: string | null; deleted: boolean } | null;
   if (row?.display_name && !row.deleted) redirect(next);

@@ -14,7 +14,7 @@ const sql = (query: string) =>
   execFileSync("psql", [DB_URL, "-X", "-A", "-t", "-q", "-v", "ON_ERROR_STOP=1", "-c", query]).toString().trim();
 
 const PROVIDER = "00000000-0000-0000-0000-00000000e220";
-const PROFILE = "/platform/p/e2e-lift-vans";
+const PROFILE = "/p/e2e-lift-vans";
 const PHOTO = "e2e/fixtures/proof-with-gps.jpg";
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
@@ -37,7 +37,7 @@ async function linkedTrader(page: Page, browser: Browser, testInfo: TestInfo) {
   const trader = await (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
   await signInWithEmail(trader, `lift-trader@${E2E_EMAIL_DOMAIN}`, { first: "Pip", surname: "Lift", next: path });
   await trader.getByRole("button", { name: "Yes, this is my business" }).click();
-  await expect(trader).toHaveURL(/\/platform\/provider$/);
+  await expect(trader).toHaveURL(/\/provider$/);
   return trader;
 }
 

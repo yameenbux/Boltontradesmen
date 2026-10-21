@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
 
 test("Continue with Google starts PKCE OAuth with the local client and the Supabase callback", async ({ page, context }) => {
   await page.route("https://accounts.google.com/**", (r) => r.abort());
-  await page.goto("/platform/sign-in");
+  await page.goto("/sign-in");
   const toGoogle = page.waitForRequest((r) => r.url().startsWith("https://accounts.google.com/"));
   await page.getByRole("button", { name: "Continue with Google" }).click();
   const url = new URL((await toGoogle).url());
@@ -18,22 +18,22 @@ test("Continue with Google starts PKCE OAuth with the local client and the Supab
 });
 
 test("coming back from Google with an error shows the Google copy on the sign-in page", async ({ page }) => {
-  await page.goto("/platform/auth/callback?error=access_denied&next=/platform/account");
-  await expect(page).toHaveURL(/\/platform\/sign-in\?error=google&next=%2Fplatform%2Faccount$/);
+  await page.goto("/auth/callback?error=access_denied&next=/account");
+  await expect(page).toHaveURL(/\/sign-in\?error=google&next=%2Faccount$/);
   await expect(page.getByRole("main").getByRole("alert")).toHaveText(
     "We couldn't sign you in with Google. Please try again, or use an email code. If you've signed in with an email code before, use that.",
   );
 });
 
 test("the home-screen hint is in the page but hidden in a normal tab", async ({ page }) => {
-  await page.goto("/platform/sign-in");
+  await page.goto("/sign-in");
   const hint = page.locator(".standalone-only");
   await expect(hint).toHaveText("Using the app from your home screen? The email code works without leaving the app.");
   await expect(hint).toBeHidden();
 });
 
 test("the Google button sits above the email form", async ({ page }) => {
-  await page.goto("/platform/sign-in");
+  await page.goto("/sign-in");
   const google = await page.getByRole("button", { name: "Continue with Google" }).boundingBox();
   const email = await page.getByLabel("Your email address").boundingBox();
   expect(google!.y).toBeLessThan(email!.y);

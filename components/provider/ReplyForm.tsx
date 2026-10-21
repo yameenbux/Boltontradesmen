@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { AlertIcon, TickIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
-import { saveReply } from "@/app/platform/provider/actions";
+import { saveReply } from "@/app/(platform)/provider/actions";
 import type { FormState } from "@/lib/admin-shared";
 import { REPLY_MAX } from "@/lib/review-form";
 

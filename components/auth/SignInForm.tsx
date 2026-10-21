@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { AlertIcon, TickIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
-import { requestCode, verifyCode, type SignInState } from "@/app/platform/sign-in/actions";
+import { requestCode, verifyCode, type SignInState } from "@/app/(platform)/sign-in/actions";
 import { nationalMobile } from "@/lib/phone-format";
 
 type State = SignInState & { notice?: string };

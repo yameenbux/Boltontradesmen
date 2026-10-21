@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PlatformChrome } from "@/components/PlatformChrome";
 
-// Home-screen app metadata: the manifest (app/manifest.ts) installs /platform, these cover iOS Safari
+// Home-screen app metadata: the manifest (app/manifest.ts) installs the directory, these cover iOS Safari
 // (the apple-touch-icon comes from the root layout).
 export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "Vouched", statusBarStyle: "default" },

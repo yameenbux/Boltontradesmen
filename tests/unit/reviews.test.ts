@@ -95,12 +95,12 @@ describe("listProviderReviews", () => {
 describe("revalidatePublicPages", () => {
   it("revalidates profile, category, home and price guide pages, plus the provider's own page when given", () => {
     revalidatePublicPages("ace");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/[slug]", "page");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/c/[category]", "page");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/prices/[category]", "page");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/prices");
-    expect(revalidatePath).toHaveBeenCalledWith("/platform/p/ace");
+    expect(revalidatePath).toHaveBeenCalledWith("/(platform)/p/[slug]", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/(platform)/c/[category]", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/");
+    expect(revalidatePath).toHaveBeenCalledWith("/(platform)/prices/[category]", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/prices");
+    expect(revalidatePath).toHaveBeenCalledWith("/p/ace");
     expect(revalidatePath).toHaveBeenCalledWith("/badge/ace.svg");
     expect(revalidatePath).toHaveBeenCalledWith("/badge/ace.png");
   });

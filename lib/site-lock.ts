@@ -43,7 +43,7 @@ export function isOpenPath(path: string): boolean {
   return (
     path === LOCK_PATH ||
     path.startsWith("/api/") ||
-    path === "/platform/auth/callback" ||
+    path === "/auth/callback" ||
     path === "/robots.txt" ||
     path === "/favicon.ico" ||
     path.startsWith("/icons/") ||
@@ -54,10 +54,10 @@ export function isOpenPath(path: string): boolean {
 /** Links a trader shares with someone outside the beta: opening one lets that browser in. */
 export function grantsAccess(path: string): boolean {
   return (
-    /^\/platform\/p\/[^/]+\/review\/?$/.test(path) ||
-    /^\/platform\/d\/[^/]+\/?$/.test(path) ||
-    /^\/platform\/consent\/[^/]+\/?$/.test(path) ||
-    /^\/platform\/link\/[^/]+\/?$/.test(path)
+    /^\/p\/[^/]+\/review\/?$/.test(path) ||
+    /^\/d\/[^/]+\/?$/.test(path) ||
+    /^\/consent\/[^/]+\/?$/.test(path) ||
+    /^\/link\/[^/]+\/?$/.test(path)
   );
 }
 

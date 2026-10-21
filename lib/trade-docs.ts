@@ -87,7 +87,7 @@ export function sortCode(s: string): string {
 }
 
 /** Where the customer's copy lives. */
-export const publicDocPath = (token: string) => `/platform/d/${token}`;
+export const publicDocPath = (token: string) => `/d/${token}`;
 
 export const DOC_ERRORS: Record<string, { field?: string; message: string }> = {
   bad_customer: { field: "customer_name", message: "Enter the customer's name." },

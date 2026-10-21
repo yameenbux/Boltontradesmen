@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({
 const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath: (...a: unknown[]) => revalidatePath(...a) }));
 
-import { claimTraderLink } from "@/app/platform/link/[token]/actions";
+import { claimTraderLink } from "@/app/(platform)/link/[token]/actions";
 import { newTraderLink, unlinkProviderAccount } from "@/app/admin/(protected)/providers/actions";
 import { TRADER_LINK_ERRORS } from "@/lib/trader-link";
 
@@ -67,7 +67,7 @@ afterEach(() => vi.unstubAllEnvs());
 describe("claimTraderLink", () => {
   it("redirects to the provider area on success", async () => {
     asMember({ data: "e2e-ace-plumbing" });
-    await expect(claimTraderLink({}, form({ token: TOKEN }))).rejects.toThrow("REDIRECT /platform/provider");
+    await expect(claimTraderLink({}, form({ token: TOKEN }))).rejects.toThrow("REDIRECT /provider");
     expect(rpc).toHaveBeenCalledWith("claim_trader_link", { p_token: TOKEN });
   });
 
@@ -115,7 +115,7 @@ describe("claimTraderLink", () => {
   it("sends a signed-out person to sign in, coming back to the link", async () => {
     auth.getUser.mockResolvedValue({ data: { user: null } });
     await expect(claimTraderLink({}, form({ token: TOKEN }))).rejects.toThrow(
-      `REDIRECT /platform/sign-in?next=${encodeURIComponent(`/platform/link/${TOKEN}`)}`,
+      `REDIRECT /sign-in?next=${encodeURIComponent(`/link/${TOKEN}`)}`,
     );
   });
 });
@@ -124,7 +124,7 @@ describe("newTraderLink", () => {
   it("returns an absolute link on the site URL, with its expiry", async () => {
     asAdmin({ data: { token: TOKEN, expires_at: "2026-10-26T10:00:00Z" } });
     const res = await newTraderLink(PROVIDER);
-    expect(res).toEqual({ url: `https://boltonvouched.example/platform/link/${TOKEN}`, expires: "26 October 2026" });
+    expect(res).toEqual({ url: `https://boltonvouched.example/link/${TOKEN}`, expires: "26 October 2026" });
     expect(rpc).toHaveBeenCalledWith("admin_new_trader_link", { p_provider: PROVIDER });
     expect(revalidatePath).toHaveBeenCalledWith(`/admin/providers/${PROVIDER}`);
   });

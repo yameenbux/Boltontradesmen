@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
-import { emailDoc, makeInvoice, markDoc } from "@/app/platform/provider/docs/actions";
+import { emailDoc, makeInvoice, markDoc } from "@/app/(platform)/provider/docs/actions";
 import { platformPath } from "@/lib/paths";
 import { docNumber, money, type TradeDoc } from "@/lib/trade-docs";
 

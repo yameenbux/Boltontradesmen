@@ -25,8 +25,8 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
-import { requestCode, verifyCode } from "@/app/platform/sign-in/actions";
-import { completeOnboarding } from "@/app/platform/welcome/actions";
+import { requestCode, verifyCode } from "@/app/(platform)/sign-in/actions";
+import { completeOnboarding } from "@/app/(platform)/welcome/actions";
 import { SIGN_IN_ERRORS } from "@/lib/otp-gate";
 import { ipHash } from "@/lib/ip-hash";
 
@@ -66,10 +66,10 @@ describe("phone sign-in switched off", () => {
 
   it("requestCode refuses with the phone_off copy without calling Supabase or the gate", async () => {
     const res = await requestCode(
-      { step: "phone", next: "/platform/account" },
-      form({ phone: "07700 900401", next: "/platform/account" }),
+      { step: "phone", next: "/account" },
+      form({ phone: "07700 900401", next: "/account" }),
     );
-    expect(res).toEqual({ step: "phone", next: "/platform/account", error: SIGN_IN_ERRORS.phone_off });
+    expect(res).toEqual({ step: "phone", next: "/account", error: SIGN_IN_ERRORS.phone_off });
     expect(SIGN_IN_ERRORS.phone_off).toBe(
       "Sign-in by text is switched off. Please continue with Google or use an email code.",
     );
@@ -79,10 +79,10 @@ describe("phone sign-in switched off", () => {
 
   it("verifyCode refuses with the phone_off copy without calling Supabase or the limiter", async () => {
     const res = await verifyCode(
-      { step: "code", phone: "+447700900401", next: "/platform/p/ace/review" },
+      { step: "code", phone: "+447700900401", next: "/p/ace/review" },
       form({ phone: "+447700900401", code: "123456", next: "//evil.example" }),
     );
-    expect(res).toEqual({ step: "phone", next: "/platform", error: SIGN_IN_ERRORS.phone_off });
+    expect(res).toEqual({ step: "phone", next: "/", error: SIGN_IN_ERRORS.phone_off });
     expect(auth.verifyOtp).not.toHaveBeenCalled();
     expect(serviceRpc).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
@@ -90,14 +90,14 @@ describe("phone sign-in switched off", () => {
 
   it("treats an unset switch as off", async () => {
     vi.stubEnv("SIGN_IN_PHONE", undefined);
-    const res = await requestCode({ step: "phone", next: "/platform/account" }, form({ phone: "07700 900401" }));
+    const res = await requestCode({ step: "phone", next: "/account" }, form({ phone: "07700 900401" }));
     expect(res.error).toBe(SIGN_IN_ERRORS.phone_off);
     expect(serviceRpc).not.toHaveBeenCalled();
   });
 });
 
 describe("verifyCode", () => {
-  const base = { step: "code" as const, phone: "+447700900401", next: "/platform/p/ace/review" };
+  const base = { step: "code" as const, phone: "+447700900401", next: "/p/ace/review" };
 
   // The wrong-code limiter (final review 2, I4): otp_verify_gate answers before Supabase is asked.
   function gate(verdict: string, attemptId = 7) {
@@ -122,7 +122,7 @@ describe("verifyCode", () => {
     auth.verifyOtp.mockResolvedValue({ data: { session: {}, user: { id: "u1" } }, error: null });
     rpc.mockResolvedValue({ data: null, error: null });
     await expect(verifyCode(base, form({ phone: "+447700900401", code: "123456", next: base.next }))).rejects.toThrow(
-      "REDIRECT /platform/welcome",
+      "REDIRECT /welcome",
     );
     expect(serviceRpc).toHaveBeenCalledWith("otp_verify_record", { p_attempt_id: 7, p_ok: true });
   });
@@ -173,7 +173,7 @@ describe("verifyCode", () => {
     auth.verifyOtp.mockResolvedValue({ data: { session: {}, user: { id: "u1" } }, error: null });
     rpc.mockResolvedValue({ data: null, error: null });
     await expect(verifyCode(base, form({ phone: "+447700900401", code: "123456", next: base.next }))).rejects.toThrow(
-      "REDIRECT /platform/welcome?next=%2Fplatform%2Fp%2Face%2Freview",
+      "REDIRECT /welcome?next=%2Fp%2Face%2Freview",
     );
     expect(auth.verifyOtp).toHaveBeenCalledWith({ phone: "+447700900401", token: "123456", type: "sms" });
     expect(rpc).not.toHaveBeenCalledWith("claim_provider_listings");
@@ -183,7 +183,7 @@ describe("verifyCode", () => {
     auth.verifyOtp.mockResolvedValue({ data: { session: {}, user: { id: "u1" } }, error: null });
     rpc.mockImplementation(async (name: string) => ({ data: name === "my_account" ? ACCOUNT : 0, error: null }));
     await expect(verifyCode(base, form({ phone: "+447700900401", code: "123456", next: base.next }))).rejects.toThrow(
-      "REDIRECT /platform/p/ace/review",
+      "REDIRECT /p/ace/review",
     );
     expect(rpc).toHaveBeenCalledWith("claim_provider_listings");
   });
@@ -193,7 +193,7 @@ describe("verifyCode", () => {
     rpc.mockImplementation(async (name: string) => ({ data: name === "my_account" ? ACCOUNT : 0, error: null }));
     await expect(
       verifyCode(base, form({ phone: "+447700900401", code: "123456", next: "//evil.example" })),
-    ).rejects.toThrow(/REDIRECT \/platform$/);
+    ).rejects.toThrow(/REDIRECT \/$/);
   });
 });
 
@@ -204,10 +204,10 @@ describe("requestCode", () => {
     );
     auth.signInWithOtp.mockResolvedValue({ data: {}, error: null });
     const res = await requestCode(
-      { step: "phone", next: "/platform/account" },
-      form({ phone: "07700 900401", next: "/platform/account" }),
+      { step: "phone", next: "/account" },
+      form({ phone: "07700 900401", next: "/account" }),
     );
-    expect(res).toEqual({ step: "code", phone: "+447700900401", next: "/platform/account" });
+    expect(res).toEqual({ step: "code", phone: "+447700900401", next: "/account" });
     expect(auth.signInWithOtp).toHaveBeenCalledWith({
       phone: "+447700900401",
       options: { shouldCreateUser: true, data: { bv_nonce: expect.stringMatching(/^[A-Za-z0-9_-]{43}$/) } },
@@ -233,13 +233,13 @@ describe("requestCode", () => {
 
   it("stays on the phone step with the copy and keeps what was typed", async () => {
     const res = await requestCode(
-      { step: "phone", next: "/platform/account" },
-      form({ phone: "01204 123456", next: "/platform/account" }),
+      { step: "phone", next: "/account" },
+      form({ phone: "01204 123456", next: "/account" }),
     );
     expect(res).toEqual({
       step: "phone",
       phone: "01204 123456",
-      next: "/platform/account",
+      next: "/account",
       error: SIGN_IN_ERRORS.invalid,
     });
     expect(serviceRpc).not.toHaveBeenCalled();
@@ -256,9 +256,9 @@ describe("completeOnboarding", () => {
     await expect(
       completeOnboarding(
         {},
-        form({ first_name: "sarah", surname: "Khan", district: "BL3", group_code: "Bolton", next: "/platform/account" }),
+        form({ first_name: "sarah", surname: "Khan", district: "BL3", group_code: "Bolton", next: "/account" }),
       ),
-    ).rejects.toThrow("REDIRECT /platform/account");
+    ).rejects.toThrow("REDIRECT /account");
     expect(rpc).toHaveBeenCalledWith("complete_onboarding", {
       p_display_name: "Sarah K.",
       p_district: "BL3",
@@ -270,7 +270,7 @@ describe("completeOnboarding", () => {
     rpc.mockResolvedValue({ data: { error: "bad_group_code" }, error: null });
     const res = await completeOnboarding(
       {},
-      form({ first_name: "sarah", surname: "Khan", district: "BL3", next: "/platform/account" }),
+      form({ first_name: "sarah", surname: "Khan", district: "BL3", next: "/account" }),
     );
     expect(res.errors).toBeUndefined();
     expect(res.message).toBe("Something went wrong saving your details. Please try again.");
@@ -304,10 +304,10 @@ describe("completeOnboarding", () => {
           first_name: "sarah",
           surname: "khan",
           district: "BL3",
-          next: "/platform/p/ace/review",
+          next: "/p/ace/review",
         }),
       ),
-    ).rejects.toThrow("REDIRECT /platform/p/ace/review");
+    ).rejects.toThrow("REDIRECT /p/ace/review");
     expect(rpc).toHaveBeenCalledWith("complete_onboarding", {
       p_display_name: "Sarah K.",
       p_district: "BL3",
@@ -320,8 +320,8 @@ describe("completeOnboarding", () => {
     await expect(
       completeOnboarding(
         {},
-        form({ first_name: "Sarah", surname: "Khan", district: "BL3", next: "/platform/account" }),
+        form({ first_name: "Sarah", surname: "Khan", district: "BL3", next: "/account" }),
       ),
-    ).rejects.toThrow("REDIRECT /platform/sign-in?next=%2Fplatform%2Faccount");
+    ).rejects.toThrow("REDIRECT /sign-in?next=%2Faccount");
   });
 });

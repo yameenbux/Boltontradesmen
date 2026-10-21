@@ -11,7 +11,7 @@ const DB_URL = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@12
 const sql = (query: string) =>
   execFileSync("psql", [DB_URL, "-X", "-A", "-t", "-q", "-v", "ON_ERROR_STOP=1", "-c", query]).toString().trim();
 
-const CATEGORY = "/platform/c/man-and-van";
+const CATEGORY = "/c/man-and-van";
 const card = (page: Page, name: string) => page.getByRole("link", { name: new RegExp(name) });
 
 async function adminSignIn(page: Page) {
@@ -23,17 +23,17 @@ async function adminSignIn(page: Page) {
 }
 
 test("profiles and cards show availability; one that has run out shows nothing", async ({ page }) => {
-  await page.goto("/platform/p/e2e-keen-vans");
+  await page.goto("/p/e2e-keen-vans");
   const head = page.locator(".prof-head");
   await expect(head.getByTestId("availability")).toHaveText("Taking on work");
   await expect(head.getByText("· updated today")).toBeVisible();
 
-  await page.goto("/platform/p/e2e-busy-vans");
+  await page.goto("/p/e2e-busy-vans");
   const until = shortDate(addDays(londonToday(), 28));
   await expect(page.locator(".prof-head").getByTestId("availability")).toHaveText(`Booked up until ${until}`);
   await expect(page.locator(".prof-head").getByText("· updated 2 days ago")).toBeVisible();
 
-  await page.goto("/platform/p/e2e-stale-vans");
+  await page.goto("/p/e2e-stale-vans");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Stale Removals");
   await expect(page.getByTestId("availability")).toHaveCount(0);
   await expect(page.getByText(/updated .* ago|Taking on work/)).toHaveCount(0);
@@ -92,7 +92,7 @@ test("a linked trader sets Taking on work, then Booked up until a date", async (
   const trader = await (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
   await signInWithEmail(trader, `ready-trader@${E2E_EMAIL_DOMAIN}`, { first: "Rae", surname: "Ready", next: path });
   await trader.getByRole("button", { name: "Yes, this is my business" }).click();
-  await expect(trader).toHaveURL(/\/platform\/provider$/);
+  await expect(trader).toHaveURL(/\/provider$/);
 
   const form = trader.getByRole("region", { name: "Taking on work?" });
   await expect(form.getByTestId("availability-now")).toHaveText("Nothing shows now.");
@@ -102,7 +102,7 @@ test("a linked trader sets Taking on work, then Booked up until a date", async (
   await expect(form.getByRole("status")).toHaveText("Saved. It's on your page now.");
   await expect(form.getByTestId("availability-now")).toContainText("Your page shows: Taking on work · updated today");
 
-  await trader.goto("/platform/p/e2e-ready-vans");
+  await trader.goto("/p/e2e-ready-vans");
   await expect(trader.locator(".prof-head").getByTestId("availability")).toHaveText("Taking on work");
   await expect(trader.locator(".prof-head").getByText("· updated today")).toBeVisible();
   await trader.goto(CATEGORY);
@@ -110,7 +110,7 @@ test("a linked trader sets Taking on work, then Booked up until a date", async (
 
   // Booked up until a date three weeks away.
   const until = addDays(londonToday(), 21);
-  await trader.goto("/platform/provider");
+  await trader.goto("/provider");
   await form.getByRole("radio", { name: "Booked up" }).check();
   const date = form.getByLabel("Booked up until");
   await expect(date).toHaveAttribute("min", addDays(londonToday(), 1));
@@ -119,7 +119,7 @@ test("a linked trader sets Taking on work, then Booked up until a date", async (
   await expect(form.getByRole("status")).toHaveText("Saved. It's on your page now.");
   await expect(form.getByTestId("availability-now")).toContainText(`Booked up until ${shortDate(until)}`);
 
-  await trader.goto("/platform/p/e2e-ready-vans");
+  await trader.goto("/p/e2e-ready-vans");
   await expect(trader.locator(".prof-head").getByTestId("availability")).toHaveText(`Booked up until ${shortDate(until)}`);
   await trader.goto(CATEGORY);
   await expect(card(trader, "Ready Removals").getByTestId("availability")).toHaveText(`Booked up until ${shortDate(until)}`);
@@ -142,7 +142,7 @@ test("the admin sets and clears a listing's availability", async ({ page }) => {
   await expect(section.getByRole("status")).toHaveText("Availability saved");
   await expect(section.getByTestId("availability-now")).toContainText("Showing now: Taking on work this week · updated today");
 
-  await page.goto("/platform/p/e2e-swift-vans");
+  await page.goto("/p/e2e-swift-vans");
   await expect(page.locator(".prof-head").getByTestId("availability")).toHaveText("Taking on work this week");
 
   await page.goto("/admin/providers/00000000-0000-0000-0000-00000000e215");
@@ -151,7 +151,7 @@ test("the admin sets and clears a listing's availability", async ({ page }) => {
   await expect(section.getByRole("status")).toHaveText("Availability cleared");
   await expect(section.getByTestId("availability-now")).toHaveText("Nothing shows now.");
 
-  await page.goto("/platform/p/e2e-swift-vans");
+  await page.goto("/p/e2e-swift-vans");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Swift Removals");
   await expect(page.getByTestId("availability")).toHaveCount(0);
 

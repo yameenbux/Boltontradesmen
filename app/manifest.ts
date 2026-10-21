@@ -1,16 +1,16 @@
 import type { MetadataRoute } from "next";
 
-// Installs the live directory (/platform) to the Home Screen; the showcase site at "/" stays outside the app's scope.
+// Installs the directory (the whole site, from the home page) to the Home Screen.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    id: "/platform",
+    id: "/",
     name: "Bolton Vouched",
     short_name: "Vouched",
     description: "Local people, vouched for by Bolton.",
     lang: "en-GB",
     dir: "ltr",
-    start_url: "/platform",
-    scope: "/platform",
+    start_url: "/",
+    scope: "/",
     display: "standalone",
     background_color: "#F5EEE3",
     theme_color: "#9C3A25",

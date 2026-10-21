@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { AlertIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
-import { reportReview } from "@/app/platform/report/[reviewId]/actions";
+import { reportReview } from "@/app/(platform)/report/[reviewId]/actions";
 import type { FormState } from "@/lib/admin-shared";
 
 export function ReportForm({

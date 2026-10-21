@@ -6,7 +6,7 @@ vi.mock("next/headers", () => ({
   headers: async () => new Headers({ "x-forwarded-for": "6.6.6.6, 203.0.113.7" }),
 }));
 
-import { acceptConsent } from "@/app/platform/consent/[token]/actions";
+import { acceptConsent } from "@/app/(platform)/consent/[token]/actions";
 
 beforeEach(() => {
   rpc.mockReset();

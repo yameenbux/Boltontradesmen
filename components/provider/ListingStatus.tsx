@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { AlertIcon, TickIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
-import { pauseMyListing, unpauseMyListing, withdrawMyListing } from "@/app/platform/provider/actions";
+import { pauseMyListing, unpauseMyListing, withdrawMyListing } from "@/app/(platform)/provider/actions";
 import type { FormState } from "@/lib/admin-shared";
 
 type Action = (prev: FormState, fd: FormData) => Promise<FormState>;

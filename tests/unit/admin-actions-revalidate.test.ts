@@ -17,11 +17,11 @@ import { newConsentLink, recordCheck, reinviteProvider, saveProvider, setStatus 
 
 const PID = "11111111-1111-4111-8111-111111111111";
 const PUBLIC_PATHS = [
-  ["/platform/p/[slug]", "page"],
-  ["/platform/c/[category]", "page"],
-  ["/platform"],
-  ["/platform/prices/[category]", "page"],
-  ["/platform/prices"],
+  ["/(platform)/p/[slug]", "page"],
+  ["/(platform)/c/[category]", "page"],
+  ["/"],
+  ["/(platform)/prices/[category]", "page"],
+  ["/prices"],
 ];
 
 function form(entries: Record<string, string>) {
@@ -69,16 +69,16 @@ describe("recordCheck", () => {
   it("does not revalidate public pages when the database refuses", async () => {
     rpc.mockResolvedValue({ data: null, error: { message: "boom" } });
     await recordCheck({}, form({ provider_id: PID, kind: "id", reference: "ref", expires_on: "" }));
-    expect(revalidatePath).not.toHaveBeenCalledWith("/platform");
+    expect(revalidatePath).not.toHaveBeenCalledWith("/");
   });
 });
 
 describe("newConsentLink", () => {
-  it("builds the link under /platform/consent/ on the site URL", async () => {
+  it("builds the link under /consent/ on the site URL", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://boltonvouched.example/";
     rpc.mockResolvedValue({ data: "22222222-2222-4222-8222-222222222222", error: null });
     const res = await newConsentLink(PID);
-    expect(res.url).toBe("https://boltonvouched.example/platform/consent/22222222-2222-4222-8222-222222222222");
+    expect(res.url).toBe("https://boltonvouched.example/consent/22222222-2222-4222-8222-222222222222");
   });
 });
 
@@ -99,7 +99,7 @@ describe("reinviteProvider", () => {
     const res = await reinviteProvider({}, form({ provider_id: PID, reason: "asked to come back" }));
     expect(rpc).toHaveBeenCalledWith("admin_reinvite_provider", { p_id: PID, p_reason: "asked to come back" });
     expect(res.ok).toBe(true);
-    expect(res.values?.consent_url).toBe("https://boltonvouched.example/platform/consent/33333333-3333-4333-8333-333333333333");
+    expect(res.values?.consent_url).toBe("https://boltonvouched.example/consent/33333333-3333-4333-8333-333333333333");
     expect(res.values?.consent_expires).toBe("26 October 2026");
     for (const args of PUBLIC_PATHS) expect(revalidatePath).toHaveBeenCalledWith(...args);
   });

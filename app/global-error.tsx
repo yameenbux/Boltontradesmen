@@ -40,7 +40,8 @@ export default function GlobalError({ error, retry }: { error: Error & { digest?
               Try again
             </button>
             {/* A plain link on purpose: a full page load starts the app afresh. */}
-            <a className="btn" href="/platform">
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- see above */}
+            <a className="btn" href="/">
               Browse trades
             </a>
           </div>

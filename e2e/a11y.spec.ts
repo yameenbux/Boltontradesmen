@@ -22,7 +22,7 @@ for (const colorScheme of ["light", "dark"] as const) {
     test(`home page has no axe violations (${colorScheme}, ${label})`, async ({ browser }) => {
       const context = await browser.newContext({ colorScheme, viewport: { width, height: 900 }, reducedMotion: "reduce" });
       const page = await context.newPage();
-      await page.goto("/platform");
+      await page.goto("/");
       await page.getByRole("heading", { level: 1 }).waitFor();
       expect(await violations(page)).toEqual([]);
       await context.close();

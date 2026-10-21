@@ -10,7 +10,7 @@ import {
   removeWorkPhoto,
   sendProDocument,
   startProCheckout,
-} from "@/app/platform/provider/pro-actions";
+} from "@/app/(platform)/provider/pro-actions";
 import type { FormState } from "@/lib/admin-shared";
 import {
   DOCUMENT_KINDS,

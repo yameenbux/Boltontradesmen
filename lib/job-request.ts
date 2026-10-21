@@ -50,4 +50,4 @@ export const JOB_STATUS_TEXT: Record<JobStatus, string> = {
   spam: "Spam",
 };
 
-export const sentPath = (slug: string) => `/platform/p/${slug}/request/sent`;
+export const sentPath = (slug: string) => `/p/${slug}/request/sent`;

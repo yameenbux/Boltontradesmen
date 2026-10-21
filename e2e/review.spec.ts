@@ -11,9 +11,9 @@ test("a resident posts a review, sees it on the profile, then edits it", async (
     await signInAsGoogle(page, `dana@${E2E_EMAIL_DOMAIN}`, {
       first: "Dana",
       surname: "Evans",
-      next: "/platform/p/e2e-calm-carpentry/review",
+      next: "/p/e2e-calm-carpentry/review",
     });
-    await expect(page).toHaveURL(/\/platform\/p\/e2e-calm-carpentry\/review$/);
+    await expect(page).toHaveURL(/\/p\/e2e-calm-carpentry\/review$/);
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Calm Carpentry");
     await expect(page.getByText("Be honest — mixed jobs are useful too.")).toBeVisible();
     await answer(page, { quality: "4", comment: "Fitted new skirting in the hall. Neat work and fair price." });
@@ -22,13 +22,13 @@ test("a resident posts a review, sees it on the profile, then edits it", async (
 
     await expect(page.getByRole("heading", { name: "Published", exact: true })).toBeVisible();
     await page.getByRole("link", { name: /Back to Calm Carpentry/ }).click();
-    await expect(page).toHaveURL(/\/platform\/p\/e2e-calm-carpentry$/);
+    await expect(page).toHaveURL(/\/p\/e2e-calm-carpentry$/);
     const review = page.getByRole("article", { name: "Review by Dana E." });
     await expect(review).toContainText("Fitted new skirting in the hall. Neat work and fair price.");
   }
   {
     // Editing: the same person opens the form again (still signed in) and sees their answers.
-    await page.goto("/platform/p/e2e-calm-carpentry/review");
+    await page.goto("/p/e2e-calm-carpentry/review");
     await expect(page.getByRole("button", { name: "Save changes" })).toBeVisible();
     const form = page.getByRole("form", { name: "Your review" });
     await expect(form.getByLabel(/Anything to add/)).toHaveValue(
@@ -49,21 +49,21 @@ test("a 5-star first review from a brand-new account goes under a quick check", 
   await signInAsGoogle(page, `lee@${E2E_EMAIL_DOMAIN}`, {
     first: "Lee",
     surname: "Moss",
-    next: "/platform/p/e2e-neat-sparks/review",
+    next: "/p/e2e-neat-sparks/review",
   });
   await answer(page, { quality: "5", comment: "New fuse board and lights. Brilliant." });
   await page.getByRole("button", { name: "Post review" }).click();
   await expect(page.getByRole("heading", { name: "Published, under a quick check" })).toBeVisible();
 
-  await page.goto("/platform/p/e2e-neat-sparks");
+  await page.goto("/p/e2e-neat-sparks");
   const review = page.getByRole("article").filter({ hasText: "New fuse board and lights. Brilliant." });
   await expect(review.getByText("Under check", { exact: true })).toBeVisible();
 });
 
 test("the draft survives signing in and a reload, and is cleared after posting", async ({ page }) => {
-  const path = "/platform/p/e2e-fresh-pipes/review";
+  const path = "/p/e2e-fresh-pipes/review";
   await page.goto(path);
-  await expect(page).toHaveURL(/\/platform\/sign-in\?next=%2Fplatform%2Fp%2Fe2e-fresh-pipes%2Freview$/);
+  await expect(page).toHaveURL(/\/sign-in\?next=%2Fp%2Fe2e-fresh-pipes%2Freview$/);
   await expect(page.getByRole("heading", { name: "Sign in to leave a review" })).toBeVisible();
   await signInAsGoogle(page, `rob@${E2E_EMAIL_DOMAIN}`, { first: "Rob", surname: "Hart", next: path });
   await expect(page).toHaveURL(new RegExp(`${path}$`));
@@ -84,7 +84,7 @@ test("the draft survives signing in and a reload, and is cleared after posting",
 });
 
 test("missing answers are marked, and a phone number in the comment is refused", async ({ page }) => {
-  await signInWithEmail(page, `mo@${E2E_EMAIL_DOMAIN}`, { first: "Mo", surname: "Ali", next: "/platform/p/e2e-half-way/review" });
+  await signInWithEmail(page, `mo@${E2E_EMAIL_DOMAIN}`, { first: "Mo", surname: "Ali", next: "/p/e2e-half-way/review" });
   await page.getByRole("button", { name: "Post review" }).click();
   await expect(page.getByRole("alert").first()).toContainText("A few answers are missing");
   await expect(page.getByText("Choose how much it roughly cost.")).toBeVisible();
@@ -103,16 +103,16 @@ test("an email-code resident's review waits for a quick check and isn't on the p
   await signInWithEmail(page, `held-ace@${E2E_EMAIL_DOMAIN}`, {
     first: "Hana",
     surname: "Reed",
-    next: "/platform/p/e2e-ace-plumbing/review",
+    next: "/p/e2e-ace-plumbing/review",
   });
   await answer(page, { quality: "4", comment: "Sorted a dripping kitchen tap in no time." });
   await page.getByRole("button", { name: "Post review" }).click();
   await expect(page.getByRole("heading", { name: HELD })).toBeVisible();
 
-  await page.goto("/platform/p/e2e-ace-plumbing");
+  await page.goto("/p/e2e-ace-plumbing");
   await expect(page.getByText("Sorted a dripping kitchen tap in no time.")).toHaveCount(0);
 
-  await page.goto("/platform/account");
+  await page.goto("/account");
   const mine = page.getByRole("region", { name: /^My reviews/ });
   await expect(mine.getByRole("listitem").filter({ hasText: "Ace Plumbing" })).toContainText(HELD);
 });
@@ -121,12 +121,12 @@ test("a Google resident's review is published straight away", async ({ page }) =
   await signInAsGoogle(page, `google-birch@${E2E_EMAIL_DOMAIN}`, {
     first: "Gail",
     surname: "Moor",
-    next: "/platform/p/e2e-birch-joinery/review",
+    next: "/p/e2e-birch-joinery/review",
   });
-  await expect(page).toHaveURL(/\/platform\/p\/e2e-birch-joinery\/review$/);
+  await expect(page).toHaveURL(/\/p\/e2e-birch-joinery\/review$/);
   await answer(page, { quality: "4", comment: "Built a lovely set of alcove shelves." });
   await page.getByRole("button", { name: "Post review" }).click();
   await expect(page.getByRole("heading", { name: "Published", exact: true })).toBeVisible();
-  await page.goto("/platform/p/e2e-birch-joinery");
+  await page.goto("/p/e2e-birch-joinery");
   await expect(page.getByText("Built a lovely set of alcove shelves.")).toBeVisible();
 });

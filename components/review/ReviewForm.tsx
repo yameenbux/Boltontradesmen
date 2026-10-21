@@ -4,7 +4,7 @@ import { startTransition, useActionState, useEffect, useMemo, useRef, useState, 
 import { AlertIcon, ChevronDown } from "@/components/auth/icons";
 import { TapChoice } from "@/components/review/TapChoice";
 import { Button } from "@/components/ui/Button";
-import { editReview, submitReview, type ReviewFormState } from "@/app/platform/p/[slug]/review/actions";
+import { editReview, submitReview, type ReviewFormState } from "@/app/(platform)/p/[slug]/review/actions";
 import { clearDraft, loadDraft, saveDraft } from "@/lib/review-draft";
 import {
   COMMENT_MAX,

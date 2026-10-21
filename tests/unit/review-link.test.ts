@@ -29,8 +29,8 @@ describe("review links", () => {
   });
 
   it("points the review form at ?ref=card only for the card", () => {
-    expect(reviewFormPath("ace-plumbing")).toBe("/platform/p/ace-plumbing/review");
-    expect(reviewFormPath("ace-plumbing", CARD_REF)).toBe("/platform/p/ace-plumbing/review?ref=card");
+    expect(reviewFormPath("ace-plumbing")).toBe("/p/ace-plumbing/review");
+    expect(reviewFormPath("ace-plumbing", CARD_REF)).toBe("/p/ace-plumbing/review?ref=card");
   });
 
   it("records only the known source", () => {
