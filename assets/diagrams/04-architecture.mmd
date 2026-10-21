@@ -1,10 +1,10 @@
 flowchart TB
     USER["<b>A phone or a laptop</b><br/>the browser, or the<br/>Home Screen app (PWA)"]
-    DNS["<b>boltonvouched.ysbdesigns.uk</b><br/>a CNAME to Railway"]
+    DNS["<b>www.boltonvouched.co.uk</b><br/>DNS at Cloudflare,<br/>a CNAME to Railway"]
 
     subgraph RAIL["Railway: service web, deployed from main"]
         direction TB
-        NEXT["<b>Next.js 16</b><br/>the showcase at /, the<br/>directory at /platform, /admin"]
+        NEXT["<b>Next.js 16</b><br/>the directory and<br/>admin, with the lock<br/>in proxy.ts"]
         CONTACT["<b>/api/contact</b><br/>logs the tap, then<br/>redirects to tel: or wa.me"]
     end
 
@@ -13,8 +13,8 @@ flowchart TB
         VIEW["<b>provider_public</b><br/>the only public door:<br/>no phone, billing or documents"]
         PRIV["<b>private.*</b><br/>SECURITY DEFINER wrappers<br/>anon can't call by name"]
         ADMIN["<b>admin_* functions</b><br/>check the admin role,<br/>write the audit log"]
-        DB[("<b>Postgres with RLS</b><br/>providers, checks,<br/>contact events, audit log")]
-        AUTH["<b>Supabase Auth</b><br/>admin only,<br/>sign-ups off"]
+        DB[("<b>Postgres with RLS</b><br/>no direct grants;<br/>every table behind<br/>checked functions")]
+        AUTH["<b>Supabase Auth</b><br/>Google and email codes;<br/>admin: password<br/>and authenticator"]
     end
 
     GHA["<b>GitHub Actions</b><br/>lint, types, unit, pgTAP<br/>and browser tests"]

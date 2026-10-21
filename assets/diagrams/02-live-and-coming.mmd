@@ -1,23 +1,23 @@
 flowchart TB
-    APP["<b>Bolton Vouched</b><br/>boltonvouched.ysbdesigns.uk"]
+    APP["<b>Bolton Vouched</b><br/>www.boltonvouched.co.uk"]
 
-    subgraph LIVE["Live today: free for residents and traders"]
+    subgraph LIVE["Live today"]
         direction LR
-        L1["<b>Showcase site</b><br/>at /, the link to share"]
-        L2["<b>The directory</b><br/>at /platform, adds to<br/>the Home Screen"]
-        L3["<b>Seven groups<br/>of trades</b><br/>Transport included"]
-        L4["<b>Profiles with checks</b><br/>ID, insurance, Gas Safe,<br/>DVSA and more"]
-        L5["<b>Call and WhatsApp</b><br/>counted as enquiries,<br/>numbers never in the page"]
-        L6["<b>Consent links<br/>and admin</b><br/>with evidence kept"]
-        L7["<b>Free sign-in<br/>and reviews</b><br/>live at once, anti-fake<br/>checks, private proof"]
-        L8["<b>Replies and<br/>moderation</b><br/>traders reply; admin<br/>clears or removes"]
+        L1["<b>The directory</b><br/>the home page, adds to<br/>the Home Screen"]
+        L2["<b>Seven groups<br/>of trades</b><br/>Transport included"]
+        L3["<b>Profiles with checks</b><br/>ID, insurance, Gas Safe,<br/>DVSA and more"]
+        L4["<b>Call and WhatsApp</b><br/>counted as enquiries,<br/>numbers never in the page"]
+        L5["<b>Consent, sign-up<br/>and admin</b><br/>evidence kept; admin<br/>needs a second step"]
+        L6["<b>Free sign-in<br/>and reviews</b><br/>anti-fake checks,<br/>private proof"]
+        L7["<b>Ask Bolton and<br/>price guides</b><br/>from residents<br/>and reviews"]
+        L8["<b>Pro</b><br/>£10 a month: quotes,<br/>invoices, job requests,<br/>ID check, photos"]
     end
 
-    subgraph NEXT["Coming: not built"]
+    subgraph NEXT["Built, switched off or not running yet"]
         direction LR
-        N2["<b>Community<br/>questions</b>"]
-        N3["<b>Trader<br/>dashboards</b>"]
-        N4["<b>Verified tier</b><br/>optional, £10 a month<br/>or £100 a year"]
+        N1["<b>Texts</b><br/>sign-in and alerts,<br/>waiting for Twilio"]
+        N2["<b>Payment<br/>reminders</b><br/>needs the cron job"]
+        N3["<b>Scheduled<br/>clean-ups</b><br/>proof files, contact<br/>events"]
     end
 
     APP --> LIVE
@@ -29,4 +29,4 @@ flowchart TB
     classDef ext fill:#EFE5D7,stroke:#97887C,stroke-width:1.5px,color:#231A15
     class APP core
     class L1,L2,L3,L4,L5,L6,L7,L8 live
-    class N2,N3,N4 dev
+    class N1,N2,N3 dev
