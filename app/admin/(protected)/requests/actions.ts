@@ -85,6 +85,6 @@ export async function approveRequest(_prev: FormState, fd: FormData): Promise<Fo
     ok: true,
     message: told
       ? `Approved and linked. They've been told by ${told}.`
-      : "Approved and linked, but the email and text didn't send (check the email and text settings in Railway). Tell them yourself.",
+      : "Approved and linked, but the email and text didn't send (check the email and text settings on the host). Tell them yourself.",
   };
 }

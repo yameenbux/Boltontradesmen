@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clientIpFrom, trustedProxyHops } from "@/lib/client-ip";
+import { clientIpFrom, clientIpHeader, trustedProxyHops } from "@/lib/client-ip";
 
 function h(entries: Record<string, string>): Headers {
   return new Headers(entries);
@@ -65,5 +65,28 @@ describe("trustedProxyHops", () => {
     expect(trustedProxyHops({ TRUSTED_PROXY_HOPS: "-1" })).toBe(1);
     expect(trustedProxyHops({ TRUSTED_PROXY_HOPS: "two" })).toBe(1);
     expect(trustedProxyHops({ TRUSTED_PROXY_HOPS: "" })).toBe(1);
+  });
+});
+
+describe("a host's own client IP header", () => {
+  it("reads only that header, whatever X-Forwarded-For says", () => {
+    const headers = h({ "true-client-ip": " 203.0.113.7 ", "x-forwarded-for": "6.6.6.6, 7.7.7.7" });
+    expect(clientIpFrom(headers, 1, "true-client-ip")).toBe("203.0.113.7");
+  });
+
+  it("is null when the header is missing, rather than falling back to a header a visitor can forge", () => {
+    expect(clientIpFrom(h({ "x-forwarded-for": "6.6.6.6", "x-real-ip": "7.7.7.7" }), 1, "true-client-ip")).toBeNull();
+  });
+
+  it("takes the first value if the header somehow holds a list", () => {
+    expect(clientIpFrom(h({ "true-client-ip": "203.0.113.7, 6.6.6.6" }), 1, "true-client-ip")).toBe("203.0.113.7");
+  });
+
+  it("reads CLIENT_IP_HEADER, ignoring anything that isn't a header name", () => {
+    expect(clientIpHeader({})).toBeNull();
+    expect(clientIpHeader({ CLIENT_IP_HEADER: " True-Client-IP " })).toBe("true-client-ip");
+    expect(clientIpHeader({ CLIENT_IP_HEADER: "cf-connecting-ip" })).toBe("cf-connecting-ip");
+    expect(clientIpHeader({ CLIENT_IP_HEADER: "x forwarded" })).toBeNull();
+    expect(clientIpHeader({ CLIENT_IP_HEADER: "" })).toBeNull();
   });
 });
