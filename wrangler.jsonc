@@ -1,0 +1,24 @@
+// TRIAL (branch trial/cloudflare-workers): Workers config for @opennextjs/cloudflare. Not deployed anywhere.
+// Secrets and per-environment vars are NOT kept here: locally they come from .dev.vars (git-ignored), in a real
+// deployment from `wrangler secret put` or the dashboard.
+// The adapter's template also sets "global_fetch_strictly_public"; it is left off here so the local trial can reach
+// a Supabase on 127.0.0.1. Production (Supabase on a public host) could turn it on.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "bolton-vouched-trial",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // Minified, the worker is ~3,078 KiB gzip (unminified ~3,488 KiB): still just over the free plan's 3 MiB.
+  "minify": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "bolton-vouched-trial"
+    }
+  ]
+}

@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Cloudflare Workers build output (opennextjs-cloudflare, wrangler): generated bundles, too big to lint.
+    ".open-next/**",
+    ".wrangler/**",
   ]),
 ]);
 

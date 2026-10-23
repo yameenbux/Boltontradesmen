@@ -55,3 +55,8 @@ next-env.d.ts
 /scripts/local-stack/bin/
 /scripts/local-stack/logs/
 /scripts/local-stack/run/
+
+# OpenNext / Cloudflare Workers trial
+/.open-next/
+/.wrangler/
+.dev.vars*
