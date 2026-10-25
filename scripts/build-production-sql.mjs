@@ -538,12 +538,16 @@ const VERIFY_NEW_CATEGORIES = `-- ==============================================
 -- Fails (and so rolls back everything above) if any piece is missing.
 do $verify$
 begin
-  if (select count(*) from public.categories where slug in ('ev-solar', 'carpets', 'gutter-cleaning', 'kitchen-fitter') and active) <> 4 then
-    raise exception 'New categories check failed: EV chargers & solar, Carpets, Gutter cleaning or Kitchen fitter is missing';
+  if (select count(*) from public.categories where active and slug in ('ev-solar', 'carpets', 'gutter-cleaning', 'kitchen-fitter',
+      'bedrooms-wardrobes', 'window-cleaner', 'bathroom-fitter', 'driveways-paving')) <> 8 then
+    raise exception 'New categories check failed: one of the eight new trades is missing';
   end if;
   if not exists (select 1 from public.categories where slug = 'cleaner' and name = 'Cleaning services')
-     or not exists (select 1 from public.categories where slug = 'caterer' and name = 'Catering services') then
-    raise exception 'New categories check failed: Cleaning services or Catering services was not renamed';
+     or not exists (select 1 from public.categories where slug = 'caterer' and name = 'Catering services')
+     or not exists (select 1 from public.categories where slug = 'valeting' and name = 'Car valeting')
+     or not exists (select 1 from public.categories c join public.category_groups g on g.id = c.group_id
+                    where c.slug = 'window-door-repair' and c.name = 'Windows, doors & glazing' and g.slug = 'home-trades') then
+    raise exception 'New categories check failed: a renamed category is missing its new name';
   end if;
 end
 $verify$;
@@ -642,7 +646,7 @@ const PRESETS = {
     verify: VERIFY_LAUNCH_HARDENING,
   },
   "new-categories": {
-    title: "new categories (EV chargers & solar, Carpets, Gutter cleaning, Kitchen fitter; Cleaning and Catering services renamed)",
+    title: "new categories (eight new trades; Cleaning services, Catering services, Car valeting and Windows, doors & glazing renamed)",
     done: "New categories applied",
     requires: { version: "20261012000038", what: "the launch hardening script (docs/launch/launch-hardening-production.sql)" },
     verify: VERIFY_NEW_CATEGORIES,

@@ -20,6 +20,13 @@ const cats = [
   cat("gutter-cleaning", "Gutter cleaning"),
   cat("kitchen-fitter", "Kitchen fitter"),
   cat("joiner", "Joiner"),
+  cat("bedrooms-wardrobes", "Fitted bedrooms & wardrobes"),
+  cat("window-cleaner", "Window cleaner"),
+  cat("bathroom-fitter", "Bathroom fitter"),
+  cat("driveways-paving", "Driveways & paving"),
+  cat("window-door-repair", "Windows, doors & glazing"),
+  cat("handyman", "Handyman"),
+  cat("valeting", "Car valeting"),
   cat("appliance-repair", "Appliance repair"),
   cat("skip-hire", "Skip hire"),
   cat("mot", "MOT"),
@@ -39,6 +46,15 @@ describe("guessTrade", () => {
     expect(guess("Gutter has come away from the wall")).toBe("roofer");
     expect(guess("Looking for someone to fit a new kitchen")).toBe("kitchen-fitter");
     expect(guess("Need a joiner for some skirting")).toBe("joiner");
+    expect(guess("Who does fitted wardrobes?")).toBe("bedrooms-wardrobes");
+    expect(guess("Need someone to build a flat pack wardrobe")).toBe("handyman");
+    expect(guess("Looking for a regular window cleaner in BL1")).toBe("window-cleaner");
+    expect(guess("Misted window needs replacing")).toBe("window-door-repair");
+    expect(guess("New windows and a composite door")).toBe("window-door-repair");
+    expect(guess("Anyone recommend a bathroom fitter?")).toBe("bathroom-fitter");
+    expect(guess("Shower is leaking")).toBe("plumber");
+    expect(guess("Want a block paving driveway")).toBe("driveways-paving");
+    expect(guess("Car valet needed this weekend")).toBe("valeting");
   });
 
   it("sends a boiler to gas engineers, never to a plumber", () => {
