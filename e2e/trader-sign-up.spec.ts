@@ -60,8 +60,28 @@ test("a new trader: tick trades and areas, mobile and WhatsApp, Confirm, live; t
   await expect(page).toHaveURL(/\/provider\/live$/);
   const live = page.getByTestId("you-are-live");
   await expect(live).toContainText(`${business} is now live on Bolton Vouched`);
-  await expect(live.getByRole("link", { name: "Start Pro: pay by card" })).toBeVisible();
-  await expect(live.getByRole("link", { name: "Share your page on WhatsApp" })).toHaveAttribute("href", /wa\.me/);
+  await expect(page.getByRole("link", { name: "Start Pro: pay by card" })).toBeVisible();
+  // Step 1: taking on work, saved from here.
+  const avail = page.getByTestId("step-availability");
+  await avail.getByRole("radio", { name: "Taking on work" }).check();
+  await avail.getByRole("button", { name: /Save/ }).click();
+  await expect(avail.getByRole("status")).toBeVisible();
+  expect(sql(`select availability from public.providers where business_name = '${business}'`)).toBe("taking");
+  // Step 2: the review link, to copy or send on WhatsApp.
+  const reviews = page.getByTestId("step-reviews");
+  await expect(reviews.getByTestId("review-link")).toContainText("/r/");
+  await expect(reviews.getByRole("link", { name: "Share on WhatsApp" })).toHaveAttribute("href", /wa\.me/);
+  // Step 3: no website? their page and the badge image; the embed code is folded away.
+  const show = page.getByTestId("step-show");
+  await expect(show.getByTestId("page-link")).toBeVisible();
+  await expect(show.getByTestId("google-link")).toContainText("/p/");
+  await expect(show.getByTestId("google-link")).toContainText("utm_source=google_business");
+  await expect(show.getByRole("button", { name: "Copy link for Google" })).toBeVisible();
+  await expect(show.getByRole("link", { name: "Download your badge" })).toHaveAttribute("href", /\.png$/);
+  await expect(reviews.getByRole("link", { name: /Print a review card/ })).toBeVisible();
+  await expect(show.getByRole("button", { name: "Copy embed code" })).toBeHidden();
+  await show.getByText("Got a website? Add your badge to it").click();
+  await expect(show.getByRole("button", { name: "Copy embed code" })).toBeVisible();
   const e164 = `+44${phone.replace(/\D/g, "").slice(1)}`;
   expect(
     sql(`select p.status || '|' || (p.user_id is not null) || '|' || (p.consent_evidence->>'via') || '|' || array_to_string(p.areas, ',')
