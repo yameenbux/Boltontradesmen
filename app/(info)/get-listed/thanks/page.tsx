@@ -29,7 +29,7 @@ export default function GetListedThanksPage() {
         <ul className="thanks-list">
           <li>The link shows exactly how your listing will look. Nothing goes live until you&apos;ve agreed to it.</li>
           <li>
-            Your basic listing is free and stays free. An optional paid upgrade is coming later; it never affects your
+            Your basic listing is free and stays free. <a href="/for-traders">Pro</a> is optional and never changes your
             place in the list.
           </li>
         </ul>

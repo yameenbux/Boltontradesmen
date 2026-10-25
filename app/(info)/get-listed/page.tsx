@@ -25,18 +25,13 @@ export default async function GetListedPage() {
     <main className="auth">
       <section className="auth-card" aria-labelledby="get-listed-title">
         <div>
-          <p className="eyebrow">For traders</p>
-          <h1 id="get-listed-title">Get listed on Bolton Vouched</h1>
+          <h1 id="get-listed-title">Get listed free</h1>
           <p className="lede">
-            A basic listing is free and stays free. Tell us who you are and we&apos;ll WhatsApp or call you within 2
-            working days. Nothing goes live until you&apos;ve seen your listing and agreed to it.
+            We&apos;ll WhatsApp or call you within 2 working days. Nothing goes live until you&apos;ve seen your listing
+            and agreed to it.
           </p>
           <p className="lede">
-            Want job requests sent straight to you, and quotes and invoices from your phone? <a href="/for-traders">See Pro</a>: you
-            can switch it on once you&apos;re listed.
-          </p>
-          <p className="lede">
-            Quicker with an account: <a href={TRADER_SIGN_IN}>log in or join as a trader</a> and fill in one short form.
+            <a href={TRADER_SIGN_IN}>Log in or join</a> to do it in one form, or <a href="/for-traders">See Pro</a>.
           </p>
         </div>
         <GetListedForm
@@ -61,8 +56,7 @@ export default async function GetListedPage() {
             <ChatIcon />
           </span>
           <span>
-            Nobody pays to rank higher. An optional paid upgrade is coming later; it never affects your place in the
-            list.
+            Nobody pays to rank higher. Pro never changes your place in the list.
           </span>
         </li>
       </ul>
