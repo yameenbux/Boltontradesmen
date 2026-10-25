@@ -10,6 +10,8 @@ const cats = [
   cat("electrician", "Electrician"),
   cat("gas-boilers", "Gas & boilers"),
   cat("window-tinting", "Window tinting"),
+  cat("venetian-plaster", "Venetian plaster"),
+  cat("vehicle-recovery", "Vehicle recovery"),
   cat("cctv-security", "CCTV & security"),
   cat("venues", "Wedding & event venues"),
   cat("mechanic", "Mechanic & car servicing"),
@@ -19,6 +21,7 @@ const cats = [
   cat("man-and-van", "Man & van"),
   cat("cleaner", "Cleaning services"),
   cat("roofer", "Roofer"),
+  cat("bricklayer", "Bricklayer"),
   cat("ev-solar", "EV chargers & solar"),
   cat("carpets", "Carpets"),
   cat("gutter-cleaning", "Gutter cleaning"),
@@ -73,6 +76,11 @@ describe("guessTrade", () => {
     expect(guess("Who does window tinting on cars?")).toBe("window-tinting");
     expect(guess("Need CCTV fitted at the front of the house")).toBe("cctv-security");
     expect(guess("Looking for a wedding venue for 300 guests")).toBe("venues");
+    expect(guess("Anyone do Venetian plaster in a bathroom?")).toBe("venetian-plaster");
+    expect(guess("Need my wall plastered before I paint")).not.toBe("venetian-plaster");
+    expect(guess("Car's broken down on the M61, need a tow")).toBe("vehicle-recovery");
+    expect(guess("Any good roofers in Bolton?")).toBe("roofer");
+    expect(guess("Need brick layers for a garden wall")).toBe("bricklayer");
     expect(guess("Car needs a full service")).toBe("mechanic");
     expect(guess("MOT due next week")).toBe("mot");
   });

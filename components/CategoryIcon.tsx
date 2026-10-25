@@ -291,6 +291,21 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M9 4V3h6v1M9 13l2 2 4-4" />
     </>
   ),
+  "vehicle-recovery": (
+    <>
+      <path d="M2 17V9h7l2 4h4v4" />
+      <path d="M15 13l5-6M20 7v4" />
+      <circle cx="6" cy="17.5" r="1.8" />
+      <circle cx="13" cy="17.5" r="1.8" />
+    </>
+  ),
+  "venetian-plaster": (
+    <>
+      <path d="M4 14h11l3-3H7Z" />
+      <path d="M11 11V7a2 2 0 0 1 2-2h1" />
+      <path d="M4 19c3-2 6 0 9-1s5-2 7-1" />
+    </>
+  ),
   "window-tinting": (
     <>
       <path d="M3 15l2-6h14l2 6v3H3Z" />

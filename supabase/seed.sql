@@ -18,6 +18,7 @@ from (values
   ('home-trades', 'gas-boilers', 'Gas & boilers', 'gas_safe', null),
   ('home-trades', 'joiner', 'Joiner', 'none', null),
   ('home-trades', 'plasterer', 'Plasterer', 'none', null),
+  ('home-trades', 'venetian-plaster', 'Venetian plaster', 'none', null),
   ('home-trades', 'painter-decorator', 'Painter & decorator', 'none', null),
   ('home-trades', 'roofer', 'Roofer', 'none', null),
   ('home-trades', 'handyman', 'Handyman', 'none', null),
@@ -65,6 +66,7 @@ from (values
   ('vehicles', 'valeting', 'Car valeting', 'none', null),
   ('vehicles', 'mot', 'MOT test', 'none', 'MOTs can only be done at a DVSA-approved test centre: look for the blue sign with three white triangles.'),
   ('vehicles', 'mobile-tyre-fitting', 'Mobile tyre fitting', 'none', null),
+  ('vehicles', 'vehicle-recovery', 'Vehicle recovery', 'none', 'Agree the price before they set off (recovery is often charged by distance), and ask if they have goods-in-transit insurance to cover your vehicle while it''s on their truck.'),
   ('vehicles', 'window-tinting', 'Window tinting', 'none', 'The windscreen must let through at least 75% of light and the front side windows at least 70%. Darker tints there can mean a fine or a failed MOT; rear windows have no limit.')
 ) as v(group_slug, slug, name, requirement, guidance_note)
 join public.category_groups g on g.slug = v.group_slug

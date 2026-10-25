@@ -36,8 +36,10 @@
 //     --out docs/launch/auto-live-production.sql
 //   node scripts/build-production-sql.mjs --preset one-step --from 20261012000042 --to 20261012000042 \
 //     --out docs/launch/one-step-production.sql
-//   node scripts/build-production-sql.mjs --preset check-numbers --from 20261012000043 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset check-numbers --from 20261012000043 --to 20261012000043 \
 //     --out docs/launch/check-numbers-production.sql
+//   node scripts/build-production-sql.mjs --preset plaster-recovery --from 20261012000044 --to <newest> \
+//     --out docs/launch/plaster-recovery-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -647,6 +649,19 @@ end
 $verify$;
 `;
 
+const VERIFY_PLASTER_RECOVERY = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if (select count(*) from public.categories c join public.category_groups g on g.id = c.group_id
+      where c.active and ((c.slug = 'venetian-plaster' and g.slug = 'home-trades')
+                       or (c.slug = 'vehicle-recovery' and g.slug = 'vehicles'))) <> 2 then
+    raise exception 'Venetian plaster and vehicle recovery check failed: one of the two trades is missing';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -768,6 +783,12 @@ const PRESETS = {
     done: "Check numbers applied",
     requires: { version: "20261012000042", what: "the one-step script (docs/launch/one-step-production.sql)" },
     verify: VERIFY_CHECK_NUMBERS,
+  },
+  "plaster-recovery": {
+    title: "Venetian plaster and vehicle recovery (two new trades)",
+    done: "Venetian plaster and vehicle recovery applied",
+    requires: { version: "20261012000043", what: "the check numbers script (docs/launch/check-numbers-production.sql)" },
+    verify: VERIFY_PLASTER_RECOVERY,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

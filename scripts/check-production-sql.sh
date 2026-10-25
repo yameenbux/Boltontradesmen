@@ -54,6 +54,8 @@ SCRIPT18=docs/launch/one-step-production.sql
 UNTIL18=20261012000041
 SCRIPT19=docs/launch/check-numbers-production.sql
 UNTIL19=20261012000042
+SCRIPT20=docs/launch/plaster-recovery-production.sql
+UNTIL20=20261012000043
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
 echo "[check-prod] database at $UNTIL"
@@ -357,10 +359,25 @@ if "${PSQL[@]}" -f "$SCRIPT19" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT1
 echo "[check-prod] applying $SCRIPT19"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT19")"
 echo "$out" | tail -1
-expected19="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL19" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+expected19="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; v="${b%%_*}"; if [[ "$v" > "$UNTIL19" && ! "$v" > "$UNTIL20" ]]; then echo "$b"; fi; done | wc -l | tr -d ' ')"
 echo "$out" | grep -q "^Check numbers applied|$expected19\$" || { echo "[check-prod] the closing check did not report $expected19 migrations"; exit 1; }
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT19" | tail -1
+
+echo "[check-prod] the Venetian plaster and recovery script refuses to run before the check numbers one is recorded"
+"${PSQL[@]}" -c "delete from supabase_migrations.schema_migrations where version = '$UNTIL20'"
+if "${PSQL[@]}" -f "$SCRIPT20" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT20 ran before $SCRIPT19"; exit 1; fi
+"${PSQL[@]}" -A -t -c "select count(*) = 0 from supabase_migrations.schema_migrations where version > '$UNTIL20'" | grep -qx t \
+  || { echo "[check-prod] the refused Venetian plaster and recovery script left something behind"; exit 1; }
+"${PSQL[@]}" -A -t -f "$SCRIPT19" | tail -1
+
+echo "[check-prod] applying $SCRIPT20"
+out="$("${PSQL[@]}" -A -t -f "$SCRIPT20")"
+echo "$out" | tail -1
+expected20="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL20" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^Venetian plaster and vehicle recovery applied|$expected20\$" || { echo "[check-prod] the closing check did not report $expected20 migrations"; exit 1; }
+echo "[check-prod] applying it a second time (a re-run must not fail)"
+"${PSQL[@]}" -A -t -f "$SCRIPT20" | tail -1
 
 # The pgTAP tests expect only their own fixtures.
 "${PSQL[@]}" -c "delete from public.providers where slug in ('prod-check-travel', 'prod-check-paused', 'prod-check-live', 'prod-check-dupe');
