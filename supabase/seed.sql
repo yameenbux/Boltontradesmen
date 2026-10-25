@@ -7,7 +7,8 @@ insert into public.category_groups (name, slug, sort, asks_tidy) values
   ('Events & occasions', 'events-occasions', 4, false),
   ('Personal & lessons', 'personal-lessons', 5, false),
   ('Vehicles', 'vehicles', 6, false),
-  ('Business & finance', 'business-finance', 8, false);
+  ('Business & finance', 'business-finance', 8, false)
+on conflict (slug) do nothing;
 
 insert into public.categories (group_id, slug, name, requirement, guidance_note)
 select g.id, v.slug, v.name, v.requirement::public.category_requirement, v.guidance_note
@@ -63,7 +64,8 @@ from (values
   ('vehicles', 'mot', 'MOT', 'none', null),
   ('vehicles', 'mobile-tyre-fitting', 'Mobile tyre fitting', 'none', null)
 ) as v(group_slug, slug, name, requirement, guidance_note)
-join public.category_groups g on g.slug = v.group_slug;
+join public.category_groups g on g.slug = v.group_slug
+on conflict (slug) do nothing;
 
 insert into public.settings (key, value) values
   ('enquiry_threshold', '5'::jsonb),
