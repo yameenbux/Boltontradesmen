@@ -9,7 +9,7 @@ import type { ConsentCard } from "@/lib/consent-shared";
 import { BL_DISTRICTS } from "@/lib/districts";
 import { LISTING_LIMITS } from "@/lib/listing-request";
 import { FREE_FEATURES, PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";
-import { MAX_TRADES, type TraderSetupState } from "@/lib/trader-setup";
+import { CHECK_TRADES, MAX_TRADES, type TraderSetupState } from "@/lib/trader-setup";
 
 type Key = keyof NonNullable<TraderSetupState["errors"]>;
 
@@ -100,6 +100,27 @@ export function TraderSetupForm({
         ))}
         <Err k="trades" msg={err.trades} />
       </fieldset>
+
+      {/* Shown (CSS :has) when the trade is ticked; the server asks for them either way. */}
+      {CHECK_TRADES.map((c) => (
+        <fieldset key={c.kind} className={`ref-box ref-${c.slug}`} aria-describedby={`ts-${c.kind}-hint`}>
+          <legend className="avail-legend">{c.label}</legend>
+          <span id={`ts-${c.kind}-hint`} className="hint">
+            {c.hint}
+          </span>
+          <label className="field">
+            {c.label}
+            <input name={`${c.kind}_ref`} className="input" autoComplete="off" maxLength={20}
+              defaultValue={v(`${c.kind}_ref`)} {...invalid(c.kind)} />
+          </label>
+          <label className="field">
+            {c.expiryLabel}
+            <input name={`${c.kind}_expires`} type="date" className="input" defaultValue={v(`${c.kind}_expires`)}
+              {...invalid(c.kind)} />
+          </label>
+          <Err k={c.kind} msg={err[c.kind]} />
+        </fieldset>
+      ))}
 
       <fieldset className="tick-group" aria-describedby={err.areas ? "ts-areas-err" : "ts-areas-hint"}>
         <legend className="avail-legend">Postcode areas you cover</legend>

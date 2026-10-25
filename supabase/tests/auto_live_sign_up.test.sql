@@ -2,7 +2,7 @@
 -- the consent evidence; trades that need a check go live with no category; one listing per account; a listing the
 -- admin made and linked goes live when its owner agrees on their page; the admin's "new, check me" list and Checked.
 begin;
-select plan(28);
+select plan(34);
 
 update public.settings set value = '["al-admin@example.com"]'::jsonb where key = 'admin_emails';
 create function public.al_as(p_uid uuid) returns void language sql as $$
@@ -32,8 +32,8 @@ create temp table al_ev as select jsonb_build_object('ip', '203.0.113.9', 'text_
 grant select on al_ev to service_role, authenticated;
 
 -- ---------------------------------------------------------------- access
-select ok(not has_function_privilege('authenticated', 'public.trader_publish_listing(uuid, text, text, text[], text[], text, text, text, text, text, jsonb)', 'execute')
-          and has_function_privilege('service_role', 'public.trader_publish_listing(uuid, text, text, text[], text[], text, text, text, text, text, jsonb)', 'execute'),
+select ok(not has_function_privilege('authenticated', 'public.trader_publish_listing(uuid, text, text, text[], text[], text, text, text, text, text, jsonb, jsonb)', 'execute')
+          and has_function_privilege('service_role', 'public.trader_publish_listing(uuid, text, text, text[], text[], text, text, text, text, text, jsonb, jsonb)', 'execute'),
   'publishing: the server only');
 select ok(not has_function_privilege('authenticated', 'public.trader_agree_listing(uuid, uuid, jsonb)', 'execute'),
   'agreeing: the server only');
@@ -64,8 +64,16 @@ select is(public.trader_publish_listing('00000000-0000-0000-0000-000000009802', 
   array['BL2'], '+447700900986', null, null, 'free', 'ip-al5', (select ev from al_ev))->>'result', 'duplicate',
   'not with a number already on a listing (its WhatsApp counts)');
 select is(public.trader_publish_listing('00000000-0000-0000-0000-000000009802', 'Gail Gas', 'Gail G', array['gas-boilers'],
-  array['M26'], '+447700900985', null, null, 'free', 'ip-al3', (select ev from al_ev))->>'result', 'ok',
-  'a trade that needs a check still goes live');
+  array['M26'], '+447700900985', null, null, 'free', 'ip-al3', (select ev from al_ev))->>'result', 'invalid',
+  'a trade that needs a check needs its number');
+select is(public.trader_publish_listing('00000000-0000-0000-0000-000000009802', 'Gail Gas', 'Gail G', array['gas-boilers'],
+  array['M26'], '+447700900985', null, null, 'free', 'ip-al3', (select ev from al_ev),
+  jsonb_build_object('gas_safe', jsonb_build_object('ref', '123456', 'expires', (current_date - 1)::text)))->>'result', 'invalid',
+  'and an expiry that hasn''t passed');
+select is(public.trader_publish_listing('00000000-0000-0000-0000-000000009802', 'Gail Gas', 'Gail G', array['gas-boilers'],
+  array['M26'], '+447700900985', null, null, 'free', 'ip-al3', (select ev from al_ev),
+  jsonb_build_object('gas_safe', jsonb_build_object('ref', 'ab1234', 'expires', (current_date + 300)::text)))->>'result', 'ok',
+  'with them, it still goes live');
 reset role;
 
 select is((select status::text from public.providers where business_name = 'Sam Sparks'), 'live', 'live straight away');
@@ -119,6 +127,29 @@ select public.admin_mark_provider_reviewed((select id from al_sam));
 select ok((public.admin_get_provider((select id from al_sam))->>'reviewed_at') is not null
           and (public.admin_get_provider((select id from al_sam))->>'owner_email') = 'sam@al.example',
   'Checked is recorded; the admin sees the account''s email');
+
+-- ---------------------------------------------------------------- confirming a check number
+reset role;
+create temp table al_gail as select id from public.providers where business_name = 'Gail Gas';
+grant select on al_gail to authenticated;
+select is((select signup_refs->'gas_safe'->>'ref' || '|' || (signup_refs->'gas_safe'->>'slug') from public.providers where business_name = 'Gail Gas'),
+  'AB1234|gas-boilers', 'the number waits for the admin');
+set local role authenticated;
+select al_as('00000000-0000-0000-0000-000000009801');
+select throws_ok($$ select public.admin_confirm_signup_check((select id from al_gail), 'gas_safe') $$, '42501', null,
+  'only the admin confirms a number');
+select al_as('00000000-0000-0000-0000-0000000098a0');
+select throws_ok($$ select public.admin_confirm_signup_check((select id from al_gail), 'dvsa_adi') $$, 'P0001', 'nothing_to_confirm',
+  'only a number that was given');
+select public.admin_confirm_signup_check((select id from al_gail), 'gas_safe');
+reset role;
+select ok((select exists (select 1 from public.provider_checks k where k.provider_id = p.id and k.kind = 'gas_safe'
+                          and k.reference = 'AB1234' and k.expires_on = current_date + 300)
+                  and exists (select 1 from public.provider_categories pc join public.categories c on c.id = pc.category_id
+                              where pc.provider_id = p.id and c.slug = 'gas-boilers')
+                  and p.signup_refs is null and p.signup_trade is null
+           from public.providers p where p.business_name = 'Gail Gas'),
+  'confirmed: the check is recorded, the trade added, nothing left waiting');
 
 select * from finish();
 rollback;

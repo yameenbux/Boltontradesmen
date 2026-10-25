@@ -52,6 +52,8 @@ SCRIPT17=docs/launch/auto-live-production.sql
 UNTIL17=20261012000040
 SCRIPT18=docs/launch/one-step-production.sql
 UNTIL18=20261012000041
+SCRIPT19=docs/launch/check-numbers-production.sql
+UNTIL19=20261012000042
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
 echo "[check-prod] database at $UNTIL"
@@ -340,10 +342,25 @@ if "${PSQL[@]}" -f "$SCRIPT18" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT1
 echo "[check-prod] applying $SCRIPT18"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT18")"
 echo "$out" | tail -1
-expected18="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL18" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+expected18="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; v="${b%%_*}"; if [[ "$v" > "$UNTIL18" && ! "$v" > "$UNTIL19" ]]; then echo "$b"; fi; done | wc -l | tr -d ' ')"
 echo "$out" | grep -q "^One-step sign-up applied|$expected18\$" || { echo "[check-prod] the closing check did not report $expected18 migrations"; exit 1; }
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT18" | tail -1
+
+echo "[check-prod] the check numbers script refuses to run before the one-step one is recorded"
+"${PSQL[@]}" -c "delete from supabase_migrations.schema_migrations where version = '$UNTIL19'"
+if "${PSQL[@]}" -f "$SCRIPT19" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT19 ran before $SCRIPT18"; exit 1; fi
+"${PSQL[@]}" -A -t -c "select count(*) = 0 from information_schema.columns where table_schema = 'public' and table_name = 'providers' and column_name = 'signup_refs'" | grep -qx t \
+  || { echo "[check-prod] the refused check numbers script left something behind"; exit 1; }
+"${PSQL[@]}" -A -t -f "$SCRIPT18" | tail -1
+
+echo "[check-prod] applying $SCRIPT19"
+out="$("${PSQL[@]}" -A -t -f "$SCRIPT19")"
+echo "$out" | tail -1
+expected19="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL19" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^Check numbers applied|$expected19\$" || { echo "[check-prod] the closing check did not report $expected19 migrations"; exit 1; }
+echo "[check-prod] applying it a second time (a re-run must not fail)"
+"${PSQL[@]}" -A -t -f "$SCRIPT19" | tail -1
 
 # The pgTAP tests expect only their own fixtures.
 "${PSQL[@]}" -c "delete from public.providers where slug in ('prod-check-travel', 'prod-check-paused', 'prod-check-live', 'prod-check-dupe');

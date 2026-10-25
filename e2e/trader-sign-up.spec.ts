@@ -87,6 +87,49 @@ test("a new trader: tick trades and areas, mobile and WhatsApp, Confirm, live; t
   await expect(admin.getByRole("link", { name: new RegExp(business) })).not.toContainText("New, check me");
 });
 
+test("a driving instructor gives their ADI badge number; the admin looks it up and lists them with one press", async ({ page, browser }, testInfo) => {
+  await page.setExtraHTTPHeaders(ip(42));
+  const email = `adi-trader-${Date.now()}@${E2E_EMAIL_DOMAIN}`;
+  const business = `E2E Driving ${Date.now()}`;
+  await signInWithEmail(page, email, { first: "Dee", surname: "Drive" });
+  await page.goto("/provider");
+  const form = page.getByTestId("trader-setup");
+  await form.getByLabel("Business name").fill(business);
+  const badge = form.getByRole("textbox", { name: "ADI badge number" });
+  await expect(badge).toBeHidden();
+  await form.getByText("Personal & lessons", { exact: true }).click();
+  await form.getByRole("checkbox", { name: "Driving instructors" }).check();
+  // Ticking the trade asks for the badge.
+  await expect(badge).toBeVisible();
+  await form.getByRole("checkbox", { name: "BL1" }).check();
+  await form.getByLabel(/^Mobile number/).fill(`07700 900${String((Date.now() + 250) % 1000).padStart(3, "0")}`);
+  await form.getByRole("radio", { name: /^Free/ }).check();
+  await form.getByRole("button", { name: "Confirm" }).click();
+  await expect(form).toContainText("Enter the number as it's shown on your card or badge");
+  const expires = new Date(Date.now() + 400 * 86_400_000).toISOString().slice(0, 10);
+  await form.getByRole("textbox", { name: "ADI badge number" }).fill("123456");
+  await form.getByLabel("Badge expiry date").fill(expires);
+  await form.getByRole("button", { name: "Confirm" }).click();
+  await expect(page).toHaveURL(/\/provider\/live$/);
+
+  // Live, but not under Driving instructors until the admin has looked the number up.
+  const admin = await (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
+  await adminSignIn(admin);
+  const row = admin.getByRole("link", { name: new RegExp(business) });
+  await expect(row).toContainText("Driving instructors (needs a check)");
+  await row.click();
+  const check = admin.getByTestId("signup-check-dvsa_adi");
+  await expect(check).toContainText("ADI badge number: 123456");
+  await check.getByRole("button", { name: "It checks out: add Driving instructors" }).click();
+  await expect(admin.getByTestId("signup-check-dvsa_adi")).toHaveCount(0);
+  expect(
+    sql(`select k.reference || '|' || k.expires_on || '|' || c.slug from public.providers p
+         join public.provider_checks k on k.provider_id = p.id and k.kind = 'dvsa_adi'
+         join public.provider_categories pc on pc.provider_id = p.id join public.categories c on c.id = pc.category_id
+         where p.business_name = '${business}'`),
+  ).toBe(`123456|${expires}|driving-instructors`);
+});
+
 test("a customer: same sign-in page, says they're looking for a trader, lands on the directory", async ({ page }) => {
   await page.goto("/sign-in");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Log in or create an account");
