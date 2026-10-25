@@ -1,8 +1,8 @@
 flowchart TB
     USER["<b>A phone or a laptop</b><br/>the browser, or the<br/>Home Screen app (PWA)"]
-    DNS["<b>www.boltonvouched.co.uk</b><br/>DNS at Cloudflare,<br/>a CNAME to Railway"]
+    DNS["<b>www.boltonvouched.co.uk</b><br/>DNS at Cloudflare,<br/>pointing at Render"]
 
-    subgraph RAIL["Railway: service web, deployed from main"]
+    subgraph RAIL["Render: web service, deployed from main"]
         direction TB
         NEXT["<b>Next.js 16</b><br/>the directory and<br/>admin, with the lock<br/>in proxy.ts"]
         CONTACT["<b>/api/contact</b><br/>logs the tap, then<br/>redirects to tel: or wa.me"]
