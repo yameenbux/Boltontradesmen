@@ -46,7 +46,7 @@ SCRIPT14=docs/launch/launch-hardening-production.sql
 UNTIL14=20261012000037
 SCRIPT15=docs/launch/new-categories-production.sql
 UNTIL15=20261012000038
-SCRIPT16=docs/launch/estate-agents-production.sql
+SCRIPT16=docs/launch/more-categories-production.sql
 UNTIL16=20261012000039
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
@@ -293,18 +293,18 @@ echo "$out" | grep -q "^New categories applied|$expected15\$" || { echo "[check-
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT15" | tail -1
 
-echo "[check-prod] the estate agents script refuses to run before the new categories one is recorded"
+echo "[check-prod] the more categories script refuses to run before the new categories one is recorded"
 "${PSQL[@]}" -c "delete from supabase_migrations.schema_migrations where version = '$UNTIL16'"
 if "${PSQL[@]}" -f "$SCRIPT16" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT16 ran before $SCRIPT15"; exit 1; fi
 "${PSQL[@]}" -A -t -c "select count(*) = 0 from supabase_migrations.schema_migrations where version > '$UNTIL16'" | grep -qx t \
-  || { echo "[check-prod] the refused estate agents script left something behind"; exit 1; }
+  || { echo "[check-prod] the refused more categories script left something behind"; exit 1; }
 "${PSQL[@]}" -A -t -f "$SCRIPT15" | tail -1
 
 echo "[check-prod] applying $SCRIPT16"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT16")"
 echo "$out" | tail -1
 expected16="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL16" ]] && echo "$b"; done | wc -l | tr -d ' ')"
-echo "$out" | grep -q "^Estate agents applied|$expected16\$" || { echo "[check-prod] the closing check did not report $expected16 migrations"; exit 1; }
+echo "$out" | grep -q "^More categories applied|$expected16\$" || { echo "[check-prod] the closing check did not report $expected16 migrations"; exit 1; }
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT16" | tail -1
 

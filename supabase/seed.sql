@@ -6,7 +6,8 @@ insert into public.category_groups (name, slug, sort, asks_tidy) values
   ('Moving & waste', 'moving-waste', 3, true),
   ('Events & occasions', 'events-occasions', 4, false),
   ('Personal & lessons', 'personal-lessons', 5, false),
-  ('Vehicles', 'vehicles', 6, false);
+  ('Vehicles', 'vehicles', 6, false),
+  ('Business & finance', 'business-finance', 8, false);
 
 insert into public.categories (group_id, slug, name, requirement, guidance_note)
 select g.id, v.slug, v.name, v.requirement::public.category_requirement, v.guidance_note
@@ -42,6 +43,7 @@ from (values
   ('moving-waste', 'skip-hire', 'Skip hire', 'none', null),
   ('moving-waste', 'house-clearance', 'House clearance', 'none', null),
   ('moving-waste', 'estate-agents', 'Estate agents', 'none', 'Estate agents must belong to a government-approved redress scheme (The Property Ombudsman or the Property Redress Scheme). Ask which one before you sign.'),
+  ('business-finance', 'accountants', 'Accountants', 'none', 'Anyone can call themselves an accountant. Look for membership of ICAEW, ACCA, CIMA or AAT.'),
   ('events-occasions', 'caterer', 'Catering services', 'none', null),
   ('events-occasions', 'bouncy-castles', 'Bouncy castles', 'none', null),
   ('events-occasions', 'dj', 'DJ', 'none', null),

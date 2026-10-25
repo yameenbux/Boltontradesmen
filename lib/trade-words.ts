@@ -35,6 +35,8 @@ const WORDS: Record<string, readonly string[]> = {
   "rubbish-removal": ["rubbish", "junk", "waste", "tip run"],
   "man-and-van": ["man and van", "van", "removals", "removal", "moving house", "move house"],
   "skip-hire": ["skip"],
+  accountants: ["accountant", "accountancy", "accounts", "bookkeeper", "bookkeeping", "tax return", "self assessment", "vat return", "payroll"],
+  "travel-agents": ["travel agent", "holiday", "package holiday", "flight", "cheap flight", "umrah", "hajj", "cruise"],
   "estate-agents": ["estate agent", "letting agent", "lettings", "sell my house", "selling my house", "sell our house", "house valuation", "property valuation", "rent out my house"],
   "house-clearance": ["house clearance", "clearance", "clear out"],
   caterer: ["caterer", "catering", "buffet"],

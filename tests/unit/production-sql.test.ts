@@ -136,8 +136,8 @@ const SCRIPTS = [
     requires: "20261012000038",
   },
   {
-    file: "docs/launch/estate-agents-production.sql",
-    preset: "estate-agents",
+    file: "docs/launch/more-categories-production.sql",
+    preset: "more-categories",
     from: "20261012000040",
     to: NEWEST,
     functions: [],
