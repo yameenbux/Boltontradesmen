@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { guessTrade } from "@/lib/trade-words";
+import { guessTrade, matchesTrade } from "@/lib/trade-words";
 import { ASK_MATCH_LIMIT, askMatches } from "@/lib/ask-matches";
 import type { PublicProvider } from "@/lib/directory";
 
@@ -134,5 +134,22 @@ describe("askMatches", () => {
 
   it("reports none", () => {
     expect(askMatches({ ranked: [], newcomers: [] })).toEqual({ total: 0, top: [] });
+  });
+});
+
+describe("matchesTrade (the trader form's trade search)", () => {
+  const fits = (q: string) => cats.filter((c) => matchesTrade(q, c)).map((c) => c.slug);
+  it("finds a trade by the start of its name or its words, any case", () => {
+    expect(fits("venet")).toEqual(["venetian-plaster"]);
+    expect(fits("Polished plaster")).toEqual(["venetian-plaster"]);
+    expect(fits("sparky")).toEqual(["electrician"]);
+    expect(fits("roofers")).toContain("roofer");
+    expect(fits("brick layers")).toContain("bricklayer");
+    expect(fits("tow")).toContain("vehicle-recovery");
+  });
+  it("needs every word, and an empty search fits everything", () => {
+    expect(fits("plaster")).toEqual(expect.arrayContaining(["plasterer", "venetian-plaster"]));
+    expect(fits("venetian roof")).toEqual([]);
+    expect(fits("  ")).toHaveLength(cats.length);
   });
 });

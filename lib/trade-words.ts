@@ -9,7 +9,7 @@ const WORDS: Record<string, readonly string[]> = {
   "gas-boilers": ["boiler", "combi", "gas", "hob", "gas safe", "gas engineer", "gas fire"],
   "heating-repair": ["radiator", "heating", "central heating", "underfloor"],
   plumber: ["plumber", "plumbing", "leak", "leaking", "tap", "toilet", "sink", "pipe", "drain", "blocked", "shower", "bath", "cistern"],
-  electrician: ["electrician", "electrics", "electrical", "socket", "fuse", "fuse box", "consumer unit", "wiring", "rewire", "light fitting"],
+  electrician: ["electrician", "sparky", "electrics", "electrical", "socket", "fuse", "fuse box", "consumer unit", "wiring", "rewire", "light fitting"],
   joiner: ["joiner", "carpenter", "joinery", "skirting", "worktop"],
   plasterer: ["plasterer", "plasterers", "plaster", "plastering", "skim", "rendering", "render"],
   "venetian-plaster": ["venetian plaster", "venetian plastering", "venetian", "polished plaster", "decorative plaster", "marmorino", "tadelakt", "microcement"],
@@ -102,4 +102,16 @@ export function guessTrade<T extends Named>(text: string, categories: readonly T
     }
   }
   return best?.cat ?? null;
+}
+
+/**
+ * Whether a trade fits what someone typed in a trade search (the trader form's "Search your trade"): every typed
+ * word starts a word of the trade's name or of its words, so "venet", "polished plaster" and "tow" all find theirs.
+ * An empty search fits everything.
+ */
+export function matchesTrade(query: string, cat: Named): boolean {
+  const typed = words(query);
+  if (typed.length === 0) return true;
+  const known = [cat.name, ...(WORDS[cat.slug] ?? [])].flatMap(words);
+  return typed.every((t) => known.some((k) => k.startsWith(t)));
 }

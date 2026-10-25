@@ -36,9 +36,18 @@ test("a new trader: tick trades and areas, mobile and WhatsApp, Confirm, live; t
   await form.getByLabel("First name").fill("Tom");
   await form.getByLabel("Surname").fill("Trades");
   await form.getByLabel("Business name").fill(business);
-  // Trades by group, as ticks.
-  await form.getByText("Home & trades", { exact: true }).click();
+  // Trades by group, as ticks, with a search: "venet" narrows the list to Venetian plaster, and a tick stays
+  // when the search is cleared.
+  const search = form.getByRole("searchbox", { name: "Search your trade" });
+  await search.fill("venet");
+  await expect(form.getByRole("checkbox", { name: "Venetian plaster" })).toBeVisible();
+  await expect(form.getByRole("checkbox", { name: "Plumber", exact: true })).toBeHidden();
+  await search.press("Enter"); // searches; doesn't send the form
+  await expect(page).toHaveURL(/\/provider$/);
+  await search.fill("plumb");
   await form.getByRole("checkbox", { name: "Plumber", exact: true }).check();
+  await search.fill("");
+  await expect(form.getByTestId("trades-ticked")).toHaveText("Ticked: Plumber");
   // Nothing ticked for areas: the form says so and keeps what was filled in.
   await form.getByLabel(/^Mobile number/).fill(phone);
   await expect(form.getByRole("checkbox", { name: "Customers can WhatsApp me on this number" })).toBeChecked();
