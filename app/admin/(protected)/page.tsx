@@ -105,7 +105,7 @@ export default async function AdminHome() {
                 <span className="min-w-0">
                   <b>{r.business_name}</b>
                   <small>
-                    {r.phone_e164} · {r.categories.join(", ") || (r.signup_trade ? `typed “${r.signup_trade}”` : "no categories")}
+                    {r.phone_e164} · {r.categories.join(", ") || (r.signup_trade ? `${r.signup_trade} (needs a check)` : "no categories")}
                   </small>
                 </span>
                 <span className="flex flex-wrap items-center justify-end gap-2">

@@ -120,16 +120,31 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
         <section aria-label="New listing" className="a-card" data-testid="new-listing">
           <h2>New, check me</h2>
           <p className="a-lede">
-            This went live from the trader&apos;s own sign-up{p.created_at ? ` on ${dayMonthYear(p.created_at)}` : ""}. Check
+            This trader signed up and went live{p.created_at ? ` on ${dayMonthYear(p.created_at)}` : ""}. Check
             the name, trade, areas and number below; anything you change is saved without telling them (except the
             phone number: changing it emails them, so calls never go somewhere they don&apos;t expect).
           </p>
           {p.signup_trade && (
             <p className="a-err">
-              They typed &ldquo;{p.signup_trade}&rdquo; as their trade, which isn&apos;t listed yet (or needs a check
-              first). Choose their category below.
+              They ticked {p.signup_trade}, which needs a check first (Gas Safe or DVSA). Record the check below, then
+              add the trade.
             </p>
           )}
+          <p className="flex flex-wrap gap-x-4 gap-y-1" data-testid="trader-contact">
+            <a className="a-link" href={`tel:${p.phone_e164}`}>
+              Call {p.phone_e164}
+            </a>
+            {p.whatsapp_e164 && (
+              <a className="a-link" href={`https://wa.me/${p.whatsapp_e164.replace(/^\+/, "")}`}>
+                WhatsApp
+              </a>
+            )}
+            {p.owner_email && (
+              <a className="a-link" href={`mailto:${p.owner_email}`}>
+                {p.owner_email}
+              </a>
+            )}
+          </p>
           <MarkReviewedForm providerId={p.id} />
         </section>
       )}

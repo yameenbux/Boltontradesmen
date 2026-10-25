@@ -50,6 +50,8 @@ SCRIPT16=docs/launch/more-categories-production.sql
 UNTIL16=20261012000039
 SCRIPT17=docs/launch/auto-live-production.sql
 UNTIL17=20261012000040
+SCRIPT18=docs/launch/one-step-production.sql
+UNTIL18=20261012000041
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
 echo "[check-prod] database at $UNTIL"
@@ -320,13 +322,28 @@ if "${PSQL[@]}" -f "$SCRIPT17" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT1
 echo "[check-prod] applying $SCRIPT17"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT17")"
 echo "$out" | tail -1
-expected17="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL17" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+expected17="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; v="${b%%_*}"; if [[ "$v" > "$UNTIL17" && ! "$v" > "$UNTIL18" ]]; then echo "$b"; fi; done | wc -l | tr -d ' ')"
 echo "$out" | grep -q "^Auto-live sign-up applied|$expected17\$" || { echo "[check-prod] the closing check did not report $expected17 migrations"; exit 1; }
 # Listings from before it count as checked: none shows as new.
 "${PSQL[@]}" -A -t -c "select count(*) = 0 from public.providers where reviewed_at is null" | grep -qx t \
   || { echo "[check-prod] an existing listing shows as not checked"; exit 1; }
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT17" | tail -1
+
+echo "[check-prod] the one-step script refuses to run before the auto-live one is recorded"
+"${PSQL[@]}" -c "delete from supabase_migrations.schema_migrations where version = '$UNTIL18'"
+if "${PSQL[@]}" -f "$SCRIPT18" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT18 ran before $SCRIPT17"; exit 1; fi
+"${PSQL[@]}" -A -t -c "select to_regprocedure('public.trader_publish_listing(uuid, text, text, text[], text[], text, text, text, text, text, jsonb)') is null" | grep -qx t \
+  || { echo "[check-prod] the refused one-step script left something behind"; exit 1; }
+"${PSQL[@]}" -A -t -f "$SCRIPT17" | tail -1
+
+echo "[check-prod] applying $SCRIPT18"
+out="$("${PSQL[@]}" -A -t -f "$SCRIPT18")"
+echo "$out" | tail -1
+expected18="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL18" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^One-step sign-up applied|$expected18\$" || { echo "[check-prod] the closing check did not report $expected18 migrations"; exit 1; }
+echo "[check-prod] applying it a second time (a re-run must not fail)"
+"${PSQL[@]}" -A -t -f "$SCRIPT18" | tail -1
 
 # The pgTAP tests expect only their own fixtures.
 "${PSQL[@]}" -c "delete from public.providers where slug in ('prod-check-travel', 'prod-check-paused', 'prod-check-live', 'prod-check-dupe');

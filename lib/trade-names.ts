@@ -10,3 +10,16 @@ export async function tradeNames(): Promise<string[]> {
     return [];
   }
 }
+
+/** The trades to tick on the trader form, by group, as the directory lists them. A form without them can't be sent. */
+export async function tradeGroups(): Promise<{ name: string; trades: { slug: string; name: string }[] }[]> {
+  try {
+    const groups = await listCategoryGroups();
+    return groups
+      .map((g) => ({ name: g.group.name, trades: g.categories.map((c) => ({ slug: c.slug, name: c.name })) }))
+      .filter((g) => g.trades.length > 0);
+  } catch (err) {
+    console.error("trade groups: could not load the trades:", err);
+    return [];
+  }
+}

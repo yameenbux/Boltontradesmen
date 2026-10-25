@@ -624,6 +624,22 @@ h1,h2,h3{text-wrap:balance}
   .points-plain li{grid-template-columns:minmax(0,1fr); padding:14px 16px}
   .points-plain p{font-size:15.5px}
   .points-plain b{font-size:16px}
+  .tick-group{border:0; margin:0; padding:0; display:grid; gap:8px; min-width:0}
+  .tick-section{border:1.5px solid var(--line); border-radius:14px; background:var(--bg)}
+  .tick-section summary{min-height:48px; display:flex; align-items:center; padding:0 14px; font-weight:700; cursor:pointer}
+  .tick-section[open] summary{border-bottom:1px solid var(--line)}
+  .tick-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr)); gap:4px 12px; padding:8px 14px 12px}
+  .tick-grid-areas{grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); padding:0}
+  .tick{display:flex; gap:10px; align-items:center; min-height:44px; font-size:16px; cursor:pointer}
+  .tick input{flex:none; width:22px; height:22px; margin:0; accent-color:var(--brick)}
+  .confirm-line{font-size:15.5px; color:var(--ink-2)}
+  .confirm-line p{margin:0}
+  .confirm-line b{color:var(--ink); font-weight:600}
+  .confirm-line a{color:var(--brick); text-underline-offset:3px}
+  .live-card{text-align:center; justify-items:center}
+  .live-card > *{width:100%}
+  .live-tick{width:64px !important; height:64px; border-radius:50%; background:var(--sage); color:var(--surface); display:grid; place-items:center}
+  .live-tick svg{width:32px; height:32px}
   .btn-danger{color:var(--brick); border-color:var(--brick)}
 
   /* ---------- availability form (trader's page and admin's provider page) ---------- */
