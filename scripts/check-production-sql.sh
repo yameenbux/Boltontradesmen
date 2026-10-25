@@ -279,7 +279,7 @@ echo "[check-prod] applying it a second time (a re-run must not fail)"
 echo "[check-prod] the new categories script refuses to run before the launch hardening one is recorded"
 "${PSQL[@]}" -c "delete from supabase_migrations.schema_migrations where version = '$UNTIL15'"
 if "${PSQL[@]}" -f "$SCRIPT15" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT15 ran before $SCRIPT14"; exit 1; fi
-"${PSQL[@]}" -A -t -c "select count(*) = 0 from public.categories where slug = 'gutter-cleaning'" | grep -qx t \
+"${PSQL[@]}" -A -t -c "select count(*) = 0 from supabase_migrations.schema_migrations where version > '$UNTIL15'" | grep -qx t \
   || { echo "[check-prod] the refused new categories script left something behind"; exit 1; }
 "${PSQL[@]}" -A -t -f "$SCRIPT14" | tail -1
 
