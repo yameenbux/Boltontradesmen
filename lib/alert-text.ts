@@ -189,3 +189,37 @@ export function approvalEmail(a: Approval, link: string): Email {
     html: customerHtml(lines, { href: link, label }, FROM_US),
   };
 }
+
+// ---------------------------------------------------------------- a trader's own sign-up, live straight away
+
+export function liveEmail(a: Approval, link: string): Email {
+  const lines = [
+    `Hi ${a.name},`,
+    `${a.business} is live on Bolton Vouched. Customers can find you and call or WhatsApp you now.`,
+    a.pro
+      ? "You chose Pro. Tap below to pay by card (£10 a month or £100 a year) and Pro switches on straight away: job requests by text, Ask Bolton alerts, quotes and invoices, and more. Cancel any time."
+      : "Sign in to see your page, reply to reviews and share your review link. You can add Pro any time.",
+  ];
+  const label = a.pro ? "Start Pro" : "See your listing";
+  return {
+    subject: `${a.business} is live on Bolton Vouched`,
+    text: `${lines.join("\n\n")}\n\n${label}: ${link}\n\n${FROM_US}\n`,
+    html: customerHtml(lines, { href: link, label }, FROM_US),
+  };
+}
+
+// ---------------------------------------------------------------- the admin changed a listing's number
+
+export function numberChangedEmail(business: string, phone: string, link: string, contact: string): Email {
+  const lines = [
+    "Hi,",
+    `We've updated the phone number on ${business}'s Bolton Vouched listing to ${nationalNumber(phone)}. Customers' calls and WhatsApps now go to this number.`,
+    `If that's not right, email ${contact} and we'll change it back.`,
+  ];
+  const label = "See your listing";
+  return {
+    subject: `The number on ${business}'s listing has changed`,
+    text: `${lines.join("\n\n")}\n\n${label}: ${link}\n\n${FROM_US}\n`,
+    html: customerHtml(lines, { href: link, label }, FROM_US),
+  };
+}

@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import {
+  markReviewed,
   newConsentLink,
   newTraderLink,
   recordCheck,
@@ -174,13 +175,25 @@ export function StatusForm({ providerId, current, hasConsent }: { providerId: st
   );
 }
 
-export function ConsentLinkButton({ providerId, status, expires }: { providerId: string; status: string; expires?: string | null }) {
+export function ConsentLinkButton({
+  providerId,
+  status,
+  expires,
+  made = false,
+}: {
+  providerId: string;
+  status: string;
+  expires?: string | null;
+  made?: boolean;
+}) {
   const [link, setLink] = useState<string | null>(null);
   const [expiresOn, setExpiresOn] = useState<string | null>(expires ?? null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function onClick() {
+    // A new link cancels the one already sent: the trader who opens the old one sees "this link doesn't work".
+    if ((made || link) && !window.confirm("This cancels the link you made before, so the trader can only use the new one. Make a new link?")) return;
     setBusy(true);
     setMessage(null);
     const res = await newConsentLink(providerId);
@@ -207,7 +220,10 @@ export function ConsentLinkButton({ providerId, status, expires }: { providerId:
       <Button type="button" onClick={onClick} disabled={busy}>
         New consent link
       </Button>
-      <p className="a-hint">Creates a fresh link and copies it, ready to paste into WhatsApp.</p>
+      <p className="a-hint">
+        Creates a fresh link and copies it, ready to paste into WhatsApp. It cancels any earlier link: send only the
+        newest. A trader with an account doesn&apos;t need one: they agree on their listing page when they sign in.
+      </p>
       {expiresOn && <p className="a-hint">Link expires on {expiresOn}</p>}
       {message && <p role="status" className="a-ok">{message}</p>}
       {link && <input readOnly aria-label="Consent link" value={link} onFocus={(e) => e.currentTarget.select()} className={`${input} w-full`} />}
@@ -360,6 +376,24 @@ export function UnlinkForm({ providerId }: { providerId: string }) {
         </Button>
       </div>
       <p className="a-hint">Use this if the wrong person opened the link. You can then make a new one.</p>
+    </form>
+  );
+}
+
+/**
+ * The admin's review of a listing that went live on its own (trader sign-up): Checked clears "New, check me" (the
+ * page refreshes without the panel).
+ */
+export function MarkReviewedForm({ providerId }: { providerId: string }) {
+  const [state, action, pending] = useActionState(markReviewed, {} as FormState);
+  if (state.ok) return <p role="status" className="a-ok">Marked as checked.</p>;
+  return (
+    <form action={action} className="grid gap-2">
+      <input type="hidden" name="provider_id" value={providerId} />
+      <Button type="submit" disabled={pending}>
+        Checked
+      </Button>
+      {state.message && <p role="alert" className="a-err">{state.message}</p>}
     </form>
   );
 }

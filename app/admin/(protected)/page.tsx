@@ -8,12 +8,23 @@ import { requireAdmin } from "@/lib/admin";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Providers | Admin | Bolton Vouched",
-  description: "Every listed provider, their status and trades, with links to edit or invite them.",
+  description: "Every listed provider, their status and trades, new sign-ups to check first, with links to edit them.",
 };
 
 const STATUS_TONE = { invited: "gold", consented: "outline", live: "sage", paused: "muted", removed: "muted" } as const;
 
-type Row = { id: string; business_name: string; phone_e164: string; status: string; categories: string[] };
+type Row = {
+  id: string;
+  business_name: string;
+  phone_e164: string;
+  status: string;
+  categories: string[];
+  reviewed_at?: string | null;
+  signup_trade?: string | null;
+};
+
+// Went live from a trader's own sign-up and not checked yet (listed first).
+const toCheck = (r: Row) => !r.reviewed_at && r.status !== "removed";
 
 export default async function AdminHome() {
   const { supabase } = await requireAdmin();
@@ -30,7 +41,13 @@ export default async function AdminHome() {
     pending_pro_documents?: number;
     questions?: number;
   };
+  const unchecked = rows.filter(toCheck).length;
   const waiting = [
+    {
+      href: "/admin",
+      n: unchecked,
+      text: `${unchecked} new listing${unchecked === 1 ? "" : "s"} to check`,
+    },
     {
       href: "/admin/reviews",
       n: counts.pending ?? 0,
@@ -88,10 +105,13 @@ export default async function AdminHome() {
                 <span className="min-w-0">
                   <b>{r.business_name}</b>
                   <small>
-                    {r.phone_e164} · {r.categories.join(", ") || "no categories"}
+                    {r.phone_e164} · {r.categories.join(", ") || (r.signup_trade ? `typed “${r.signup_trade}”` : "no categories")}
                   </small>
                 </span>
-                <Pill tone={STATUS_TONE[r.status as keyof typeof STATUS_TONE] ?? "muted"}>{r.status}</Pill>
+                <span className="flex flex-wrap items-center justify-end gap-2">
+                  {toCheck(r) && <Pill tone="gold">New, check me</Pill>}
+                  <Pill tone={STATUS_TONE[r.status as keyof typeof STATUS_TONE] ?? "muted"}>{r.status}</Pill>
+                </span>
               </Link>
             </li>
           ))}

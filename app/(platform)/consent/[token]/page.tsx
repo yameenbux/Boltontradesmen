@@ -1,14 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import {
-  type ConsentCard,
-  type ConsentCardKey,
-  consentStatement,
-  PRIVACY_LINK_TEXT,
-  PRIVACY_PATH,
-  TERMS_LINK_TEXT,
-  TERMS_PATH,
-} from "@/lib/consent-text";
+import { ConsentParagraph } from "@/components/consent/ConsentParagraph";
+import { type ConsentCard, type ConsentCardKey, consentStatement } from "@/lib/consent-text";
 import { firstName } from "@/lib/initials";
 import { createServiceClient } from "@/lib/supabase/service";
 import { AgreeBox } from "./AgreeBox";
@@ -66,37 +58,13 @@ const ICONS: Record<Exclude<ConsentCardKey, "controller" | "privacy">, React.Rea
   ),
 };
 
-/**
- * One statement paragraph. Its text content is exactly `cardParagraph(card)`, the text that is hashed as evidence:
- * the bold title (with the privacy title's words linked, adding no text), ". ", then the body.
- */
+/** A statement paragraph; the agreement card is the tick box's label. */
 function Paragraph({ card }: { card: ConsentCard }) {
-  if (!card.title) return <p data-consent-paragraph>{card.body}</p>;
-  let title: React.ReactNode = card.title;
-  if (card.key === "privacy") {
-    const [beforeTerms, rest] = card.title.split(TERMS_LINK_TEXT);
-    const [between, after] = rest.split(PRIVACY_LINK_TEXT);
-    title = (
-      <>
-        {beforeTerms}
-        <Link href={TERMS_PATH}>{TERMS_LINK_TEXT}</Link>
-        {between}
-        <Link href={PRIVACY_PATH}>{PRIVACY_LINK_TEXT}</Link>
-        {after}
-      </>
-    );
-    return (
-      <AgreeBox>
-        <p data-consent-paragraph>
-          <b>{title}.</b>
-        </p>
-      </AgreeBox>
-    );
-  }
+  if (card.key !== "privacy") return <ConsentParagraph card={card} />;
   return (
-    <p data-consent-paragraph>
-      <b>{title}.</b> {card.body}
-    </p>
+    <AgreeBox>
+      <ConsentParagraph card={card} />
+    </AgreeBox>
   );
 }
 

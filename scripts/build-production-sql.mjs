@@ -30,8 +30,10 @@
 //     --out docs/launch/launch-hardening-production.sql
 //   node scripts/build-production-sql.mjs --preset new-categories --from 20261012000039 --to 20261012000039 \
 //     --out docs/launch/new-categories-production.sql
-//   node scripts/build-production-sql.mjs --preset more-categories --from 20261012000040 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset more-categories --from 20261012000040 --to 20261012000040 \
 //     --out docs/launch/more-categories-production.sql
+//   node scripts/build-production-sql.mjs --preset auto-live --from 20261012000041 --to <newest> \
+//     --out docs/launch/auto-live-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -579,6 +581,29 @@ end
 $verify$;
 `;
 
+const VERIFY_AUTO_LIVE = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'providers'
+      and column_name in ('reviewed_at', 'signup_trade')) <> 2 then
+    raise exception 'Auto-live check failed: providers.reviewed_at or providers.signup_trade is missing';
+  end if;
+  if (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public'
+      and p.proname in ('trader_publish_listing', 'trader_agree_listing', 'admin_mark_provider_reviewed')) <> 3 then
+    raise exception 'Auto-live check failed: a sign-up or review function is missing';
+  end if;
+  if has_function_privilege('authenticated', 'public.trader_publish_listing(uuid, text, text, text, text, text, text, text, text, text, jsonb)', 'execute')
+     or has_function_privilege('authenticated', 'public.trader_agree_listing(uuid, uuid, jsonb)', 'execute') then
+    raise exception 'Auto-live check failed: a signed-in account could call the server-only functions';
+  end if;
+  if exists (select 1 from public.providers where reviewed_at is null and signup_trade is null and user_id is null) then
+    raise exception 'Auto-live check failed: an existing listing shows as not checked';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -682,6 +707,12 @@ const PRESETS = {
     done: "More categories applied",
     requires: { version: "20261012000039", what: "the new categories script (docs/launch/new-categories-production.sql)" },
     verify: VERIFY_MORE_CATEGORIES,
+  },
+  "auto-live": {
+    title: "trader sign-ups go live straight away (agree in the form; the admin checks afterwards)",
+    done: "Auto-live sign-up applied",
+    requires: { version: "20261012000040", what: "the more categories script (docs/launch/more-categories-production.sql)" },
+    verify: VERIFY_AUTO_LIVE,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

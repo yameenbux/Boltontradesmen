@@ -2,6 +2,7 @@ import { TickIcon } from "@/components/auth/icons";
 import { TraderSetupForm } from "@/components/provider/TraderSetupForm";
 import { SUPPORT_WHATSAPP_DISPLAY, whatsappTicket } from "@/components/site/content";
 import { Button } from "@/components/ui/Button";
+import { consentStatement } from "@/lib/consent-text";
 import { platformPath } from "@/lib/paths";
 import { FREE_FEATURES, PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";
 import type { MyListingRequest } from "@/lib/trader-setup";
@@ -72,8 +73,9 @@ function SentForReview({ request }: { request: MyListingRequest }) {
 }
 
 /**
- * The trader start, for a signed-in account with no listing linked: one form (business, area, mobile, Free or Pro),
- * or, once it's sent, "sent for review". An existing listing is linked by the one-time link we send.
+ * The trader start, for a signed-in account with no listing linked: one form (business, area, mobile, Free or Pro,
+ * the listing statement) that puts the listing live. "Sent for review" is only for a request sent before sign-ups
+ * went live straight away. An existing listing is linked by the one-time link we send.
  */
 export function TraderStart({
   needsName,
@@ -91,11 +93,9 @@ export function TraderStart({
         <div>
           <p className="eyebrow">For traders</p>
           <h1 id="provider-title">Tell us about your business</h1>
-          <p className="lede">
-            One short form. We check every listing by hand, then you&apos;ll get a notification when you&apos;re approved.
-          </p>
+          <p className="lede">One short form, and your listing goes live straight away.</p>
         </div>
-        <TraderSetupForm needsName={needsName} trades={trades} />
+        <TraderSetupForm needsName={needsName} trades={trades} cards={consentStatement()?.cards ?? []} />
       </section>
       <p className="lede">
         Already listed? <a href={LINK_ME_WHATSAPP}>WhatsApp us</a> and we&apos;ll send the link that connects it to this

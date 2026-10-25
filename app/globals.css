@@ -617,6 +617,13 @@ h1,h2,h3{text-wrap:balance}
   .confirm-box{display:grid; grid-template-columns:28px minmax(0,1fr); gap:12px; align-items:center; min-height:56px; padding:12px 14px; border:1.5px solid var(--line); border-radius:14px; background:var(--bg); font-size:16.5px; font-weight:600; cursor:pointer}
   .confirm-box.has-err{border-color:var(--brick)}
   .confirm-box input{width:24px; height:24px; margin:0; accent-color:var(--brick)}
+  .confirm-box p{margin:0}
+  .confirm-box a{color:var(--brick); text-underline-offset:3px}
+  .signup-consent{display:grid; gap:4px}
+  .signup-consent .points{margin-top:6px}
+  .points-plain li{grid-template-columns:minmax(0,1fr); padding:14px 16px}
+  .points-plain p{font-size:15.5px}
+  .points-plain b{font-size:16px}
   .btn-danger{color:var(--brick); border-color:var(--brick)}
 
   /* ---------- availability form (trader's page and admin's provider page) ---------- */

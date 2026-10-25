@@ -12,7 +12,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 // Shown on the page; change it whenever the terms change.
-const TERMS_UPDATED = "16 October 2026";
+const TERMS_UPDATED = "25 October 2026";
 
 export default function TermsPage() {
   const { contact } = policyIdentity();
@@ -80,6 +80,14 @@ export default function TermsPage() {
       <p>
         Providers listed on the site are not employed, endorsed or guaranteed by Bolton Vouched. A listing is not a
         recommendation that a provider is right for your job. Please get quotes and check details yourself.
+      </p>
+
+      <H2>Your listing</H2>
+      <p>
+        When you list your business yourself, it goes live straight away and we check it afterwards. We may edit
+        listings for accuracy and clarity, such as fixing a spelling, putting you under the right trade or correcting
+        your areas, without asking first. If we change the phone number customers reach you on, we&apos;ll email you.
+        We can pause or remove a listing that isn&apos;t a real local business or breaks these terms.
       </p>
 
       <H2>Payment and ranking</H2>
