@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import { AskCard } from "@/components/home/AskCard";
 import { CategoryGroups } from "@/components/home/CategoryGroups";
 import { CategoryTile } from "@/components/home/CategoryTile";
@@ -70,7 +71,7 @@ export default async function Home() {
       </div>
       <CategoryGroups groups={groups} />
 
-      <section className="howto" aria-labelledby="how-title">
+      <section className="howto reveal" aria-labelledby="how-title">
         <h2 id="how-title">How it works</h2>
         <ol>
           <li>
@@ -89,6 +90,12 @@ export default async function Home() {
             </span>
           </li>
         </ol>
+      </section>
+
+      {/* Traders are the other half of the directory: every listing is one more neighbour residents can call. */}
+      <section className="trade-band reveal" aria-labelledby="trade-band-title">
+        <h2 id="trade-band-title">A Bolton trader?</h2>
+        <Button href="/for-traders">List your trade free</Button>
       </section>
     </main>
   );

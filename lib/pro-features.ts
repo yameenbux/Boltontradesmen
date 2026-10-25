@@ -7,12 +7,12 @@ export type ProFeature = { title: string; text: string };
 
 export const PRO_FEATURES: ProFeature[] = [
   {
-    title: "Job requests by text",
-    text: "A “Request a quote” button on your page. Customers describe the job and you get a text and an email straight away, so you don't lose work while you're up a ladder.",
+    title: "Job requests, straight to you",
+    text: "A “Request a quote” button on your page. Customers describe the job and you hear about it straight away, so you don't lose work while you're up a ladder.",
   },
   {
     title: "First to hear what Bolton's asking for",
-    text: "A text when someone in your areas asks Bolton for your trade, so you can be first to say you can help.",
+    text: "A message when someone in your areas asks Bolton for your trade, so you can be first to say you can help.",
   },
   {
     title: "Quotes and invoices from your phone",

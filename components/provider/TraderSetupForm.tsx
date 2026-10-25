@@ -91,7 +91,7 @@ export function TraderSetupForm({ needsName, trades }: { needsName: boolean; tra
       </label>
       <label className="field">
         Mobile number
-        <span className="hint">Customers call and WhatsApp you on this. We&apos;ll text you when you&apos;re approved.</span>
+        <span className="hint">Customers call and WhatsApp you on this. We&apos;ll let you know when you&apos;re approved.</span>
         <input name="phone" type="tel" className="input" autoComplete="tel" inputMode="tel" maxLength={LISTING_LIMITS.phone}
           required defaultValue={v("phone")} {...invalid("phone")} />
         <Err k="phone" msg={err.phone} />
