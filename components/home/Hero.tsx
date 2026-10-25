@@ -1,14 +1,15 @@
+import { Scene } from "@/components/art/Scene";
 import { Greeting } from "@/components/home/Greeting";
 import { HomeSearch } from "@/components/home/HomeSearch";
 
-// Calm editorial hero on the page background: serif headline, one line of reassurance and the search.
+// The home page's opening scene: Bolton at dusk behind the headline and the search. The search is usable at once;
+// the skyline draws itself in around it.
 export function Hero({ categories }: { categories: { slug: string; name: string }[] }) {
   return (
-    <section className="hero" aria-labelledby="hero-title">
+    <Scene className="hero" labelledBy="hero-title">
       <Greeting />
       <h1 id="hero-title">Trades your neighbours vouch for.</h1>
-      <p>Plumbers, electricians, cleaners and more across Bolton, BL1 to BL7. Free to look, <span className="whitespace-nowrap">no sign-up.</span></p>
       <HomeSearch categories={categories} />
-    </section>
+    </Scene>
   );
 }
