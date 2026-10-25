@@ -30,7 +30,8 @@ export function AdminNav({ counts }: { counts: Counts | null }) {
   return (
     <nav aria-label="Admin" className="admin-nav">
       {items.map((i) => {
-        const current = i.current ?? path.startsWith(i.href);
+        // The section itself or a page inside it: "/admin/pro" must not match "/admin/providers".
+        const current = i.current ?? (path === i.href || path.startsWith(`${i.href}/`));
         return (
           <Link key={i.href} href={i.href} className="chip press" aria-current={current ? "page" : undefined}>
             {i.label}

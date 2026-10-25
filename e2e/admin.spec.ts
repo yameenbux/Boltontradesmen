@@ -61,6 +61,10 @@ test("admin creates a provider and sees the consent link button", async ({ page 
   await expect(page.getByTestId("provider-status")).toHaveText("invited");
   await expect(page.getByText("+447700900123").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "New consent link" })).toBeVisible();
+  // A provider's page is in Providers, not Pro ("/admin/providers" starts with "/admin/pro").
+  const nav = page.getByRole("navigation", { name: "Admin" });
+  await expect(nav.getByRole("link", { name: "Providers" })).toHaveAttribute("aria-current", "page");
+  await expect(nav.locator(`a[href="/admin/pro"]`)).not.toHaveAttribute("aria-current", "page");
 });
 
 test("cannot go live without consent", async ({ page }) => {
