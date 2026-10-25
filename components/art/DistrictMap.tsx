@@ -6,16 +6,16 @@ import { BL_DISTRICTS } from "@/lib/districts";
 // page states the districts in its own text.
 
 const CENTRES: Record<string, [number, number]> = {
-  BL7: [150, 44],
-  BL6: [62, 98],
-  BL1: [150, 112],
-  BL2: [238, 98],
-  BL5: [70, 196],
-  BL3: [152, 186],
-  BL4: [236, 198],
+  BL7: [150, 42],
+  BL6: [78, 84],
+  BL2: [222, 84],
+  BL1: [150, 126],
+  BL5: [78, 168],
+  BL4: [222, 168],
+  BL3: [150, 210],
 };
 
-function hex([cx, cy]: [number, number], r = 40) {
+function hex([cx, cy]: [number, number], r = 36) {
   return Array.from({ length: 6 }, (_, k) => {
     const t = (Math.PI / 3) * k + Math.PI / 6;
     return `${(cx + r * Math.cos(t)).toFixed(1)},${(cy + r * Math.sin(t)).toFixed(1)}`;
@@ -25,7 +25,7 @@ function hex([cx, cy]: [number, number], r = 40) {
 export function DistrictMap({ className }: { className?: string }) {
   const codes = BL_DISTRICTS.filter((c) => c in CENTRES);
   return (
-    <svg className={["district-map", className].filter(Boolean).join(" ")} viewBox="0 0 300 250" aria-hidden="true" focusable="false">
+    <svg className={["district-map", className].filter(Boolean).join(" ")} viewBox="0 0 300 252" aria-hidden="true" focusable="false">
       {codes.map((code, i) => {
         const at = CENTRES[code];
         return (

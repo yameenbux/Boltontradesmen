@@ -239,11 +239,13 @@ h1,h2,h3{text-wrap:balance}
      from a start state, and the global reduced-motion rule switches them all off. */
   .scene{position:relative; isolation:isolate; overflow:hidden; border-radius:28px; margin-top:12px;
     background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-mid) 58%,var(--sky-low) 100%);
-    padding:24px 20px calc(var(--skyline-h) + 20px); --skyline-h:116px}
-  .scene-body{position:relative; z-index:2; display:grid; gap:14px}
-  .scene-sun{position:absolute; z-index:0; right:12%; bottom:calc(var(--skyline-h) - 46px); width:190px; height:190px; border-radius:50%;
+    padding:24px 20px 0; container-type:inline-size}
+  /* The skyline keeps its proportions (800 × 220) at every width, never under 116px, so nothing is cropped off the
+     top; the content leaves room for it. cqw is the scene's own width. */
+  .scene-body{position:relative; z-index:2; display:grid; gap:14px; padding-bottom:calc(max(116px, 27.5cqw) + 20px)}
+  .scene-sun{position:absolute; z-index:0; right:12%; bottom:calc(max(116px, 27.5cqw) - 46px); width:190px; height:190px; border-radius:50%;
     background:radial-gradient(circle,var(--sun) 0%,transparent 68%); animation:sun-rise 2.4s var(--ease) backwards; pointer-events:none}
-  .skyline{position:absolute; z-index:1; left:0; right:0; bottom:0; width:100%; height:var(--skyline-h); display:block; pointer-events:none}
+  .skyline{position:absolute; z-index:1; left:0; right:0; bottom:0; width:100%; height:max(116px, 27.5cqw); display:block; pointer-events:none}
   .skyline .art-shape{fill:var(--art-fill); stroke:var(--art-line); stroke-width:2; stroke-linejoin:round; stroke-dasharray:1;
     animation:art-draw 1.5s var(--ease) backwards, art-fill .9s ease backwards;
     animation-delay:calc(var(--i,0) * 70ms), calc(.8s + var(--i,0) * 70ms)}
@@ -267,7 +269,7 @@ h1,h2,h3{text-wrap:balance}
     .reveal{animation:rise linear backwards; animation-timeline:view(); animation-range:entry 0% entry 70%}
     .scene-sun{animation:sun-rise 2.4s var(--ease) backwards, sun-sink linear both; animation-timeline:auto, scroll(root); animation-range:normal, 0 70vh}
   }
-  @media (min-width:900px){.scene{--skyline-h:170px; padding:44px 40px calc(var(--skyline-h) + 28px); border-radius:34px}}
+  @media (min-width:900px){.scene{padding:44px 40px 0; border-radius:34px}}
 
   @keyframes art-draw{from{stroke-dashoffset:1}}
   @keyframes art-fill{from{fill-opacity:0}}
