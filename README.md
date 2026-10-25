@@ -428,7 +428,7 @@ Railway service variables:
 | `CF_WEB_ANALYTICS_TOKEN` | Optional. Cloudflare Web Analytics (cookieless). Read at build time |
 | `GOOGLE_SITE_VERIFICATION` | Optional. The Google Search Console HTML-tag value. Read at build time |
 | `TRUSTED_PROXY_HOPS` | Optional, default `1`. How many trusted proxies append to `X-Forwarded-For` in front of the app. Railway's edge appends the real client IP as the last entry, so the app reads the entry this many places from the right and ignores anything a visitor puts on the left. Only change it if another proxy (a CDN) is put in front of Railway |
-| `CLIENT_IP_HEADER` | Optional. A header the host sets itself and a visitor can't forge (for example `true-client-ip`). When set, the visitor's IP is read from it alone and `X-Forwarded-For` is ignored. Only set it after checking on that host that a forged value doesn't get through |
+| `CLIENT_IP_HEADER` | Optional. A header the host sets itself and a visitor can't forge (for example `true-client-ip`). When set, the visitor's IP is read from it alone and `X-Forwarded-For` is ignored. Only set it after checking on that host that a forged value doesn't get through. **On Render, set it to `true-client-ip`**: there the rightmost `X-Forwarded-For` entry is one of Render's own proxies, so without it every visitor shares the same rate limits |
 | `OWNER_LEGAL_NAME` | `YSB Ventures Ltd`, matching Companies House character for character |
 | `CONTACT_EMAIL` | `support@ysbdesigns.uk` |
 

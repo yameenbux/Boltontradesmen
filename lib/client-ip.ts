@@ -9,6 +9,8 @@
 // Some hosts instead set one header of their own that overwrites whatever the visitor sent (True-Client-IP
 // or CF-Connecting-IP behind Cloudflare). CLIENT_IP_HEADER names it, and then that header alone is read and
 // X-Forwarded-For is ignored. Only name a header after checking a visitor can't forge it on that host.
+// On Render, set CLIENT_IP_HEADER=true-client-ip: its edge overwrites True-Client-IP with the visitor's address,
+// while the rightmost X-Forwarded-For entry is one of Render's own proxies, shared by every visitor.
 
 type Env = Record<string, string | undefined>;
 
