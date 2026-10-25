@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { FOOTER_LINE } from "@/lib/company";
 import {
   COMPANY_LINE,
   DECK,
@@ -93,6 +94,7 @@ describe("operator", () => {
     expect(COMPANY_LINE).toBe(
       "Bolton Vouched is a YSB Designs platform. YSB Designs is a trading name of YSB Ventures Ltd, registered in England and Wales, company number 16022339.",
     );
+    expect(FOOTER_LINE).toBe("Bolton Vouched · YSB Ventures Ltd · Registered in England and Wales, no. 16022339");
     expect(faqText(byQ("Who runs Bolton Vouched?"))).toContain("built and run by YSB Designs");
   });
 

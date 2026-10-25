@@ -123,9 +123,17 @@ const SCRIPTS = [
     file: "docs/launch/launch-hardening-production.sql",
     preset: "launch-hardening",
     from: "20261012000038",
-    to: NEWEST,
+    to: "20261012000038",
     functions: ["rate_allow", "rate_failures", "lock_grant_valid", "am_i_admin_account"],
     requires: "20261012000037",
+  },
+  {
+    file: "docs/launch/new-categories-production.sql",
+    preset: "new-categories",
+    from: "20261012000039",
+    to: NEWEST,
+    functions: [],
+    requires: "20261012000038",
   },
 ];
 

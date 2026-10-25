@@ -12,9 +12,7 @@ test("brand bar shows the name and tagline", async ({ page }) => {
 test("footer names the operator and the registered company", async ({ page }) => {
   await page.goto("/");
   const footer = page.getByRole("contentinfo");
-  await expect(footer).toContainText(
-    "Bolton Vouched is a YSB Designs platform. YSB Designs is a trading name of YSB Ventures Ltd, registered in England and Wales, company number 16022339.",
-  );
+  await expect(footer).toContainText("Bolton Vouched · YSB Ventures Ltd · Registered in England and Wales, no. 16022339");
   await expect(footer).not.toContainText(/yameen/i);
 });
 
@@ -68,7 +66,7 @@ test("unknown route shows the branded 404 with links to the trades, home and sup
   await expect(main.getByRole("link", { name: "Bolton Vouched home" })).toHaveAttribute("href", "/");
   await expect(main.getByRole("link", { name: "support@ysbdesigns.uk" })).toHaveAttribute("href", /^mailto:support@ysbdesigns\.uk\?/);
   await expect(page.getByRole("banner")).toContainText("Bolton Vouched");
-  await expect(page.getByRole("contentinfo")).toContainText("YSB Designs platform");
+  await expect(page.getByRole("contentinfo")).toContainText("YSB Ventures Ltd");
 });
 
 test("no horizontal scroll at 360px on the home page", async ({ page }) => {
