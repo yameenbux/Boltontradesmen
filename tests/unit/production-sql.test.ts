@@ -147,9 +147,17 @@ const SCRIPTS = [
     file: "docs/launch/auto-live-production.sql",
     preset: "auto-live",
     from: "20261012000041",
-    to: NEWEST,
+    to: "20261012000041",
     functions: ["trader_publish_listing", "trader_agree_listing", "admin_mark_provider_reviewed"],
     requires: "20261012000040",
+  },
+  {
+    file: "docs/launch/one-step-production.sql",
+    preset: "one-step",
+    from: "20261012000042",
+    to: NEWEST,
+    functions: [],
+    requires: "20261012000041",
   },
 ];
 

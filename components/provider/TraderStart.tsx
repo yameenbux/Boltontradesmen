@@ -1,5 +1,5 @@
 import { TickIcon } from "@/components/auth/icons";
-import { TraderSetupForm } from "@/components/provider/TraderSetupForm";
+import { type TradeGroup, TraderSetupForm } from "@/components/provider/TraderSetupForm";
 import { SUPPORT_WHATSAPP_DISPLAY, whatsappTicket } from "@/components/site/content";
 import { Button } from "@/components/ui/Button";
 import { consentStatement } from "@/lib/consent-text";
@@ -79,11 +79,11 @@ function SentForReview({ request }: { request: MyListingRequest }) {
  */
 export function TraderStart({
   needsName,
-  trades,
+  groups,
   request,
 }: {
   needsName: boolean;
-  trades: string[];
+  groups: TradeGroup[];
   request: MyListingRequest | null;
 }) {
   if (request) return <SentForReview request={request} />;
@@ -93,9 +93,9 @@ export function TraderStart({
         <div>
           <p className="eyebrow">For traders</p>
           <h1 id="provider-title">Tell us about your business</h1>
-          <p className="lede">One short form, and your listing goes live straight away.</p>
+          <p className="lede">One short form. Press Confirm and you&apos;re live.</p>
         </div>
-        <TraderSetupForm needsName={needsName} trades={trades} cards={consentStatement()?.cards ?? []} />
+        <TraderSetupForm needsName={needsName} groups={groups} cards={consentStatement()?.cards ?? []} />
       </section>
       <p className="lede">
         Already listed? <a href={LINK_ME_WHATSAPP}>WhatsApp us</a> and we&apos;ll send the link that connects it to this

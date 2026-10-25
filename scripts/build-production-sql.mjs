@@ -32,8 +32,10 @@
 //     --out docs/launch/new-categories-production.sql
 //   node scripts/build-production-sql.mjs --preset more-categories --from 20261012000040 --to 20261012000040 \
 //     --out docs/launch/more-categories-production.sql
-//   node scripts/build-production-sql.mjs --preset auto-live --from 20261012000041 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset auto-live --from 20261012000041 --to 20261012000041 \
 //     --out docs/launch/auto-live-production.sql
+//   node scripts/build-production-sql.mjs --preset one-step --from 20261012000042 --to <newest> \
+//     --out docs/launch/one-step-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -604,6 +606,22 @@ end
 $verify$;
 `;
 
+const VERIFY_ONE_STEP = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if to_regprocedure('public.trader_publish_listing(uuid, text, text, text[], text[], text, text, text, text, text, jsonb)') is null
+     or (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+         where n.nspname = 'public' and p.proname = 'trader_publish_listing') <> 1 then
+    raise exception 'One-step check failed: trader_publish_listing (trades and areas as lists) is missing, or the old one is still there';
+  end if;
+  if has_function_privilege('authenticated', 'public.trader_publish_listing(uuid, text, text, text[], text[], text, text, text, text, text, jsonb)', 'execute') then
+    raise exception 'One-step check failed: a signed-in account could call trader_publish_listing';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -713,6 +731,12 @@ const PRESETS = {
     done: "Auto-live sign-up applied",
     requires: { version: "20261012000040", what: "the more categories script (docs/launch/more-categories-production.sql)" },
     verify: VERIFY_AUTO_LIVE,
+  },
+  "one-step": {
+    title: "one-step trader sign-up (tick trades and areas, mobile and WhatsApp, Confirm)",
+    done: "One-step sign-up applied",
+    requires: { version: "20261012000041", what: "the auto-live script (docs/launch/auto-live-production.sql)" },
+    verify: VERIFY_ONE_STEP,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];
