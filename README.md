@@ -16,7 +16,7 @@ Made by YSB Designs, a trading name of YSB Ventures Ltd.
 ![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20RLS-6E2616?style=flat-square&labelColor=6E2616&color=9C3A25)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-6E2616?style=flat-square&labelColor=6E2616&color=9C3A25)
 ![Tailwind](https://img.shields.io/badge/Tailwind-4-6E2616?style=flat-square&labelColor=6E2616&color=9C3A25)
-![Hosting](https://img.shields.io/badge/hosting-Railway-B5862C?style=flat-square&labelColor=6E2616)
+![Hosting](https://img.shields.io/badge/hosting-Render-B5862C?style=flat-square&labelColor=6E2616)
 ![Data region](https://img.shields.io/badge/data%20region-London-46684A?style=flat-square&labelColor=6E2616)
 ![Licence](https://img.shields.io/badge/licence-all%20rights%20reserved-B5862C?style=flat-square&labelColor=6E2616)
 
@@ -69,28 +69,40 @@ to call or WhatsApp them. Every trader on it has agreed to be listed.
 
 One site: free for residents, free for traders, with an optional paid tier for traders.
 
-<img src="assets/diagrams/02-live-and-coming.svg" alt="What is live today (the directory at the home page, seven groups of trades, profiles with checks, Call and WhatsApp, consent links and admin, free sign-in and reviews, replies and moderation, Ask Bolton, price guides, the trader dashboard and Pro with quotes and invoices) and what is built but switched off (texts, which wait for Twilio, and the scheduled payment-reminder job)" width="100%">
+<img src="assets/diagrams/02-live-and-coming.svg" alt="What is live today (the directory at the home page, eight groups of trades, profiles with checks, Call and WhatsApp, consent links and admin, free sign-in and reviews, replies and moderation, Ask Bolton, price guides, the trader dashboard and Pro with quotes and invoices) and what is built but switched off (texts, which wait for Twilio, and the scheduled payment-reminder job)" width="100%">
 
 **Live today**
 
 - **The directory is the home page** (`/`), and installs to the Home Screen as an app
   (a PWA, `app/manifest.ts`). Old `/platform/…` links (sent as consent, review, quote and
   invoice links, and in Google) forward to the same page without `/platform`.
-- **43 categories in seven groups**: home and trades, repairs and appliances,
-  moving and waste, events, personal and lessons, vehicles, and transport (taxis
-  and private hire, minibus hire, airport transfers).
+- **59 trades in eight groups**: home and trades, repairs and appliances, moving and waste,
+  events and occasions, personal and lessons, vehicles, travel and transport, and business
+  and finance. Each can carry a short tip for customers (an estate agent's redress scheme,
+  ATOL for travel agents, the legal limits on window tints). Adding one is a migration (see
+  *Where things live*).
 - **Provider profiles** at `/p/<slug>` with the areas they cover and the checks we've
-  recorded. Gas & boilers can't go live without a Gas Safe check; driving instructors need
-  a DVSA ADI check.
+  recorded. A trader is only listed under Gas & boilers with an in-date Gas Safe check, and
+  under Driving instructors with an in-date DVSA ADI check.
 - **Call and WhatsApp** buttons that go through `/api/contact`, which counts each
   tap as an enquiry and then hands over to the phone or WhatsApp. **The numbers
   are never in the page's HTML**, and one connection can open at most 60 an hour.
-- **Consent links** (`/consent/<token>`): a trader is listed only after they open their
-  link, read exactly how they'll appear, and agree. What they agreed to is kept as evidence.
-- **Getting listed**: **For traders** (`/for-traders`) explains Free and Pro; **Get listed**
-  (`/get-listed`) takes a request without an account. A trader who signs in with *I'm a
-  trader* fills in one form (business, trade, area, mobile, Free or Pro) at `/provider`,
-  sees *sent for review*, and is emailed once the admin approves it onto their listing.
+- **Getting listed, in one step**: a trader signs in with *I'm a trader* and fills in one
+  form at `/provider`: business name, the trades they do (up to three, ticked, with a
+  **Search your trade** box), the postcode areas they cover, their mobile and WhatsApp, and
+  Free or Pro. Pressing **Confirm** under the listing statement is their agreement, and the
+  listing goes **live straight away**, linked to their account. Gas & boilers and Driving
+  instructors also ask for the Gas Safe or ADI badge number and its expiry; those go live
+  without that trade until the admin has looked the number up. They land on **You're now
+  live** (`/provider/live`): taking on work, their review link and QR card, and how to show
+  they're vouched (their page as the website on their Google Business Profile, the badge as
+  an image, or the embed code). They're emailed that they're live; Pro is paid for from there.
+- **Consent**: what a trader agreed to (the IP, the text version and a SHA-256 of the exact
+  statement) is kept as evidence, however they agreed. A listing the admin adds for someone
+  else stays *invited* until they open their **consent link** (`/consent/<token>`) and
+  agree. **For traders** (`/for-traders`) explains Free and Pro; **Get listed**
+  (`/get-listed`) still takes a request without an account, which the admin turns into an
+  invited listing.
 - **Sign-in** at `/sign-in`: **Continue with Google** (PKCE, back through
   `/auth/callback`) or a **6-digit code sent by email** (works inside the home-screen app).
   Throwaway email domains are refused, codes are rate-limited per address and per
@@ -102,17 +114,19 @@ One site: free for residents, free for traders, with an optional paid tier for t
   anti-fake rule trips), editable for 14 days, with an optional private proof photo or PDF
   (location data stripped). Profiles list them with Verified job and Group member filters,
   and the category list ranks anyone with three or more by their quality score.
-- **Provider replies**: the admin sends a trader a single-use **trader sign-in link**
-  (`/link/<token>`, 14 days); they open it signed in and their account is linked to the
-  listing. Then they reply once to each review.
+- **Provider replies**: a trader who signed up is already linked to their listing. For a
+  listing the admin added, the admin sends a single-use **trader sign-in link**
+  (`/link/<token>`, 14 days); they open it signed in and their account is linked. Then they
+  reply once to each review.
 - **Taking on work**: the trader says they're taking on work (optionally "this week") or
   booked up until a date, and the admin can set or clear it too. It shows as a chip on the
   profile ("updated 3 days ago") and the cards, runs out by itself (14 days, or on the
   date), can filter a category list, and never changes the order or a badge.
 - **Trader dashboard** at `/provider`: enquiries this month and all time (calls and
   WhatsApps; one per connection a day, the trader's own and the admin's taps left out), six
-  months as bars, reviews this month, their review link and QR card, and their "Vouched in
-  Bolton" website badge. The trader edits their description (300 characters, no phone
+  months as bars, reviews this month, their review link and QR card, **Put it on Google**
+  (their page link for the Website box of a Google Business Profile, tagged
+  `?utm_source=google_business`), and their "Vouched in Bolton" website badge. The trader edits their description (300 characters, no phone
   numbers or web addresses) and areas, pauses and unpauses (never an admin's pause), or
   withdraws (only a new invite brings it back). Trades stay with the admin.
 - **Pro** (£10 a month or £100 a year, through Stripe; see *Free and Pro*): a "Request a
@@ -139,9 +153,12 @@ One site: free for residents, free for traders, with an optional paid tier for t
   (reviews, questions and answers come down; a trader's quotes, invoices, job requests and
   bank details are deleted; the number is kept privately for 12 months).
 - **Admin** at `/admin`, for the owner only, behind a password **and** an authenticator
-  code: add and edit providers, record checks, copy consent and trader links, approve
-  sign-up requests, set live, pause or remove; clear or remove reviews under check (with a
-  logged reason), resolve flags and reports, accept proofs and ID, grant founding Pro.
+  code. New sign-ups come first in **Providers**, marked **New, check me**, with call,
+  WhatsApp and email links; the admin edits anything (silently, in the audit log; changing
+  the phone number emails the trader), confirms a Gas Safe or ADI number in one press, and
+  presses **Checked**. Also: add providers, record checks, copy consent and trader links,
+  pause or remove; clear or remove reviews under check (with a logged reason), resolve flags
+  and reports, accept proofs and ID, grant founding Pro.
 - **The pre-launch lock** (`SITE_LOCK_PASSWORD`): while it's set, every page asks for one
   password, nothing is indexed, and only real shared links (a review form, a quote, a consent
   or trader link) let someone in without it. Clear the variable to open the site.
@@ -150,8 +167,9 @@ One site: free for residents, free for traders, with an optional paid tier for t
 
 - **Texts**: sign-in by text and Pro's text alerts need Twilio (see *Phone sign-in*). Until
   then sign-in is Google or an email code, and alerts go by email.
-- **Payment reminders** (`/api/cron/payment-reminders`) need `CRON_SECRET` and a Railway cron
-  service; until then nobody is reminded about an unpaid invoice.
+- **Payment reminders** (`/api/cron/payment-reminders`) need `CRON_SECRET` and a scheduled job
+  that calls it (a Render cron job, on a paid plan); until then nobody is reminded about an
+  unpaid invoice.
 - **Scheduled clean-ups**: old proof files are deleted from admin by hand once a month, and
   the 12-month purge of contact events isn't built.
 
@@ -189,14 +207,14 @@ Two details that matter more than they look:
 This is the technical picture. **The browser only ever talks to our Next.js
 server, and the server only ever reads providers through one view.**
 
-<img src="assets/diagrams/04-architecture.svg" alt="Architecture: a phone or laptop reaches www.boltonvouched.co.uk (DNS at Cloudflare, a CNAME to Railway), where Next.js 16 serves the directory and admin behind proxy.ts; it reads the provider_public view with the anon key, /api/contact uses the service key on the server only, and admin_* functions write the audit log, all in a separate Supabase project in London with Postgres RLS; GitHub Actions checks every push" width="100%">
+<img src="assets/diagrams/04-architecture.svg" alt="Architecture: a phone or laptop reaches www.boltonvouched.co.uk (DNS at Cloudflare, pointing at Render), where Next.js 16 serves the directory and admin behind proxy.ts; it reads the provider_public view with the anon key, /api/contact uses the service key on the server only, and admin_* functions write the audit log, all in a separate Supabase project in London with Postgres RLS; GitHub Actions checks every push" width="100%">
 
 | Piece | What it does |
 | :--- | :--- |
 | **Browser or PWA** | The directory at `/`. No account and no cookies to look or call |
-| **`www.boltonvouched.co.uk`** | DNS at Cloudflare: `www` is a CNAME to Railway (DNS only, so Railway issues the certificate); the bare `boltonvouched.co.uk` goes through Cloudflare, which redirects it to `www` keeping the path |
+| **`www.boltonvouched.co.uk`** | DNS at Cloudflare: `www` points at the Render service (Render issues the certificate); the bare `boltonvouched.co.uk` redirects to `www`, keeping the path |
 | **`proxy.ts`** | The pre-launch lock, and session-cookie refresh on the signed-in routes only |
-| **Next.js 16 on Railway** | Service `web`, deployed from `main`. Server components and Server Actions read the database; nothing in the browser holds a key that matters, and the session cookies are HttpOnly |
+| **Next.js 16 on Render** | Web service `bolton-vouched` (Frankfurt), deployed from `main`. Server components and Server Actions read the database; nothing in the browser holds a key that matters, and the session cookies are HttpOnly |
 | **`provider_public`** | The only public door to provider data. Live providers only, and no phone, billing, consent or document columns |
 | **`private.*`** | `SECURITY DEFINER` wrappers the view calls, in a schema the public role can't even name |
 | **`admin_*` functions** | Every admin write: checks the caller is an admin, then writes one `audit_log` row |
@@ -263,7 +281,7 @@ Only where it has to.
 Left to right: what gets written, what it becomes, where that runs, and what it
 hands the visitor off to.
 
-<img src="assets/diagrams/06-tech-stack.svg" alt="The stack in four layers: TypeScript, React 19, Tailwind 4 and SQL migrations; a Next.js 16 app and a Postgres schema; Railway and Supabase in London; the phone's dialler and WhatsApp" width="100%">
+<img src="assets/diagrams/06-tech-stack.svg" alt="The stack in four layers: TypeScript, React 19, Tailwind 4 and SQL migrations; a Next.js 16 app and a Postgres schema; Render and Supabase in London; the phone's dialler and WhatsApp" width="100%">
 
 | Layer | What and why |
 | :--- | :--- |
@@ -274,7 +292,7 @@ hands the visitor off to.
 | **Supabase Postgres** + RLS | Schema, view, functions and policies in `supabase/migrations/`, tested with pgTAP in `supabase/tests/` |
 | **Supabase Auth** | Google and email-code sign-in (codes go to a local inbox in development and CI), phone sign-in behind `SIGN_IN_PHONE`, and the admin's email sign-in |
 | **zod**, **libphonenumber-js** | Every admin form is validated; numbers are stored as E.164 |
-| **Railway** | Service `web`, from `main` |
+| **Render** | Web service `bolton-vouched`, from `main` |
 | **GitHub Actions** | `.github/workflows/ci.yml`: the checks above on every push and pull request |
 
 ---
@@ -347,12 +365,15 @@ release, each refusing to run before the one it follows: `plan-2b` (000018 to 00
 `launch-checklist` (000026), `review-source` (000027), `availability` (000028),
 `trader-dashboard` (000029), `pro-tier` (000030), `community-questions` (000031),
 `price-guides` (000032), `consent-link` (000033), `one-listing` (000034), `pro-jobs` (000035),
-`quotes-invoices` (000036), `trader-sign-up` (000037) and `launch-hardening` (000038 on), each
-as `docs/launch/<name>-production.sql`. After adding or changing a migration from 000038 on,
+`quotes-invoices` (000036), `trader-sign-up` (000037), `launch-hardening` (000038),
+`new-categories` (000039), `more-categories` (000040), `auto-live` (000041), `one-step`
+(000042), `check-numbers` (000043) and `plaster-recovery` (000044 on), each as
+`docs/launch/<name>-production.sql`. After adding or changing a migration from 000044 on,
 regenerate with
-`node scripts/build-production-sql.mjs --preset launch-hardening --from 20261012000038 --to <newest> --out docs/launch/launch-hardening-production.sql`
+`node scripts/build-production-sql.mjs --preset plaster-recovery --from 20261012000044 --to <newest> --out docs/launch/plaster-recovery-production.sql`
 (`tests/unit/production-sql.test.ts` fails until you do). A new release gets its own preset in
-that script, a check in `scripts/check-production-sql.sh`, and an entry in the test.
+that script (and the previous one's `--to` fixed), a check in `scripts/check-production-sql.sh`,
+and an entry in the test.
 
 Run `npm run test:db` straight after a reset: the scoring tests expect an empty
 register, without the E2E fixtures. `npm run test:e2e` loads its own fixtures and
@@ -402,12 +423,12 @@ where user_id = (select id from auth.users where email = 'admin@example.com');
 
 | Where | What |
 | :--- | :--- |
-| **Railway**, project *Bolton Vouched* | Service `web`, deploying from `main` once CI passes ("Wait for CI"). Auto-deploy needs the **Railway GitHub app installed** on the repository; if a merge doesn't deploy, use **Deploy Latest Commit** (Ctrl/Cmd+K) or reconnect the repo under Settings → Source. Needs a paid plan before launch: on the trial, the site stops when the credit runs out |
+| **Render**, web service *bolton-vouched* | Frankfurt, Node, `npm ci && npm run build` then `npm start`, auto-deploying from `main`. If a merge doesn't deploy, use **Manual Deploy → Deploy latest commit** on the service, or reconnect the repository (Render's GitHub app) under Settings. On the **free plan** the service sleeps after 15 minutes without visitors, and the next visitor waits around a minute while it wakes: move to Starter before sending traffic to it |
 | **Supabase**, project *Bolton Vouched* | London. Its own project, sharing **nothing** (keys, users, database, storage) with any other project. Daily backups, kept 7 days |
-| **Domain** `boltonvouched.co.uk` | Registered at One.com, DNS at **Cloudflare** (free): `www` CNAME to Railway's target, **DNS only**; `@` A `192.0.2.1`, **proxied**, with a redirect rule `http*://boltonvouched.co.uk/*` → `https://www.boltonvouched.co.uk/${2}` (301, query kept); MX `.` (no email on the domain) |
+| **Domain** `boltonvouched.co.uk` | Registered at One.com, DNS at **Cloudflare** (free): `www` pointing at the Render service (Render's custom domain shows the record); `@` A `192.0.2.1`, **proxied**, with a redirect rule `http*://boltonvouched.co.uk/*` → `https://www.boltonvouched.co.uk/${2}` (301, query kept); MX `.` (no email on the domain) |
 | **Stripe** | Product *Bolton Vouched Pro* with a monthly and an annual price; webhook endpoint `https://www.boltonvouched.co.uk/api/stripe/webhook`; Customer Portal on |
 
-Railway service variables:
+Render environment variables (service → Environment). Saving a change redeploys:
 
 | Variable | What it is |
 | :--- | :--- |
@@ -427,7 +448,7 @@ Railway service variables:
 | `CRON_SECRET` | The payment-reminders job. Server only, 16 characters or more. Unset: the job refuses every call |
 | `CF_WEB_ANALYTICS_TOKEN` | Optional. Cloudflare Web Analytics (cookieless). Read at build time |
 | `GOOGLE_SITE_VERIFICATION` | Optional. The Google Search Console HTML-tag value. Read at build time |
-| `TRUSTED_PROXY_HOPS` | Optional, default `1`. How many trusted proxies append to `X-Forwarded-For` in front of the app. Railway's edge appends the real client IP as the last entry, so the app reads the entry this many places from the right and ignores anything a visitor puts on the left. Only change it if another proxy (a CDN) is put in front of Railway |
+| `TRUSTED_PROXY_HOPS` | Optional, default `1`. How many trusted proxies append to `X-Forwarded-For` in front of the app. The app reads the entry this many places from the right and ignores anything a visitor puts on the left. Ignored when `CLIENT_IP_HEADER` is set |
 | `CLIENT_IP_HEADER` | Optional. A header the host sets itself and a visitor can't forge (for example `true-client-ip`). When set, the visitor's IP is read from it alone and `X-Forwarded-For` is ignored. Only set it after checking on that host that a forged value doesn't get through. **On Render, set it to `true-client-ip`**: there the rightmost `X-Forwarded-For` entry is one of Render's own proxies, so without it every visitor shares the same rate limits |
 | `OWNER_LEGAL_NAME` | `YSB Ventures Ltd`, matching Companies House character for character |
 | `CONTACT_EMAIL` | `support@ysbdesigns.uk` |
@@ -452,7 +473,7 @@ In Supabase:
 2. **Phone provider off, and the Send SMS hook off**, unless phone sign-in is switched
    on (see *Phone sign-in* below).
 3. **Authentication → Rate Limits**: sign-ups and sign-ins, and token verifications, 150
-   per 5 minutes. These are "per IP", but every request comes from Railway, so they are
+   per 5 minutes. These are "per IP", but every request comes from the host, so they are
    one bucket for the whole site. The app's own limits (`settings.email_limits`,
    `settings.otp_verify_limits`) stop one visitor from using them all up.
 4. **Storage**: bucket `review-proofs` exists, is **private**, 10 MB, JPEG/PNG/WebP/PDF,
@@ -486,13 +507,13 @@ To switch it back on, set the Twilio variables and the hook secret, `SIGN_IN_PHO
 2. **Authentication → Rate Limits**: SMS sent per hour **30** (the owner's choice, launch
    day included: it is project-wide and the only Supabase-side ceiling on texts); sign-ups and sign-ins,
    and token verifications, 150 per 5 minutes. These are "per IP", but every request
-   comes from Railway, so they are one bucket for the whole site. The app's own
+   comes from the host, so they are one bucket for the whole site. The app's own
    wrong-code limit (5 per number per 15 minutes, 20 per connection per hour,
    `settings.otp_verify_limits`) stops one visitor from using them all up.
 3. **Authentication → Hooks → Send SMS hook → HTTPS**, URL
    `https://www.boltonvouched.co.uk/api/auth/sms-hook`. Generate the secret and
-   put it in Railway as `SUPABASE_SMS_HOOK_SECRET`; set `TWILIO_MESSAGING_SERVICE_SID`
-   (see *Texts and the SMS bill* below). Turn the hook on **after** Railway has
+   put it in Render as `SUPABASE_SMS_HOOK_SECRET`; set `TWILIO_MESSAGING_SERVICE_SID`
+   (see *Texts and the SMS bill* below). Turn the hook on **after** Render has
    redeployed with both variables.
 
 #### Texts and the SMS bill
@@ -541,7 +562,7 @@ settings and test phone numbers for local use and CI only.
 `docs/launch/LAUNCH.md` has the launch morning step by step.
 
 > [!CAUTION]
-> **The address lives in five places.** Railway's custom domain on service `web`, the DNS at
+> **The address lives in five places.** Render's custom domain on the service, the DNS at
 > Cloudflare, `NEXT_PUBLIC_SITE_URL` (every link the site sends is built from it), Supabase's
 > Site URL and Redirect URLs, and the Stripe webhook endpoint. Change the domain and update
 > all five in the same change, or sign-in, payments and links already sent break. The
@@ -560,13 +581,15 @@ settings and test phone numbers for local use and CI only.
 | The Call and WhatsApp buttons | `components/profile/ActionBar.tsx` |
 | Logging a tap and redirecting | `app/api/contact/[slug]/route.ts` |
 | The device hash and rate limits | `lib/device-hash.ts`, `lib/ip-hash.ts`, `lib/rate-limit.ts` (`public.rate_allow`) |
-| The consent wording and its version | `lib/consent-text.ts` |
+| The consent wording and its version | `lib/consent-text.ts` (shown on the consent page and the sign-up form; `lib/consent-shared.ts` holds the browser-safe parts) |
 | The consent page | `app/(platform)/consent/[token]/` |
 | Sign-in (Google, email code, phone) and Welcome | `app/(platform)/sign-in/`, `app/(platform)/welcome/`, `lib/email-gate.ts`, `lib/email.ts`, `lib/sign-in-methods.ts`, `lib/otp-gate.ts`, `lib/line-type.ts` |
 | Where people land after sign-in, and which paths are allowed | `lib/account-intent.ts`, `lib/safe-next.ts` |
 | The Google sign-in callback | `app/(platform)/auth/callback/route.ts`, `lib/google-callback.ts` |
 | Trader sign-in links (linking a trader to their listing) | `app/(platform)/link/[token]/`, `lib/trader-link.ts`, `supabase/migrations/20261012000022_trader_links.sql` |
-| The trader sign-up form and *sent for review* | `components/provider/TraderSetupForm.tsx`, `components/provider/TraderStart.tsx`, `app/(platform)/provider/setup-actions.ts` |
+| The trader sign-up form (trades search, areas, WhatsApp, Gas Safe and ADI numbers, Confirm) | `components/provider/TraderSetupForm.tsx`, `components/provider/TraderStart.tsx`, `app/(platform)/provider/setup-actions.ts`, `lib/trader-setup.ts`, `supabase/migrations/20261012000043_check_numbers_at_sign_up.sql` |
+| *You're now live* (next steps) and Put it on Google | `app/(platform)/provider/live/page.tsx`, `components/share/GoogleProfileLink.tsx`, `lib/share.ts` |
+| New sign-ups in admin (*New, check me*, Checked, confirming a number) | `app/admin/(protected)/page.tsx`, `app/admin/(protected)/providers/[id]/page.tsx`, `components/admin/ProviderForms.tsx` |
 | For traders and Get listed | `app/(info)/for-traders/`, `app/(info)/get-listed/`, `lib/pro-features.ts` |
 | The sign-in code email | `supabase/templates/sign-in-code.html` (pasted into Supabase's templates) |
 | Throwaway email domains | `lib/disposable-email-domains.json`, `scripts/disposable-domains-sql.mjs` |
@@ -581,7 +604,7 @@ settings and test phone numbers for local use and CI only.
 | Posting rules and the anti-fake checks | `supabase/migrations/20261012000004_review_posting.sql`, `…000005_review_flags.sql` |
 | Admin pages and actions | `app/admin/(protected)/`, `lib/admin.ts` |
 | Admin sign-in and the authenticator step | `app/admin/login/`, `app/admin/verify/`, `components/admin/VerifyForm.tsx` |
-| Categories and groups | `supabase/seed.sql`, then a new migration for the live database |
+| Categories and groups | `supabase/seed.sql` and a new migration (with its production script), plus the icon in `components/CategoryIcon.tsx`, search words in `lib/trade-words.ts` and price-guide words in `lib/price-guides.ts` |
 | What the public can read | `supabase/migrations/20261011000003_public_view_rls.sql` |
 | Enquiry logging and counting | `supabase/migrations/20261011000004_contact_events.sql`, `…000029_trader_dashboard.sql`, `lib/tap-actor.ts` |
 | Admin functions and the audit log | `supabase/migrations/20261011000005_admin_consent.sql` |
@@ -651,23 +674,24 @@ monitoring yet, and the payment-reminder and clean-up jobs aren't scheduled.
 Most problems are a listing problem, and the owner fixes those in admin. The
 rest is a bug, and a fix reaches everyone, not only the person who reported it.
 
-<img src="assets/diagrams/07-support.svg" alt="Support path: something is wrong; raise a ticket by email or WhatsApp Business; a listing problem is fixed in admin, with removal within one working day; a site problem is reproduced, fixed with a test, checked in CI, merged to main and deployed by Railway to everyone, and we reply" width="100%">
+<img src="assets/diagrams/07-support.svg" alt="Support path: something is wrong; raise a ticket by email or WhatsApp Business; a listing problem is fixed in admin, with removal within one working day; a site problem is reproduced, fixed with a test, checked in CI, merged to main and deployed by Render to everyone, and we reply" width="100%">
 
 ### Who fixes what
 
 | It is… | Who | How |
 | :--- | :--- | :--- |
 | A wrong detail on a listing | **The owner**, in admin | Edit the provider; it's in the audit log |
+| A new sign-up | **The owner**, in admin → Providers | It's already live. Check it (the *New, check me* badge), fix anything, confirm any Gas Safe or ADI number, press **Checked** |
 | A trader wants to come off | **The owner**, in admin | Removed within one working day of asking |
 | A complaint about a trader | **The owner** | Pause the listing in admin while it's looked into |
 | A reported or flagged review | **The owner**, in admin → Reviews / Flags | Clear it, or remove it with a reason (kept in the audit log). Never because a trader disagrees |
 | A page that breaks, a wrong count | **Whoever maintains the code** | Reproduce, add a failing test, fix, merge to `main` |
-| The site is down | **Whoever maintains the code** | Railway's deploy logs for service `web`, then Supabase's status |
+| The site is down | **Whoever maintains the code** | Render's logs and events for the service, then Supabase's status |
 
 Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
 **07466 487591**. The site's contact links open an email with a
 *Bolton Vouched: …* subject; the address is `CONTACT_EMAIL` in
-`components/site/content.ts` and the `CONTACT_EMAIL` variable on Railway.
+`components/site/content.ts` and the `CONTACT_EMAIL` variable on Render.
 
 ---
 
@@ -686,14 +710,10 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
       *Draft — pending legal review* banner (`DRAFT_BANNER` in `components/PolicyPage.tsx`).
 - [ ] **Register YSB Ventures Ltd with the ICO** (the data protection fee) as the
       controller for Bolton Vouched.
-- [ ] **Railway on a paid plan**, so the site doesn't stop when the trial credit runs out.
-- [ ] **The domain**: `www.boltonvouched.co.uk` serving with a valid certificate, the bare
-      domain redirecting, then `NEXT_PUBLIC_SITE_URL`, Supabase's Site URL and the Stripe
-      webhook moved to it (see the caution under *Deploying*).
-- [ ] **`docs/launch/launch-hardening-production.sql` pasted** once the code is deployed, then
-      the admin's authenticator set up straight away.
+- [ ] **Render on a paid plan (Starter)**, so the site doesn't sleep after 15 idle minutes and
+      make the next visitor wait around a minute.
 - [ ] **`SITE_LOCK_PASSWORD` set** until launch day, then cleared.
-- [ ] **Cloudflare Turnstile** keys on Railway (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`).
+- [ ] **Cloudflare Turnstile** keys on Render (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`).
 - [ ] **Licence checks for taxis and private hire.** Before a taxi, minibus or
       airport-transfer listing goes live, check the council private hire or
       hackney licence (and an operator licence for minibuses with a driver) and
@@ -702,11 +722,15 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
       12-month retention; the job isn't built yet.
 - [ ] **Delete old proof files monthly** (admin → Proofs → Old proof files) until it's
       scheduled.
-- [ ] **Payment reminders**: `CRON_SECRET` and a Railway cron service (`docs/launch/LAUNCH.md`,
+- [ ] **Payment reminders**: `CRON_SECRET` and a scheduled job calling it (`docs/launch/LAUNCH.md`,
       *Pro part 3*).
 - [ ] **Texts**, when wanted: the Twilio steps in *Texts and the SMS bill*, then
       `SIGN_IN_PHONE=on` for sign-in by text.
-- [x] `OWNER_LEGAL_NAME` and `CONTACT_EMAIL` set on Railway.
+- [x] `OWNER_LEGAL_NAME` and `CONTACT_EMAIL` set on Render.
+- [x] The domain: `www.boltonvouched.co.uk` on Render with a valid certificate, the bare domain
+      redirecting.
+- [x] Every production script up to `plaster-recovery` applied; the admin's authenticator set up.
+- [x] `CLIENT_IP_HEADER=true-client-ip` on Render, so rate limits see each visitor.
 - [x] Free sign-in (Google and email codes) live.
 - [x] Stripe live, with a restricted key.
 - [x] Supabase daily backups, leaked-password protection, App Authenticator on.

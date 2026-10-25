@@ -24,9 +24,11 @@ insert into public.contact_events (provider_id, type, device_hash) values
   ('00000000-0000-0000-0000-0000000005b1', 'whatsapp_tap', 'dev-a');
 select is(public.enquiry_count('00000000-0000-0000-0000-0000000005b1'), 1, 'whatsapp tap by same device today still counts once');
 
--- Case 2: same device yesterday and today -> 2 (London day boundary)
+-- Case 2: same device yesterday and today -> 2 (London day boundary). "Yesterday" is a calendar day back in London
+-- time: 24 hours back can be the same London date on the night the clocks go back.
 insert into public.contact_events (provider_id, type, device_hash, created_at) values
-  ('00000000-0000-0000-0000-0000000005b3', 'call_tap', 'dev-y', now() - interval '1 day'),
+  ('00000000-0000-0000-0000-0000000005b3', 'call_tap', 'dev-y',
+   ((now() at time zone 'Europe/London') - interval '1 day') at time zone 'Europe/London'),
   ('00000000-0000-0000-0000-0000000005b3', 'call_tap', 'dev-y', now());
 select is(public.enquiry_count('00000000-0000-0000-0000-0000000005b3'), 2, 'same device on two London days counts twice');
 
