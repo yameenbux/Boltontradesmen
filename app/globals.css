@@ -632,6 +632,9 @@ h1,h2,h3{text-wrap:balance}
   .tick-grid-areas{grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); padding:0}
   .tick{display:flex; gap:10px; align-items:center; min-height:44px; font-size:16px; cursor:pointer}
   .tick input{flex:none; width:22px; height:22px; margin:0; accent-color:var(--brick)}
+  .tick[hidden], .tick-section[hidden]{display:none}
+  .trade-search input{min-height:48px}
+  .trade-ticked{margin:0; font-size:15px; font-weight:600; color:var(--ink)}
   .ref-box{display:none; border:1.5px solid color-mix(in srgb,var(--brick) 40%,var(--line)); border-radius:14px; margin:0; padding:12px 14px; gap:10px; min-width:0}
   form:has(input[name="trades"][value="driving-instructors"]:checked) .ref-driving-instructors,
   form:has(input[name="trades"][value="gas-boilers"]:checked) .ref-gas-boilers{display:grid}

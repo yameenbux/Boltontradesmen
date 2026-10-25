@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { AlertIcon, TickIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
 import { submitTraderSetup } from "@/app/(platform)/provider/setup-actions";
@@ -9,6 +9,7 @@ import type { ConsentCard } from "@/lib/consent-shared";
 import { BL_DISTRICTS } from "@/lib/districts";
 import { LISTING_LIMITS } from "@/lib/listing-request";
 import { FREE_FEATURES, PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";
+import { matchesTrade } from "@/lib/trade-words";
 import { CHECK_TRADES, MAX_TRADES, type TraderSetupState } from "@/lib/trader-setup";
 
 type Key = keyof NonNullable<TraderSetupState["errors"]>;
@@ -80,26 +81,7 @@ export function TraderSetupForm({
         <Err k="business_name" msg={err.business_name} />
       </label>
 
-      <fieldset className="tick-group" aria-describedby={err.trades ? "ts-trades-err" : "ts-trades-hint"}>
-        <legend className="avail-legend">Your trade</legend>
-        <span id="ts-trades-hint" className="hint">
-          Tick up to {MAX_TRADES}.
-        </span>
-        {groups.map((g) => (
-          <details key={g.name} className="tick-section" open={g.trades.some((t) => trades.has(t.slug)) || undefined}>
-            <summary>{g.name}</summary>
-            <div className="tick-grid">
-              {g.trades.map((t) => (
-                <label key={t.slug} className="tick">
-                  <input type="checkbox" name="trades" value={t.slug} defaultChecked={trades.has(t.slug)} />
-                  <span>{t.name}</span>
-                </label>
-              ))}
-            </div>
-          </details>
-        ))}
-        <Err k="trades" msg={err.trades} />
-      </fieldset>
+      <TradePicker key={[...trades].join(",")} groups={groups} picked={trades} error={err.trades} />
 
       {/* Shown (CSS :has) when the trade is ticked; the server asks for them either way. */}
       {CHECK_TRADES.map((c) => (
@@ -234,5 +216,92 @@ export function TraderSetupForm({
         {pending ? "Putting you live…" : "Confirm"}
       </Button>
     </form>
+  );
+}
+
+/**
+ * "Your trade": a search box over the trades by group. Typing narrows the list to the trades whose name or words
+ * start with what's typed ("venet", "polished plaster", "sparky"), opening their groups; clearing it shows the groups
+ * again. Every tick box stays in the form (hidden ones too), so nothing ticked is lost while searching. What's ticked
+ * is listed under the search, as a group may be closed. Remounted (key) when the server sends the form back.
+ */
+function TradePicker({ groups, picked, error }: { groups: TradeGroup[]; picked: Set<string>; error?: string }) {
+  const [query, setQuery] = useState("");
+  const [ticked, setTicked] = useState<Set<string>>(() => new Set(picked));
+  const searching = query.trim() !== "";
+  const names = new Map(groups.flatMap((g) => g.trades.map((t) => [t.slug, t.name] as const)));
+  const found = searching ? groups.flatMap((g) => g.trades).filter((t) => matchesTrade(query, t)).length : 0;
+
+  function toggle(slug: string, on: boolean) {
+    setTicked((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(slug);
+      else next.delete(slug);
+      return next;
+    });
+  }
+
+  return (
+    <fieldset className="tick-group" aria-describedby={error ? "ts-trades-err" : "ts-trades-hint"}>
+      <legend className="avail-legend">Your trade</legend>
+      <span id="ts-trades-hint" className="hint">
+        Tick up to {MAX_TRADES}. Search, or open a group.
+      </span>
+      <label className="field trade-search">
+        <input
+          type="search"
+          className="input"
+          placeholder="Search your trade, e.g. Venetian plaster"
+          aria-label="Search your trade"
+          autoComplete="off"
+          enterKeyHint="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          // Enter searches; it mustn't send the form.
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.preventDefault();
+          }}
+        />
+      </label>
+      {ticked.size > 0 && (
+        <p className="trade-ticked" data-testid="trades-ticked">
+          Ticked: {[...ticked].map((s) => names.get(s) ?? s).join(", ")}
+        </p>
+      )}
+      {searching && found === 0 && (
+        <p className="hint" role="status">
+          Nothing matches &ldquo;{query.trim()}&rdquo;. Try another word, or tick the closest and WhatsApp us on 07466
+          487591 to add your trade.
+        </p>
+      )}
+      {groups.map((g) => {
+        const shown = g.trades.filter((t) => !searching || matchesTrade(query, t));
+        return (
+          <details
+            key={g.name}
+            className="tick-section"
+            hidden={searching && shown.length === 0}
+            open={searching || g.trades.some((t) => picked.has(t.slug)) || undefined}
+          >
+            <summary>{g.name}</summary>
+            <div className="tick-grid">
+              {g.trades.map((t) => (
+                <label key={t.slug} className="tick" hidden={searching && !shown.includes(t)}>
+                  <input
+                    type="checkbox"
+                    name="trades"
+                    value={t.slug}
+                    defaultChecked={picked.has(t.slug)}
+                    onChange={(e) => toggle(t.slug, e.target.checked)}
+                  />
+                  <span>{t.name}</span>
+                </label>
+              ))}
+            </div>
+          </details>
+        );
+      })}
+      <Err k="trades" msg={error} />
+    </fieldset>
   );
 }
