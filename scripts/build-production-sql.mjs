@@ -26,8 +26,10 @@
 //     --out docs/launch/quotes-invoices-production.sql
 //   node scripts/build-production-sql.mjs --preset trader-sign-up --from 20261012000037 --to 20261012000037 \
 //     --out docs/launch/trader-sign-up-production.sql
-//   node scripts/build-production-sql.mjs --preset launch-hardening --from 20261012000038 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset launch-hardening --from 20261012000038 --to 20261012000038 \
 //     --out docs/launch/launch-hardening-production.sql
+//   node scripts/build-production-sql.mjs --preset new-categories --from 20261012000039 --to <newest> \
+//     --out docs/launch/new-categories-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -532,6 +534,21 @@ end
 $verify$;
 `;
 
+const VERIFY_NEW_CATEGORIES = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if (select count(*) from public.categories where slug in ('ev-solar', 'carpets', 'gutter-cleaning', 'kitchen-fitter') and active) <> 4 then
+    raise exception 'New categories check failed: EV chargers & solar, Carpets, Gutter cleaning or Kitchen fitter is missing';
+  end if;
+  if not exists (select 1 from public.categories where slug = 'cleaner' and name = 'Cleaning services')
+     or not exists (select 1 from public.categories where slug = 'caterer' and name = 'Catering services') then
+    raise exception 'New categories check failed: Cleaning services or Catering services was not renamed';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -623,6 +640,12 @@ const PRESETS = {
     done: "Launch hardening database changes applied",
     requires: { version: "20261012000037", what: "the trader sign-up script (docs/launch/trader-sign-up-production.sql)" },
     verify: VERIFY_LAUNCH_HARDENING,
+  },
+  "new-categories": {
+    title: "new categories (EV chargers & solar, Carpets, Gutter cleaning, Kitchen fitter; Cleaning and Catering services renamed)",
+    done: "New categories applied",
+    requires: { version: "20261012000038", what: "the launch hardening script (docs/launch/launch-hardening-production.sql)" },
+    verify: VERIFY_NEW_CATEGORIES,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

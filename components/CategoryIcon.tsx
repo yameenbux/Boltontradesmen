@@ -53,6 +53,32 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M12 12C12 7 8.5 4 4 4c0 5 3.5 8 8 8ZM12 15c0-4.5 3-7.5 8-7.5 0 4.5-3 7.5-8 7.5Z" />
     </>
   ),
+  "ev-solar": (
+    <>
+      <rect x="3" y="4" width="13" height="9" rx="1" />
+      <path d="M3 8.5h13M9.5 4v9M9.5 13v3M6 20h7M20 9l-2 4h3l-2 4" />
+    </>
+  ),
+  carpets: (
+    <>
+      <path d="M4 7a3 3 0 0 1 6 0v10a3 3 0 0 1-6 0Z" />
+      <path d="M7 4h11a2 2 0 0 1 2 2v10H10" />
+      <path d="M7 10v1" />
+    </>
+  ),
+  "kitchen-fitter": (
+    <>
+      <rect x="3" y="10" width="18" height="10" rx="1" />
+      <path d="M3 14h18M12 10v10M7 4h10v3H7ZM12 7v3" />
+    </>
+  ),
+  "gutter-cleaning": (
+    <>
+      <path d="M3 6h18l-2 4H5Z" />
+      <path d="M17 10v7a2 2 0 0 1-2 2" />
+      <path d="M8 14c0 1.5 1 2.5 1 3.5a1 1 0 0 1-2 0c0-1 1-2 1-3.5Z" />
+    </>
+  ),
   cleaner: (
     <>
       <path d="m11 3 1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8Z" />
