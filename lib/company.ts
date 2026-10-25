@@ -4,3 +4,5 @@
 export const TRADING_NAME = "YSB Designs";
 export const COMPANY_LINE =
   "Bolton Vouched is a YSB Designs platform. YSB Designs is a trading name of YSB Ventures Ltd, registered in England and Wales, company number 16022339.";
+/** The footer's short form: the business, the registered company, where it's registered and its number. */
+export const FOOTER_LINE = "Bolton Vouched · YSB Ventures Ltd · Registered in England and Wales, no. 16022339";

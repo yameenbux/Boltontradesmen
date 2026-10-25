@@ -12,9 +12,7 @@ test("brand bar shows the name and tagline", async ({ page }) => {
 test("footer names the operator and the registered company", async ({ page }) => {
   await page.goto("/");
   const footer = page.getByRole("contentinfo");
-  await expect(footer).toContainText(
-    "Bolton Vouched is a YSB Designs platform. YSB Designs is a trading name of YSB Ventures Ltd, registered in England and Wales, company number 16022339.",
-  );
+  await expect(footer).toContainText("Bolton Vouched · YSB Ventures Ltd · Registered in England and Wales, no. 16022339");
   await expect(footer).not.toContainText(/yameen/i);
 });
 

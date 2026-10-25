@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { COMPANY_LINE } from "@/lib/company";
+import { FOOTER_LINE } from "@/lib/company";
 
 export function SiteFooter() {
   return (
@@ -12,7 +12,7 @@ export function SiteFooter() {
         <Link href="/fake-reviews-policy">Fake reviews</Link>
         <Link href="/cookies">Cookies</Link>
       </nav>
-      <p className="m-0">{COMPANY_LINE}</p>
+      <p className="m-0">{FOOTER_LINE}</p>
     </footer>
   );
 }
