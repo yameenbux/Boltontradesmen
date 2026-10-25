@@ -48,6 +48,7 @@ test("a trader sees their enquiries, edits their listing, pauses and unpauses it
     "Taking on work?",
     "Ask for reviews",
     "Share your page",
+    "Put it on Google",
     "Your website badge",
     "Reviews",
     "Edit your listing",

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { TickIcon } from "@/components/auth/icons";
 import { AvailabilityForm } from "@/components/provider/AvailabilityForm";
 import { ShareReviewLink } from "@/components/review-card/ShareReviewLink";
+import { GoogleProfileLink } from "@/components/share/GoogleProfileLink";
 import { WebsiteBadge } from "@/components/share/WebsiteBadge";
 import { Button } from "@/components/ui/Button";
 import { setMyAvailability } from "@/app/(platform)/provider/actions";
@@ -10,7 +11,7 @@ import { requireAccount } from "@/lib/auth";
 import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
 import { platformPath } from "@/lib/paths";
 import { reviewShare } from "@/lib/review-link";
-import { badgeShare, pageShare } from "@/lib/share";
+import { badgeShare, googleProfileLink, pageShare } from "@/lib/share";
 import type { MyListingRequest } from "@/lib/trader-setup";
 
 export const dynamic = "force-dynamic";
@@ -83,10 +84,13 @@ export default async function YouAreLivePage() {
           <h2 id="step-show">Show you&apos;re vouched</h2>
           <p className="lede">
             No website? Your page here is your website. Put the link where customers look for you: your WhatsApp
-            Business profile, your Facebook or Instagram bio, and the website box on your Google Business Profile.
+            Business profile, your Facebook or Instagram bio and, most of all, your Google profile.
           </p>
         </div>
         <ShareReviewLink {...page} label="Your page" testId="page-link" />
+        <h3 className="avail-legend">Put it on Google</h3>
+        <GoogleProfileLink link={googleProfileLink(p.slug)} />
+        <h3 className="avail-legend">Your badge</h3>
         <Button href={badge.png} variant="secondary" download={`${badge.downloadName}.png`}>
           Download your badge
         </Button>

@@ -74,6 +74,9 @@ test("a new trader: tick trades and areas, mobile and WhatsApp, Confirm, live; t
   // Step 3: no website? their page and the badge image; the embed code is folded away.
   const show = page.getByTestId("step-show");
   await expect(show.getByTestId("page-link")).toBeVisible();
+  await expect(show.getByTestId("google-link")).toContainText("/p/");
+  await expect(show.getByTestId("google-link")).toContainText("utm_source=google_business");
+  await expect(show.getByRole("button", { name: "Copy link for Google" })).toBeVisible();
   await expect(show.getByRole("link", { name: "Download your badge" })).toHaveAttribute("href", /\.png$/);
   await expect(reviews.getByRole("link", { name: /Print a review card/ })).toBeVisible();
   await expect(show.getByRole("button", { name: "Copy embed code" })).toBeHidden();

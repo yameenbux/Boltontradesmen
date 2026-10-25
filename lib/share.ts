@@ -75,6 +75,14 @@ export function badgeEmbedCode(slug: string, businessName: string, base: string 
   );
 }
 
+/**
+ * The link a trader pastes into the Website box of their Google Business Profile: their page here, tagged
+ * ?utm_source=google_business so visits from Google can be told apart (the page's canonical URL has no query).
+ */
+export function googleProfileLink(slug: string, base: string = siteUrl()): string {
+  return `${profileUrl(slug, base)}?utm_source=google_business`;
+}
+
 /** Everything the "Your website badge" section needs for one listing. */
 export function badgeShare(slug: string, businessName: string, base: string = siteUrl()) {
   return {

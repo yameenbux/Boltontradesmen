@@ -644,6 +644,9 @@ h1,h2,h3{text-wrap:balance}
   .live-tick{width:64px !important; height:64px; border-radius:50%; background:var(--sage); color:var(--surface); display:grid; place-items:center}
   .live-tick svg{width:32px; height:32px}
   .live-embed{padding:12px 14px 14px}
+  .google-steps{margin:4px 0 0; padding-left:22px; display:grid; gap:6px; font-size:15.5px; color:var(--ink-2)}
+  .google-steps a{color:var(--brick); text-underline-offset:3px}
+  .google-steps b{color:var(--ink)}
   .btn-danger{color:var(--brick); border-color:var(--brick)}
 
   /* ---------- availability form (trader's page and admin's provider page) ---------- */
