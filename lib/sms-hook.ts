@@ -94,6 +94,15 @@ export async function handleSendSmsHook(headers: Headers, rawBody: string, deps:
   return { status: 200, body: {} };
 }
 
+/**
+ * Whether texts can go at all: the three Twilio settings (or the local stub). Until they're set, every text is
+ * skipped and only emails go, so pages must not promise a text (they say "we'll let you know" instead).
+ */
+export function textsAvailable(env: Env = process.env): boolean {
+  if (env.TWILIO_SMS_STUB === "1") return true;
+  return !!(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_MESSAGING_SERVICE_SID);
+}
+
 /** Sends one text through a Twilio Messaging Service. */
 export async function sendSms(
   to: string,

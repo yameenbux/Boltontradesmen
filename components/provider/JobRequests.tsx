@@ -96,12 +96,20 @@ function RequestCard({ r, business }: { r: JobRequestRow; business: string }) {
 }
 
 /** A Pro trader's job requests from their page, newest first, with one-tap Call and WhatsApp back. */
-export function JobRequests({ requests, business }: { requests: JobRequestRow[]; business: string }) {
+export function JobRequests({
+  requests,
+  business,
+  textsOn,
+}: {
+  requests: JobRequestRow[];
+  business: string;
+  textsOn: boolean;
+}) {
   if (requests.length === 0) {
     return (
       <p className="reviews-empty">
-        No requests yet. When someone uses &ldquo;Request a quote&rdquo; on your page, it shows here and you get a text
-        straight away.
+        No requests yet. When someone uses &ldquo;Request a quote&rdquo; on your page, it shows here and you get{" "}
+        {textsOn ? "a text and an email" : "an email"} straight away.
       </p>
     );
   }

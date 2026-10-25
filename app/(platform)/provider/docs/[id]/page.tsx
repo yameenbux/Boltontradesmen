@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Quote or invoice | Bolton Vouched", 
 
 const NEXT_STEP: Record<string, string> = {
   draft: "Not sent yet. Send it on WhatsApp or by email: your customer can accept it online.",
-  sent: "Sent. We'll text you when your customer accepts or declines it.",
+  sent: "Sent. We'll let you know when your customer accepts or declines it.",
   accepted: "Accepted. When the job's done, turn it into an invoice in one tap.",
   declined: "Your customer declined this quote.",
   unpaid: "Waiting for payment. We remind your customer 3 and 10 days after the due date.",

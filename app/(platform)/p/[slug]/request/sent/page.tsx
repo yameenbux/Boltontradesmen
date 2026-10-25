@@ -17,7 +17,7 @@ export default async function RequestSentPage({ params }: { params: Promise<{ sl
           <h1 id="rq-sent-title" className="display">
             Request sent
           </h1>
-          <p>They&apos;ve been told by text and email. Keep your phone handy: they&apos;ll call or message you.</p>
+          <p>They&apos;ve been sent your request. Keep your phone handy: they&apos;ll call or message you.</p>
           <Button href={platformPath("p", slug)} variant="secondary">
             Back to their page
           </Button>

@@ -3,6 +3,7 @@ import { ShopIcon } from "@/components/auth/icons";
 import { AvailabilityForm } from "@/components/provider/AvailabilityForm";
 import { EditListingForm } from "@/components/provider/EditListingForm";
 import { AlertSettingsForm, type AlertSettings } from "@/components/provider/AlertSettingsForm";
+import { textsAvailable } from "@/lib/sms-hook";
 import { EnquiryStats } from "@/components/provider/EnquiryStats";
 import { JobRequests, type JobRequestRow } from "@/components/provider/JobRequests";
 import { BillingForm } from "@/components/docs/BillingForm";
@@ -161,6 +162,7 @@ export default async function ProviderArea({
   // No Welcome here: a new trader's account gets its name from the trader form.
   const { supabase, account } = await requireAccount(platformPath("provider"));
   const { withdrawn, pro: proParam } = await searchParams;
+  const textsOn = textsAvailable();
   let listings: Listing[] = [];
   if (account?.displayName) {
     const { data, error } = await supabase.rpc("provider_my_reviews");
@@ -305,7 +307,7 @@ export default async function ProviderArea({
                 </h2>
                 <p className="lede">From &ldquo;Request a quote&rdquo; on your page. Only you see these.</p>
               </div>
-              <JobRequests requests={jobs[i].requests} business={p.business_name} />
+              <JobRequests requests={jobs[i].requests} business={p.business_name} textsOn={textsOn} />
             </section>
           )}
           {jobs[i] && (
@@ -336,11 +338,13 @@ export default async function ProviderArea({
               <div>
                 <h2 id={`alerts-${p.id}`}>Alerts</h2>
                 <p className="lede">
-                  We text and email you when a job request comes in, and when someone in your areas asks Bolton for
-                  your trade. Up to 10 texts a day.
+                  We let you know straight away when a job request comes in, and when someone in your areas asks
+                  Bolton for your trade.{" "}
+                  {textsOn ? "By text (up to 10 a day) and email." : "By email for now: texts are coming soon."}
                 </p>
               </div>
               <AlertSettingsForm
+                textsOn={textsOn}
                 action={saveAlertSettings.bind(null, p.id)}
                 settings={jobs[i].settings}
                 defaultSms={
