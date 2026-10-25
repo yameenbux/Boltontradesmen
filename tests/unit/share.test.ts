@@ -5,6 +5,7 @@ import {
   badgePath,
   badgeShare,
   escapeMarkup,
+  googleProfileLink,
   pageShare,
   parseBadgeFile,
   profileShare,
@@ -94,5 +95,11 @@ describe("embed code", () => {
     expect(b).toMatchObject({ svg: "/badge/ace.svg", png: "/badge/ace.png", downloadName: "bolton-vouched-ace" });
     expect(b.alt).toBe(badgeAlt("Ace"));
     expect(b.embed).toBe(badgeEmbedCode("ace", "Ace", BASE));
+  });
+});
+
+describe("googleProfileLink", () => {
+  it("is the trader's page, tagged so visits from Google can be told apart", () => {
+    expect(googleProfileLink("ace-plumbing", BASE)).toBe(`${BASE}/p/ace-plumbing?utm_source=google_business`);
   });
 });

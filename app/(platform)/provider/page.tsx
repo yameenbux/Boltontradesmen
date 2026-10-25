@@ -14,6 +14,7 @@ import { ProPanel } from "@/components/provider/ProPanel";
 import { ReplyForm } from "@/components/provider/ReplyForm";
 import { TraderStart } from "@/components/provider/TraderStart";
 import { ShareReviewLink } from "@/components/review-card/ShareReviewLink";
+import { GoogleProfileLink } from "@/components/share/GoogleProfileLink";
 import { WebsiteBadge } from "@/components/share/WebsiteBadge";
 import { CONTACT_EMAIL, MAILTO } from "@/components/site/content";
 import { Button } from "@/components/ui/Button";
@@ -33,7 +34,7 @@ import { stillOpen } from "@/lib/review-form";
 import { tradeGroups } from "@/lib/trade-names";
 import type { MyListingRequest } from "@/lib/trader-setup";
 import { reviewShare } from "@/lib/review-link";
-import { badgeShare, pageShare } from "@/lib/share";
+import { badgeShare, googleProfileLink, pageShare } from "@/lib/share";
 import {
   monthYear,
   ON_PRICE_TEXT,
@@ -393,12 +394,25 @@ export default async function ProviderArea({
             </div>
             <ShareReviewLink {...pageShare(p.slug, p.business_name)} label="Your page" testId="page-link" />
           </section>
+          {p.status === "live" && (
+            <section className="auth-card" aria-labelledby={`google-${p.id}`}>
+              <div>
+                <h2 id={`google-${p.id}`}>Put it on Google</h2>
+                <p className="lede">
+                  Most customers start on Google. Add your page as the website on your Google Business Profile, so
+                  people who find you there can read your reviews.
+                </p>
+              </div>
+              <GoogleProfileLink link={googleProfileLink(p.slug)} />
+            </section>
+          )}
           <section className="auth-card" aria-labelledby={`badge-${p.id}`}>
             <div>
               <h2 id={`badge-${p.id}`}>Your website badge</h2>
               <p className="lede">
                 Put it on your website or Facebook page, or print it for your van. It links to your page here and
-                shows your rating badge once you&apos;ve earned one.
+                shows your rating badge once you&apos;ve earned one. No website? Your page is your website: put its
+                link in your WhatsApp Business, Facebook, Instagram and Google profiles.
               </p>
             </div>
             {p.status === "live" ? (
