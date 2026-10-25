@@ -94,7 +94,9 @@ from (values
 ) v(provider_id, type, device, months);
 
 update public.providers set availability = 'taking', availability_set_at = now() where slug = 'e2e-keen-vans';
-update public.providers set availability = 'booked', availability_set_at = now() - interval '2 days',
+-- Two London calendar days back, not 48 hours: on the night the clocks change, 48 hours is one London day.
+update public.providers set availability = 'booked',
+  availability_set_at = ((now() at time zone 'Europe/London') - interval '2 days') at time zone 'Europe/London',
   available_until = (now() at time zone 'Europe/London')::date + 28 where slug = 'e2e-busy-vans';
 update public.providers set availability = 'taking', availability_set_at = now() - interval '20 days'
 where slug = 'e2e-stale-vans';
