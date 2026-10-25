@@ -148,6 +148,8 @@ const TRADE_WORDS: Record<string, { one: string; many: string }> = {
   mot: { one: "an MOT", many: "MOT garages" },
   "mobile-tyre-fitting": { one: "mobile tyre fitting", many: "mobile tyre fitters" },
   "window-tinting": { one: "window tinting", many: "window tinters" },
+  "vehicle-recovery": { one: "vehicle recovery", many: "recovery firms" },
+  "venetian-plaster": { one: "Venetian plastering", many: "Venetian plasterers" },
   "taxi-private-hire": { one: "a taxi", many: "taxis and private hire" },
   "minibus-hire": { one: "minibus hire", many: "minibus hire firms" },
   "airport-transfers": { one: "an airport transfer", many: "airport transfer drivers" },

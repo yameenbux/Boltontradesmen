@@ -163,9 +163,17 @@ const SCRIPTS = [
     file: "docs/launch/check-numbers-production.sql",
     preset: "check-numbers",
     from: "20261012000043",
-    to: NEWEST,
+    to: "20261012000043",
     functions: [],
     requires: "20261012000042",
+  },
+  {
+    file: "docs/launch/plaster-recovery-production.sql",
+    preset: "plaster-recovery",
+    from: "20261012000044",
+    to: NEWEST,
+    functions: [],
+    requires: "20261012000043",
   },
 ];
 
