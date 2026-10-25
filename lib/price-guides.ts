@@ -124,6 +124,7 @@ const TRADE_WORDS: Record<string, { one: string; many: string }> = {
   "man-and-van": { one: "a man and van", many: "man and van firms" },
   "skip-hire": { one: "skip hire", many: "skip hire firms" },
   "house-clearance": { one: "a house clearance", many: "house clearance firms" },
+  "estate-agents": { one: "an estate agent", many: "estate agents" },
   caterer: { one: "a caterer", many: "caterers" },
   "bouncy-castles": { one: "bouncy castle hire", many: "bouncy castle hire firms" },
   dj: { one: "a DJ", many: "DJs" },

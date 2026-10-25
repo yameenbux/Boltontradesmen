@@ -28,8 +28,10 @@
 //     --out docs/launch/trader-sign-up-production.sql
 //   node scripts/build-production-sql.mjs --preset launch-hardening --from 20261012000038 --to 20261012000038 \
 //     --out docs/launch/launch-hardening-production.sql
-//   node scripts/build-production-sql.mjs --preset new-categories --from 20261012000039 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset new-categories --from 20261012000039 --to 20261012000039 \
 //     --out docs/launch/new-categories-production.sql
+//   node scripts/build-production-sql.mjs --preset estate-agents --from 20261012000040 --to <newest> \
+//     --out docs/launch/estate-agents-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -553,6 +555,18 @@ end
 $verify$;
 `;
 
+const VERIFY_ESTATE_AGENTS = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if not exists (select 1 from public.categories c join public.category_groups g on g.id = c.group_id
+                 where c.slug = 'estate-agents' and c.active and g.slug = 'moving-waste' and c.guidance_note like '%redress scheme%') then
+    raise exception 'Estate agents check failed: the category is missing';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -650,6 +664,12 @@ const PRESETS = {
     done: "New categories applied",
     requires: { version: "20261012000038", what: "the launch hardening script (docs/launch/launch-hardening-production.sql)" },
     verify: VERIFY_NEW_CATEGORIES,
+  },
+  "estate-agents": {
+    title: "Estate agents category",
+    done: "Estate agents applied",
+    requires: { version: "20261012000039", what: "the new categories script (docs/launch/new-categories-production.sql)" },
+    verify: VERIFY_ESTATE_AGENTS,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

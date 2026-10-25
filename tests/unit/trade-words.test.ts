@@ -27,6 +27,7 @@ const cats = [
   cat("window-door-repair", "Windows, doors & glazing"),
   cat("handyman", "Handyman"),
   cat("valeting", "Car valeting"),
+  cat("estate-agents", "Estate agents"),
   cat("appliance-repair", "Appliance repair"),
   cat("skip-hire", "Skip hire"),
   cat("mot", "MOT"),
@@ -55,6 +56,9 @@ describe("guessTrade", () => {
     expect(guess("Shower is leaking")).toBe("plumber");
     expect(guess("Want a block paving driveway")).toBe("driveways-paving");
     expect(guess("Car valet needed this weekend")).toBe("valeting");
+    expect(guess("Looking to sell my house, any good estate agents?")).toBe("estate-agents");
+    expect(guess("Need a man and van, moving house next week")).toBe("man-and-van");
+    expect(guess("My landlord won't fix the boiler")).toBe("gas-boilers");
   });
 
   it("sends a boiler to gas engineers, never to a plumber", () => {

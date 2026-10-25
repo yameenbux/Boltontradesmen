@@ -41,6 +41,7 @@ from (values
   ('moving-waste', 'man-and-van', 'Man & van', 'none', null),
   ('moving-waste', 'skip-hire', 'Skip hire', 'none', null),
   ('moving-waste', 'house-clearance', 'House clearance', 'none', null),
+  ('moving-waste', 'estate-agents', 'Estate agents', 'none', 'Estate agents must belong to a government-approved redress scheme (The Property Ombudsman or the Property Redress Scheme). Ask which one before you sign.'),
   ('events-occasions', 'caterer', 'Catering services', 'none', null),
   ('events-occasions', 'bouncy-castles', 'Bouncy castles', 'none', null),
   ('events-occasions', 'dj', 'DJ', 'none', null),

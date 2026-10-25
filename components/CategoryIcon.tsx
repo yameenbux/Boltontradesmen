@@ -164,6 +164,12 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M6 8 5 5M18 8l1-3M9 12v3M15 12v3" />
     </>
   ),
+  "estate-agents": (
+    <>
+      <path d="M3 11 10 5l7 6v9H3Z" />
+      <path d="M8 20v-5h4v5M17 8h4v6h-4M19 14v6" />
+    </>
+  ),
   "house-clearance": (
     <>
       <path d="M21 8 12 3 3 8v8l9 5 9-5Z" />
