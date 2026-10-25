@@ -42,7 +42,7 @@ select lives_ok(
   'gas-boilers allowed with in-date gas_safe check');
 
 -- seed data
-select is((select count(*) from public.category_groups), 7::bigint, '7 category groups (Transport added 2026-10-12)');
+select is((select count(*) from public.category_groups), 8::bigint, '8 category groups (Transport added 2026-10-12, Business & finance 2026-10-25)');
 select ok((select count(*) from public.categories) >= 41, 'at least 41 categories');
 select is((select requirement::text from public.categories where slug = 'gas-boilers'), 'gas_safe', 'gas-boilers requires gas_safe');
 select is((select requirement::text from public.categories where slug = 'driving-instructors'), 'dvsa_adi', 'driving-instructors requires dvsa_adi');

@@ -131,9 +131,17 @@ const SCRIPTS = [
     file: "docs/launch/new-categories-production.sql",
     preset: "new-categories",
     from: "20261012000039",
-    to: NEWEST,
+    to: "20261012000039",
     functions: [],
     requires: "20261012000038",
+  },
+  {
+    file: "docs/launch/more-categories-production.sql",
+    preset: "more-categories",
+    from: "20261012000040",
+    to: NEWEST,
+    functions: [],
+    requires: "20261012000039",
   },
 ];
 

@@ -19,6 +19,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  // GitHub's runners are slower and busier than a laptop: a page that settles in 2s locally can take 6-8s there, and
+  // the 5s default sent a different long test over the edge on each run. CI waits longer; local runs keep the defaults
+  // so a genuinely slow page still shows up while developing.
+  ...(process.env.CI ? { timeout: 60_000, expect: { timeout: 15_000 } } : {}),
   reporter: process.env.CI ? "github" : "list",
   use: { baseURL: "http://localhost:3000", trace: "on-first-retry" },
   // Two projects: everything runs with phone sign-in off (production's setting) on :3000; the phone path keeps

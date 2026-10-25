@@ -9,6 +9,10 @@ const cats = [
   cat("plumber", "Plumber"),
   cat("electrician", "Electrician"),
   cat("gas-boilers", "Gas & boilers"),
+  cat("window-tinting", "Window tinting"),
+  cat("cctv-security", "CCTV & security"),
+  cat("venues", "Wedding & event venues"),
+  cat("mechanic", "Mechanic & car servicing"),
   cat("heating-repair", "Heating repair"),
   cat("plasterer", "Plasterer"),
   cat("rubbish-removal", "Rubbish removal"),
@@ -27,9 +31,14 @@ const cats = [
   cat("window-door-repair", "Windows, doors & glazing"),
   cat("handyman", "Handyman"),
   cat("valeting", "Car valeting"),
+  cat("estate-agents", "Estate agents"),
+  cat("accountants", "Accountants"),
+  cat("travel-agents", "Travel agents"),
+  cat("airport-transfers", "Airport transfers"),
+  cat("gas-boilers", "Gas & boilers"),
   cat("appliance-repair", "Appliance repair"),
   cat("skip-hire", "Skip hire"),
-  cat("mot", "MOT"),
+  cat("mot", "MOT test"),
   cat("taxi-private-hire", "Taxi & private hire"),
 ];
 
@@ -55,6 +64,17 @@ describe("guessTrade", () => {
     expect(guess("Shower is leaking")).toBe("plumber");
     expect(guess("Want a block paving driveway")).toBe("driveways-paving");
     expect(guess("Car valet needed this weekend")).toBe("valeting");
+    expect(guess("Looking to sell my house, any good estate agents?")).toBe("estate-agents");
+    expect(guess("Need a man and van, moving house next week")).toBe("man-and-van");
+    expect(guess("My landlord won't fix the boiler")).toBe("gas-boilers");
+    expect(guess("Need someone to do my self assessment tax return")).toBe("accountants");
+    expect(guess("Anyone know a good travel agent for Umrah?")).toBe("travel-agents");
+    expect(guess("Need a lift to the airport for my holiday")).toBe("airport-transfers");
+    expect(guess("Who does window tinting on cars?")).toBe("window-tinting");
+    expect(guess("Need CCTV fitted at the front of the house")).toBe("cctv-security");
+    expect(guess("Looking for a wedding venue for 300 guests")).toBe("venues");
+    expect(guess("Car needs a full service")).toBe("mechanic");
+    expect(guess("MOT due next week")).toBe("mot");
   });
 
   it("sends a boiler to gas engineers, never to a plumber", () => {
