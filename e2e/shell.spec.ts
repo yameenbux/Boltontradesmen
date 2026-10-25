@@ -66,7 +66,7 @@ test("unknown route shows the branded 404 with links to the trades, home and sup
   await expect(main.getByRole("link", { name: "Bolton Vouched home" })).toHaveAttribute("href", "/");
   await expect(main.getByRole("link", { name: "support@ysbdesigns.uk" })).toHaveAttribute("href", /^mailto:support@ysbdesigns\.uk\?/);
   await expect(page.getByRole("banner")).toContainText("Bolton Vouched");
-  await expect(page.getByRole("contentinfo")).toContainText("YSB Designs platform");
+  await expect(page.getByRole("contentinfo")).toContainText("YSB Ventures Ltd");
 });
 
 test("no horizontal scroll at 360px on the home page", async ({ page }) => {
