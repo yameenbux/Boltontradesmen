@@ -643,6 +643,7 @@ h1,h2,h3{text-wrap:balance}
   .live-card > *{width:100%}
   .live-tick{width:64px !important; height:64px; border-radius:50%; background:var(--sage); color:var(--surface); display:grid; place-items:center}
   .live-tick svg{width:32px; height:32px}
+  .live-embed{padding:12px 14px 14px}
   .btn-danger{color:var(--brick); border-color:var(--brick)}
 
   /* ---------- availability form (trader's page and admin's provider page) ---------- */

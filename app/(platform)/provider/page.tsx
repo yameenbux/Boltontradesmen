@@ -398,7 +398,8 @@ export default async function ProviderArea({
               <h2 id={`badge-${p.id}`}>Your website badge</h2>
               <p className="lede">
                 Put it on your website or Facebook page, or print it for your van. It links to your page here and
-                shows your rating badge once you&apos;ve earned one.
+                shows your rating badge once you&apos;ve earned one. No website? Your page is your website: put its
+                link in your WhatsApp Business, Facebook, Instagram and Google profiles.
               </p>
             </div>
             {p.status === "live" ? (
