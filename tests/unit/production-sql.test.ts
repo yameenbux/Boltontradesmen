@@ -155,9 +155,17 @@ const SCRIPTS = [
     file: "docs/launch/one-step-production.sql",
     preset: "one-step",
     from: "20261012000042",
-    to: NEWEST,
+    to: "20261012000042",
     functions: [],
     requires: "20261012000041",
+  },
+  {
+    file: "docs/launch/check-numbers-production.sql",
+    preset: "check-numbers",
+    from: "20261012000043",
+    to: NEWEST,
+    functions: [],
+    requires: "20261012000042",
   },
 ];
 

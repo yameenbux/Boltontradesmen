@@ -7,6 +7,7 @@ import { Pill } from "@/components/ui/Pill";
 import {
   CheckForm,
   ConsentLinkButton,
+  ConfirmSignupCheckForm,
   MarkReviewedForm,
   ProviderForm,
   ReinviteForm,
@@ -19,6 +20,7 @@ import { EnquiryStats } from "@/components/provider/EnquiryStats";
 import { setProviderAvailability } from "@/app/admin/(protected)/providers/actions";
 import { FoundingProForm } from "@/components/admin/FoundingProForm";
 import { requireAdmin } from "@/lib/admin";
+import { CHECK_TRADES, type CheckKind } from "@/lib/trader-setup";
 import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
 import { dayMonthYear } from "@/lib/checks";
 import { toEnquiryStats } from "@/lib/enquiries";
@@ -58,6 +60,7 @@ type Detail = {
   created_at?: string;
   owner_email?: string | null;
   consent_link_made?: boolean;
+  signup_refs?: Partial<Record<CheckKind, { ref: string; expires: string; slug: string }>>;
 };
 
 const LINKABLE = ["consented", "live", "paused"];
@@ -90,7 +93,7 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
   const { supabase } = await requireAdmin();
   const [{ data }, { data: categories }, { data: enquiries }, { data: proData }, { data: grantData }] = await Promise.all([
     supabase.rpc("admin_get_provider", { p_id: id }),
-    supabase.from("categories").select("id, name").order("name"),
+    supabase.from("categories").select("id, name, slug").order("name"),
     supabase.rpc("admin_enquiry_stats", { p_provider: id }),
     supabase.rpc("admin_provider_pro", { p_provider: id }),
     supabase.rpc("admin_pro_grant", { p_provider: id }),
@@ -124,7 +127,7 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
             the name, trade, areas and number below; anything you change is saved without telling them (except the
             phone number: changing it emails them, so calls never go somewhere they don&apos;t expect).
           </p>
-          {p.signup_trade && (
+          {p.signup_trade && Object.keys(p.signup_refs ?? {}).length === 0 && (
             <p className="a-err">
               They ticked {p.signup_trade}, which needs a check first (Gas Safe or DVSA). Record the check below, then
               add the trade.
@@ -148,6 +151,25 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
           <MarkReviewedForm providerId={p.id} />
         </section>
       )}
+
+      {CHECK_TRADES.map((c) => {
+        const r = p.signup_refs?.[c.kind];
+        if (!r) return null;
+        const trade = categories?.find((x) => x.slug === r.slug)?.name ?? c.slug;
+        return (
+          <section key={c.kind} aria-label={`${c.label} to check`} className="a-card" data-testid={`signup-check-${c.kind}`}>
+            <h2>{trade}: check their number</h2>
+            <p className="a-lede">
+              {c.label}: <strong>{r.ref}</strong> · expires {dayMonthYear(r.expires)}.{" "}
+              <a className="a-link" href={c.lookup} target="_blank" rel="noopener noreferrer">
+                {c.lookupLabel}
+              </a>
+              . Once it checks out, this records the check and lists them under {trade}.
+            </p>
+            <ConfirmSignupCheckForm providerId={p.id} kind={c.kind} trade={trade} />
+          </section>
+        );
+      })}
 
       {enquiries && (
         <section aria-label="Enquiries" className="a-card">

@@ -18,7 +18,7 @@ import { revalidatePublicPages } from "@/lib/revalidate-public";
 import { createServerAuthClient } from "@/lib/supabase/server";
 import { deliverLive } from "@/lib/notify";
 import { createServiceClient } from "@/lib/supabase/service";
-import { isPlan, MAX_TRADES, TRADER_SETUP_ERRORS, type TraderSetupState } from "@/lib/trader-setup";
+import { CHECK_TRADES, isPlan, MAX_TRADES, TRADER_SETUP_ERRORS, type TraderSetupState } from "@/lib/trader-setup";
 
 function field(fd: FormData, name: string): string {
   const v = fd.get(name);
@@ -44,6 +44,10 @@ export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): 
   const areas = list(fd, "areas").filter((a) => BL_DISTRICTS.includes(a));
   values.trades = trades;
   values.areas = areas;
+  for (const c of CHECK_TRADES) {
+    values[`${c.kind}_ref`] = field(fd, `${c.kind}_ref`);
+    values[`${c.kind}_expires`] = field(fd, `${c.kind}_expires`);
+  }
 
   const supabase = await createServerAuthClient();
   const { data: auth } = await supabase.auth.getUser();
@@ -98,6 +102,16 @@ export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): 
     }
   }
   if (!isPlan(values.plan as string)) errors.plan = TRADER_SETUP_ERRORS.plan;
+  // A ticked trade that needs a check comes with its number and expiry, for the admin to look up.
+  const refs: Record<string, { ref: string; expires: string }> = {};
+  for (const c of CHECK_TRADES) {
+    if (!trades.includes(c.slug)) continue;
+    const ref = (values[`${c.kind}_ref`] as string).replace(/\s+/g, "");
+    const expires = values[`${c.kind}_expires`] as string;
+    if (!/^[A-Za-z0-9]{4,12}$/.test(ref)) errors[c.kind] = TRADER_SETUP_ERRORS.check_ref;
+    else if (!validExpiry(expires)) errors[c.kind] = TRADER_SETUP_ERRORS.check_expires;
+    else refs[c.kind] = { ref, expires };
+  }
   if (Object.keys(errors).length) return { errors, values };
 
   const statement = consentStatement();
@@ -137,6 +151,7 @@ export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): 
       p_email: email,
       p_plan: values.plan,
       p_ip_hash: ipHash(ip),
+      p_refs: refs,
       p_evidence: {
         ip,
         text_version: CONSENT_TEXT_VERSION,
@@ -166,4 +181,15 @@ export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): 
     after(() => deliverLive(email, { name: firstName(contactName) ?? "there", business, pro }));
   }
   redirect(platformPath("provider", "live"));
+}
+
+// A yyyy-mm-dd date from today to six years ahead (cards and badges last up to five).
+function validExpiry(v: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const d = new Date(`${v}T12:00:00Z`);
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) return false;
+  const today = new Date().toISOString().slice(0, 10);
+  const limit = new Date();
+  limit.setUTCFullYear(limit.getUTCFullYear() + 6);
+  return v >= today && v <= limit.toISOString().slice(0, 10);
 }

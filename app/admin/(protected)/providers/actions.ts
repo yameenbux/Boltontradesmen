@@ -418,3 +418,22 @@ export async function markReviewed(_prev: FormState, fd: FormData): Promise<Form
   revalidatePath("/admin");
   return { ok: true };
 }
+
+// The admin looked up a check number the trader gave at sign-up: record the check and add the trade.
+export async function confirmSignupCheck(_prev: FormState, fd: FormData): Promise<FormState> {
+  const { supabase } = await requireAdmin();
+  const id = text(fd.get("provider_id"));
+  const kind = text(fd.get("kind"));
+  if (!z.string().uuid().safeParse(id).success || (kind !== "gas_safe" && kind !== "dvsa_adi")) {
+    return { message: "Unknown check" };
+  }
+  const { error } = await supabase.rpc("admin_confirm_signup_check", { p_provider: id, p_kind: kind });
+  if (error) {
+    if (error.message.includes("nothing_to_confirm")) return { message: "That number has already been dealt with." };
+    return { message: "Could not record the check. Try again." };
+  }
+  revalidatePath(`/admin/providers/${id}`);
+  revalidatePath("/admin");
+  revalidatePublicPages();
+  return { ok: true };
+}

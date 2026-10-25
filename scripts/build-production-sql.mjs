@@ -34,8 +34,10 @@
 //     --out docs/launch/more-categories-production.sql
 //   node scripts/build-production-sql.mjs --preset auto-live --from 20261012000041 --to 20261012000041 \
 //     --out docs/launch/auto-live-production.sql
-//   node scripts/build-production-sql.mjs --preset one-step --from 20261012000042 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset one-step --from 20261012000042 --to 20261012000042 \
 //     --out docs/launch/one-step-production.sql
+//   node scripts/build-production-sql.mjs --preset check-numbers --from 20261012000043 --to <newest> \
+//     --out docs/launch/check-numbers-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -622,6 +624,29 @@ end
 $verify$;
 `;
 
+const VERIFY_CHECK_NUMBERS = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'providers'
+                 and column_name = 'signup_refs') then
+    raise exception 'Check numbers check failed: providers.signup_refs is missing';
+  end if;
+  if to_regprocedure('public.trader_publish_listing(uuid, text, text, text[], text[], text, text, text, text, text, jsonb, jsonb)') is null
+     or (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+         where n.nspname = 'public' and p.proname = 'trader_publish_listing') <> 1 then
+    raise exception 'Check numbers check failed: trader_publish_listing (with the check numbers) is missing, or an old one is still there';
+  end if;
+  if to_regprocedure('public.admin_confirm_signup_check(uuid, public.check_kind)') is null then
+    raise exception 'Check numbers check failed: admin_confirm_signup_check is missing';
+  end if;
+  if has_function_privilege('authenticated', 'public.trader_publish_listing(uuid, text, text, text[], text[], text, text, text, text, text, jsonb, jsonb)', 'execute') then
+    raise exception 'Check numbers check failed: a signed-in account could call trader_publish_listing';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -737,6 +762,12 @@ const PRESETS = {
     done: "One-step sign-up applied",
     requires: { version: "20261012000041", what: "the auto-live script (docs/launch/auto-live-production.sql)" },
     verify: VERIFY_ONE_STEP,
+  },
+  "check-numbers": {
+    title: "check numbers at sign-up (ADI badge and Gas Safe numbers, confirmed by the admin with one button)",
+    done: "Check numbers applied",
+    requires: { version: "20261012000042", what: "the one-step script (docs/launch/one-step-production.sql)" },
+    verify: VERIFY_CHECK_NUMBERS,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

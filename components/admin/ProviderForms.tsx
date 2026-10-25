@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import {
+  confirmSignupCheck,
   markReviewed,
   newConsentLink,
   newTraderLink,
@@ -392,6 +393,22 @@ export function MarkReviewedForm({ providerId }: { providerId: string }) {
       <input type="hidden" name="provider_id" value={providerId} />
       <Button type="submit" disabled={pending}>
         Checked
+      </Button>
+      {state.message && <p role="alert" className="a-err">{state.message}</p>}
+    </form>
+  );
+}
+
+/** One press once the admin has looked the number up: records the check (number and expiry given) and adds the trade. */
+export function ConfirmSignupCheckForm({ providerId, kind, trade }: { providerId: string; kind: string; trade: string }) {
+  const [state, action, pending] = useActionState(confirmSignupCheck, {} as FormState);
+  if (state.ok) return <p role="status" className="a-ok">Check recorded and {trade} added.</p>;
+  return (
+    <form action={action} className="grid gap-2">
+      <input type="hidden" name="provider_id" value={providerId} />
+      <input type="hidden" name="kind" value={kind} />
+      <Button type="submit" disabled={pending}>
+        It checks out: add {trade}
       </Button>
       {state.message && <p role="alert" className="a-err">{state.message}</p>}
     </form>
