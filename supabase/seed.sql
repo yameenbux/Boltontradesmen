@@ -31,6 +31,7 @@ from (values
   ('home-trades', 'carpets', 'Carpets', 'none', null),
   ('home-trades', 'gutter-cleaning', 'Gutter cleaning', 'none', null),
   ('home-trades', 'kitchen-fitter', 'Kitchen fitter', 'none', null),
+  ('home-trades', 'cctv-security', 'CCTV & security', 'none', 'For alarms, NSI or SSAIB approval is a good sign. If cameras will see past your boundary (the street or a neighbour''s home), the footage comes under data protection law: ask the installer where to point them.'),
   ('home-trades', 'bedrooms-wardrobes', 'Fitted bedrooms & wardrobes', 'none', null),
   ('home-trades', 'window-cleaner', 'Window cleaner', 'none', null),
   ('home-trades', 'bathroom-fitter', 'Bathroom fitter', 'none', null),
@@ -53,16 +54,18 @@ from (values
   ('events-occasions', 'photographer', 'Photographer', 'none', null),
   ('events-occasions', 'entertainer', 'Entertainer', 'none', null),
   ('events-occasions', 'florist', 'Florist', 'none', null),
+  ('events-occasions', 'venues', 'Wedding & event venues', 'none', null),
   ('personal-lessons', 'mobile-hair-beauty', 'Mobile hair & beauty', 'none', null),
   ('personal-lessons', 'tutors', 'Tutors', 'none', null),
   ('personal-lessons', 'driving-instructors', 'Driving instructors', 'dvsa_adi', null),
   ('personal-lessons', 'fitness', 'Fitness', 'none', null),
   ('personal-lessons', 'music-lessons', 'Music lessons', 'none', null),
   ('personal-lessons', 'dog-walking-grooming', 'Dog walking & grooming', 'none', null),
-  ('vehicles', 'mechanic', 'Mechanic', 'none', null),
+  ('vehicles', 'mechanic', 'Mechanic & car servicing', 'none', null),
   ('vehicles', 'valeting', 'Car valeting', 'none', null),
-  ('vehicles', 'mot', 'MOT', 'none', null),
-  ('vehicles', 'mobile-tyre-fitting', 'Mobile tyre fitting', 'none', null)
+  ('vehicles', 'mot', 'MOT test', 'none', 'MOTs can only be done at a DVSA-approved test centre: look for the blue sign with three white triangles.'),
+  ('vehicles', 'mobile-tyre-fitting', 'Mobile tyre fitting', 'none', null),
+  ('vehicles', 'window-tinting', 'Window tinting', 'none', 'The windscreen must let through at least 75% of light and the front side windows at least 70%. Darker tints there can mean a fine or a failed MOT; rear windows have no limit.')
 ) as v(group_slug, slug, name, requirement, guidance_note)
 join public.category_groups g on g.slug = v.group_slug
 on conflict (slug) do nothing;

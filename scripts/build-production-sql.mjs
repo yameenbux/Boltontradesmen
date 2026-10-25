@@ -562,8 +562,15 @@ begin
   if (select count(*) from public.categories c join public.category_groups g on g.id = c.group_id
       where c.active and ((c.slug = 'estate-agents' and g.slug = 'moving-waste')
                        or (c.slug = 'accountants' and g.slug = 'business-finance')
-                       or (c.slug = 'travel-agents' and g.slug = 'transport'))) <> 3 then
-    raise exception 'More categories check failed: Estate agents, Accountants or Travel agents is missing';
+                       or (c.slug = 'travel-agents' and g.slug = 'transport')
+                       or (c.slug = 'window-tinting' and g.slug = 'vehicles')
+                       or (c.slug = 'cctv-security' and g.slug = 'home-trades')
+                       or (c.slug = 'venues' and g.slug = 'events-occasions'))) <> 6 then
+    raise exception 'More categories check failed: one of the six new trades is missing';
+  end if;
+  if not exists (select 1 from public.categories where slug = 'mot' and name = 'MOT test')
+     or not exists (select 1 from public.categories where slug = 'mechanic' and name = 'Mechanic & car servicing') then
+    raise exception 'More categories check failed: MOT test or Mechanic & car servicing was not renamed';
   end if;
   if not exists (select 1 from public.category_groups where slug = 'transport' and name = 'Travel & transport') then
     raise exception 'More categories check failed: the Transport group was not renamed';
@@ -671,7 +678,7 @@ const PRESETS = {
     verify: VERIFY_NEW_CATEGORIES,
   },
   "more-categories": {
-    title: "more categories (Estate agents, Accountants in a new Business & finance group, Travel agents)",
+    title: "more categories (Estate agents, Accountants, Travel agents, Window tinting, CCTV & security, Wedding & event venues; MOT test and Mechanic & car servicing renamed)",
     done: "More categories applied",
     requires: { version: "20261012000039", what: "the new categories script (docs/launch/new-categories-production.sql)" },
     verify: VERIFY_MORE_CATEGORIES,

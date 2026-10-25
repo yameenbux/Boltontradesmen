@@ -66,6 +66,12 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M7 10v1" />
     </>
   ),
+  "cctv-security": (
+    <>
+      <path d="M3 7l12 4-2 5-12-4Z" />
+      <path d="M15 11l3 1M13 16l1 4h-4M19 9v6" />
+    </>
+  ),
   "kitchen-fitter": (
     <>
       <rect x="3" y="10" width="18" height="10" rx="1" />
@@ -212,6 +218,12 @@ const ICONS: Record<string, React.ReactNode> = {
     </>
   ),
   entertainer: <path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z" />,
+  venues: (
+    <>
+      <path d="M3 21h18M5 21V10l7-6 7 6v11" />
+      <path d="M10 21v-5a2 2 0 0 1 4 0v5M12 4V2" />
+    </>
+  ),
   florist: (
     <>
       <circle cx="12" cy="8" r="2" />
@@ -277,6 +289,13 @@ const ICONS: Record<string, React.ReactNode> = {
     <>
       <rect x="5" y="4" width="14" height="17" rx="2" />
       <path d="M9 4V3h6v1M9 13l2 2 4-4" />
+    </>
+  ),
+  "window-tinting": (
+    <>
+      <path d="M3 15l2-6h14l2 6v3H3Z" />
+      <path d="M6 9l1.5-3h9L18 9M7 18v2M17 18v2" />
+      <path d="M8 9l2-3M12 9l2-3" />
     </>
   ),
   "mobile-tyre-fitting": (
