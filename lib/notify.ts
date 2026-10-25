@@ -5,6 +5,8 @@ import {
   type Approval,
   docEmail,
   jobAlertEmail,
+  liveEmail,
+  numberChangedEmail,
   jobAlertSms,
   paymentReminderEmail,
   paymentReminderSms,
@@ -183,4 +185,19 @@ export async function deliverApproval(to: { email: string | null; phone: string 
   if (!email.ok) console.error("notify: approval email not sent:", email.reason);
   if (!sms.ok) console.error("notify: approval text not sent:", sms.reason);
   return { email: email.ok, sms: sms.ok };
+}
+
+/** Tells a trader their own sign-up is live (Pro choosers land on the Pro offer). Best effort, never throws. */
+export async function deliverLive(email: string, a: Approval): Promise<boolean> {
+  const link = `${absoluteUrl(platformPath("provider"))}${a.pro ? "#pro" : ""}`;
+  const r = await sendEmail(email, liveEmail(a, link));
+  if (!r.ok) console.error("notify: live email not sent:", r.reason);
+  return r.ok;
+}
+
+/** Tells a trader the admin changed the number customers reach them on. Best effort, never throws. */
+export async function deliverNumberChanged(email: string, business: string, phone: string, contact: string): Promise<boolean> {
+  const r = await sendEmail(email, numberChangedEmail(business, phone, absoluteUrl(platformPath("provider")), contact));
+  if (!r.ok) console.error("notify: number changed email not sent:", r.reason);
+  return r.ok;
 }

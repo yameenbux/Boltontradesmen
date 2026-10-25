@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ID_PATTERN } from "@/lib/review-form";
@@ -15,6 +16,8 @@ import { dayMonthYear } from "@/lib/checks";
 // Public pages read providers from the database (home is prerendered), so status changes and
 // edits must invalidate them for paused/removed providers to disappear immediately.
 import { revalidatePublicPages } from "@/lib/revalidate-public";
+import { deliverNumberChanged } from "@/lib/notify";
+import { CONTACT_EMAIL } from "@/components/site/content";
 
 const text = (v: FormDataEntryValue | null) => (typeof v === "string" ? v.trim() : "");
 
@@ -92,6 +95,13 @@ export async function saveProvider(_prev: FormState, formData: FormData): Promis
   const duplicate = duplicateMessage(existing, !v.id);
   if (duplicate) return { errors: { phone: duplicate }, values };
 
+  // Before saving: the number customers reach them on now, and who to tell if it changes.
+  let before = null as { phone_e164?: string; owner_email?: string | null } | null;
+  if (v.id) {
+    const { data: b } = await supabase.rpc("admin_get_provider", { p_id: v.id });
+    before = b as typeof before;
+  }
+
   const { data, error } = await supabase.rpc("admin_upsert_provider", {
     p: {
       id: v.id,
@@ -131,6 +141,14 @@ export async function saveProvider(_prev: FormState, formData: FormData): Promis
     });
     if (reqError) console.error("admin: marking listing request done failed:", reqError.message);
     revalidatePath("/admin/requests");
+  }
+  // The admin's edits are silent, except a new number: calls would go somewhere the trader doesn't expect, so tell
+  // the account it's linked to. Best effort, after the response.
+  const to = before?.owner_email;
+  const phone = v.phone;
+  if (to && phone && before?.phone_e164 && before.phone_e164 !== phone) {
+    const business = v.business_name;
+    after(() => deliverNumberChanged(to, business, phone, CONTACT_EMAIL));
   }
   revalidatePath("/admin");
   revalidatePublicPages();
@@ -387,4 +405,16 @@ export async function endFoundingPro(_prev: FormState, fd: FormData): Promise<Fo
   revalidatePath(`/admin/providers/${providerId}`);
   revalidatePublicPages(typeof data === "string" ? data : undefined);
   return { ok: true, message: "Founding Pro ended" };
+}
+
+// Clears "New, check me" on a listing that went live from a trader's own sign-up.
+export async function markReviewed(_prev: FormState, fd: FormData): Promise<FormState> {
+  const { supabase } = await requireAdmin();
+  const id = text(fd.get("provider_id"));
+  if (!z.string().uuid().safeParse(id).success) return { message: "Unknown provider" };
+  const { error } = await supabase.rpc("admin_mark_provider_reviewed", { p_id: id });
+  if (error) return { message: "Could not mark it checked. Try again." };
+  revalidatePath(`/admin/providers/${id}`);
+  revalidatePath("/admin");
+  return { ok: true };
 }

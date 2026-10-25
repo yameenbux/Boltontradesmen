@@ -139,9 +139,17 @@ const SCRIPTS = [
     file: "docs/launch/more-categories-production.sql",
     preset: "more-categories",
     from: "20261012000040",
-    to: NEWEST,
+    to: "20261012000040",
     functions: [],
     requires: "20261012000039",
+  },
+  {
+    file: "docs/launch/auto-live-production.sql",
+    preset: "auto-live",
+    from: "20261012000041",
+    to: NEWEST,
+    functions: ["trader_publish_listing", "trader_agree_listing", "admin_mark_provider_reviewed"],
+    requires: "20261012000040",
   },
 ];
 

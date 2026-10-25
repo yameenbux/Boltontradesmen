@@ -48,6 +48,8 @@ SCRIPT15=docs/launch/new-categories-production.sql
 UNTIL15=20261012000038
 SCRIPT16=docs/launch/more-categories-production.sql
 UNTIL16=20261012000039
+SCRIPT17=docs/launch/auto-live-production.sql
+UNTIL17=20261012000040
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
 echo "[check-prod] database at $UNTIL"
@@ -303,10 +305,28 @@ if "${PSQL[@]}" -f "$SCRIPT16" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT1
 echo "[check-prod] applying $SCRIPT16"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT16")"
 echo "$out" | tail -1
-expected16="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL16" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+expected16="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; v="${b%%_*}"; if [[ "$v" > "$UNTIL16" && ! "$v" > "$UNTIL17" ]]; then echo "$b"; fi; done | wc -l | tr -d ' ')"
 echo "$out" | grep -q "^More categories applied|$expected16\$" || { echo "[check-prod] the closing check did not report $expected16 migrations"; exit 1; }
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT16" | tail -1
+
+echo "[check-prod] the auto-live script refuses to run before the more categories one is recorded"
+"${PSQL[@]}" -c "delete from supabase_migrations.schema_migrations where version = '$UNTIL17'"
+if "${PSQL[@]}" -f "$SCRIPT17" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT17 ran before $SCRIPT16"; exit 1; fi
+"${PSQL[@]}" -A -t -c "select count(*) = 0 from information_schema.columns where table_schema = 'public' and table_name = 'providers' and column_name = 'reviewed_at'" | grep -qx t \
+  || { echo "[check-prod] the refused auto-live script left something behind"; exit 1; }
+"${PSQL[@]}" -A -t -f "$SCRIPT16" | tail -1
+
+echo "[check-prod] applying $SCRIPT17"
+out="$("${PSQL[@]}" -A -t -f "$SCRIPT17")"
+echo "$out" | tail -1
+expected17="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL17" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^Auto-live sign-up applied|$expected17\$" || { echo "[check-prod] the closing check did not report $expected17 migrations"; exit 1; }
+# Listings from before it count as checked: none shows as new.
+"${PSQL[@]}" -A -t -c "select count(*) = 0 from public.providers where reviewed_at is null" | grep -qx t \
+  || { echo "[check-prod] an existing listing shows as not checked"; exit 1; }
+echo "[check-prod] applying it a second time (a re-run must not fail)"
+"${PSQL[@]}" -A -t -f "$SCRIPT17" | tail -1
 
 # The pgTAP tests expect only their own fixtures.
 "${PSQL[@]}" -c "delete from public.providers where slug in ('prod-check-travel', 'prod-check-paused', 'prod-check-live', 'prod-check-dupe');

@@ -1,22 +1,19 @@
 import { createHash } from "node:crypto";
+import { cardParagraph, type ConsentCard, PRIVACY_LINK_TEXT, TERMS_LINK_TEXT } from "@/lib/consent-shared";
 
 // The statement a provider reads before agreeing to be listed. Bump the version when the wording changes:
 // the version and a hash of the exact rendered text are stored with each consent as evidence.
 export const CONSENT_TEXT_VERSION = "2026-10-17";
 
-export const PRIVACY_PATH = "/privacy";
-// The words in the agreement card's title that link to PRIVACY_PATH and TERMS_PATH (the links add no text of their own).
-export const PRIVACY_LINK_TEXT = "privacy notice";
-export const TERMS_PATH = "/terms";
-export const TERMS_LINK_TEXT = "terms";
-
-export type ConsentCardKey = "listing" | "reviews" | "leaving" | "fairness" | "privacy" | "controller";
-/**
- * One card on the consent page. Its paragraph (the hashed text) is `${title}. ${body}`, `${title}.` when the body is
- * empty, or just `body` when there is no title; the page renders the title in bold, then ". ", then the body, so the
- * card's text is the paragraph.
- */
-export type ConsentCard = { key: ConsentCardKey; title: string | null; body: string };
+export {
+  cardParagraph,
+  type ConsentCard,
+  type ConsentCardKey,
+  PRIVACY_LINK_TEXT,
+  PRIVACY_PATH,
+  TERMS_LINK_TEXT,
+  TERMS_PATH,
+} from "@/lib/consent-shared";
 
 export type ConsentStatement = {
   cards: ConsentCard[];
@@ -25,11 +22,6 @@ export type ConsentStatement = {
   owner: string;
   contact: string;
 };
-
-export function cardParagraph(card: ConsentCard): string {
-  if (!card.title) return card.body;
-  return card.body ? `${card.title}. ${card.body}` : `${card.title}.`;
-}
 
 // Plain text only; render as text nodes (never as HTML).
 // Returns null (fail closed) in production when the owner or contact details are not configured.

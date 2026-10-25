@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ShopIcon } from "@/components/auth/icons";
+import { AgreeListing } from "@/components/provider/AgreeListing";
 import { AvailabilityForm } from "@/components/provider/AvailabilityForm";
 import { EditListingForm } from "@/components/provider/EditListingForm";
 import { AlertSettingsForm, type AlertSettings } from "@/components/provider/AlertSettingsForm";
@@ -26,6 +27,7 @@ import { nationalNumber } from "@/lib/alert-text";
 import { requireAccount } from "@/lib/auth";
 import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
 import { dayMonthYear } from "@/lib/checks";
+import { consentStatement } from "@/lib/consent-text";
 import { toEnquiryStats } from "@/lib/enquiries";
 import { platformPath } from "@/lib/paths";
 import { stripeConfig, toProStatus } from "@/lib/pro";
@@ -157,11 +159,11 @@ function ProviderReview({ r }: { r: Review }) {
 export default async function ProviderArea({
   searchParams,
 }: {
-  searchParams: Promise<{ withdrawn?: string; pro?: string }>;
+  searchParams: Promise<{ withdrawn?: string; pro?: string; live?: string }>;
 }) {
   // No Welcome here: a new trader's account gets its name from the trader form.
   const { supabase, account } = await requireAccount(platformPath("provider"));
-  const { withdrawn, pro: proParam } = await searchParams;
+  const { withdrawn, pro: proParam, live: liveParam } = await searchParams;
   const textsOn = textsAvailable();
   let listings: Listing[] = [];
   if (account?.displayName) {
@@ -266,8 +268,17 @@ export default async function ProviderArea({
               How your page is doing, and everything you can change on it. Reply to any review: your reply shows under
               it straight away, and you can edit it for 14 days.
             </p>
-            {p.status !== "live" && (
-              <p className="form-alert">{STATUS_NOTE[p.status] ?? "Your listing isn't live right now."}</p>
+            {p.status === "invited" ? (
+              <AgreeListing providerId={p.id} cards={consentStatement()?.cards ?? []} />
+            ) : (
+              p.status !== "live" && (
+                <p className="form-alert">{STATUS_NOTE[p.status] ?? "Your listing isn't live right now."}</p>
+              )
+            )}
+            {liveParam === "1" && p.status === "live" && (
+              <p className="form-ok" role="status" data-testid="you-are-live">
+                You&apos;re live. Customers can find you on Bolton Vouched now.
+              </p>
             )}
             {proParam === "success" && !pros[i].isPro && (
               <p className="form-ok" role="status">

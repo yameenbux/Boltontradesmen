@@ -7,6 +7,7 @@ import { Pill } from "@/components/ui/Pill";
 import {
   CheckForm,
   ConsentLinkButton,
+  MarkReviewedForm,
   ProviderForm,
   ReinviteForm,
   StatusForm,
@@ -52,6 +53,11 @@ type Detail = {
   linked: boolean;
   trader_link_expires_at: string | null;
   availability?: StoredAvailability;
+  reviewed_at?: string | null;
+  signup_trade?: string | null;
+  created_at?: string;
+  owner_email?: string | null;
+  consent_link_made?: boolean;
 };
 
 const LINKABLE = ["consented", "live", "paused"];
@@ -109,6 +115,24 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
           · {p.phone_e164}
         </p>
       </div>
+
+      {!p.reviewed_at && p.status !== "removed" && (
+        <section aria-label="New listing" className="a-card" data-testid="new-listing">
+          <h2>New, check me</h2>
+          <p className="a-lede">
+            This went live from the trader&apos;s own sign-up{p.created_at ? ` on ${dayMonthYear(p.created_at)}` : ""}. Check
+            the name, trade, areas and number below; anything you change is saved without telling them (except the
+            phone number: changing it emails them, so calls never go somewhere they don&apos;t expect).
+          </p>
+          {p.signup_trade && (
+            <p className="a-err">
+              They typed &ldquo;{p.signup_trade}&rdquo; as their trade, which isn&apos;t listed yet (or needs a check
+              first). Choose their category below.
+            </p>
+          )}
+          <MarkReviewedForm providerId={p.id} />
+        </section>
+      )}
 
       {enquiries && (
         <section aria-label="Enquiries" className="a-card">
@@ -175,7 +199,12 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
 
       <section aria-label="Consent link" className="a-card a-consent">
         <h2>Consent</h2>
-        <ConsentLinkButton providerId={p.id} status={p.status} expires={dayMonthYear(p.consent_token_expires_at)} />
+        <ConsentLinkButton
+          providerId={p.id}
+          status={p.status}
+          expires={dayMonthYear(p.consent_token_expires_at)}
+          made={p.consent_link_made}
+        />
         {/* Always mounted, so the new link stays on screen after the page refreshes to "invited". */}
         <ReinviteForm providerId={p.id} removed={p.status === "removed"} />
       </section>
