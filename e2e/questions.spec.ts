@@ -164,7 +164,7 @@ test("typing the question picks the trade and shows who's already listed for the
 
   // A trade nobody covers says so, and posting is the way on.
   await form.getByRole("textbox", { name: /^Your question/ }).fill("Who does a cheap MOT round here?");
-  await expect(trade.locator("option:checked")).toHaveText("MOT");
+  await expect(trade.locator("option:checked")).toHaveText("MOT test");
   await expect(matches).toContainText("Nobody listed covers BL5 for MOT yet.");
 
   // Once the person picks a trade themselves, the words no longer change it.
