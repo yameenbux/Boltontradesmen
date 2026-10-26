@@ -24,6 +24,7 @@ const cats = [
   cat("bricklayer", "Bricklayer"),
   cat("builders", "Builders & extensions"),
   cat("air-conditioning", "Air conditioning"),
+  cat("building-surveyors", "Building surveyors"),
   cat("fitness", "Personal trainers & fitness"),
   cat("caterer", "Catering & canapés"),
   cat("cakes", "Cakes & desserts"),
@@ -102,6 +103,9 @@ describe("guessTrade", () => {
     expect(guess("Anyone do a dessert table for a mehndi?")).toBe("cakes");
     expect(guess("Where can I hire a marquee?")).toBe("event-hire");
     expect(guess("Need a DJ and a photo booth")).toBe("event-hire");
+    expect(guess("Need a level 2 survey before we buy")).toBe("building-surveyors");
+    expect(guess("Neighbour wants a party wall agreement for their extension")).toBe("building-surveyors");
+    expect(guess("Who can do a structural survey?")).toBe("building-surveyors");
     expect(guess("Car needs a full service")).toBe("mechanic");
     expect(guess("MOT due next week")).toBe("mot");
   });
@@ -176,6 +180,8 @@ describe("matchesTrade (the trader form's trade search)", () => {
     expect(fits("canap")).toEqual(["caterer"]);
     expect(fits("dessert")).toEqual(["cakes"]);
     expect(fits("marquee")).toEqual(["event-hire"]);
+    expect(fits("surveyor")).toEqual(["building-surveyors"]);
+    expect(fits("builder surveyor")).toEqual(["building-surveyors"]);
   });
   it("needs every word, and an empty search fits everything", () => {
     expect(fits("plaster")).toEqual(expect.arrayContaining(["plasterer", "venetian-plaster"]));

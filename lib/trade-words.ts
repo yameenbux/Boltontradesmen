@@ -22,6 +22,7 @@ const WORDS: Record<string, readonly string[]> = {
   cleaner: ["cleaner", "cleaning", "end of tenancy", "deep clean", "carpet clean", "carpet cleaning", "oven clean", "house clean"],
   builders: ["builder", "building work", "extension", "house extension", "kitchen extension", "loft conversion", "garage conversion", "renovation", "refurbishment", "refurb", "new build", "structural", "knock through", "steel beam", "rsj"],
   "air-conditioning": ["air conditioning", "air con", "aircon", "air conditioner", "ac unit", "air con unit", "split system", "air to air", "f gas", "fgas"],
+  "building-surveyors": ["surveyor", "surveyors", "building surveyor", "builder surveyor", "builders surveyor", "chartered surveyor", "house survey", "home survey", "homebuyer survey", "homebuyers report", "building survey", "structural survey", "level 2 survey", "level 3 survey", "party wall", "party wall surveyor", "party wall agreement", "damp survey", "defects report", "snagging"],
   bricklayer: ["bricklayer", "bricklayers", "brick layer", "brick layers", "brickie", "brickwork", "bricks", "pointing", "repointing"],
   "ev-solar": ["ev charger", "car charger", "electric car charger", "solar", "solar panel", "battery storage", "home battery"],
   carpets: ["carpet", "carpet fitter", "carpet fitting", "flooring", "laminate", "vinyl flooring", "underlay", "lino"],
