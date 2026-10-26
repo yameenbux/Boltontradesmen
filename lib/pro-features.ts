@@ -16,7 +16,7 @@ export const PRO_FEATURES: ProFeature[] = [
   },
   {
     title: "Quotes and invoices from your phone",
-    text: "Make a quote in two minutes and send it on WhatsApp. Your customer accepts it online; one tap turns it into an invoice with your bank details, and we send the payment reminders.",
+    text: "Make a quote in two minutes and send it on WhatsApp. Your customer accepts it online; one tap turns it into an invoice with your bank details.",
   },
   {
     title: "More reviews, without asking",
