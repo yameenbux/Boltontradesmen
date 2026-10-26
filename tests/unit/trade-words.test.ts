@@ -23,6 +23,7 @@ const cats = [
   cat("damp-insulation", "Damp proofing & insulation"),
   cat("tree-surgeons", "Tree surgeons"),
   cat("gardener", "Gardener"),
+  cat("cupping-hijama", "Cupping & hijama"),
   cat("cleaner", "Cleaning services"),
   cat("roofer", "Roofer"),
   cat("bricklayer", "Bricklayer"),
@@ -118,6 +119,8 @@ describe("guessTrade", () => {
     expect(guess("Hedge needs trimming")).toBe("gardener");
     expect(guess("Bridal makeup and henna for the wedding")).toBe("mobile-hair-beauty");
     expect(guess("Removal firm for a 3 bed house")).toBe("man-and-van");
+    expect(guess("Anyone recommend a sister who does hijama?")).toBe("cupping-hijama");
+    expect(guess("Looking for wet cupping in Bolton")).toBe("cupping-hijama");
     expect(guess("Car needs a full service")).toBe("mechanic");
     expect(guess("MOT due next week")).toBe("mot");
   });
@@ -196,6 +199,8 @@ describe("matchesTrade (the trader form's trade search)", () => {
     expect(fits("fenc")).toEqual(["fencing-landscaping"]);
     expect(fits("insulation")).toEqual(["damp-insulation"]);
     expect(fits("tree surgeon")).toEqual(["tree-surgeons"]);
+    expect(fits("hijama")).toEqual(["cupping-hijama"]);
+    expect(fits("cupp")).toEqual(["cupping-hijama"]);
     expect(fits("removals")).toContain("man-and-van");
     expect(fits("builder surveyor")).toEqual(["building-surveyors"]);
   });

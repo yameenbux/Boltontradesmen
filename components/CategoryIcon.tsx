@@ -234,6 +234,13 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
 
   // Personal & lessons
+  "cupping-hijama": (
+    <>
+      <path d="M7 4h10M8 4v3a4 4 0 0 0 8 0V4" />
+      <path d="M3 20c3-3 6-4 9-4s6 1 9 4" />
+      <path d="M12 11v5" />
+    </>
+  ),
   "mobile-hair-beauty": (
     <>
       <circle cx="6" cy="6" r="3" />
