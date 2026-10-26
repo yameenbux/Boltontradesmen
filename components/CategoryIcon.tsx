@@ -195,7 +195,7 @@ const ICONS: Record<string, React.ReactNode> = {
     </>
   ),
 
-  // Events & occasions
+  // Weddings & events
   caterer: <path d="M3 18h18M5 18a7 7 0 0 1 14 0M12 9V7M10 7h4" />,
   "bouncy-castles": <path d="M3 21V9l3 2V6l3 2 3-4 3 4 3-2v5l3-2v12ZM10 21v-4a2 2 0 0 1 4 0v4" />,
   dj: (
@@ -218,6 +218,7 @@ const ICONS: Record<string, React.ReactNode> = {
     </>
   ),
   entertainer: <path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z" />,
+  "event-hire": <path d="M2 20h20M4 20 12 5l8 15M12 5v15M9 20l3-6 3 6" />,
   venues: (
     <>
       <path d="M3 21h18M5 21V10l7-6 7 6v11" />

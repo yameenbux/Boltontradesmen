@@ -689,6 +689,12 @@ begin
   if not exists (select 1 from public.categories where active and slug = 'fitness' and name = 'Personal trainers & fitness') then
     raise exception 'Air conditioning check failed: Fitness is not renamed to Personal trainers & fitness';
   end if;
+  if not exists (select 1 from public.categories c join public.category_groups g on g.id = c.group_id
+                 where c.active and c.slug = 'event-hire' and g.slug = 'events-occasions' and g.name = 'Weddings & events')
+     or (select count(*) from public.categories
+         where slug in ('caterer', 'cakes', 'decor') and name in ('Catering & canapés', 'Cakes & desserts', 'Stages & decor')) <> 3 then
+    raise exception 'Air conditioning check failed: the weddings and events changes are missing';
+  end if;
 end
 $verify$;
 `;
@@ -828,7 +834,7 @@ const PRESETS = {
     verify: VERIFY_BUILDERS,
   },
   "air-conditioning": {
-    title: "Air conditioning (a new trade) and personal trainers (Fitness renamed)",
+    title: "Air conditioning, personal trainers, and weddings and events (stages, canapés, desserts, event hire)",
     done: "Air conditioning applied",
     requires: { version: "20261012000045", what: "the builders script (docs/launch/builders-production.sql)" },
     verify: VERIFY_AIR_CONDITIONING,

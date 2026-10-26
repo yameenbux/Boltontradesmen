@@ -19,6 +19,12 @@ describe("matchCategory", () => {
     expect(matchCategory("  PLUMB ", cats)?.slug).toBe("plumber");
   });
 
+  it("ignores accents either way", () => {
+    const food = [cat("caterer", "Catering & canapés")];
+    expect(matchCategory("canapes", food)?.slug).toBe("caterer");
+    expect(matchCategory("canapés", food)?.slug).toBe("caterer");
+  });
+
   it("matches a name prefix", () => {
     expect(matchCategory("cake", cats)?.slug).toBe("cakes");
     expect(matchCategory("bouncy castle", cats)?.slug).toBe("bouncy-castles");

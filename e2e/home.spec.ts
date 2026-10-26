@@ -28,7 +28,7 @@ test("everything else groups show counts, links for live categories and 'soon' c
     "Home & trades",
     "Repairs & appliances",
     "Moving & waste",
-    "Events & occasions",
+    "Weddings & events",
     "Personal & lessons",
     "Vehicles",
   ]) {
@@ -43,7 +43,7 @@ test("everything else groups show counts, links for live categories and 'soon' c
   await expect(home.locator('a[href="/c/tiler"]')).toHaveCount(0);
   await expect(home.locator(".chip.soon", { hasText: "Tiler" })).toContainText("soon");
 
-  const events = page.locator("details", { hasText: "Events & occasions" });
+  const events = page.locator("details", { hasText: "Weddings & events" });
   await expect(events.locator("summary")).toContainText("· 0 with pros");
 });
 

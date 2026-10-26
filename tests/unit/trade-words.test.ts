@@ -25,6 +25,11 @@ const cats = [
   cat("builders", "Builders & extensions"),
   cat("air-conditioning", "Air conditioning"),
   cat("fitness", "Personal trainers & fitness"),
+  cat("caterer", "Catering & canapés"),
+  cat("cakes", "Cakes & desserts"),
+  cat("decor", "Stages & decor"),
+  cat("event-hire", "Event hire"),
+  cat("dj", "DJ"),
   cat("mobile-hair-beauty", "Mobile hair & beauty"),
   cat("ev-solar", "EV chargers & solar"),
   cat("carpets", "Carpets"),
@@ -92,6 +97,11 @@ describe("guessTrade", () => {
     expect(guess("Need an aircon unit for the office")).toBe("air-conditioning");
     expect(guess("Car air con needs a regas")).toBe("mechanic");
     expect(guess("Looking for a PT for weight loss")).toBe("fitness");
+    expect(guess("Who did the stage at your wedding?")).toBe("decor");
+    expect(guess("Need canapés for 80 guests")).toBe("caterer");
+    expect(guess("Anyone do a dessert table for a mehndi?")).toBe("cakes");
+    expect(guess("Where can I hire a marquee?")).toBe("event-hire");
+    expect(guess("Need a DJ and a photo booth")).toBe("event-hire");
     expect(guess("Car needs a full service")).toBe("mechanic");
     expect(guess("MOT due next week")).toBe("mot");
   });
@@ -162,6 +172,10 @@ describe("matchesTrade (the trader form's trade search)", () => {
     expect(fits("aircon")).toEqual(["mechanic", "air-conditioning"]);
     expect(fits("personal trainer")).toEqual(["fitness"]);
     expect(fits("pt")).toContain("fitness");
+    expect(fits("stage")).toContain("decor");
+    expect(fits("canap")).toEqual(["caterer"]);
+    expect(fits("dessert")).toEqual(["cakes"]);
+    expect(fits("marquee")).toEqual(["event-hire"]);
   });
   it("needs every word, and an empty search fits everything", () => {
     expect(fits("plaster")).toEqual(expect.arrayContaining(["plasterer", "venetian-plaster"]));
