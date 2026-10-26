@@ -3,6 +3,7 @@ import { type TradeGroup, TraderSetupForm } from "@/components/provider/TraderSe
 import { SUPPORT_WHATSAPP_DISPLAY, whatsappTicket } from "@/components/site/content";
 import { Button } from "@/components/ui/Button";
 import { consentStatement } from "@/lib/consent-text";
+import { stripeConfig } from "@/lib/pro";
 import { platformPath } from "@/lib/paths";
 import { FREE_FEATURES, PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";
 import type { MyListingRequest } from "@/lib/trader-setup";
@@ -95,7 +96,12 @@ export function TraderStart({
           <h1 id="provider-title">Tell us about your business</h1>
           <p className="lede">One short form. Press Confirm and you&apos;re live.</p>
         </div>
-        <TraderSetupForm needsName={needsName} groups={groups} cards={consentStatement()?.cards ?? []} />
+        <TraderSetupForm
+          needsName={needsName}
+          groups={groups}
+          cards={consentStatement()?.cards ?? []}
+          proReady={stripeConfig() !== null}
+        />
       </section>
       <p className="lede">
         Already listed? <a href={LINK_ME_WHATSAPP}>WhatsApp us</a> and we&apos;ll send the link that connects it to this

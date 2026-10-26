@@ -8,6 +8,7 @@ import { ConsentParagraph } from "@/components/consent/ConsentParagraph";
 import type { ConsentCard } from "@/lib/consent-shared";
 import { BL_DISTRICTS } from "@/lib/districts";
 import { LISTING_LIMITS } from "@/lib/listing-request";
+import { PLANS } from "@/lib/pro";
 import { FREE_FEATURES, PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";
 import { matchesTrade } from "@/lib/trade-words";
 import { CHECK_TRADES, MAX_TRADES, type TraderSetupState } from "@/lib/trader-setup";
@@ -37,10 +38,13 @@ export function TraderSetupForm({
   needsName,
   groups,
   cards,
+  proReady = false,
 }: {
   needsName: boolean;
   groups: TradeGroup[];
   cards: ConsentCard[];
+  /** Stripe is set up: choosing Pro goes straight to payment after Confirm. */
+  proReady?: boolean;
 }) {
   const [state, action, pending] = useActionState(submitTraderSetup, {} as TraderSetupState);
   const sent = state.values !== undefined;
@@ -178,9 +182,27 @@ export function TraderSetupForm({
                 </li>
               ))}
             </ul>
-            <span className="plan-note">Your listing goes live free now. Pay by card on your listing page and Pro switches on. Cancel any time.</span>
+            <span className="plan-note">
+              {proReady
+                ? "After Confirm you go straight to secure card payment, and Pro switches on as soon as you've paid. If you stop, you're live on Free. Cancel any time."
+                : "Pro opens soon. Your listing goes live free now, and you can add Pro from your listing page."}
+            </span>
           </span>
         </label>
+        {proReady && (
+          <div className="pro-billing" data-testid="pro-billing">
+            <span className="hint">How would you like to pay for Pro?</span>
+            {PLANS.map((p) => (
+              <label key={p.plan} className="tick">
+                <input type="radio" name="pro_billing" value={p.plan}
+                  defaultChecked={(v("pro_billing") || "monthly") === p.plan} />
+                <span>
+                  <b>{p.price}</b> · {p.note}
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
         <Err k="plan" msg={err.plan} />
       </fieldset>
 
