@@ -150,6 +150,7 @@ const TRADE_WORDS: Record<string, { one: string; many: string }> = {
   "window-tinting": { one: "window tinting", many: "window tinters" },
   "vehicle-recovery": { one: "vehicle recovery", many: "recovery firms" },
   builders: { one: "a builder", many: "builders" },
+  "air-conditioning": { one: "air conditioning", many: "air conditioning engineers" },
   "venetian-plaster": { one: "Venetian plastering", many: "Venetian plasterers" },
   "taxi-private-hire": { one: "a taxi", many: "taxis and private hire" },
   "minibus-hire": { one: "minibus hire", many: "minibus hire firms" },

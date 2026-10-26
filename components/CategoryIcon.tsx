@@ -299,6 +299,13 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M12 3v3M15 4l-1 2" />
     </>
   ),
+  "air-conditioning": (
+    <>
+      <rect x="3" y="5" width="18" height="8" rx="2" />
+      <path d="M6 10h12" />
+      <path d="M8 16c0 1.5-1 2-1 3M12 16c0 1.5-1 2-1 3M16 16c0 1.5-1 2-1 3" />
+    </>
+  ),
   "vehicle-recovery": (
     <>
       <path d="M2 17V9h7l2 4h4v4" />

@@ -23,6 +23,7 @@ const cats = [
   cat("roofer", "Roofer"),
   cat("bricklayer", "Bricklayer"),
   cat("builders", "Builders & extensions"),
+  cat("air-conditioning", "Air conditioning"),
   cat("mobile-hair-beauty", "Mobile hair & beauty"),
   cat("ev-solar", "EV chargers & solar"),
   cat("carpets", "Carpets"),
@@ -86,6 +87,9 @@ describe("guessTrade", () => {
     expect(guess("Who did your kitchen extension?")).toBe("builders");
     expect(guess("Quotes for a loft conversion in BL1")).toBe("builders");
     expect(guess("Anyone do hair extensions at home?")).toBe("mobile-hair-beauty");
+    expect(guess("Anyone fit air con in a bedroom?")).toBe("air-conditioning");
+    expect(guess("Need an aircon unit for the office")).toBe("air-conditioning");
+    expect(guess("Car air con needs a regas")).toBe("mechanic");
     expect(guess("Car needs a full service")).toBe("mechanic");
     expect(guess("MOT due next week")).toBe("mot");
   });
@@ -152,6 +156,8 @@ describe("matchesTrade (the trader form's trade search)", () => {
     expect(fits("roofers")).toContain("roofer");
     expect(fits("brick layers")).toContain("bricklayer");
     expect(fits("tow")).toContain("vehicle-recovery");
+    expect(fits("air con")).toContain("air-conditioning");
+    expect(fits("aircon")).toEqual(["mechanic", "air-conditioning"]);
   });
   it("needs every word, and an empty search fits everything", () => {
     expect(fits("plaster")).toEqual(expect.arrayContaining(["plasterer", "venetian-plaster"]));

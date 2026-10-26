@@ -40,8 +40,10 @@
 //     --out docs/launch/check-numbers-production.sql
 //   node scripts/build-production-sql.mjs --preset plaster-recovery --from 20261012000044 --to 20261012000044 \
 //     --out docs/launch/plaster-recovery-production.sql
-//   node scripts/build-production-sql.mjs --preset builders --from 20261012000045 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset builders --from 20261012000045 --to 20261012000045 \
 //     --out docs/launch/builders-production.sql
+//   node scripts/build-production-sql.mjs --preset air-conditioning --from 20261012000046 --to <newest> \
+//     --out docs/launch/air-conditioning-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -676,6 +678,18 @@ end
 $verify$;
 `;
 
+const VERIFY_AIR_CONDITIONING = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if not exists (select 1 from public.categories c join public.category_groups g on g.id = c.group_id
+                 where c.active and c.slug = 'air-conditioning' and g.slug = 'home-trades') then
+    raise exception 'Air conditioning check failed: the Air conditioning trade is missing';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -809,6 +823,12 @@ const PRESETS = {
     done: "Builders applied",
     requires: { version: "20261012000044", what: "the Venetian plaster and recovery script (docs/launch/plaster-recovery-production.sql)" },
     verify: VERIFY_BUILDERS,
+  },
+  "air-conditioning": {
+    title: "Air conditioning (a new trade)",
+    done: "Air conditioning applied",
+    requires: { version: "20261012000045", what: "the builders script (docs/launch/builders-production.sql)" },
+    verify: VERIFY_AIR_CONDITIONING,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

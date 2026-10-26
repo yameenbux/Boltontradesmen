@@ -76,7 +76,7 @@ One site: free for residents, free for traders, with an optional paid tier for t
 - **The directory is the home page** (`/`), and installs to the Home Screen as an app
   (a PWA, `app/manifest.ts`). Old `/platform/…` links (sent as consent, review, quote and
   invoice links, and in Google) forward to the same page without `/platform`.
-- **60 trades in eight groups**: home and trades, repairs and appliances, moving and waste,
+- **61 trades in eight groups**: home and trades, repairs and appliances, moving and waste,
   events and occasions, personal and lessons, vehicles, travel and transport, and business
   and finance. Each can carry a short tip for customers (an estate agent's redress scheme,
   ATOL for travel agents, the legal limits on window tints). Adding one is a migration (see
@@ -367,10 +367,10 @@ release, each refusing to run before the one it follows: `plan-2b` (000018 to 00
 `price-guides` (000032), `consent-link` (000033), `one-listing` (000034), `pro-jobs` (000035),
 `quotes-invoices` (000036), `trader-sign-up` (000037), `launch-hardening` (000038),
 `new-categories` (000039), `more-categories` (000040), `auto-live` (000041), `one-step`
-(000042), `check-numbers` (000043), `plaster-recovery` (000044) and `builders` (000045 on), each
-as `docs/launch/<name>-production.sql`. After adding or changing a migration from 000045 on,
-regenerate with
-`node scripts/build-production-sql.mjs --preset builders --from 20261012000045 --to <newest> --out docs/launch/builders-production.sql`
+(000042), `check-numbers` (000043), `plaster-recovery` (000044), `builders` (000045) and `air-conditioning` (000046 on),
+each as `docs/launch/<name>-production.sql`. After adding or changing a migration from 000046
+on, regenerate with
+`node scripts/build-production-sql.mjs --preset air-conditioning --from 20261012000046 --to <newest> --out docs/launch/air-conditioning-production.sql`
 (`tests/unit/production-sql.test.ts` fails until you do). A new release gets its own preset in
 that script (and the previous one's `--to` fixed), a check in `scripts/check-production-sql.sh`,
 and an entry in the test.
@@ -729,7 +729,7 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
 - [x] `OWNER_LEGAL_NAME` and `CONTACT_EMAIL` set on Render.
 - [x] The domain: `www.boltonvouched.co.uk` on Render with a valid certificate, the bare domain
       redirecting.
-- [x] Every production script up to `builders` applied; the admin's authenticator set up.
+- [x] Every production script up to `air-conditioning` applied; the admin's authenticator set up.
 - [x] `CLIENT_IP_HEADER=true-client-ip` on Render, so rate limits see each visitor.
 - [x] Free sign-in (Google and email codes) live.
 - [x] Stripe live, with a restricted key.
