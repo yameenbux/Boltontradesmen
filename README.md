@@ -76,7 +76,7 @@ One site: free for residents, free for traders, with an optional paid tier for t
 - **The directory is the home page** (`/`), and installs to the Home Screen as an app
   (a PWA, `app/manifest.ts`). Old `/platform/…` links (sent as consent, review, quote and
   invoice links, and in Google) forward to the same page without `/platform`.
-- **63 trades in eight groups**: home and trades, repairs and appliances, moving and waste,
+- **66 trades in eight groups**: home and trades, repairs and appliances, moving and waste,
   weddings and events, personal and lessons, vehicles, travel and transport, and business
   and finance. Each can carry a short tip for customers (an estate agent's redress scheme,
   ATOL for travel agents, the legal limits on window tints). Adding one is a migration (see

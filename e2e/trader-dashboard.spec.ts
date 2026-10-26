@@ -84,7 +84,7 @@ test("a trader sees their enquiries, edits their listing, pauses and unpauses it
 
   // Edit the bio and areas: refused with a phone number, then saved and on the public page.
   const edit = trader.getByRole("region", { name: "Edit your listing" });
-  await expect(edit.getByText("Man & van")).toBeVisible();
+  await expect(edit.getByText("Man & van, removals")).toBeVisible();
   const bio = edit.getByLabel("About your business");
   await expect(bio).toHaveValue("House moves across Bolton.");
   await bio.fill("Call 07700 900 317 for a quote");

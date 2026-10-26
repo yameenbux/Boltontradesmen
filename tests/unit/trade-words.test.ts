@@ -18,7 +18,11 @@ const cats = [
   cat("heating-repair", "Heating repair"),
   cat("plasterer", "Plasterer"),
   cat("rubbish-removal", "Rubbish removal"),
-  cat("man-and-van", "Man & van"),
+  cat("man-and-van", "Man & van, removals"),
+  cat("fencing-landscaping", "Fencing, decking & landscaping"),
+  cat("damp-insulation", "Damp proofing & insulation"),
+  cat("tree-surgeons", "Tree surgeons"),
+  cat("gardener", "Gardener"),
   cat("cleaner", "Cleaning services"),
   cat("roofer", "Roofer"),
   cat("bricklayer", "Bricklayer"),
@@ -106,6 +110,14 @@ describe("guessTrade", () => {
     expect(guess("Need a level 2 survey before we buy")).toBe("building-surveyors");
     expect(guess("Neighbour wants a party wall agreement for their extension")).toBe("building-surveyors");
     expect(guess("Who can do a structural survey?")).toBe("building-surveyors");
+    expect(guess("Fence blew down in the wind")).toBe("fencing-landscaping");
+    expect(guess("Quote for artificial grass in the back garden")).toBe("fencing-landscaping");
+    expect(guess("Black mould in the bedroom")).toBe("damp-insulation");
+    expect(guess("Need a damp survey")).toBe("building-surveyors");
+    expect(guess("Big tree needs cutting back")).toBe("tree-surgeons");
+    expect(guess("Hedge needs trimming")).toBe("gardener");
+    expect(guess("Bridal makeup and henna for the wedding")).toBe("mobile-hair-beauty");
+    expect(guess("Removal firm for a 3 bed house")).toBe("man-and-van");
     expect(guess("Car needs a full service")).toBe("mechanic");
     expect(guess("MOT due next week")).toBe("mot");
   });
@@ -181,6 +193,10 @@ describe("matchesTrade (the trader form's trade search)", () => {
     expect(fits("dessert")).toEqual(["cakes"]);
     expect(fits("marquee")).toEqual(["event-hire"]);
     expect(fits("surveyor")).toEqual(["building-surveyors"]);
+    expect(fits("fenc")).toEqual(["fencing-landscaping"]);
+    expect(fits("insulation")).toEqual(["damp-insulation"]);
+    expect(fits("tree surgeon")).toEqual(["tree-surgeons"]);
+    expect(fits("removals")).toContain("man-and-van");
     expect(fits("builder surveyor")).toEqual(["building-surveyors"]);
   });
   it("needs every word, and an empty search fits everything", () => {
