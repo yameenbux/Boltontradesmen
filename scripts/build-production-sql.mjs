@@ -686,6 +686,9 @@ begin
                  where c.active and c.slug = 'air-conditioning' and g.slug = 'home-trades') then
     raise exception 'Air conditioning check failed: the Air conditioning trade is missing';
   end if;
+  if not exists (select 1 from public.categories where active and slug = 'fitness' and name = 'Personal trainers & fitness') then
+    raise exception 'Air conditioning check failed: Fitness is not renamed to Personal trainers & fitness';
+  end if;
 end
 $verify$;
 `;
@@ -825,7 +828,7 @@ const PRESETS = {
     verify: VERIFY_BUILDERS,
   },
   "air-conditioning": {
-    title: "Air conditioning (a new trade)",
+    title: "Air conditioning (a new trade) and personal trainers (Fitness renamed)",
     done: "Air conditioning applied",
     requires: { version: "20261012000045", what: "the builders script (docs/launch/builders-production.sql)" },
     verify: VERIFY_AIR_CONDITIONING,

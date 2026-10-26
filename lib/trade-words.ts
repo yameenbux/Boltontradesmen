@@ -55,7 +55,7 @@ const WORDS: Record<string, readonly string[]> = {
   "mobile-hair-beauty": ["hair extensions", "lash extensions", "eyelash extensions", "nail extensions", "hairdresser", "hair", "barber", "nails", "makeup", "lashes", "beauty"],
   tutors: ["tutor", "tutoring", "tuition", "maths", "gcse", "eleven plus", "11 plus"],
   "driving-instructors": ["driving instructor", "driving lessons", "driving lesson", "learner"],
-  fitness: ["personal trainer", "fitness"],
+  fitness: ["personal trainer", "personal training", "pt", "fitness", "gym", "workout", "weight loss", "strength training", "boxing", "yoga", "pilates", "bootcamp"],
   "music-lessons": ["piano", "guitar", "singing", "music lessons", "drums"],
   "dog-walking-grooming": ["dog walker", "dog walking", "dog groomer", "grooming", "dog"],
   mechanic: ["mechanic", "car repair", "car air con", "car aircon", "air con regas", "aircon regas", "brakes", "clutch", "car service", "car servicing", "service my car", "full service", "interim service", "garage"],

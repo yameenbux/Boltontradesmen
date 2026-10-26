@@ -61,7 +61,7 @@ from (values
   ('personal-lessons', 'mobile-hair-beauty', 'Mobile hair & beauty', 'none', null),
   ('personal-lessons', 'tutors', 'Tutors', 'none', null),
   ('personal-lessons', 'driving-instructors', 'Driving instructors', 'dvsa_adi', null),
-  ('personal-lessons', 'fitness', 'Fitness', 'none', null),
+  ('personal-lessons', 'fitness', 'Personal trainers & fitness', 'none', 'Ask about their qualification (a Level 3 personal training certificate is the usual standard) and their insurance, and tell them about any injuries or health conditions before the first session.'),
   ('personal-lessons', 'music-lessons', 'Music lessons', 'none', null),
   ('personal-lessons', 'dog-walking-grooming', 'Dog walking & grooming', 'none', null),
   ('vehicles', 'mechanic', 'Mechanic & car servicing', 'none', null),
