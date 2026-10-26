@@ -57,6 +57,7 @@ const WORDS: Record<string, readonly string[]> = {
   entertainer: ["entertainer", "magician", "face painter", "clown"],
   florist: ["florist", "flowers", "bouquet"],
   venues: ["wedding venue", "venue", "venue hire", "banqueting hall", "banqueting suite", "function room", "function hall", "hall hire", "wedding hall", "events hall"],
+  "cupping-hijama": ["cupping", "cupping therapy", "hijama", "hijamah", "hijama therapy", "wet cupping", "dry cupping", "fire cupping"],
   "mobile-hair-beauty": ["hair extensions", "lash extensions", "eyelash extensions", "nail extensions", "hairdresser", "hair", "barber", "nails", "makeup", "lashes", "beauty", "makeup artist", "mua", "bridal makeup", "bridal hair", "henna", "henna artist", "mehndi artist"],
   tutors: ["tutor", "tutoring", "tuition", "maths", "gcse", "eleven plus", "11 plus"],
   "driving-instructors": ["driving instructor", "driving lessons", "driving lesson", "learner"],

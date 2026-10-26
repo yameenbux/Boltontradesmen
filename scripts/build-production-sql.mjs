@@ -705,6 +705,10 @@ begin
      or not exists (select 1 from public.categories where slug = 'man-and-van' and name = 'Man & van, removals') then
     raise exception 'Air conditioning check failed: the fencing, damp, tree surgeon or removals changes are missing';
   end if;
+  if not exists (select 1 from public.categories c join public.category_groups g on g.id = c.group_id
+                 where c.active and c.slug = 'cupping-hijama' and g.slug = 'personal-lessons') then
+    raise exception 'Air conditioning check failed: the Cupping & hijama trade is missing';
+  end if;
 end
 $verify$;
 `;
@@ -844,7 +848,7 @@ const PRESETS = {
     verify: VERIFY_BUILDERS,
   },
   "air-conditioning": {
-    title: "New trades and renames of 26 October (air conditioning to tree surgeons)",
+    title: "New trades and renames of 26 October (air conditioning to cupping and hijama)",
     done: "Air conditioning applied",
     requires: { version: "20261012000045", what: "the builders script (docs/launch/builders-production.sql)" },
     verify: VERIFY_AIR_CONDITIONING,

@@ -142,6 +142,7 @@ const TRADE_WORDS: Record<string, { one: string; many: string }> = {
   florist: { one: "a florist", many: "florists" },
   venues: { one: "a wedding or event venue", many: "wedding and event venues" },
   "mobile-hair-beauty": { one: "mobile hair and beauty", many: "mobile hair and beauty pros" },
+  "cupping-hijama": { one: "a cupping or hijama session", many: "cupping and hijama practitioners" },
   tutors: { one: "a tutor", many: "tutors" },
   "driving-instructors": { one: "a driving instructor", many: "driving instructors" },
   fitness: { one: "a personal trainer", many: "personal trainers" },
