@@ -300,6 +300,13 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M12 3v3M15 4l-1 2" />
     </>
   ),
+  "building-surveyors": (
+    <>
+      <path d="M4 21V10l6-5 6 5v3" />
+      <circle cx="16" cy="16" r="3" />
+      <path d="M18.2 18.2 21 21" />
+    </>
+  ),
   "air-conditioning": (
     <>
       <rect x="3" y="5" width="18" height="8" rx="2" />
