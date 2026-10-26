@@ -17,6 +17,8 @@ import { InvalidPhoneError, toE164, toUkMobileE164 } from "@/lib/phone";
 import { revalidatePublicPages } from "@/lib/revalidate-public";
 import { createServerAuthClient } from "@/lib/supabase/server";
 import { deliverLive } from "@/lib/notify";
+import { isPlan as isProBilling, stripeConfig } from "@/lib/pro";
+import { proCheckoutUrl } from "@/lib/pro-checkout";
 import { createServiceClient } from "@/lib/supabase/service";
 import { CHECK_TRADES, isPlan, MAX_TRADES, TRADER_SETUP_ERRORS, type TraderSetupState } from "@/lib/trader-setup";
 
@@ -28,13 +30,13 @@ function field(fd: FormData, name: string): string {
 const list = (fd: FormData, name: string) =>
   [...new Set(fd.getAll(name).filter((v): v is string => typeof v === "string" && v.trim() !== ""))];
 
-const FIELDS = ["first_name", "surname", "business_name", "phone", "whatsapp", "plan"] as const;
+const FIELDS = ["first_name", "surname", "business_name", "phone", "whatsapp", "plan", "pro_billing"] as const;
 
 /**
  * The trader's one form, in one step: their name (when the account has none yet), business, the trades and postcode
  * areas they tick, mobile and WhatsApp, Free or Pro, then Confirm. Confirm, under the listing statement, is their
  * agreement (recorded as the consent page records it), and the listing goes live at once, linked to the account.
- * The admin checks it afterwards. Then the "you're now live" page.
+ * The admin checks it afterwards. Then the "you're now live" page, or, for Pro, Stripe's payment page first.
  */
 export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): Promise<TraderSetupState> {
   const values: TraderSetupState["values"] = {};
@@ -137,7 +139,7 @@ export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): 
   }
 
   const email = account?.email ?? auth.user.email ?? null;
-  let result: { result?: string; slug?: string } = {};
+  let result: { result?: string; slug?: string; id?: string } = {};
   try {
     const ip = clientIpFrom(await headers()) ?? "unknown";
     const { data, error } = await createServiceClient().rpc("trader_publish_listing", {
@@ -180,7 +182,26 @@ export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): 
     const pro = values.plan === "pro";
     after(() => deliverLive(email, { name: firstName(contactName) ?? "there", business, pro }));
   }
-  redirect(platformPath("provider", "live"));
+  // Chose Pro: straight to Stripe to pay. They're live on Free whatever happens there; paying switches Pro on (the
+  // webhook), stopping leaves them on Free with Pro a tap away.
+  const live = platformPath("provider", "live");
+  const cfg = values.plan === "pro" ? stripeConfig() : null;
+  if (cfg && result.id) {
+    let url: string | null = null;
+    try {
+      url = await proCheckoutUrl(cfg, {
+        providerId: result.id,
+        email,
+        plan: isProBilling(values.pro_billing) ? values.pro_billing : "monthly",
+        successPath: `${live}?pro=success`,
+        cancelPath: `${live}?pro=stopped`,
+      });
+    } catch (err) {
+      console.error("trader setup: Stripe checkout failed:", err instanceof Error ? err.message : err);
+    }
+    if (url) redirect(url);
+  }
+  redirect(live);
 }
 
 // A yyyy-mm-dd date from today to six years ahead (cards and badges last up to five).

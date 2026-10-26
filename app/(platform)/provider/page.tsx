@@ -292,6 +292,7 @@ export default async function ProviderArea({
                   <ProUpgradeCard
                     providerId={p.id}
                     ended={!!pros[i].subscription && pros[i].subscription?.status !== "incomplete"}
+                    enquiries={stats[i].thisMonth.enquiries}
                   />
                 ) : (
                   <ProSoonCard />

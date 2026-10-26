@@ -635,6 +635,9 @@ h1,h2,h3{text-wrap:balance}
   .tick[hidden], .tick-section[hidden]{display:none}
   .trade-search input{min-height:48px}
   .trade-ticked{margin:0; font-size:15px; font-weight:600; color:var(--ink)}
+  .pro-hook{margin:0; padding:10px 12px; border-radius:12px; background:var(--brick-tint)}
+  .pro-billing{display:none; gap:2px; padding:4px 14px 8px}
+  form:has(input[name="plan"][value="pro"]:checked) .pro-billing{display:grid}
   .ref-box{display:none; border:1.5px solid color-mix(in srgb,var(--brick) 40%,var(--line)); border-radius:14px; margin:0; padding:12px 14px; gap:10px; min-width:0}
   form:has(input[name="trades"][value="driving-instructors"]:checked) .ref-driving-instructors,
   form:has(input[name="trades"][value="gas-boilers"]:checked) .ref-gas-boilers{display:grid}

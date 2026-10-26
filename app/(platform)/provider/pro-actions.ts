@@ -9,6 +9,7 @@ import { DOCUMENT_KINDS, isPlan, PRO_ERRORS, stripeConfig, toProStatus, type Doc
 import { ProofError, prepareProof, uploadProof } from "@/lib/proofs";
 import { ID_PATTERN } from "@/lib/review-form";
 import { revalidatePublicPages } from "@/lib/revalidate-public";
+import { proCheckoutUrl } from "@/lib/pro-checkout";
 import { absoluteUrl } from "@/lib/seo";
 import { stripeClient } from "@/lib/stripe";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -58,23 +59,13 @@ export async function startProCheckout(_prev: FormState, fd: FormData): Promise<
 
   let url: string | null;
   try {
-    // A returning trader keeps their Stripe customer (and saved card); a new one is created by Checkout.
-    const { data: customer } = await createServiceClient().rpc("stripe_customer_for", { p_provider: r.id });
-    const session = await stripeClient(cfg).checkout.sessions.create({
-      mode: "subscription",
-      line_items: [{ price: cfg.prices[plan], quantity: 1 }],
-      client_reference_id: r.id,
-      ...(typeof customer === "string" && customer
-        ? { customer }
-        : r.account.email
-          ? { customer_email: r.account.email }
-          : {}),
-      metadata: { provider_id: r.id },
-      subscription_data: { metadata: { provider_id: r.id } },
-      success_url: absoluteUrl(`${platformPath("provider")}?pro=success`),
-      cancel_url: absoluteUrl(platformPath("provider")),
+    url = await proCheckoutUrl(cfg, {
+      providerId: r.id,
+      email: r.account.email,
+      plan,
+      successPath: `${platformPath("provider")}?pro=success`,
+      cancelPath: platformPath("provider"),
     });
-    url = session.url;
   } catch (err) {
     console.error("provider: Stripe checkout failed:", err instanceof Error ? err.message : err);
     return { message: SOMETHING_WRONG };

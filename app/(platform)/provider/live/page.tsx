@@ -30,7 +30,8 @@ type Listing = {
  * they're taking on work, ask their last customers for reviews, and show they're vouched (their page as their
  * website when they haven't one; the embed code when they have). The dashboard has all of this too.
  */
-export default async function YouAreLivePage() {
+export default async function YouAreLivePage({ searchParams }: { searchParams: Promise<{ pro?: string }> }) {
+  const { pro: proParam } = await searchParams;
   const { supabase, account } = await requireAccount(platformPath("provider", "live"));
   if (!account?.displayName) redirect(platformPath("provider"));
   const [{ data, error }, { data: req }] = await Promise.all([
@@ -55,6 +56,16 @@ export default async function YouAreLivePage() {
           <h1 id="live-title">{p.business_name} is now live on Bolton Vouched</h1>
           <p className="lede">Customers can find you and call or WhatsApp you now. Three quick things to get you work:</p>
         </div>
+        {proParam === "success" && (
+          <p className="form-ok" role="status" data-testid="pro-paid">
+            Thanks, your payment went through. Pro switches on as soon as Stripe confirms it, usually within a minute.
+          </p>
+        )}
+        {proParam === "stopped" && (
+          <p className="form-alert" role="status" data-testid="pro-stopped">
+            No payment was taken, and you&apos;re live on Free. You can start Pro any time from your dashboard.
+          </p>
+        )}
       </section>
 
       <section className="auth-card" aria-labelledby="step-avail" data-testid="step-availability">
@@ -108,7 +119,7 @@ export default async function YouAreLivePage() {
 
       <section className="auth-card" aria-label="What next">
         <Button href={platformPath("p", p.slug)}>See your page</Button>
-        {pro && (
+        {pro && proParam !== "success" && (
           <Button href={`${platformPath("provider")}#pro`} variant="secondary">
             Start Pro: pay by card
           </Button>
