@@ -155,7 +155,7 @@ test("typing the question picks the trade and shows who's already listed for the
 
   // "man and van" in the words picks Man & van; Hill Top covers BL5, so the panel lists traders with Call buttons.
   await form.getByRole("textbox", { name: /^Your question/ }).fill("Anyone know a man and van for Saturday?");
-  await expect(trade.locator("option:checked")).toHaveText("Man & van");
+  await expect(trade.locator("option:checked")).toHaveText("Man & van, removals");
   await expect(form.getByTestId("trade-guessed")).toBeVisible();
   await form.getByLabel("Where?").selectOption("BL5");
   const matches = form.getByTestId("ask-matches");

@@ -699,6 +699,12 @@ begin
                  where c.active and c.slug = 'building-surveyors' and g.slug = 'home-trades') then
     raise exception 'Air conditioning check failed: the Building surveyors trade is missing';
   end if;
+  if (select count(*) from public.categories c join public.category_groups g on g.id = c.group_id
+      where c.active and g.slug = 'home-trades'
+        and c.slug in ('fencing-landscaping', 'damp-insulation', 'tree-surgeons')) <> 3
+     or not exists (select 1 from public.categories where slug = 'man-and-van' and name = 'Man & van, removals') then
+    raise exception 'Air conditioning check failed: the fencing, damp, tree surgeon or removals changes are missing';
+  end if;
 end
 $verify$;
 `;
@@ -838,7 +844,7 @@ const PRESETS = {
     verify: VERIFY_BUILDERS,
   },
   "air-conditioning": {
-    title: "Air conditioning, personal trainers, weddings and events (stages, canapés, desserts, event hire), building surveyors",
+    title: "New trades and renames of 26 October (air conditioning to tree surgeons)",
     done: "Air conditioning applied",
     requires: { version: "20261012000045", what: "the builders script (docs/launch/builders-production.sql)" },
     verify: VERIFY_AIR_CONDITIONING,

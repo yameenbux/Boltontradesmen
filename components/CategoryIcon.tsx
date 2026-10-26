@@ -307,6 +307,20 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M18.2 18.2 21 21" />
     </>
   ),
+  "fencing-landscaping": <path d="M3 21V8l2-3 2 3v13M10 21V8l2-3 2 3v13M17 21V8l2-3 2 3v13M3 11h18M3 17h18" />,
+  "damp-insulation": (
+    <>
+      <path d="M3 21h18M5 21V9l7-5 7 5v12" />
+      <path d="M12 11c-1.5 2-2.5 3.2-2.5 4.5a2.5 2.5 0 0 0 5 0c0-1.3-1-2.5-2.5-4.5Z" />
+    </>
+  ),
+  "tree-surgeons": (
+    <>
+      <path d="M12 21v-7M9 21h6" />
+      <path d="M12 14a5 5 0 0 1-5-5 5 5 0 0 1 10 0 5 5 0 0 1-5 5Z" />
+      <path d="M17 17l4-4M19 19l2-2" />
+    </>
+  ),
   "air-conditioning": (
     <>
       <rect x="3" y="5" width="18" height="8" rx="2" />
