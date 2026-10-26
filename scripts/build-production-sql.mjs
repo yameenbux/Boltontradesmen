@@ -38,8 +38,10 @@
 //     --out docs/launch/one-step-production.sql
 //   node scripts/build-production-sql.mjs --preset check-numbers --from 20261012000043 --to 20261012000043 \
 //     --out docs/launch/check-numbers-production.sql
-//   node scripts/build-production-sql.mjs --preset plaster-recovery --from 20261012000044 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset plaster-recovery --from 20261012000044 --to 20261012000044 \
 //     --out docs/launch/plaster-recovery-production.sql
+//   node scripts/build-production-sql.mjs --preset builders --from 20261012000045 --to <newest> \
+//     --out docs/launch/builders-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -662,6 +664,18 @@ end
 $verify$;
 `;
 
+const VERIFY_BUILDERS = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if not exists (select 1 from public.categories c join public.category_groups g on g.id = c.group_id
+                 where c.active and c.slug = 'builders' and g.slug = 'home-trades') then
+    raise exception 'Builders check failed: the Builders & extensions trade is missing';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -789,6 +803,12 @@ const PRESETS = {
     done: "Venetian plaster and vehicle recovery applied",
     requires: { version: "20261012000043", what: "the check numbers script (docs/launch/check-numbers-production.sql)" },
     verify: VERIFY_PLASTER_RECOVERY,
+  },
+  builders: {
+    title: "Builders & extensions (a new trade)",
+    done: "Builders applied",
+    requires: { version: "20261012000044", what: "the Venetian plaster and recovery script (docs/launch/plaster-recovery-production.sql)" },
+    verify: VERIFY_BUILDERS,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

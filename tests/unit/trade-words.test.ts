@@ -22,6 +22,8 @@ const cats = [
   cat("cleaner", "Cleaning services"),
   cat("roofer", "Roofer"),
   cat("bricklayer", "Bricklayer"),
+  cat("builders", "Builders & extensions"),
+  cat("mobile-hair-beauty", "Mobile hair & beauty"),
   cat("ev-solar", "EV chargers & solar"),
   cat("carpets", "Carpets"),
   cat("gutter-cleaning", "Gutter cleaning"),
@@ -81,6 +83,9 @@ describe("guessTrade", () => {
     expect(guess("Car's broken down on the M61, need a tow")).toBe("vehicle-recovery");
     expect(guess("Any good roofers in Bolton?")).toBe("roofer");
     expect(guess("Need brick layers for a garden wall")).toBe("bricklayer");
+    expect(guess("Who did your kitchen extension?")).toBe("builders");
+    expect(guess("Quotes for a loft conversion in BL1")).toBe("builders");
+    expect(guess("Anyone do hair extensions at home?")).toBe("mobile-hair-beauty");
     expect(guess("Car needs a full service")).toBe("mechanic");
     expect(guess("MOT due next week")).toBe("mot");
   });
@@ -143,6 +148,7 @@ describe("matchesTrade (the trader form's trade search)", () => {
     expect(fits("venet")).toEqual(["venetian-plaster"]);
     expect(fits("Polished plaster")).toEqual(["venetian-plaster"]);
     expect(fits("sparky")).toEqual(["electrician"]);
+    expect(fits("builder")).toContain("builders");
     expect(fits("roofers")).toContain("roofer");
     expect(fits("brick layers")).toContain("bricklayer");
     expect(fits("tow")).toContain("vehicle-recovery");
