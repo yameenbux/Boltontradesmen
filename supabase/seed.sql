@@ -27,6 +27,7 @@ from (values
   ('home-trades', 'gardener', 'Gardener', 'none', null),
   ('home-trades', 'cleaner', 'Cleaning services', 'none', null),
   ('home-trades', 'bricklayer', 'Bricklayer', 'none', null),
+  ('home-trades', 'builders', 'Builders & extensions', 'none', 'For extensions, conversions and structural work, ask whether it needs planning permission or building regulations approval, and who will apply. Get the quote and the timings in writing, and agree stage payments rather than paying a lot up front.'),
   ('home-trades', 'pest-control', 'Pest control', 'none', null),
   ('home-trades', 'ev-solar', 'EV chargers & solar', 'none', 'For solar panels, ask if the installer is MCS certified: it''s needed to be paid for the power you export. EV chargers should be fitted by a registered electrician (NICEIC or NAPIT).'),
   ('home-trades', 'carpets', 'Carpets', 'none', null),

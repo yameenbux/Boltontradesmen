@@ -291,6 +291,14 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M9 4V3h6v1M9 13l2 2 4-4" />
     </>
   ),
+  builders: (
+    <>
+      <path d="M3 21h18" />
+      <path d="M5 21V11l7-5 7 5v10" />
+      <path d="M9 21v-6h6v6" />
+      <path d="M12 3v3M15 4l-1 2" />
+    </>
+  ),
   "vehicle-recovery": (
     <>
       <path d="M2 17V9h7l2 4h4v4" />

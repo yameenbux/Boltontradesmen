@@ -171,9 +171,17 @@ const SCRIPTS = [
     file: "docs/launch/plaster-recovery-production.sql",
     preset: "plaster-recovery",
     from: "20261012000044",
-    to: NEWEST,
+    to: "20261012000044",
     functions: [],
     requires: "20261012000043",
+  },
+  {
+    file: "docs/launch/builders-production.sql",
+    preset: "builders",
+    from: "20261012000045",
+    to: NEWEST,
+    functions: [],
+    requires: "20261012000044",
   },
 ];
 
