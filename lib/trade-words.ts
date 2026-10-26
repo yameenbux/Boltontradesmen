@@ -21,6 +21,7 @@ const WORDS: Record<string, readonly string[]> = {
   gardener: ["gardener", "garden", "gardening", "lawn", "hedge", "grass", "tree", "turf"],
   cleaner: ["cleaner", "cleaning", "end of tenancy", "deep clean", "carpet clean", "carpet cleaning", "oven clean", "house clean"],
   builders: ["builder", "building work", "extension", "house extension", "kitchen extension", "loft conversion", "garage conversion", "renovation", "refurbishment", "refurb", "new build", "structural", "knock through", "steel beam", "rsj"],
+  "air-conditioning": ["air conditioning", "air con", "aircon", "air conditioner", "ac unit", "air con unit", "split system", "air to air", "f gas", "fgas"],
   bricklayer: ["bricklayer", "bricklayers", "brick layer", "brick layers", "brickie", "brickwork", "bricks", "pointing", "repointing"],
   "ev-solar": ["ev charger", "car charger", "electric car charger", "solar", "solar panel", "battery storage", "home battery"],
   carpets: ["carpet", "carpet fitter", "carpet fitting", "flooring", "laminate", "vinyl flooring", "underlay", "lino"],
@@ -42,11 +43,12 @@ const WORDS: Record<string, readonly string[]> = {
   "travel-agents": ["travel agent", "holiday", "package holiday", "flight", "cheap flight", "umrah", "hajj", "cruise"],
   "estate-agents": ["estate agent", "letting agent", "lettings", "sell my house", "selling my house", "sell our house", "house valuation", "property valuation", "rent out my house"],
   "house-clearance": ["house clearance", "clearance", "clear out"],
-  caterer: ["caterer", "catering", "buffet"],
+  caterer: ["caterer", "catering", "buffet", "canape", "canapes", "grazing table", "live cooking", "live station", "chaat", "food stall", "wedding catering", "private chef"],
   "bouncy-castles": ["bouncy castle", "bouncy castles", "inflatable"],
   dj: ["dj"],
-  cakes: ["cake", "cakes", "cupcakes"],
-  decor: ["decor", "balloons", "backdrop"],
+  cakes: ["cake", "cakes", "cupcakes", "dessert", "desserts", "dessert table", "sweet table", "sweet cart", "chocolate fountain", "mithai", "wedding cake"],
+  decor: ["decor", "balloons", "backdrop", "stage", "wedding stage", "mehndi stage", "stage decor", "wedding decor", "centrepiece", "centerpiece", "balloon arch", "chair covers", "flower wall", "event styling", "event stylist"],
+  "event-hire": ["event hire", "party hire", "marquee", "marquees", "furniture hire", "chair hire", "table hire", "dance floor", "led dance floor", "photo booth", "360 booth", "light up letters", "love letters", "uplighting"],
   photographer: ["photographer", "photography", "photos", "photoshoot"],
   entertainer: ["entertainer", "magician", "face painter", "clown"],
   florist: ["florist", "flowers", "bouquet"],
@@ -54,10 +56,10 @@ const WORDS: Record<string, readonly string[]> = {
   "mobile-hair-beauty": ["hair extensions", "lash extensions", "eyelash extensions", "nail extensions", "hairdresser", "hair", "barber", "nails", "makeup", "lashes", "beauty"],
   tutors: ["tutor", "tutoring", "tuition", "maths", "gcse", "eleven plus", "11 plus"],
   "driving-instructors": ["driving instructor", "driving lessons", "driving lesson", "learner"],
-  fitness: ["personal trainer", "fitness"],
+  fitness: ["personal trainer", "personal training", "pt", "fitness", "gym", "workout", "weight loss", "strength training", "boxing", "yoga", "pilates", "bootcamp"],
   "music-lessons": ["piano", "guitar", "singing", "music lessons", "drums"],
   "dog-walking-grooming": ["dog walker", "dog walking", "dog groomer", "grooming", "dog"],
-  mechanic: ["mechanic", "car repair", "brakes", "clutch", "car service", "car servicing", "service my car", "full service", "interim service", "garage"],
+  mechanic: ["mechanic", "car repair", "car air con", "car aircon", "air con regas", "aircon regas", "brakes", "clutch", "car service", "car servicing", "service my car", "full service", "interim service", "garage"],
   valeting: ["valet", "valeting", "car valet", "car valeting", "car wash", "detailing"],
   mot: ["mot", "mot test", "mot centre"],
   "vehicle-recovery": ["vehicle recovery", "car recovery", "recovery truck", "breakdown", "broken down", "tow", "towing", "tow truck", "jump start", "flat battery"],
@@ -72,6 +74,9 @@ const WORDS: Record<string, readonly string[]> = {
 function words(s: string): string[] {
   return s
     .toLowerCase()
+    // "canapés" is "canapes": accents dropped, not split into two words.
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/&/g, " and ")
     .replace(/[^a-z0-9]+/g, " ")
     .trim()

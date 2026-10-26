@@ -179,9 +179,17 @@ const SCRIPTS = [
     file: "docs/launch/builders-production.sql",
     preset: "builders",
     from: "20261012000045",
-    to: NEWEST,
+    to: "20261012000045",
     functions: [],
     requires: "20261012000044",
+  },
+  {
+    file: "docs/launch/air-conditioning-production.sql",
+    preset: "air-conditioning",
+    from: "20261012000046",
+    to: NEWEST,
+    functions: [],
+    requires: "20261012000045",
   },
 ];
 
