@@ -48,8 +48,10 @@
 //     --out docs/launch/trader-logos-production.sql
 //   node scripts/build-production-sql.mjs --preset pro-insights --from 20261012000053 --to 20261012000053 \
 //     --out docs/launch/pro-insights-production.sql
-//   node scripts/build-production-sql.mjs --preset card-payments --from 20261012000054 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset card-payments --from 20261012000054 --to 20261012000054 \
 //     --out docs/launch/card-payments-production.sql
+//   node scripts/build-production-sql.mjs --preset pay-links --from 20261012000055 --to <newest> \
+//     --out docs/launch/pay-links-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -786,6 +788,24 @@ end
 $verify$;
 `;
 
+const VERIFY_PAY_LINKS = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if to_regclass('public.trader_pay_links') is null then
+    raise exception 'Pay links check failed: the table is missing';
+  end if;
+  if (select count(distinct proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and proname in ('my_pay_link', 'set_my_pay_link')) <> 2 then
+    raise exception 'Pay links check failed: a function is missing';
+  end if;
+  if pg_get_functiondef('public.public_doc(uuid)'::regprocedure) not like '%pay_link%' then
+    raise exception 'Pay links check failed: the customer''s copy has no pay_link';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -943,6 +963,12 @@ const PRESETS = {
     done: "Card payments applied",
     requires: { version: "20261012000053", what: "the Pro insights script (docs/launch/pro-insights-production.sql)" },
     verify: VERIFY_CARD_PAYMENTS,
+  },
+  "pay-links": {
+    title: "Traders' own card payment links (SumUp, Square, PayPal...) on invoices",
+    done: "Pay links applied",
+    requires: { version: "20261012000054", what: "the card payments script (docs/launch/card-payments-production.sql)" },
+    verify: VERIFY_PAY_LINKS,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

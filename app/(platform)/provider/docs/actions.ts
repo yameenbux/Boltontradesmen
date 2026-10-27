@@ -9,6 +9,7 @@ import { deliverCustomerMessage } from "@/lib/notify";
 import { platformPath } from "@/lib/paths";
 import { InvalidPhoneError, toE164 } from "@/lib/phone";
 import { ID_PATTERN } from "@/lib/review-form";
+import { PAY_LINK_ERROR, payLink } from "@/lib/pay-link";
 import { DOC_ERRORS, docTotal, parsePence, type DocLine } from "@/lib/trade-docs";
 
 // Pro's quotes and invoices, the trader's side. The database checks the listing is the caller's and has Pro, and
@@ -162,4 +163,23 @@ export async function saveBilling(providerId: string, _prev: FormState, fd: Form
   }
   revalidatePath(platformPath("provider"));
   return { ok: true, message: "Saved. They'll show on your invoices.", values };
+}
+
+/** The trader's own card payment link (SumUp, Square, PayPal...), shown on their invoices. Empty clears it. */
+export async function savePayLink(providerId: string, _prev: FormState, fd: FormData): Promise<FormState> {
+  const { supabase } = await requireMember(platformPath("provider"));
+  const raw = text(fd, "pay_link");
+  const values = { pay_link: raw };
+  if (!ID_PATTERN.test(providerId)) return { message: FAILED, values };
+  const link = raw.trim() ? payLink(raw) : null;
+  if (raw.trim() && !link) return { errors: { pay_link: PAY_LINK_ERROR }, values };
+  const { error } = await supabase.rpc("set_my_pay_link", { p_provider: providerId, p_url: link?.url ?? null });
+  if (error) {
+    if (error.message === "bad_link") return { errors: { pay_link: PAY_LINK_ERROR }, values };
+    return refused("set_my_pay_link", error.message, values);
+  }
+  revalidatePath(platformPath("provider"));
+  return link
+    ? { ok: true, message: `Saved. Your invoices now show “Pay by card” through ${link.name}.`, values: { pay_link: link.url } }
+    : { ok: true, message: "Removed from your invoices.", values };
 }
