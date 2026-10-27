@@ -20,6 +20,8 @@ export type DocDraft = {
   until: string;
   ask_review: boolean;
   job_request_id?: string | null;
+  /** A quote's deposit in pounds ("50.00"), or empty. */
+  deposit?: string;
 };
 
 const toRow = (l: DocLine): Row => ({
@@ -125,6 +127,16 @@ export function DocEditor({ providerId, kind, draft }: { providerId: string; kin
         <input name="until" className="input" type="date" defaultValue={v("until")} />
         {err.until && <span className="field-err">{err.until}</span>}
       </label>
+      {kind === "quote" && (
+        <label className="field">
+          <span>
+            Deposit<span className="opt"> (optional)</span>
+          </span>
+          <input name="deposit" className="input" inputMode="decimal" defaultValue={v("deposit")} placeholder="50.00" />
+          <span className="hint">With card payments on, your customer can pay this by card once they accept.</span>
+          {err.deposit && <span className="field-err">{err.deposit}</span>}
+        </label>
+      )}
       <label className="field">
         <span>
           Notes<span className="opt"> (optional)</span>

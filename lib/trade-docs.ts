@@ -27,6 +27,13 @@ export type TradeDoc = {
   sent_at: string | null;
   answered_at: string | null;
   paid_at: string | null;
+  /** A quote's deposit, asked by card once accepted (migration 000054). */
+  deposit_pence?: number | null;
+  deposit_paid_pence?: number | null;
+  deposit_paid_at?: string | null;
+  paid_by_card?: boolean;
+  /** On an invoice made from a quote: the deposit already paid, so left to pay = total - this. */
+  paid_upfront_pence?: number;
 };
 
 export type Billing = { account_name: string; sort_code: string; account_number: string };
@@ -97,6 +104,12 @@ export const DOC_ERRORS: Record<string, { field?: string; message: string }> = {
   bad_lines: { field: "lines", message: "Each line needs a description, a quantity and a price." },
   bad_notes: { field: "notes", message: "Keep the notes to 1,000 characters." },
   bad_date: { field: "until", message: "Choose a date within the next year." },
+  bad_deposit: { field: "deposit", message: "A deposit must be at least £1 and no more than the quote's total." },
   locked: { message: "This can't be changed now: it's been accepted, paid or cancelled." },
   pro_needed: { message: "Quotes and invoices come with Pro." },
 };
+
+/** What's left to pay on an invoice (its total, less a deposit paid on its quote). */
+export function leftToPay(doc: Pick<TradeDoc, "total_pence" | "paid_upfront_pence">): number {
+  return Math.max(0, doc.total_pence - (doc.paid_upfront_pence ?? 0));
+}

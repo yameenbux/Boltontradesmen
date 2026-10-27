@@ -1,17 +1,20 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { answerQuote } from "@/app/(platform)/d/[token]/actions";
 
-/** Accept or decline a quote, from the customer's link. */
+/** Accept or decline a quote, from the customer's link. Accepted: the page reloads to offer the deposit, if any. */
 export function CustomerDocActions({ token }: { token: string }) {
+  const router = useRouter();
   const [pending, start] = useTransition();
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const answer = (accept: boolean) =>
     start(async () => {
       const r = await answerQuote(token, accept);
       setNote({ ok: r.ok, text: r.message });
+      if (r.ok && accept) router.refresh();
     });
   if (note?.ok) {
     return (

@@ -9,6 +9,7 @@ import { DOCUMENT_KINDS, isPlan, PRO_ERRORS, stripeConfig, toProStatus, type Doc
 import { ProofError, prepareProof, uploadProof } from "@/lib/proofs";
 import { ID_PATTERN } from "@/lib/review-form";
 import { revalidatePublicPages } from "@/lib/revalidate-public";
+import { onboardingUrl } from "@/lib/card-payments";
 import { proCheckoutUrl } from "@/lib/pro-checkout";
 import { absoluteUrl } from "@/lib/seo";
 import { stripeClient } from "@/lib/stripe";
@@ -212,4 +213,26 @@ export async function moveWorkPhoto(_prev: FormState, fd: FormData): Promise<For
   if (error) return proFail(error.message, "reorder_my_work_photos");
   refresh(data);
   return { ok: true, message: "Moved." };
+}
+
+/**
+ * Card payments: connects the trader's own Stripe account (made the first time) and sends them to Stripe to finish
+ * setting it up. Pro only. Stripe brings them back to the dashboard.
+ */
+export async function startCardPayments(_prev: FormState, fd: FormData): Promise<FormState> {
+  const cfg = stripeConfig();
+  if (!cfg) return { message: "Card payments open soon." };
+  const r = await myPro(fd);
+  if ("fail" in r) return r.fail as FormState;
+  if (!r.pro.isPro) return { message: "Card payments come with Pro." };
+  const slug = r.account.providers.find((p) => p.id === r.id)?.slug;
+  if (!slug) return { message: SOMETHING_WRONG };
+  let url: string;
+  try {
+    url = await onboardingUrl(cfg, { providerId: r.id, email: r.account.email, slug });
+  } catch (err) {
+    console.error("provider: card payments onboarding failed:", err instanceof Error ? err.message : err);
+    return { message: SOMETHING_WRONG };
+  }
+  redirect(url);
 }

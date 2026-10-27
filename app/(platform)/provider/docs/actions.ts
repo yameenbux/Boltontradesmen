@@ -9,7 +9,7 @@ import { deliverCustomerMessage } from "@/lib/notify";
 import { platformPath } from "@/lib/paths";
 import { InvalidPhoneError, toE164 } from "@/lib/phone";
 import { ID_PATTERN } from "@/lib/review-form";
-import { DOC_ERRORS } from "@/lib/trade-docs";
+import { DOC_ERRORS, docTotal, parsePence, type DocLine } from "@/lib/trade-docs";
 
 // Pro's quotes and invoices, the trader's side. The database checks the listing is the caller's and has Pro, and
 // works out every total itself.
@@ -29,7 +29,7 @@ function refused(where: string, message: string, values?: Record<string, string>
 /** Saves a quote or invoice from the editor, then opens it. */
 export async function saveDoc(_prev: FormState, fd: FormData): Promise<FormState> {
   const { supabase } = await requireMember(platformPath("provider"));
-  const keys = ["provider_id", "id", "kind", "customer_name", "customer_phone", "customer_email", "title", "until", "notes", "lines", "job_request_id"];
+  const keys = ["provider_id", "id", "kind", "customer_name", "customer_phone", "customer_email", "title", "until", "notes", "lines", "job_request_id", "deposit"];
   const values: Record<string, string> = Object.fromEntries(keys.map((k) => [k, text(fd, k)]));
   values.ask_review = fd.get("ask_review") === "on" ? "on" : "";
   if (!ID_PATTERN.test(values.provider_id) || (values.id && !ID_PATTERN.test(values.id))) return { message: FAILED, values };
@@ -50,6 +50,14 @@ export async function saveDoc(_prev: FormState, fd: FormData): Promise<FormState
     return { errors: { lines: DOC_ERRORS.bad_lines.message }, values };
   }
 
+  // A quote's deposit: at least £1, at most the total (checked here first, so a refused one saves nothing).
+  let deposit: number | null = null;
+  if (values.kind === "quote" && values.deposit.trim()) {
+    deposit = parsePence(values.deposit);
+    const total = Array.isArray(lines) ? docTotal(lines as DocLine[]) : 0;
+    if (deposit === null || deposit < 100 || deposit > total) return { errors: { deposit: DOC_ERRORS.bad_deposit.message }, values };
+  }
+
   const { data, error } = await supabase.rpc("save_my_doc", {
     p_provider: values.provider_id,
     p_doc: {
@@ -68,6 +76,10 @@ export async function saveDoc(_prev: FormState, fd: FormData): Promise<FormState
     },
   });
   if (error) return refused("save_my_doc", error.message, values);
+  if (values.kind === "quote") {
+    const { error: e } = await supabase.rpc("set_my_quote_deposit", { p_doc: String(data), p_pence: deposit });
+    if (e) return refused("set_my_quote_deposit", e.message, { ...values, id: String(data) });
+  }
   revalidatePath(platformPath("provider"));
   redirect(platformPath("provider", "docs", String(data)));
 }

@@ -44,6 +44,7 @@ export default async function EditDocPage({ params }: { params: Promise<{ id: st
             lines: doc.lines,
             notes: doc.notes ?? "",
             until: doc.until ?? "",
+            deposit: doc.deposit_pence ? (doc.deposit_pence / 100).toFixed(2) : "",
             ask_review: doc.ask_review,
             job_request_id: doc.job_request_id,
           }}

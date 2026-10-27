@@ -46,8 +46,10 @@
 //     --out docs/launch/air-conditioning-production.sql
 //   node scripts/build-production-sql.mjs --preset trader-logos --from 20261012000052 --to 20261012000052 \
 //     --out docs/launch/trader-logos-production.sql
-//   node scripts/build-production-sql.mjs --preset pro-insights --from 20261012000053 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset pro-insights --from 20261012000053 --to 20261012000053 \
 //     --out docs/launch/pro-insights-production.sql
+//   node scripts/build-production-sql.mjs --preset card-payments --from 20261012000054 --to <newest> \
+//     --out docs/launch/card-payments-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -763,6 +765,27 @@ end
 $verify$;
 `;
 
+const VERIFY_CARD_PAYMENTS = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if to_regclass('public.trader_stripe') is null or to_regclass('public.card_payments') is null then
+    raise exception 'Card payments check failed: a table is missing';
+  end if;
+  if not exists (select 1 from information_schema.columns
+                 where table_schema = 'public' and table_name = 'trade_docs' and column_name = 'deposit_pence') then
+    raise exception 'Card payments check failed: quotes have no deposit';
+  end if;
+  if (select count(distinct proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and proname in ('set_my_quote_deposit', 'my_card_payments', 'doc_card_payment',
+                                                 'record_card_payment', 'set_stripe_account', 'update_stripe_account',
+                                                 'stripe_account_of')) <> 7 then
+    raise exception 'Card payments check failed: a function is missing';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -914,6 +937,12 @@ const PRESETS = {
     done: "Pro insights applied",
     requires: { version: "20261012000052", what: "the trader logos script (docs/launch/trader-logos-production.sql)" },
     verify: VERIFY_PRO_INSIGHTS,
+  },
+  "card-payments": {
+    title: "Card payments and deposits through the trader's own Stripe account",
+    done: "Card payments applied",
+    requires: { version: "20261012000053", what: "the Pro insights script (docs/launch/pro-insights-production.sql)" },
+    verify: VERIFY_CARD_PAYMENTS,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];
