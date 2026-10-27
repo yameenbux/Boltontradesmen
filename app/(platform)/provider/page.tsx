@@ -14,6 +14,7 @@ import { DocList } from "@/components/docs/DocList";
 import { ListingStatus } from "@/components/provider/ListingStatus";
 import { ProSoonCard, ProUpgradeCard } from "@/components/provider/ProOffer";
 import { ProPanel } from "@/components/provider/ProPanel";
+import { CardPaymentsForm } from "@/components/provider/ProForms";
 import { ReplyForm } from "@/components/provider/ReplyForm";
 import { TraderStart } from "@/components/provider/TraderStart";
 import { ShareReviewLink } from "@/components/review-card/ShareReviewLink";
@@ -35,6 +36,8 @@ import { toEnquiryStats } from "@/lib/enquiries";
 import { quotesToChase, toInsights } from "@/lib/insights";
 import { platformPath } from "@/lib/paths";
 import { stripeConfig, toProStatus } from "@/lib/pro";
+import { refreshAccount } from "@/lib/card-payments";
+import { toCardState } from "@/lib/card-state";
 import { stillOpen } from "@/lib/review-form";
 import { tradeGroups } from "@/lib/trade-names";
 import type { MyListingRequest } from "@/lib/trader-setup";
@@ -163,11 +166,11 @@ function ProviderReview({ r }: { r: Review }) {
 export default async function ProviderArea({
   searchParams,
 }: {
-  searchParams: Promise<{ withdrawn?: string; pro?: string }>;
+  searchParams: Promise<{ withdrawn?: string; pro?: string; card?: string }>;
 }) {
   // No Welcome here: a new trader's account gets its name from the trader form.
   const { supabase, account } = await requireAccount(platformPath("provider"));
-  const { withdrawn, pro: proParam } = await searchParams;
+  const { withdrawn, pro: proParam, card: cardParam } = await searchParams;
   const textsOn = textsAvailable();
   let listings: Listing[] = [];
   if (account?.displayName) {
@@ -249,21 +252,31 @@ export default async function ProviderArea({
   const jobs = await Promise.all(
     listings.map(async ({ provider: p }, i) => {
       if (!pros[i].isPro) return null;
-      const [req, set, docs, bank] = await Promise.all([
+      // Back from Stripe, or still waiting on it: ask Stripe whether the account can take payments yet.
+      const cfg = stripeConfig();
+      if (cfg && process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim()) {
+        const { data: c } = await supabase.rpc("my_card_payments", { p_provider: p.id });
+        const known = toCardState(c);
+        if (known.connected && !known.chargesEnabled) await refreshAccount(cfg, p.id);
+      }
+      const [req, set, docs, bank, card] = await Promise.all([
         supabase.rpc("my_job_requests", { p_provider: p.id }),
         supabase.rpc("my_alert_settings", { p_provider: p.id }),
         supabase.rpc("my_docs", { p_provider: p.id }),
         supabase.rpc("my_billing", { p_provider: p.id }),
+        supabase.rpc("my_card_payments", { p_provider: p.id }),
       ]);
       if (req.error) throw new Error(`my_job_requests failed: ${req.error.message}`);
       if (set.error) throw new Error(`my_alert_settings failed: ${set.error.message}`);
       if (docs.error) throw new Error(`my_docs failed: ${docs.error.message}`);
       if (bank.error) throw new Error(`my_billing failed: ${bank.error.message}`);
+      if (card.error) throw new Error(`my_card_payments failed: ${card.error.message}`);
       return {
         requests: (req.data ?? []) as JobRequestRow[],
         settings: set.data as AlertSettings,
         docs: (docs.data ?? []) as TradeDoc[],
         billing: (bank.data ?? null) as Billing | null,
+        card: toCardState(card.data),
       };
     }),
   );
@@ -271,6 +284,8 @@ export default async function ProviderArea({
   const stripeReady = stripeConfig() !== null;
   // Quote follow-up emails go out from the daily job, which only runs with CRON_SECRET set.
   const followupsOn = !!process.env.CRON_SECRET?.trim();
+  // Card payments need Stripe Connect switched on for our account, shown by its webhook's secret being set.
+  const cardReady = stripeReady && !!process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim();
 
   return (
     <main className="auth">
@@ -374,6 +389,39 @@ export default async function ProviderArea({
                 <p className="avail-hint">Printed on your invoices so customers can pay you by bank transfer.</p>
                 <BillingForm action={saveBilling.bind(null, p.id)} billing={jobs[i].billing} />
               </div>
+            </section>
+          )}
+          {jobs[i] && cardReady && (
+            <section className="auth-card" id="card" aria-labelledby={`card-${p.id}`}>
+              <div>
+                <h2 id={`card-${p.id}`}>Card payments</h2>
+                <p className="lede">
+                  Customers pay your invoices, and deposits on quotes, by card, straight into your own Stripe account.
+                  We take nothing: Stripe charges its usual fee on each payment, and refunds are done from your Stripe
+                  dashboard.
+                </p>
+              </div>
+              {jobs[i].card.chargesEnabled ? (
+                <>
+                  <p className="form-ok" data-testid="card-status">
+                    Card payments are on. Your invoices and deposits show &ldquo;Pay by card&rdquo;.
+                  </p>
+                  <a className="link" href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer">
+                    Open your Stripe dashboard
+                  </a>
+                </>
+              ) : (
+                <>
+                  {jobs[i].card.connected && (
+                    <p className="form-note" data-testid="card-status">
+                      {cardParam === "back"
+                        ? "Thanks. Stripe is checking your details; this usually takes a few minutes. Refresh to see."
+                        : "Stripe needs a few more details before you can take payments."}
+                    </p>
+                  )}
+                  <CardPaymentsForm providerId={p.id} started={jobs[i].card.connected} />
+                </>
+              )}
             </section>
           )}
           {jobs[i] && (

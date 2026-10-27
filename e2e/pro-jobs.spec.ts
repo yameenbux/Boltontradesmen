@@ -163,9 +163,15 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   await editor.getByRole("group", { name: "Line 2" }).getByLabel("Description").fill("Fuel");
   await editor.getByRole("group", { name: "Line 2" }).getByLabel("Price (£)").fill("12.50");
   await expect(editor.getByText("Total £147.50")).toBeVisible();
+  // A deposit: never more than the quote.
+  await editor.getByLabel(/Deposit/).fill("500");
+  await editor.getByRole("button", { name: "Save quote" }).click();
+  await expect(editor.getByText("A deposit must be at least £1 and no more than the quote's total.")).toBeVisible();
+  await editor.getByLabel(/Deposit/).fill("40");
   await editor.getByRole("button", { name: "Save quote" }).click();
   await expect(trader.getByRole("heading", { level: 1, name: /^Q-\d{4}$/ })).toBeVisible();
   await expect(trader.getByTestId("doc-total")).toHaveText("£147.50");
+  await expect(trader.getByTestId("doc-deposit")).toHaveText("£40.00");
 
   // Sent on WhatsApp from the trader's own phone (a new tab), which marks the quote sent.
   const [wa] = await Promise.all([trader.waitForEvent("popup"), trader.getByRole("link", { name: "Send on WhatsApp" }).click()]);
@@ -199,6 +205,9 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   await expect(customer.getByRole("status")).toHaveText(/^(Accepted. We've let them know.|You accepted this quote. Brook Removals has been told.)$/);
   await customer.reload();
   await expect(customer.getByRole("button", { name: "Accept this quote" })).toHaveCount(0);
+  await expect(customer.getByText("Deposit on acceptance")).toBeVisible();
+  // Card payments need the trader's Stripe account (not set up here), so no card button.
+  await expect(customer.getByRole("button", { name: /by card/ })).toHaveCount(0);
   expect(await alertsFor("quote_answered", `'${quoteId}'`)).toEqual(["email:sent", "sms:sent"]);
 
   // One tap to an invoice; the customer's copy shows how to pay.

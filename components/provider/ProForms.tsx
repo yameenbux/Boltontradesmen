@@ -7,6 +7,7 @@ import {
   addWorkPhoto,
   moveWorkPhoto,
   openBillingPortal,
+  startCardPayments,
   removeWorkPhoto,
   sendProDocument,
   startProCheckout,
@@ -97,6 +98,20 @@ export function ManageBillingForm({ providerId }: { providerId: string }) {
       <Result state={state} />
       <Button type="submit" variant="secondary" disabled={pending} aria-busy={pending}>
         {pending ? "Opening…" : "Manage billing"}
+      </Button>
+    </form>
+  );
+}
+
+/** Card payments: off to Stripe to connect (or finish connecting) the trader's own account. */
+export function CardPaymentsForm({ providerId, started }: { providerId: string; started: boolean }) {
+  const [state, action, pending] = useActionState(startCardPayments, {} as FormState);
+  return (
+    <form action={action} className="auth-form">
+      <input type="hidden" name="provider_id" value={providerId} />
+      <Result state={state} />
+      <Button type="submit" variant={started ? "secondary" : "primary"} disabled={pending} aria-busy={pending}>
+        {pending ? "Opening Stripe…" : started ? "Finish setting up with Stripe" : "Take card payments"}
       </Button>
     </form>
   );

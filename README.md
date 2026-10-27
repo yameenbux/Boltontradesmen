@@ -134,6 +134,13 @@ One site: free for residents, free for traders, with an optional paid tier for t
   re-encoded to a 512-pixel WebP with no metadata (`lib/trader-logo.ts`) and kept in the
   public `trader-logos` bucket. With Pro, they can also pick a cover colour (a fixed set,
   `lib/brand.ts`) for a band behind the logo. Neither changes ranking.
+- **Card payments** (Pro): a trader connects a Stripe account of their own (Connect, full
+  Stripe dashboard; they pay Stripe's fee and own refunds and disputes) from "Card payments" on
+  the dashboard. Their customers then see "Pay by card" on unpaid invoices, and on an accepted
+  quote's optional deposit; an invoice from that quote asks only for what's left. Money goes
+  straight to the trader: no cut, no application fee. A payment is recorded once, from the
+  customer's return or the Connect webhook (`/api/stripe/connect`). Shown only when
+  `STRIPE_CONNECT_WEBHOOK_SECRET` is set (Connect switched on for our Stripe account).
 - **Page views and demand**: every trader's dashboard shows views of their page ("Who's
   looking"; one per connection a day, their own and the admin's left out; `/api/view`, counts
   only). With Pro it adds the last 30 days' visits to each of their trades' pages and the Ask
@@ -379,9 +386,9 @@ release, each refusing to run before the one it follows: `plan-2b` (000018 to 00
 `quotes-invoices` (000036), `trader-sign-up` (000037), `launch-hardening` (000038),
 `new-categories` (000039), `more-categories` (000040), `auto-live` (000041), `one-step`
 (000042), `check-numbers` (000043), `plaster-recovery` (000044), `builders` (000045), `air-conditioning` (000046 to 000051) and
-`trader-logos` (000052) and `pro-insights` (000053 on), each as `docs/launch/<name>-production.sql`. After adding or changing
-a migration from 000053 on, regenerate with
-`node scripts/build-production-sql.mjs --preset pro-insights --from 20261012000053 --to <newest> --out docs/launch/pro-insights-production.sql`
+`trader-logos` (000052), `pro-insights` (000053) and `card-payments` (000054 on), each as `docs/launch/<name>-production.sql`. After adding or changing
+a migration from 000054 on, regenerate with
+`node scripts/build-production-sql.mjs --preset card-payments --from 20261012000054 --to <newest> --out docs/launch/card-payments-production.sql`
 (`tests/unit/production-sql.test.ts` fails until you do). A new release gets its own preset in
 that script (and the previous one's `--to` fixed), a check in `scripts/check-production-sql.sh`,
 and an entry in the test.
@@ -456,6 +463,7 @@ Render environment variables (service → Environment). Saving a change redeploy
 | `DEVICE_HASH_SECRET` | Server only. A long random secret (`openssl rand -hex 32`), never `change-me`. Rate limits, enquiry counts and the lock cookie need it |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL` | Pro. Server only. A restricted key is enough (write: Checkout Sessions, Customer portal, Subscriptions, Customers; read: Prices, Products). Pro opens only when all four are set; otherwise the dashboard says "Pro opens soon" |
 | `RESEND_API_KEY`, `NOTIFY_FROM` | Alert, quote and invoice emails. Server only. A key restricted to sending from the site's domain; `NOTIFY_FROM` is the sender. `NOTIFY_EMAIL_STUB` must **not** be set in production |
+| `STRIPE_CONNECT_WEBHOOK_SECRET` | Card payments. Server only. The signing secret of a second Stripe webhook endpoint, `/api/stripe/connect`, listening to **events on connected accounts** (`checkout.session.completed`, `account.updated`). The restricted key also needs write on Connected accounts, Account Links and Checkout Sessions. Unset: no card payments are offered |
 | `CRON_SECRET` | The daily job (`/api/cron/daily`). Server only, 16 characters or more. Unset: the job refuses every call, and the dashboard doesn't promise follow-up emails |
 | `CF_WEB_ANALYTICS_TOKEN` | Optional. Cloudflare Web Analytics (cookieless). Read at build time |
 | `GOOGLE_SITE_VERIFICATION` | Optional. The Google Search Console HTML-tag value. Read at build time |

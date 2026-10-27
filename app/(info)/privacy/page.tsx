@@ -41,6 +41,7 @@ export default function PrivacyPage() {
         items={[
           "Payment: Stripe, our payment processor, takes your payment and holds your card details; we never see them. We keep the references Stripe gives us for you and your subscription, which plan you're on, its status and when it renews or ends.",
           "Your ID check: a photo of your passport or driving licence, and, if you choose, your insurance certificate or trade accreditations. We use them only to check who you are and what you're covered for. They are stored privately, we remove photos' hidden details (such as location) first, and only the site admin sees them. We delete each file 30 days after we've decided on it and keep only the decision: whether it was accepted, when, and why not if it wasn't. While Pro is on, your page shows \"ID checked\".",
+          "Card payments, if you turn them on: you open a Stripe account of your own, and Stripe collects the details it needs from you directly. We keep only its account reference and whether it can take payments. Your customers pay you through Stripe; we see which quote or invoice was paid and how much, never their card details.",
           "Work photos you add are published on your page while Pro is on. We remove their hidden details (such as location) before publishing them. You can delete them at any time from your dashboard, Pro or not.",
         ]}
       />

@@ -1,9 +1,10 @@
 import { dayMonthYear } from "@/lib/checks";
-import { docNumber, KIND_TEXT, lineTotal, money, STATUS_TEXT, type TradeDoc } from "@/lib/trade-docs";
+import { docNumber, KIND_TEXT, leftToPay, lineTotal, money, STATUS_TEXT, type TradeDoc } from "@/lib/trade-docs";
 
 /** The quote or invoice itself: who it's from and for, the lines, the total, dates and notes. Print-friendly. */
-export function DocSheet({ doc, business }: { doc: Pick<TradeDoc, "kind" | "number" | "status" | "customer_name" | "title" | "lines" | "total_pence" | "notes" | "until" | "created_at" | "paid_at">; business: string }) {
+export function DocSheet({ doc, business }: { doc: Pick<TradeDoc, "kind" | "number" | "status" | "customer_name" | "title" | "lines" | "total_pence" | "notes" | "until" | "created_at" | "paid_at" | "deposit_pence" | "deposit_paid_pence" | "paid_by_card" | "paid_upfront_pence">; business: string }) {
   const label = docNumber(doc.kind, doc.number);
+  const upfront = doc.kind === "invoice" ? (doc.paid_upfront_pence ?? 0) : 0;
   return (
     <article className="doc-sheet" aria-label={`${KIND_TEXT[doc.kind]} ${label}`}>
       <header className="doc-head">
@@ -47,12 +48,40 @@ export function DocSheet({ doc, business }: { doc: Pick<TradeDoc, "kind" | "numb
             </th>
             <td data-testid="doc-total">{money(doc.total_pence)}</td>
           </tr>
+          {upfront > 0 && (
+            <>
+              <tr>
+                <th scope="row" colSpan={3}>
+                  Deposit paid
+                </th>
+                <td>−{money(upfront)}</td>
+              </tr>
+              <tr>
+                <th scope="row" colSpan={3}>
+                  Left to pay
+                </th>
+                <td data-testid="doc-left">{money(leftToPay(doc))}</td>
+              </tr>
+            </>
+          )}
+          {doc.kind === "quote" && doc.deposit_pence ? (
+            <tr>
+              <th scope="row" colSpan={3}>
+                {doc.deposit_paid_pence ? "Deposit paid" : "Deposit on acceptance"}
+              </th>
+              <td data-testid="doc-deposit">{money(doc.deposit_paid_pence ?? Math.min(doc.deposit_pence, doc.total_pence))}</td>
+            </tr>
+          ) : null}
         </tfoot>
       </table>
       <p className="doc-meta">
         {doc.kind === "quote" && doc.until && <>Valid until {dayMonthYear(doc.until)}. </>}
         {doc.kind === "invoice" && doc.status === "unpaid" && doc.until && <>Due by {dayMonthYear(doc.until)}. </>}
-        {doc.kind === "invoice" && doc.status === "paid" && doc.paid_at && <>Paid {dayMonthYear(doc.paid_at)}. Thank you. </>}
+        {doc.kind === "invoice" && doc.status === "paid" && doc.paid_at && (
+          <>
+            Paid{doc.paid_by_card ? " by card" : ""} {dayMonthYear(doc.paid_at)}. Thank you.{" "}
+          </>
+        )}
         No VAT added.
       </p>
       {doc.notes && <p className="doc-notes">{doc.notes}</p>}

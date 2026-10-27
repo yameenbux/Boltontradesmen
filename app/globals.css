@@ -1059,6 +1059,9 @@ h1,h2,h3{text-wrap:balance}
   .doc-status.s-accepted, .doc-status.s-paid{background:var(--sage-tint); color:var(--sage)}
   .doc-status.s-sent, .doc-status.s-unpaid{background:var(--brick-tint); color:var(--brick-deep)}
   .doc-bank{display:grid; gap:8px; padding-top:8px; border-top:1px solid var(--line)}
+  .pay-card{display:grid; gap:6px; margin-bottom:6px}
+  .pay-card .btn{width:100%}
+  .pay-or{margin:8px 0 0; font-weight:700}
   .chase{display:grid; gap:8px; padding:14px; border-radius:var(--r-md); background:var(--surface-2)}
   .chase h3{margin:0; font-size:17px}
   .chase ul{margin:0; padding:0; list-style:none; display:grid; gap:10px}

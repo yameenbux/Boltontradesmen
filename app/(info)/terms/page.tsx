@@ -123,6 +123,12 @@ export default function TermsPage() {
         part-used periods, except that if we can&apos;t accept your photo ID we refund your Pro payment in full.
       </p>
       <p>
+        With Pro, you can also let your customers pay your invoices, and deposits on your quotes, by card. You open a
+        Stripe account of your own for this and agree Stripe&apos;s terms with them. Payments go straight to your Stripe
+        account: we take no cut, Stripe charges you its own fee on each payment, and refunds, disputes and chargebacks
+        are between you, your customer and Stripe.
+      </p>
+      <p>
         If a payment fails, Stripe tries again for about two weeks, and Pro stays on for up to 14 days from the failed
         payment. If it still isn&apos;t paid, or Pro ends for any other reason, your photos and the ID checked mark
         stop showing. Your listing and its reviews stay as they were, and your photos come back if you restart Pro.
