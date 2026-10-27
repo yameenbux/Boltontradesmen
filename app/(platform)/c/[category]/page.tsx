@@ -10,6 +10,7 @@ import { listCategoryGroups, listProvidersInCategory } from "@/lib/directory";
 import { platformPath } from "@/lib/paths";
 import { getPriceGuide } from "@/lib/price-guides-public";
 import { JsonLd } from "@/components/JsonLd";
+import { ViewBeacon } from "@/components/ViewBeacon";
 import { breadcrumbJsonLd, categoryMetadata } from "@/lib/seo";
 
 // Static and cookie-free: the area filter runs client-side, so no searchParams.
@@ -104,6 +105,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
           <small>Ask the neighbours who they&apos;d use for {name.toLowerCase()}.</small>
         </span>
       </a>
+      <ViewBeacon kind="category" slug={slug} />
     </main>
   );
 }

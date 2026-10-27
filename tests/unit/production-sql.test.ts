@@ -195,9 +195,17 @@ const SCRIPTS = [
     file: "docs/launch/trader-logos-production.sql",
     preset: "trader-logos",
     from: "20261012000052",
-    to: NEWEST,
+    to: "20261012000052",
     functions: ["my_branding", "set_my_logo", "set_my_brand_color"],
     requires: "20261012000051",
+  },
+  {
+    file: "docs/launch/pro-insights-production.sql",
+    preset: "pro-insights",
+    from: "20261012000053",
+    to: NEWEST,
+    functions: ["record_page_view", "my_insights", "due_quote_followups", "purge_old_page_views"],
+    requires: "20261012000052",
   },
 ];
 

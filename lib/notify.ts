@@ -12,6 +12,7 @@ import {
   paymentReminderSms,
   questionAlertEmail,
   questionAlertSms,
+  quoteFollowupEmail,
   quoteAnsweredEmail,
   quoteAnsweredSms,
   reviewRequestEmail,
@@ -120,11 +121,17 @@ function docMessage(c: { doc: TradeDoc; business_name: string }, link: string): 
   };
 }
 
-export type CustomerMessage = "review_request" | "payment_reminder_1" | "payment_reminder_2" | "doc_email";
+export type CustomerMessage =
+  | "review_request"
+  | "payment_reminder_1"
+  | "payment_reminder_2"
+  | "doc_email"
+  | "quote_followup_1"
+  | "quote_followup_2";
 
 /**
  * A message to a trader's customer about a quote or invoice: the review request after it's paid, a payment
- * reminder, or the trader's "Email it". Returns how many went. Never throws.
+ * reminder, a quote follow-up (email only), or the trader's "Email it". Returns how many went. Never throws.
  */
 export async function deliverCustomerMessage(kind: CustomerMessage, docId: string): Promise<number> {
   try {
@@ -143,9 +150,14 @@ export async function deliverCustomerMessage(kind: CustomerMessage, docId: strin
       email = reviewRequestEmail(c.business_name, c.doc.customer_name, link);
     } else {
       const m = docMessage(c, absoluteUrl(publicDocPath(c.doc.token)));
-      const second = kind === "payment_reminder_2";
+      const second = kind === "payment_reminder_2" || kind === "quote_followup_2";
       sms = paymentReminderSms(m, second);
-      email = kind === "doc_email" ? docEmail(c.doc.kind, m) : paymentReminderEmail(m, second);
+      email =
+        kind === "doc_email"
+          ? docEmail(c.doc.kind, m)
+          : kind.startsWith("quote_followup")
+            ? quoteFollowupEmail(m, second)
+            : paymentReminderEmail(m, second);
     }
     await sendAll(c.send, sms, email);
     return c.send.length;
