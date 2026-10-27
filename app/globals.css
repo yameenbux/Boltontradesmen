@@ -285,7 +285,6 @@ h1,h2,h3{text-wrap:balance}
   .chip em{font-style:normal; color:var(--ink-3); font-weight:500}
   .chip[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
   .chip[aria-pressed="true"] em{color:inherit}
-  .chip.soon{color:var(--ink-3); cursor:default}
   .empty{margin:0; padding:22px; text-align:center; border:1.5px dashed var(--line); border-radius:var(--r-lg); color:var(--ink-2)}
 
   /* ---------- home ---------- */
@@ -301,53 +300,68 @@ h1,h2,h3{text-wrap:balance}
   .search-msg p{margin:12px 2px 0; font-size:16px}
   .search-msg a{color:var(--brick); font-weight:700; text-decoration:underline; text-underline-offset:3px; display:inline-flex; align-items:center; min-height:48px}
 
-  .trust{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 0; padding:0; list-style:none}
-  .trust li{display:inline-flex; align-items:center; gap:7px; font-size:13.5px; font-weight:600; line-height:1.2; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:8px 12px 8px 10px}
-  .trust svg{flex:none; width:16px; height:16px; color:var(--brick)}
+  /* Home, below the hero: shortcut grid, new listings, how it works, Ask Bolton, the trader band. */
+  .home-block{margin-top:30px}
+  .home-block h2,.newbies h2{font-family:var(--display); font-weight:400; font-size:24px; line-height:1.1; margin:0 0 14px}
+  .shortcuts{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px 8px; margin:0; padding:0; list-style:none}
+  .shortcut{display:flex; flex-direction:column; align-items:center; gap:8px; min-height:48px; text-decoration:none; color:var(--ink)}
+  .shortcut .ic{width:64px; height:64px; border-radius:20px; background:var(--surface); border:1px solid var(--line); color:var(--brick); display:grid; place-items:center; transition:transform .35s var(--ease), border-color .2s}
+  .shortcut .ic svg{width:26px; height:26px}
+  .shortcut.all .ic{background:var(--ink); border-color:var(--ink); color:var(--bg); font-weight:700; font-size:18px}
+  .shortcut .nm{font-size:13px; font-weight:600; line-height:1.25; text-align:center; text-wrap:balance; overflow-wrap:anywhere}
+  @media (hover:hover){.shortcut:hover .ic{transform:translateY(-2px); border-color:color-mix(in srgb,var(--brick) 35%,var(--line))}}
 
-  .tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-  .tile{display:flex; align-items:center; gap:12px; min-width:0; min-height:72px; text-align:left; text-decoration:none; color:inherit; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:12px}
-  .tile .ic{flex:none; width:40px; height:40px; border-radius:12px; background:var(--brick-tint); color:var(--brick); display:grid; place-items:center; transition:transform .35s var(--ease)}
-  .tile .ic svg{width:22px; height:22px}
-  @media (hover:hover){.tile:hover .ic{transform:rotate(-6deg) scale(1.06)} .tile:hover{border-color:color-mix(in srgb,var(--brick) 35%,var(--line))}}
-  .tile .tx{display:grid; gap:2px; min-width:0}
-  .tile b{font-size:16px; font-weight:700; line-height:1.2; overflow-wrap:anywhere}
-  .tile .tx > span{font-size:13.5px; color:var(--ink-2)}
+  .newbies{margin-top:30px}
+  .newbies-row{display:flex; gap:12px; margin:0 -16px; padding:2px 16px 6px; list-style:none; overflow-x:auto; scroll-snap-type:x mandatory; scroll-padding:0 16px; scrollbar-width:none}
+  .newbies-row::-webkit-scrollbar{display:none}
+  .newbies-row > li{flex:none; width:min(240px,72vw); scroll-snap-align:start; display:flex}
+  .newbie{flex:1; display:flex; flex-direction:column; gap:12px; padding:16px; border-radius:20px; background:var(--surface); border:1px solid var(--line); color:var(--ink); text-decoration:none}
+  .newbie-id{display:flex; align-items:center; gap:12px; min-width:0}
+  .newbie-logo{flex:none; width:48px; height:48px; border-radius:14px; overflow:hidden; background:var(--brick-tint); color:var(--brick); display:grid; place-items:center; font-family:var(--display); font-size:18px}
+  .newbie-logo.has-logo{background:#fff; border:1px solid var(--line)}
+  .newbie-logo img{width:100%; height:100%; object-fit:contain}
+  .newbie-name{display:grid; gap:2px; min-width:0}
+  .newbie-name b{font-size:16px; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .newbie-name small{font-size:13px; color:var(--ink-2); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+  .newbie-tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:auto}
+  .tag{padding:5px 10px; border-radius:999px; background:var(--surface-2); color:var(--ink-2); font-size:12px; font-weight:600; line-height:1.2}
+  .tag-go{background:var(--sage-tint); color:color-mix(in srgb,var(--sage) 78%,var(--ink)); font-weight:700}
 
-  .launch{margin-top:30px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); padding:20px; display:grid; gap:10px; color:var(--ink-2); font-size:15.5px}
-  .launch h2{font-family:var(--display); font-weight:400; font-size:24px; line-height:1.15; color:var(--ink)}
-  .launch a{color:var(--brick); font-weight:700; text-decoration:underline; text-underline-offset:3px}
+  .how-card{margin-top:28px; display:grid; gap:18px; padding:22px 20px; border-radius:var(--r-lg); background:var(--surface); border:1px solid var(--line)}
+  .how-card h2{font-family:var(--display); font-weight:400; font-size:22px; line-height:1.1; margin:0}
+  .how-card ol{margin:0; padding:0; list-style:none; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; counter-reset:s}
+  .how-card li{display:flex; flex-direction:column; gap:6px; font-size:13px; line-height:1.4; color:var(--ink-2)}
+  .how-card li::before{counter-increment:s; content:counter(s); width:32px; height:32px; border-radius:50%; background:var(--brick); color:var(--on-brick); display:grid; place-items:center; font-weight:700; font-size:14px; margin-bottom:2px}
+  .how-card li b{font-size:14px; line-height:1.25; color:var(--ink)}
+  .how-card p{margin:0; padding-top:14px; border-top:1px solid var(--surface-2); font-size:13.5px; color:var(--ink-2)}
 
-  .groups{display:flex; flex-direction:column; gap:10px}
-  details.group{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden}
-  details.group summary{list-style:none; display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:56px; padding:14px 18px; cursor:pointer; font-weight:700}
-  details.group summary::-webkit-details-marker{display:none}
-  details.group summary small{font-weight:500; color:var(--ink-3); font-size:14px}
-  details.group summary svg{flex:none; width:18px; height:18px; transition:transform .3s var(--ease); color:var(--ink-3)}
-  details.group[open] summary svg{transform:rotate(180deg)}
-  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0 18px 18px; list-style:none}
+  .ask-slim{margin-top:16px; display:flex; align-items:center; gap:14px; padding:16px 18px; border-radius:var(--r-lg); background:var(--surface-2)}
+  .ask-slim .ask-ic{background:var(--surface)}
+  .ask-slim-tx{flex:1; display:grid; gap:2px; min-width:0; font-size:13.5px; color:var(--ink-2)}
+  .ask-slim-tx b{font-size:15px; color:var(--ink)}
+  .ask-slim-tx a{color:var(--brick); font-weight:700}
+  .btn-dark{flex:none; min-height:44px; padding:0 16px; border-radius:12px; font-size:15px; background:var(--ink); color:var(--bg)}
 
-  .howto{margin-top:34px; padding-top:24px; border-top:1px solid var(--line)}
-  .howto h2{font-family:var(--display); font-weight:400; font-size:26px; line-height:1.1; margin-bottom:16px}
-  .howto ol{margin:0; padding:0; list-style:none; display:grid; gap:16px; counter-reset:s}
-  .howto li{display:grid; grid-template-columns:34px 1fr; gap:14px; align-items:start; font-size:15.5px; color:var(--ink-2)}
-  .howto li::before{counter-increment:s; content:counter(s); width:34px; height:34px; border-radius:50%; background:var(--brick); color:var(--on-brick); display:grid; place-items:center; font-family:var(--display); font-size:17px}
-  .howto li b{display:block; color:var(--ink); font-weight:700}
+  .trade-band{margin-top:16px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px; padding:20px; border-radius:var(--r-lg); background:var(--hero); color:#FFF5E9}
+  .trade-band h2{font-family:var(--display); font-weight:400; font-size:24px; line-height:1.1; margin:0; color:#FFF5E9}
+  .trade-band p{margin:4px 0 0; font-size:13.5px; color:#F3DACF}
+  .trade-band .btn-primary{min-height:48px; font-size:15px; background:#FFF5E9; color:#6E2616}
 
-  .trade-band{margin-top:30px; display:grid; gap:14px; justify-items:start; padding:22px; border-radius:var(--r-lg); background:var(--hero); color:#FFF5E9}
-  .trade-band h2{font-family:var(--display); font-weight:400; font-size:28px; line-height:1.1; margin:0; color:#FFF5E9}
-  .trade-band .btn-primary{background:#FFF5E9; color:#6E2616}
+  /* All trades: each group's trades as chips. */
+  .groups{display:grid; gap:22px; margin-top:8px}
+  .group h2{font-size:15px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); margin:0 0 10px}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0; list-style:none}
+  .chip.quiet{color:var(--ink-2); background:transparent}
 
   /* Desktop: the home page widens past the phone column (the rest of the platform stays phone-width). */
   @media (min-width:900px){
     .app:has(main.home){max-width:880px}
     .home .hero h1{font-size:60px; max-width:14ch}
     .home .search{max-width:640px}
-    .home .tiles{grid-template-columns:repeat(4,1fr)}
-    .home .groups{display:grid; grid-template-columns:1fr 1fr; align-items:start}
-    .home .howto ol{grid-template-columns:repeat(3,1fr); gap:24px}
-    .home .launch{max-width:640px}
-    .home .trade-band{grid-template-columns:1fr auto; align-items:center}
+    .home .shortcuts{grid-template-columns:repeat(8,minmax(0,1fr))}
+    .home .newbies-row{margin:0; padding:2px 0 6px; flex-wrap:wrap; overflow:visible}
+    .home .how-card{grid-template-columns:200px 1fr; align-items:start}
+    .home .how-card p{grid-column:1 / -1}
   }
 
   /* ---------- category ---------- */
@@ -988,16 +1002,6 @@ h1,h2,h3{text-wrap:balance}
   /* ---------- community questions (Ask Bolton) ---------- */
   .ask-ic{flex:none; width:44px; height:44px; border-radius:13px; background:var(--brick-tint); color:var(--brick); display:grid; place-items:center}
   .ask-ic svg{width:22px; height:22px}
-  .ask-card{margin-top:22px; display:grid; gap:14px; padding:18px; background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--brick); border-radius:var(--r-lg); box-shadow:var(--shadow)}
-  .ask-card-head{display:flex; gap:14px; align-items:flex-start}
-  .ask-card h2{margin:0; font-family:var(--display); font-weight:400; font-size:26px; line-height:1.1}
-  .ask-card-head p{margin:4px 0 0; font-size:16px; color:var(--ink-2)}
-  .ask-latest{margin:0; padding:0; list-style:none; display:grid; gap:8px}
-  .ask-latest a{display:grid; gap:2px; padding:10px 12px; border-radius:var(--r-sm); background:var(--surface-2); color:inherit; text-decoration:none}
-  .ask-q{font-size:15.5px; font-weight:600; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
-  .ask-latest small{font-size:13.5px; color:var(--ink-2)}
-  .ask-card-actions{display:flex; flex-wrap:wrap; align-items:center; gap:4px 16px}
-  .ask-card-actions .btn{flex:1 1 180px}
   .ask-nudge{margin-top:22px; display:grid; grid-template-columns:44px minmax(0,1fr); gap:14px; align-items:center; padding:14px 16px; background:var(--surface); border:1px dashed var(--brick); border-radius:var(--r-lg); color:inherit; text-decoration:none}
   .ask-nudge b{display:block; font-size:17px; line-height:1.25; color:var(--brick)}
   .ask-nudge small{display:block; margin-top:2px; font-size:14.5px; color:var(--ink-2)}

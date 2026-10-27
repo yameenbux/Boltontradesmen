@@ -4,17 +4,28 @@ import { platformPath } from "@/lib/paths";
 
 export const localPros = (n: number) => `${n} local pro${n === 1 ? "" : "s"}`;
 
-// "Most asked for" tile: icon on the left, trade name and how many live providers it has.
-export function CategoryTile({ slug, name, liveCount }: { slug: string; name: string; liveCount: number }) {
+// The home page's shortcut grid: an icon over each trade's name, then a dark "All trades" tile with the total.
+export function Shortcuts({ trades, total }: { trades: { slug: string; name: string }[]; total: number }) {
   return (
-    <Link href={platformPath("c", slug)} className="tile press lift">
-      <span className="ic">
-        <CategoryIcon slug={slug} />
-      </span>
-      <span className="tx">
-        <b>{name}</b>
-        <span>{localPros(liveCount)}</span>
-      </span>
-    </Link>
+    <ul className="shortcuts stagger" data-testid="shortcuts">
+      {trades.map((c) => (
+        <li key={c.slug}>
+          <Link href={platformPath("c", c.slug)} className="shortcut press">
+            <span className="ic" aria-hidden="true">
+              <CategoryIcon slug={c.slug} />
+            </span>
+            <span className="nm">{c.name}</span>
+          </Link>
+        </li>
+      ))}
+      <li>
+        <Link href={platformPath("trades")} className="shortcut all press">
+          <span className="ic" aria-hidden="true">
+            {total}
+          </span>
+          <span className="nm">All trades</span>
+        </Link>
+      </li>
+    </ul>
   );
 }

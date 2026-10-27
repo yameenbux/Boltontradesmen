@@ -68,8 +68,8 @@ test("category with no live providers shows a friendly empty state", async ({ pa
   expect(res?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Roofer");
   await expect(page.getByText("Nobody's listed for Roofer yet.")).toBeVisible();
-  await expect(page.getByText("Know a good one? Message the group admin to get them added.")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Browse other trades" })).toHaveAttribute("href", "/");
+  await expect(page.getByText("Know a good one? Send them to the for traders page: listing is free.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Browse other trades" })).toHaveAttribute("href", "/trades");
   await expect(page.getByRole("group", { name: "Your area" })).toHaveCount(0);
   await expect(page.getByTestId("ranked-list")).toHaveCount(0);
 });

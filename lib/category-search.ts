@@ -1,4 +1,4 @@
-// Pure helpers for the home page: used by the server page (popularCategories) and the client search (matchCategory).
+// Pure helpers for the home page: used by the server page (homeShortcuts) and the client search (matchCategory).
 
 type Named = { slug: string; name: string };
 
@@ -46,14 +46,27 @@ export function matchCategory<T extends Named>(query: string, categories: readon
   return null;
 }
 
-/** Categories with at least one live provider, most providers first, then by name; at most `limit`. */
-export function popularCategories<T extends Named & { liveCount: number }>(
+/** Everyday trades that top up the home page's shortcuts while fewer than `limit` trades have someone listed. */
+export const STAPLE_TRADES = ["plumber", "electrician", "gas-boilers", "handyman", "builders", "mechanic", "roofer"];
+
+/**
+ * The home page's shortcut grid: trades with at least one live provider first (most providers, then by name), then
+ * the staple trades in order, so the grid is full from day one and fills with trades that have someone as people join.
+ * At most `limit`, no repeats.
+ */
+export function homeShortcuts<T extends Named & { liveCount: number }>(
   groups: readonly { categories: readonly T[] }[],
-  limit = 8,
+  limit = 7,
 ): T[] {
-  return groups
-    .flatMap((g) => g.categories)
+  const all = groups.flatMap((g) => g.categories);
+  const picked = all
     .filter((c) => c.liveCount >= 1)
     .sort((a, b) => b.liveCount - a.liveCount || a.name.localeCompare(b.name))
     .slice(0, limit);
+  for (const slug of STAPLE_TRADES) {
+    if (picked.length >= limit) break;
+    const c = all.find((x) => x.slug === slug);
+    if (c && !picked.includes(c)) picked.push(c);
+  }
+  return picked;
 }

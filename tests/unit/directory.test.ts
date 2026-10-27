@@ -6,7 +6,9 @@ const state: {
   contains: unknown[][];
   tables: Record<string, unknown[]>;
   selects: [string, string][];
-} = { rows: [], error: null, contains: [], tables: {}, selects: [] };
+  orders: [string, unknown][];
+  limit: number | null;
+} = { rows: [], error: null, contains: [], tables: {}, selects: [], orders: [], limit: null };
 
 vi.mock("@/lib/supabase/server", () => ({
   createPublicClient: () => ({
@@ -16,7 +18,14 @@ vi.mock("@/lib/supabase/server", () => ({
           state.selects.push([table, cols]);
           return builder;
         },
-        order: () => builder,
+        order: (col: string, opts?: unknown) => {
+          state.orders.push([col, opts]);
+          return builder;
+        },
+        limit: (n: number) => {
+          state.limit = n;
+          return builder;
+        },
         contains: (col: string, val: unknown) => {
           state.contains.push([col, val]);
           return builder;
@@ -29,7 +38,7 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-import { listProvidersInCategory, listCategoryGroups, BL_DISTRICTS } from "@/lib/directory";
+import { listProvidersInCategory, listCategoryGroups, listNewestProviders, BL_DISTRICTS } from "@/lib/directory";
 
 const row = (slug: string, o: Record<string, unknown> = {}) => ({
   id: slug,
@@ -58,6 +67,8 @@ beforeEach(() => {
   state.error = null;
   state.contains = [];
   state.tables = {};
+  state.orders = [];
+  state.limit = null;
   state.selects = [];
 });
 
@@ -185,5 +196,21 @@ describe("listCategoryGroups", () => {
   it("throws on a database error", async () => {
     state.error = { message: "nope" };
     await expect(listCategoryGroups()).rejects.toThrow(/nope/);
+  });
+});
+
+describe("listNewestProviders", () => {
+  it("reads the newest live providers first, limited", async () => {
+    state.rows = [row("new", { created_at: "2026-10-26T18:49:00Z" }), row("old")];
+    const got = await listNewestProviders(6);
+    expect(got.map((p) => p.slug)).toEqual(["new", "old"]);
+    expect(state.selects).toContainEqual(["provider_public", "*"]);
+    expect(state.orders).toContainEqual(["created_at", { ascending: false }]);
+    expect(state.limit).toBe(6);
+  });
+
+  it("throws on a read error", async () => {
+    state.error = { message: "nope" };
+    await expect(listNewestProviders()).rejects.toThrow(/listNewestProviders: nope/);
   });
 });

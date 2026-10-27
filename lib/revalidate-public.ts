@@ -14,6 +14,7 @@ export function revalidatePublicPages(slug?: string): void {
   revalidatePath(`${GROUP}/p/[slug]`, "page");
   revalidatePath(`${GROUP}/c/[category]`, "page");
   revalidatePath("/");
+  revalidatePath(`${PLATFORM_BASE}/trades`);
   // A review posted, edited or removed can publish or withdraw a price guide (otherwise refreshed hourly).
   revalidatePath(`${GROUP}/prices/[category]`, "page");
   revalidatePath(`${PLATFORM_BASE}/prices`);
@@ -25,11 +26,10 @@ export function revalidatePublicPages(slug?: string): void {
 }
 
 /**
- * Refresh the cached community question pages after a question or answer is posted, approved or removed: the Ask list,
- * the directory home (its Ask Bolton card shows the latest questions) and, with an id, that question's page.
+ * Refresh the cached community question pages after a question or answer is posted, approved or removed: the Ask list
+ * and, with an id, that question's page.
  */
 export function revalidateQuestionPages(questionId?: string): void {
   revalidatePath(`${PLATFORM_BASE}/ask`);
-  revalidatePath("/");
   if (questionId) revalidatePath(`${PLATFORM_BASE}/ask/${encodeURIComponent(questionId)}`);
 }

@@ -98,7 +98,7 @@ export function HomeSearch({ categories }: { categories: Cat[] }) {
       <div className="search-msg" aria-live="polite">
         {noMatch !== null && (
           <p>
-            No trade called “{noMatch}” yet. <a href="#all-trades">Browse all trades</a>
+            No trade called “{noMatch}” yet. <a href="/trades">Browse all trades</a>
           </p>
         )}
       </div>

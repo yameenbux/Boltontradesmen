@@ -41,8 +41,9 @@ test("a resident asks, neighbours recommend, the trader says they can help, and 
 
   // Entry points: the directory home and the category page.
   await page.goto("/");
-  const card = page.getByRole("region", { name: "Ask Bolton" });
-  await expect(card.getByRole("link", { name: "Ask a question" })).toHaveAttribute("href", "/ask/new");
+  const card = page.getByRole("region", { name: "Can't find who you need?" });
+  await expect(card.getByRole("link", { name: "Ask", exact: true })).toHaveAttribute("href", "/ask/new");
+  await expect(card.getByRole("link", { name: "Ask Bolton" })).toHaveAttribute("href", "/ask");
   await page.goto("/c/man-and-van");
   await expect(page.getByRole("link", { name: /Can't decide\? Ask Bolton/ })).toHaveAttribute(
     "href",
