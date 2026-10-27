@@ -151,6 +151,15 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   await bank.getByRole("button", { name: "Save bank details" }).click();
   await expect(bank.getByRole("status")).toHaveText("Saved. They'll show on your invoices.");
 
+  // Their own card payment link (they haven't connected Stripe): only a real payment provider's.
+  const linkForm = trader.getByRole("form", { name: "Your card payment link" });
+  await linkForm.getByLabel(/Your payment link/).fill("https://paypal.me.evil.example/brook");
+  await linkForm.getByRole("button", { name: "Save payment link" }).click();
+  await expect(linkForm.getByText(/Paste a payment link from SumUp, Square, PayPal/)).toBeVisible();
+  await linkForm.getByLabel(/Your payment link/).fill("paypal.me/BrookRemovals");
+  await linkForm.getByRole("button", { name: "Save payment link" }).click();
+  await expect(linkForm.getByRole("status")).toHaveText("Saved. Your invoices now show “Pay by card” through PayPal.");
+
   // "Write a quote" from the job request: the customer's details come with it; the trader adds the prices.
   await trader.getByRole("article", { name: "Request from Rosa Requester" }).getByRole("link", { name: "Write a quote" }).click();
   const editor = trader.getByRole("form", { name: "Quote details" });
@@ -220,6 +229,7 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   await expect(pay).toContainText("12-34-56");
   await expect(pay).toContainText("12345678");
   await expect(pay).toContainText(/INV-\d{4}/);
+  await expect(pay.getByRole("link", { name: "Pay £147.50 by card" })).toHaveAttribute("href", "https://paypal.me/BrookRemovals");
 
   // Marked paid: the customer is asked for an honest review, by text (they gave no email), once.
   await trader.getByRole("button", { name: "Mark as paid" }).click();

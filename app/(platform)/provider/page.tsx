@@ -11,6 +11,7 @@ import { JobRequests, type JobRequestRow } from "@/components/provider/JobReques
 import { BillingForm } from "@/components/docs/BillingForm";
 import { ChaseList } from "@/components/docs/ChaseList";
 import { DocList } from "@/components/docs/DocList";
+import { PayLinkForm } from "@/components/docs/PayLinkForm";
 import { ListingStatus } from "@/components/provider/ListingStatus";
 import { ProSoonCard, ProUpgradeCard } from "@/components/provider/ProOffer";
 import { ProPanel } from "@/components/provider/ProPanel";
@@ -25,7 +26,7 @@ import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { setMyAvailability } from "@/app/(platform)/provider/actions";
 import { saveAlertSettings } from "@/app/(platform)/provider/jobs-actions";
-import { saveBilling } from "@/app/(platform)/provider/docs/actions";
+import { saveBilling, savePayLink } from "@/app/(platform)/provider/docs/actions";
 import type { Billing, TradeDoc } from "@/lib/trade-docs";
 import { nationalNumber } from "@/lib/alert-text";
 import { requireAccount } from "@/lib/auth";
@@ -259,24 +260,27 @@ export default async function ProviderArea({
         const known = toCardState(c);
         if (known.connected && !known.chargesEnabled) await refreshAccount(cfg, p.id);
       }
-      const [req, set, docs, bank, card] = await Promise.all([
+      const [req, set, docs, bank, card, link] = await Promise.all([
         supabase.rpc("my_job_requests", { p_provider: p.id }),
         supabase.rpc("my_alert_settings", { p_provider: p.id }),
         supabase.rpc("my_docs", { p_provider: p.id }),
         supabase.rpc("my_billing", { p_provider: p.id }),
         supabase.rpc("my_card_payments", { p_provider: p.id }),
+        supabase.rpc("my_pay_link", { p_provider: p.id }),
       ]);
       if (req.error) throw new Error(`my_job_requests failed: ${req.error.message}`);
       if (set.error) throw new Error(`my_alert_settings failed: ${set.error.message}`);
       if (docs.error) throw new Error(`my_docs failed: ${docs.error.message}`);
       if (bank.error) throw new Error(`my_billing failed: ${bank.error.message}`);
       if (card.error) throw new Error(`my_card_payments failed: ${card.error.message}`);
+      if (link.error) throw new Error(`my_pay_link failed: ${link.error.message}`);
       return {
         requests: (req.data ?? []) as JobRequestRow[],
         settings: set.data as AlertSettings,
         docs: (docs.data ?? []) as TradeDoc[],
         billing: (bank.data ?? null) as Billing | null,
         card: toCardState(card.data),
+        payLink: typeof link.data === "string" ? link.data : null,
       };
     }),
   );
@@ -389,6 +393,12 @@ export default async function ProviderArea({
                 <p className="avail-hint">Printed on your invoices so customers can pay you by bank transfer.</p>
                 <BillingForm action={saveBilling.bind(null, p.id)} billing={jobs[i].billing} />
               </div>
+              {!jobs[i].card.chargesEnabled && (
+                <div className="doc-bank">
+                  <h3>Card payments with your own provider</h3>
+                  <PayLinkForm action={savePayLink.bind(null, p.id)} current={jobs[i].payLink} />
+                </div>
+              )}
             </section>
           )}
           {jobs[i] && cardReady && (

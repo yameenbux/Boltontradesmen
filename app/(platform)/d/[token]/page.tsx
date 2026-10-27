@@ -8,6 +8,7 @@ import { nationalNumber } from "@/lib/alert-text";
 import { platformPath } from "@/lib/paths";
 import { after } from "next/server";
 import { cardPaymentFor, confirmReturn } from "@/lib/card-payments";
+import { payLink } from "@/lib/pay-link";
 import { deliverCustomerMessage } from "@/lib/notify";
 import { stripeConfig } from "@/lib/pro";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -18,7 +19,14 @@ import { docNumber, leftToPay, money, sortCode, type Billing, type TradeDoc } fr
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Quote or invoice | Bolton Vouched", robots: { index: false, follow: false } };
 
-type PublicDoc = { doc: TradeDoc; business_name: string; slug: string | null; phone: string; bank: Billing | null };
+type PublicDoc = {
+  doc: TradeDoc;
+  business_name: string;
+  slug: string | null;
+  phone: string;
+  bank: Billing | null;
+  pay_link?: string | null;
+};
 
 export default async function CustomerDocPage({
   params,
@@ -36,12 +44,14 @@ export default async function CustomerDocPage({
   const { data, error } = await createServiceClient().rpc("public_doc", { p_token: token });
   if (error) throw new Error(`public_doc failed: ${error.message}`);
   if (!data) notFound();
-  const { doc, business_name, slug, phone, bank } = data as PublicDoc;
+  const { doc, business_name, slug, phone, bank, pay_link } = data as PublicDoc;
   const label = docNumber(doc.kind, doc.number);
   // A paid invoice asks the customer for an honest review, as when the trader marks it paid.
   if (confirmed?.result === "recorded" && confirmed.ask_review) after(() => deliverCustomerMessage("review_request", doc.id));
   // What they can pay by card now (with Pro and the trader's Stripe account ready), if anything.
   const pay = cfg ? await cardPaymentFor(token).catch(() => null) : null;
+  // The trader's own provider (SumUp, PayPal...), when they haven't connected Stripe. Checked again here.
+  const ownLink = !pay && pay_link ? payLink(pay_link) : null;
   const paidByCard = !!card && ((doc.kind === "invoice" && doc.paid_by_card) || (doc.kind === "quote" && !!doc.deposit_paid_at));
 
   return (
@@ -76,7 +86,17 @@ export default async function CustomerDocPage({
           <section className="pay-box" aria-labelledby="pay-title">
             <h2 id="pay-title">How to pay</h2>
             {pay?.what === "invoice" && <PayByCard token={token} label={`Pay ${money(pay.amount_pence)} by card`} />}
-            {pay?.what === "invoice" && bank && <p className="pay-or">Or by bank transfer:</p>}
+            {ownLink && (
+              <div className="pay-card">
+                <a className="btn btn-primary" href={ownLink.url} target="_blank" rel="noopener noreferrer nofollow">
+                  Pay {money(leftToPay(doc))} by card
+                </a>
+                <p className="hint">
+                  Through {ownLink.name}, {business_name}&apos;s card payments. Use {label} as the reference.
+                </p>
+              </div>
+            )}
+            {(pay?.what === "invoice" || ownLink) && bank && <p className="pay-or">Or by bank transfer:</p>}
             {bank ? (
               <dl className="pay-details">
                 <div>

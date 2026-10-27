@@ -141,6 +141,10 @@ One site: free for residents, free for traders, with an optional paid tier for t
   straight to the trader: no cut, no application fee. A payment is recorded once, from the
   customer's return or the Connect webhook (`/api/stripe/connect`). Shown only when
   `STRIPE_CONNECT_WEBHOOK_SECRET` is set (Connect switched on for our Stripe account).
+- **Own payment links** (Pro, without Stripe connected): a trader pastes their SumUp, Square,
+  PayPal, Stripe, Monzo, Revolut or Starling payment link; their unpaid invoices show "Pay by
+  card" pointing at it. Only those providers' https links are accepted (`lib/pay-link.ts`, checked
+  again in the database), and the trader marks the invoice paid as for a bank transfer.
 - **Page views and demand**: every trader's dashboard shows views of their page ("Who's
   looking"; one per connection a day, their own and the admin's left out; `/api/view`, counts
   only). With Pro it adds the last 30 days' visits to each of their trades' pages and the Ask
@@ -386,9 +390,9 @@ release, each refusing to run before the one it follows: `plan-2b` (000018 to 00
 `quotes-invoices` (000036), `trader-sign-up` (000037), `launch-hardening` (000038),
 `new-categories` (000039), `more-categories` (000040), `auto-live` (000041), `one-step`
 (000042), `check-numbers` (000043), `plaster-recovery` (000044), `builders` (000045), `air-conditioning` (000046 to 000051) and
-`trader-logos` (000052), `pro-insights` (000053) and `card-payments` (000054 on), each as `docs/launch/<name>-production.sql`. After adding or changing
-a migration from 000054 on, regenerate with
-`node scripts/build-production-sql.mjs --preset card-payments --from 20261012000054 --to <newest> --out docs/launch/card-payments-production.sql`
+`trader-logos` (000052), `pro-insights` (000053) and `card-payments` (000054) and `pay-links` (000055 on), each as `docs/launch/<name>-production.sql`. After adding or changing
+a migration from 000055 on, regenerate with
+`node scripts/build-production-sql.mjs --preset pay-links --from 20261012000055 --to <newest> --out docs/launch/pay-links-production.sql`
 (`tests/unit/production-sql.test.ts` fails until you do). A new release gets its own preset in
 that script (and the previous one's `--to` fixed), a check in `scripts/check-production-sql.sh`,
 and an entry in the test.

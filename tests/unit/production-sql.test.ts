@@ -211,9 +211,17 @@ const SCRIPTS = [
     file: "docs/launch/card-payments-production.sql",
     preset: "card-payments",
     from: "20261012000054",
-    to: NEWEST,
+    to: "20261012000054",
     functions: ["set_my_quote_deposit", "my_card_payments", "doc_card_payment", "record_card_payment"],
     requires: "20261012000053",
+  },
+  {
+    file: "docs/launch/pay-links-production.sql",
+    preset: "pay-links",
+    from: "20261012000055",
+    to: NEWEST,
+    functions: ["my_pay_link", "set_my_pay_link"],
+    requires: "20261012000054",
   },
 ];
 
