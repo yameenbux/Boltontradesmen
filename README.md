@@ -129,11 +129,16 @@ One site: free for residents, free for traders, with an optional paid tier for t
   `?utm_source=google_business`), and their "Vouched in Bolton" website badge. The trader edits their description (300 characters, no phone
   numbers or web addresses) and areas, pauses and unpauses (never an admin's pause), or
   withdraws (only a new invite brings it back). Trades stay with the admin.
+- **Logos**: a trader can add their logo on the sign-up form or later from the dashboard
+  ("Your page's look"); it replaces their initials at the top of their page. Every logo is
+  re-encoded to a 512-pixel WebP with no metadata (`lib/trader-logo.ts`) and kept in the
+  public `trader-logos` bucket. With Pro, they can also pick a cover colour (a fixed set,
+  `lib/brand.ts`) for a band behind the logo. Neither changes ranking.
 - **Pro** (£10 a month or £100 a year, through Stripe; see *Free and Pro*): a "Request a
   quote" button and job requests, alerts when Bolton asks for their trade, **quotes and
   invoices** sent as links (`/d/<token>`; the customer accepts a quote online, the invoice
   carries the trader's bank details), a review request when an invoice is marked paid, an
-  ID check ("ID checked"), up to 6 work photos and a monthly enquiry report. Alerts go by
+  ID check ("ID checked"), up to 6 work photos, a cover colour and a monthly enquiry report. Alerts go by
   email today; by text once Twilio is set up.
 - **Ask Bolton** (community questions) at `/ask`: a signed-in resident asks "Anyone know a
   good electrician in BL3?" (a trade, a district and up to 280 characters; no phone numbers
@@ -367,10 +372,10 @@ release, each refusing to run before the one it follows: `plan-2b` (000018 to 00
 `price-guides` (000032), `consent-link` (000033), `one-listing` (000034), `pro-jobs` (000035),
 `quotes-invoices` (000036), `trader-sign-up` (000037), `launch-hardening` (000038),
 `new-categories` (000039), `more-categories` (000040), `auto-live` (000041), `one-step`
-(000042), `check-numbers` (000043), `plaster-recovery` (000044), `builders` (000045) and `air-conditioning` (000046 on),
-each as `docs/launch/<name>-production.sql`. After adding or changing a migration from 000046
-on, regenerate with
-`node scripts/build-production-sql.mjs --preset air-conditioning --from 20261012000046 --to <newest> --out docs/launch/air-conditioning-production.sql`
+(000042), `check-numbers` (000043), `plaster-recovery` (000044), `builders` (000045), `air-conditioning` (000046 to 000051) and
+`trader-logos` (000052 on), each as `docs/launch/<name>-production.sql`. After adding or changing
+a migration from 000052 on, regenerate with
+`node scripts/build-production-sql.mjs --preset trader-logos --from 20261012000052 --to <newest> --out docs/launch/trader-logos-production.sql`
 (`tests/unit/production-sql.test.ts` fails until you do). A new release gets its own preset in
 that script (and the previous one's `--to` fixed), a check in `scripts/check-production-sql.sh`,
 and an entry in the test.
@@ -729,7 +734,7 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
 - [x] `OWNER_LEGAL_NAME` and `CONTACT_EMAIL` set on Render.
 - [x] The domain: `www.boltonvouched.co.uk` on Render with a valid certificate, the bare domain
       redirecting.
-- [x] Every production script up to `air-conditioning` applied; the admin's authenticator set up.
+- [x] Every production script up to `trader-logos` applied; the admin's authenticator set up.
 - [x] `CLIENT_IP_HEADER=true-client-ip` on Render, so rate limits see each visitor.
 - [x] Free sign-in (Google and email codes) live.
 - [x] Stripe live, with a restricted key.

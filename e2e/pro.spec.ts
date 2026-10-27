@@ -96,6 +96,17 @@ test("Pro: opens soon without Stripe; then the ID check, a work photo, the publi
   const path = sql(`select storage_path from public.work_photos where provider_id = '${PROVIDER}' and removed_at is null`);
   expect(path).toMatch(new RegExp(`^${PROVIDER}/[0-9a-f-]{36}\\.webp$`));
 
+  // Their logo (any plan) and, with Pro, a cover in their colour.
+  const look = trader.getByRole("region", { name: "Your page's look" });
+  await look.getByLabel("Your logo").setInputFiles(PHOTO);
+  await look.getByRole("button", { name: "Add to my page" }).click();
+  await expect(look.getByRole("status").filter({ hasText: "Your logo is on your page." })).toBeVisible();
+  const logo = sql(`select logo_path from public.providers where id = '${PROVIDER}'`);
+  expect(logo).toMatch(new RegExp(`^${PROVIDER}/[0-9a-f-]{36}\\.webp$`));
+  await look.getByRole("radio", { name: "Teal" }).check();
+  await look.getByRole("button", { name: "Save colour" }).click();
+  await expect(look.getByRole("status").filter({ hasText: "Your cover colour is saved." })).toBeVisible();
+
   // Before the admin approves: the photo shows, the ID checked mark doesn't.
   const visitor = await (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
   await visitor.goto(PROFILE);
@@ -134,6 +145,13 @@ test("Pro: opens soon without Stripe; then the ID check, a work photo, the publi
   const text = (await visitor.locator("main").textContent()) ?? "";
   expect(text).not.toMatch(/\bPro\b|£10|subscription/);
   expect(text).not.toMatch(/7700/);
+  // The logo, re-encoded without its GPS, on a cover in their colour.
+  const logoSrc = (await head.locator(".prof-logo img").getAttribute("src")) ?? "";
+  expect(logoSrc).toContain(`/storage/v1/object/public/trader-logos/${logo}`);
+  const logoFile = await visitor.request.get(logoSrc);
+  expect(logoFile.status()).toBe(200);
+  expect((await logoFile.body()).includes(Buffer.from("GPS"))).toBe(false);
+  await expect(head.locator(".prof-cover")).toHaveCount(1);
 
   // The webhook refuses a bad signature.
   const bad = await visitor.request.post("/api/stripe/webhook", {
@@ -161,6 +179,9 @@ test("Pro: opens soon without Stripe; then the ID check, a work photo, the publi
   await expect(visitor.getByRole("heading", { level: 1 })).toHaveText("Lift Removals");
   await expect(visitor.locator(".prof-head")).not.toContainText("ID checked");
   await expect(visitor.getByRole("region", { name: "Their work" })).toHaveCount(0);
+  // The cover goes with Pro; the logo stays (any plan has one).
+  await expect(visitor.locator(".prof-cover")).toHaveCount(0);
+  await expect(visitor.locator(".prof-logo img")).toHaveAttribute("src", logoSrc);
 
   // The trader sees it ended; the photo is hidden but can still be removed (its file goes too).
   await trader.reload();

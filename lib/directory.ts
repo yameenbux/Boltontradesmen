@@ -1,4 +1,5 @@
 import "server-only";
+import { isBrandColor, type BrandColor } from "@/lib/brand";
 import { cache } from "react";
 import { createPublicClient } from "@/lib/supabase/server";
 import type { Availability } from "@/lib/availability";
@@ -36,6 +37,10 @@ export type PublicProvider = {
   photos: PublicPhoto[];
   /** Pro is on, so the page offers "Request a quote". Never ranks or badges. */
   takesRequests: boolean;
+  /** The trader's logo (path in the 'trader-logos' bucket), any plan. Never ranks or badges. */
+  logoPath: string | null;
+  /** The cover colour, while the trader has Pro (null otherwise). Never ranks or badges. */
+  brandColor: BrandColor | null;
 };
 
 export type Group = { id: string; name: string; slug: string; sort: number };
@@ -78,6 +83,8 @@ function toProvider(r: any): PublicProvider {
     idChecked: r.id_checked === true,
     photos: toPublicPhotos(r.photos),
     takesRequests: r.takes_requests === true,
+    logoPath: typeof r.logo_path === "string" ? r.logo_path : null,
+    brandColor: isBrandColor(r.brand_color) ? r.brand_color : null,
   };
 }
 

@@ -42,8 +42,10 @@
 //     --out docs/launch/plaster-recovery-production.sql
 //   node scripts/build-production-sql.mjs --preset builders --from 20261012000045 --to 20261012000045 \
 //     --out docs/launch/builders-production.sql
-//   node scripts/build-production-sql.mjs --preset air-conditioning --from 20261012000046 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset air-conditioning --from 20261012000046 --to 20261012000051 \
 //     --out docs/launch/air-conditioning-production.sql
+//   node scripts/build-production-sql.mjs --preset trader-logos --from 20261012000052 --to <newest> \
+//     --out docs/launch/trader-logos-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -713,6 +715,33 @@ end
 $verify$;
 `;
 
+const VERIFY_TRADER_LOGOS = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+declare
+  v_ok boolean;
+begin
+  if not exists (select 1 from information_schema.columns
+                 where table_schema = 'public' and table_name = 'provider_public' and column_name = 'logo_path')
+     or not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'provider_public' and column_name = 'brand_color') then
+    raise exception 'Trader logos check failed: provider_public has no logo_path or brand_color';
+  end if;
+  if (select count(distinct proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and proname in ('my_branding', 'set_my_logo', 'set_my_brand_color')) <> 3 then
+    raise exception 'Trader logos check failed: a branding function is missing';
+  end if;
+  -- Only where Storage exists (the rehearsal's local stack has none); dynamic, so it isn't planned without it.
+  if to_regclass('storage.buckets') is not null then
+    execute 'select exists (select 1 from storage.buckets where id = ''trader-logos'' and public)' into v_ok;
+    if not v_ok then
+      raise exception 'Trader logos check failed: the public trader-logos bucket is missing';
+    end if;
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -852,6 +881,12 @@ const PRESETS = {
     done: "Air conditioning applied",
     requires: { version: "20261012000045", what: "the builders script (docs/launch/builders-production.sql)" },
     verify: VERIFY_AIR_CONDITIONING,
+  },
+  "trader-logos": {
+    title: "Trader logos and the Pro cover colour",
+    done: "Trader logos applied",
+    requires: { version: "20261012000051", what: "the new trades script (docs/launch/air-conditioning-production.sql)" },
+    verify: VERIFY_TRADER_LOGOS,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

@@ -36,6 +36,9 @@ test("a new trader: tick trades and areas, mobile and WhatsApp, Confirm, live; t
   await form.getByLabel("First name").fill("Tom");
   await form.getByLabel("Surname").fill("Trades");
   await form.getByLabel("Business name").fill(business);
+  // Their logo, optional: previewed as soon as it's chosen.
+  await form.getByLabel("Your logo").setInputFiles("e2e/fixtures/proof-with-gps.jpg");
+  await expect(form.locator(".logo-preview img")).toBeVisible();
   // Trades by group, as ticks, with a search: "venet" narrows the list to Venetian plaster, and a tick stays
   // when the search is cleared.
   const search = form.getByRole("searchbox", { name: "Search your trade" });
@@ -61,6 +64,9 @@ test("a new trader: tick trades and areas, mobile and WhatsApp, Confirm, live; t
   await expect(form).toContainText("Tick the postcode areas you cover");
   await expect(form.getByRole("radio", { name: /^Pro/ })).toBeChecked();
   await expect(form.getByLabel("Business name")).toHaveValue(business);
+  // A file box can't be refilled after a refused send, so it asks for the logo again.
+  await expect(form).toContainText("Choose your logo again before you press Confirm.");
+  await form.getByLabel("Your logo").setInputFiles("e2e/fixtures/proof-with-gps.jpg");
   await form.getByRole("checkbox", { name: "BL3" }).check();
   await form.getByRole("checkbox", { name: "BL4" }).check();
   await form.getByRole("button", { name: "Confirm" }).click();
@@ -69,6 +75,8 @@ test("a new trader: tick trades and areas, mobile and WhatsApp, Confirm, live; t
   await expect(page).toHaveURL(/\/provider\/live$/);
   const live = page.getByTestId("you-are-live");
   await expect(live).toContainText(`${business} is now live on Bolton Vouched`);
+  // The logo went on with the listing, in its own folder.
+  expect(sql(`select logo_path ~ ('^' || id || '/[0-9a-f-]{36}\\.webp$') from public.providers where business_name = '${business}'`)).toBe("t");
   await expect(page.getByRole("link", { name: "Start Pro: pay by card" })).toBeVisible();
   // Step 1: taking on work, saved from here.
   const avail = page.getByTestId("step-availability");

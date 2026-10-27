@@ -10,6 +10,7 @@ import { ReviewList } from "@/components/profile/ReviewList";
 import { StatCard } from "@/components/profile/StatCard";
 import { WorkGallery } from "@/components/profile/WorkGallery";
 import { ratingBadge } from "@/lib/badges";
+import { brandHex, logoUrl } from "@/lib/brand";
 import { getProvider, listCategoryGroups } from "@/lib/directory";
 import { firstName } from "@/lib/initials";
 import { platformPath } from "@/lib/paths";
@@ -25,14 +26,14 @@ export function generateStaticParams() {
   return [];
 }
 
-// The provider's live trades, in their category order, with display names.
+// The provider's live trades, in their category order, with display names and each trade's tip for customers.
 async function tradesOf(categorySlugs: string[]) {
-  const names = new Map(
-    (await listCategoryGroups()).flatMap(({ categories }) => categories.map((c) => [c.slug, c.name] as const)),
+  const bySlug = new Map(
+    (await listCategoryGroups()).flatMap(({ categories }) => categories.map((c) => [c.slug, c] as const)),
   );
   return categorySlugs.flatMap((s) => {
-    const name = names.get(s);
-    return name ? [{ slug: s, name }] : [];
+    const c = bySlug.get(s);
+    return c ? [{ slug: s, name: c.name, guidance: c.guidanceNote }] : [];
   });
 }
 
@@ -60,6 +61,8 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
   const trades = await tradesOf(p.categorySlugs);
   const reviews = await listProviderReviews(p.id);
   const trail = profileTrail(p, trades[0]);
+  // The first of their trades with a tip ("ask for their Gas Safe card", "council skin-piercing registration"...).
+  const tip = trades.find((t) => t.guidance);
 
   return (
     <main className="profile">
@@ -76,6 +79,10 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
         areas={p.areas}
         availability={p.availability}
         share={<ShareProfile {...profileShare(p.slug, p.businessName)} />}
+        logo={logoUrl(p.logoPath)}
+        cover={p.brandColor ? brandHex(p.brandColor) : null}
+        hasWhatsapp={p.hasWhatsapp}
+        createdAt={p.createdAt}
       />
       <StatCard stats={p} />
       {p.takesRequests && (
@@ -92,6 +99,12 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
         <section className="card" aria-labelledby="about-title">
           <h2 id="about-title">About</h2>
           <p className="bio">{p.bio}</p>
+        </section>
+      )}
+      {tip && (
+        <section className="card tip-card" aria-labelledby="tip-title">
+          <h2 id="tip-title">Before you book</h2>
+          <p>{tip.guidance}</p>
         </section>
       )}
       <WorkGallery photos={p.photos} businessName={p.businessName} />

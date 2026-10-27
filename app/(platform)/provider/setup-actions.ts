@@ -19,6 +19,8 @@ import { createServerAuthClient } from "@/lib/supabase/server";
 import { deliverLive } from "@/lib/notify";
 import { isPlan as isProBilling, stripeConfig } from "@/lib/pro";
 import { proCheckoutUrl } from "@/lib/pro-checkout";
+import { logoFile, logoPath, prepareLogo, type PreparedLogo } from "@/lib/trader-logo";
+import { PhotoError } from "@/lib/work-photos";
 import { createServiceClient } from "@/lib/supabase/service";
 import { CHECK_TRADES, isPlan, MAX_TRADES, TRADER_SETUP_ERRORS, type TraderSetupState } from "@/lib/trader-setup";
 
@@ -35,7 +37,8 @@ const FIELDS = ["first_name", "surname", "business_name", "phone", "whatsapp", "
 /**
  * The trader's one form, in one step: their name (when the account has none yet), business, the trades and postcode
  * areas they tick, mobile and WhatsApp, Free or Pro, then Confirm. Confirm, under the listing statement, is their
- * agreement (recorded as the consent page records it), and the listing goes live at once, linked to the account.
+ * agreement (recorded as the consent page records it), and the listing goes live at once, linked to the account,
+ * with their logo if they chose one.
  * The admin checks it afterwards. Then the "you're now live" page, or, for Pro, Stripe's payment page first.
  */
 export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): Promise<TraderSetupState> {
@@ -114,7 +117,22 @@ export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): 
     else if (!validExpiry(expires)) errors[c.kind] = TRADER_SETUP_ERRORS.check_expires;
     else refs[c.kind] = { ref, expires };
   }
-  if (Object.keys(errors).length) return { errors, values };
+  // Their logo (optional): checked and re-encoded now, so a bad file is refused on the form; stored once they're live.
+  let logo: PreparedLogo | null = null;
+  const logoIn = logoFile(fd);
+  if (logoIn) {
+    try {
+      logo = await prepareLogo(new Uint8Array(await logoIn.arrayBuffer()));
+    } catch (err) {
+      if (!(err instanceof PhotoError)) throw err;
+      errors.logo = err.message;
+    }
+  }
+  // A refused send empties the file box (it can't be refilled), so say so when a good logo was chosen.
+  if (Object.keys(errors).length) {
+    if (logo) errors.logo = TRADER_SETUP_ERRORS.logo_again;
+    return { errors, values };
+  }
 
   const statement = consentStatement();
   if (!statement) {
@@ -176,6 +194,7 @@ export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): 
     console.error("trader setup: trader_publish_listing answered", result.result);
     return { message: LISTING_ERRORS.failed, values };
   }
+  if (logo && result.id) await storeLogo(supabase, result.id, logo);
   // On the category and home pages now, not when their cache next runs out.
   revalidatePublicPages();
   if (email) {
@@ -202,6 +221,28 @@ export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): 
     if (url) redirect(url);
   }
   redirect(live);
+}
+
+// Stores the logo and puts it on the new listing. A failure here doesn't undo the listing: they're live, and can add
+// it from the dashboard.
+async function storeLogo(
+  supabase: Awaited<ReturnType<typeof createServerAuthClient>>,
+  providerId: string,
+  logo: PreparedLogo,
+): Promise<void> {
+  try {
+    const path = logoPath(providerId);
+    const bucket = createServiceClient().storage.from("trader-logos");
+    const { error: upErr } = await bucket.upload(path, logo.bytes, { contentType: logo.mime, upsert: false });
+    if (upErr) throw new Error(`upload: ${upErr.message}`);
+    const { error } = await supabase.rpc("set_my_logo", { p_provider: providerId, p_path: path });
+    if (error) {
+      await bucket.remove([path]);
+      throw new Error(`set_my_logo: ${error.message}`);
+    }
+  } catch (err) {
+    console.error("trader setup: storing the logo failed:", err instanceof Error ? err.message : err);
+  }
 }
 
 // A yyyy-mm-dd date from today to six years ahead (cards and badges last up to five).

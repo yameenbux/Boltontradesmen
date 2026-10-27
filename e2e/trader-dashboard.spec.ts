@@ -44,6 +44,7 @@ test("a trader sees their enquiries, edits their listing, pauses and unpauses it
   // The sections, in order.
   const headings = await trader.locator("main h2").allTextContents();
   expect(headings.map((h) => h.replace(/\s*\d*\s*$/, ""))).toEqual([
+    "Your page's look",
     "Enquiries",
     "Taking on work?",
     "Ask for reviews",
@@ -103,7 +104,7 @@ test("a trader sees their enquiries, edits their listing, pauses and unpauses it
   const visitor = await (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
   await visitor.goto("/p/e2e-dash-vans");
   await expect(visitor.getByRole("region", { name: "About" })).toContainText("Blankets and straps on every job.");
-  await expect(visitor.locator(".prof-head")).toContainText("Covers BL3, M26");
+  await expect(visitor.locator(".prof-facts")).toContainText("BL3, M26");
 
   // Pause: a confirm dialog, then gone from the category list and the profile; reviews kept.
   await edit.getByRole("button", { name: "Pause my listing" }).click();

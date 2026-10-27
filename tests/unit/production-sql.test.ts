@@ -187,9 +187,17 @@ const SCRIPTS = [
     file: "docs/launch/air-conditioning-production.sql",
     preset: "air-conditioning",
     from: "20261012000046",
-    to: NEWEST,
+    to: "20261012000051",
     functions: [],
     requires: "20261012000045",
+  },
+  {
+    file: "docs/launch/trader-logos-production.sql",
+    preset: "trader-logos",
+    from: "20261012000052",
+    to: NEWEST,
+    functions: ["my_branding", "set_my_logo", "set_my_brand_color"],
+    requires: "20261012000051",
   },
 ];
 
