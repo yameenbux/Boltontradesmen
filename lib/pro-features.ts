@@ -15,6 +15,14 @@ export const PRO_FEATURES: ProFeature[] = [
     text: "A message when someone in your areas asks Bolton for your trade, so you can be first to say you can help.",
   },
   {
+    title: "See who's looking for your trade",
+    text: "How many people in Bolton looked for your trade in the last 30 days, and the questions asked in your areas.",
+  },
+  {
+    title: "Never lose a quote to silence",
+    text: "Quotes nobody has answered after 3 days show up on your dashboard, with a one-tap WhatsApp to chase them.",
+  },
+  {
     title: "Quotes and invoices from your phone",
     text: "Make a quote in two minutes and send it on WhatsApp. Your customer accepts it online; one tap turns it into an invoice with your bank details.",
   },
@@ -40,6 +48,6 @@ export const PRO_FEATURES: ProFeature[] = [
 export const FREE_FEATURES: string[] = [
   "Your page, with Call and WhatsApp buttons that come straight to you: no lead fees, never sold to anyone else",
   "Reviews from Bolton residents, and your own review link and QR card",
-  "Your enquiry count on your dashboard",
+  "Your enquiry count and page views on your dashboard",
   "A “Taking on work” switch, and your “Vouched in Bolton” website badge",
 ];

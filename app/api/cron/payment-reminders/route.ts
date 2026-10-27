@@ -1,34 +1,20 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
-import { deliverCustomerMessage, type CustomerMessage } from "@/lib/notify";
-import { createServiceClient } from "@/lib/supabase/service";
+import { cronAuthorised, sendDue } from "@/lib/cron";
 
 export const dynamic = "force-dynamic";
 
-// Payment reminders for Pro traders' unpaid invoices: the first 3 days after the due date, the second a week later
-// (due_payment_reminders decides; the alert log stops repeats). Run once a day by a Railway cron service:
-//   curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://boltonvouched.ysbdesigns.uk/api/cron/payment-reminders
-// Without CRON_SECRET set, it refuses everything.
-
-function authorised(header: string | null, secret: string | undefined): boolean {
-  if (!secret || secret.length < 16 || !header) return false;
-  const want = Buffer.from(`Bearer ${secret}`);
-  const got = Buffer.from(header);
-  return got.length === want.length && timingSafeEqual(got, want);
-}
-
+// Payment reminders only (kept for an existing schedule; /api/cron/daily does this and the rest). Needs CRON_SECRET:
+//   curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://www.boltonvouched.co.uk/api/cron/payment-reminders
 export async function GET(request: Request) {
-  if (!authorised(request.headers.get("authorization"), process.env.CRON_SECRET?.trim())) {
+  if (!cronAuthorised(request.headers.get("authorization"), process.env.CRON_SECRET?.trim())) {
     return NextResponse.json({ error: "unauthorised" }, { status: 401 });
   }
-  const { data, error } = await createServiceClient().rpc("due_payment_reminders");
-  if (error) {
-    console.error("cron: due_payment_reminders failed:", error.message);
+  try {
+    const r = await sendDue("due_payment_reminders");
+    console.log(JSON.stringify({ cron: "payment-reminders", ...r }));
+    return NextResponse.json(r, { headers: { "Cache-Control": "no-store" } });
+  } catch (err) {
+    console.error("cron:", err instanceof Error ? err.message : err);
     return NextResponse.json({ error: "failed" }, { status: 500 });
   }
-  const due = (data ?? []) as { id: string; kind: CustomerMessage }[];
-  let sent = 0;
-  for (const d of due) sent += await deliverCustomerMessage(d.kind, d.id);
-  console.log(JSON.stringify({ cron: "payment-reminders", due: due.length, sent }));
-  return NextResponse.json({ due: due.length, sent }, { headers: { "Cache-Control": "no-store" } });
 }

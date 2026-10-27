@@ -134,6 +134,11 @@ One site: free for residents, free for traders, with an optional paid tier for t
   re-encoded to a 512-pixel WebP with no metadata (`lib/trader-logo.ts`) and kept in the
   public `trader-logos` bucket. With Pro, they can also pick a cover colour (a fixed set,
   `lib/brand.ts`) for a band behind the logo. Neither changes ranking.
+- **Page views and demand**: every trader's dashboard shows views of their page ("Who's
+  looking"; one per connection a day, their own and the admin's left out; `/api/view`, counts
+  only). With Pro it adds the last 30 days' visits to each of their trades' pages and the Ask
+  Bolton questions in their areas, and lists quotes nobody has answered after 3 days with a
+  one-tap WhatsApp chase; the daily job also emails those customers a follow-up (3 and 7 days).
 - **Pro** (£10 a month or £100 a year, through Stripe; see *Free and Pro*): a "Request a
   quote" button and job requests, alerts when Bolton asks for their trade, **quotes and
   invoices** sent as links (`/d/<token>`; the customer accepts a quote online, the invoice
@@ -172,9 +177,10 @@ One site: free for residents, free for traders, with an optional paid tier for t
 
 - **Texts**: sign-in by text and Pro's text alerts need Twilio (see *Phone sign-in*). Until
   then sign-in is Google or an email code, and alerts go by email.
-- **Payment reminders** (`/api/cron/payment-reminders`) need `CRON_SECRET` and a scheduled job
-  that calls it (a Render cron job, on a paid plan); until then nobody is reminded about an
-  unpaid invoice.
+- **The daily job** (`/api/cron/daily`: payment reminders, quote follow-up emails, clearing page
+  views past 13 months) needs `CRON_SECRET` and a scheduled job that calls it (a Render cron job,
+  on a paid plan); until then nobody is reminded about an unpaid invoice or an unanswered quote.
+  The dashboard's "Waiting on an answer" list and its WhatsApp chase work without it.
 - **Scheduled clean-ups**: old proof files are deleted from admin by hand once a month, and
   the 12-month purge of contact events isn't built.
 
@@ -373,9 +379,9 @@ release, each refusing to run before the one it follows: `plan-2b` (000018 to 00
 `quotes-invoices` (000036), `trader-sign-up` (000037), `launch-hardening` (000038),
 `new-categories` (000039), `more-categories` (000040), `auto-live` (000041), `one-step`
 (000042), `check-numbers` (000043), `plaster-recovery` (000044), `builders` (000045), `air-conditioning` (000046 to 000051) and
-`trader-logos` (000052 on), each as `docs/launch/<name>-production.sql`. After adding or changing
-a migration from 000052 on, regenerate with
-`node scripts/build-production-sql.mjs --preset trader-logos --from 20261012000052 --to <newest> --out docs/launch/trader-logos-production.sql`
+`trader-logos` (000052) and `pro-insights` (000053 on), each as `docs/launch/<name>-production.sql`. After adding or changing
+a migration from 000053 on, regenerate with
+`node scripts/build-production-sql.mjs --preset pro-insights --from 20261012000053 --to <newest> --out docs/launch/pro-insights-production.sql`
 (`tests/unit/production-sql.test.ts` fails until you do). A new release gets its own preset in
 that script (and the previous one's `--to` fixed), a check in `scripts/check-production-sql.sh`,
 and an entry in the test.
@@ -450,7 +456,7 @@ Render environment variables (service → Environment). Saving a change redeploy
 | `DEVICE_HASH_SECRET` | Server only. A long random secret (`openssl rand -hex 32`), never `change-me`. Rate limits, enquiry counts and the lock cookie need it |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL` | Pro. Server only. A restricted key is enough (write: Checkout Sessions, Customer portal, Subscriptions, Customers; read: Prices, Products). Pro opens only when all four are set; otherwise the dashboard says "Pro opens soon" |
 | `RESEND_API_KEY`, `NOTIFY_FROM` | Alert, quote and invoice emails. Server only. A key restricted to sending from the site's domain; `NOTIFY_FROM` is the sender. `NOTIFY_EMAIL_STUB` must **not** be set in production |
-| `CRON_SECRET` | The payment-reminders job. Server only, 16 characters or more. Unset: the job refuses every call |
+| `CRON_SECRET` | The daily job (`/api/cron/daily`). Server only, 16 characters or more. Unset: the job refuses every call, and the dashboard doesn't promise follow-up emails |
 | `CF_WEB_ANALYTICS_TOKEN` | Optional. Cloudflare Web Analytics (cookieless). Read at build time |
 | `GOOGLE_SITE_VERIFICATION` | Optional. The Google Search Console HTML-tag value. Read at build time |
 | `TRUSTED_PROXY_HOPS` | Optional, default `1`. How many trusted proxies append to `X-Forwarded-For` in front of the app. The app reads the entry this many places from the right and ignores anything a visitor puts on the left. Ignored when `CLIENT_IP_HEADER` is set |
@@ -727,8 +733,8 @@ Support is a ticket: email **support@ysbdesigns.uk**, or WhatsApp Business on
       12-month retention; the job isn't built yet.
 - [ ] **Delete old proof files monthly** (admin → Proofs → Old proof files) until it's
       scheduled.
-- [ ] **Payment reminders**: `CRON_SECRET` and a scheduled job calling it (`docs/launch/LAUNCH.md`,
-      *Pro part 3*).
+- [ ] **The daily job**: `CRON_SECRET` and a scheduled job calling `/api/cron/daily` once a day
+      (payment reminders and quote follow-ups; `docs/launch/LAUNCH.md`, *Pro part 3*).
 - [ ] **Texts**, when wanted: the Twilio steps in *Texts and the SMS bill*, then
       `SIGN_IN_PHONE=on` for sign-in by text.
 - [x] `OWNER_LEGAL_NAME` and `CONTACT_EMAIL` set on Render.

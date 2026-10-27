@@ -130,6 +130,23 @@ export function paymentReminderEmail(m: DocMessage, second: boolean): Email {
   };
 }
 
+/** A friendly nudge on a quote the customer hasn't answered (Pro, 3 and 7 days after it was sent). Email only. */
+export function quoteFollowupEmail(m: DocMessage, second: boolean): Email {
+  const lines = [
+    `Hi ${m.customer},`,
+    second
+      ? `${m.business} wanted to check once more about quote ${m.label}, for ${m.total}.`
+      : `Just checking you got quote ${m.label} from ${m.business}, for ${m.total}.`,
+    "You can accept or decline it online in a minute. Any questions, just get in touch with them.",
+  ];
+  const label = "See the quote";
+  return {
+    subject: `${second ? "Still interested?" : "Your quote"} ${m.label} from ${m.business}`,
+    text: `${lines.join("\n\n")}\n\n${label}: ${m.link}\n\n${FROM_TRADER(m.business)}\n`,
+    html: customerHtml(lines, { href: m.link, label }, FROM_TRADER(m.business)),
+  };
+}
+
 export function docEmail(kind: "quote" | "invoice", m: DocMessage): Email {
   const what = kind === "quote" ? "quote" : "invoice";
   const lines = [

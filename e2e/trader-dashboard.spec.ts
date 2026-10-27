@@ -45,6 +45,7 @@ test("a trader sees their enquiries, edits their listing, pauses and unpauses it
   const headings = await trader.locator("main h2").allTextContents();
   expect(headings.map((h) => h.replace(/\s*\d*\s*$/, ""))).toEqual([
     "Your page's look",
+    "Who's looking",
     "Enquiries",
     "Taking on work?",
     "Ask for reviews",
@@ -83,6 +84,19 @@ test("a trader sees their enquiries, edits their listing, pauses and unpauses it
   await trader.reload();
   await expect(strip.locator(".stat")).toHaveText(["Enquiries3", "Calls1", "WhatsApps2", "Reviews0"]);
 
+  // Page views: one per connection a day; the trader's own visit doesn't count. (Headless browsers are left out, so
+  // these send an ordinary user agent.) Without Pro, the demand report is offered, not shown.
+  const looking = trader.getByRole("region", { name: "Who's looking" });
+  await expect(looking.locator(".insight-big")).toHaveText("0 views of your page this month");
+  const view = { data: { kind: "profile", slug: "e2e-dash-vans" }, headers: { "user-agent": "E2E browser" } };
+  expect((await trader.request.post("/api/view", view)).status()).toBe(204);
+  const viewer = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
+  for (let i = 0; i < 2; i++) expect((await viewer.request.post("/api/view", view)).status()).toBe(204);
+  await viewer.close();
+  await trader.reload();
+  await expect(looking.locator(".insight-big")).toHaveText("1 view of your page this month");
+  await expect(looking).toContainText("With Pro, see how many people looked for your trade");
+
   // Edit the bio and areas: refused with a phone number, then saved and on the public page.
   const edit = trader.getByRole("region", { name: "Edit your listing" });
   await expect(edit.getByText("Man & van, removals")).toBeVisible();
@@ -102,7 +116,10 @@ test("a trader sees their enquiries, edits their listing, pauses and unpauses it
   );
 
   const visitor = await (await browser.newContext({ baseURL: testInfo.project.use.baseURL })).newPage();
+  // The page sends its view beacon once it has shown (its body, a Blob, isn't visible here; lib/page-views is tested).
+  const beacon = visitor.waitForRequest((r) => r.url().endsWith("/api/view") && r.method() === "POST");
   await visitor.goto("/p/e2e-dash-vans");
+  await beacon;
   await expect(visitor.getByRole("region", { name: "About" })).toContainText("Blankets and straps on every job.");
   await expect(visitor.locator(".prof-facts")).toContainText("BL3, M26");
 

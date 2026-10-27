@@ -176,6 +176,18 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
     expect(sql(`select status from public.trade_docs where id = '${quoteId}'`)).toBe("sent");
   }).toPass({ timeout: 10_000 });
 
+  // Unanswered after 3 days: the dashboard lists it to chase, with WhatsApp to the customer and the message ready.
+  sql(`update public.trade_docs set sent_at = now() - interval '4 days' where id = '${quoteId}'`);
+  await trader.goto("/provider");
+  const chase = trader.getByTestId("chase-list");
+  await expect(chase).toContainText("Rosa Requester");
+  await expect(chase).toContainText("sent 4 days ago");
+  const chaseLink = await chase.getByRole("link", { name: "Chase on WhatsApp" }).getAttribute("href");
+  expect(chaseLink).toMatch(/^https:\/\/wa\.me\/447700900341\?text=Hi%20Rosa%2C%20just%20checking%20you%20got%20my%20quote%20Q-/);
+  // The demand report shows with Pro.
+  await expect(trader.getByTestId(/^demand-/)).toContainText(/\d+ visits? to Bolton's man & van, removals page/);
+  await trader.goBack();
+
   // The customer opens their copy (no sign-in) and accepts; the trader is told.
   const token = sql(`select token from public.trade_docs where id = '${quoteId}'`);
   const customer = await newPage(browser, testInfo);

@@ -44,8 +44,10 @@
 //     --out docs/launch/builders-production.sql
 //   node scripts/build-production-sql.mjs --preset air-conditioning --from 20261012000046 --to 20261012000051 \
 //     --out docs/launch/air-conditioning-production.sql
-//   node scripts/build-production-sql.mjs --preset trader-logos --from 20261012000052 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset trader-logos --from 20261012000052 --to 20261012000052 \
 //     --out docs/launch/trader-logos-production.sql
+//   node scripts/build-production-sql.mjs --preset pro-insights --from 20261012000053 --to <newest> \
+//     --out docs/launch/pro-insights-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -742,6 +744,25 @@ end
 $verify$;
 `;
 
+const VERIFY_PRO_INSIGHTS = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if to_regclass('public.page_view_days') is null or to_regclass('public.page_view_seen') is null then
+    raise exception 'Pro insights check failed: the page view tables are missing';
+  end if;
+  if (select count(distinct proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and proname in ('record_page_view', 'my_insights', 'due_quote_followups', 'purge_old_page_views')) <> 4 then
+    raise exception 'Pro insights check failed: a function is missing';
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'notifications_kind_check'
+                 and pg_get_constraintdef(oid) like '%quote_followup_2%') then
+    raise exception 'Pro insights check failed: notifications can''t take quote follow-ups';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -887,6 +908,12 @@ const PRESETS = {
     done: "Trader logos applied",
     requires: { version: "20261012000051", what: "the new trades script (docs/launch/air-conditioning-production.sql)" },
     verify: VERIFY_TRADER_LOGOS,
+  },
+  "pro-insights": {
+    title: "Page views, the Pro demand report and quote follow-ups",
+    done: "Pro insights applied",
+    requires: { version: "20261012000052", what: "the trader logos script (docs/launch/trader-logos-production.sql)" },
+    verify: VERIFY_PRO_INSIGHTS,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

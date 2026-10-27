@@ -73,6 +73,17 @@ describe("messages to a trader's customers", () => {
     expect(paymentReminderEmail(m, true).subject).toBe("Second reminder: invoice INV-0001 from Brook Removals");
   });
 
+  it("follows up a quote politely, with its number, amount and link", async () => {
+    const { quoteFollowupEmail } = await import("@/lib/alert-text");
+    const q = { ...m, label: "Q-0002" };
+    const first = quoteFollowupEmail(q, false);
+    expect(first.subject).toBe("Your quote Q-0002 from Brook Removals");
+    expect(first.text).toContain("Just checking you got quote Q-0002 from Brook Removals, for £165.00.");
+    expect(first.text).toContain("See the quote: https://x.test/d/abc");
+    expect(quoteFollowupEmail(q, true).subject).toBe("Still interested? Q-0002 from Brook Removals");
+    expect(first.text.toLowerCase()).not.toMatch(/last chance|expires today|hurry|limited/);
+  });
+
   it("tells the trader a quote was answered", async () => {
     const { quoteAnsweredSms } = await import("@/lib/alert-text");
     expect(quoteAnsweredSms({ ...m, label: "Q-0001" }, true)).toContain("Rosa ACCEPTED quote Q-0001 (£165.00)");

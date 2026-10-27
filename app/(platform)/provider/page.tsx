@@ -6,8 +6,10 @@ import { EditListingForm } from "@/components/provider/EditListingForm";
 import { AlertSettingsForm, type AlertSettings } from "@/components/provider/AlertSettingsForm";
 import { textsAvailable } from "@/lib/sms-hook";
 import { EnquiryStats } from "@/components/provider/EnquiryStats";
+import { Insights } from "@/components/provider/Insights";
 import { JobRequests, type JobRequestRow } from "@/components/provider/JobRequests";
 import { BillingForm } from "@/components/docs/BillingForm";
+import { ChaseList } from "@/components/docs/ChaseList";
 import { DocList } from "@/components/docs/DocList";
 import { ListingStatus } from "@/components/provider/ListingStatus";
 import { ProSoonCard, ProUpgradeCard } from "@/components/provider/ProOffer";
@@ -30,6 +32,7 @@ import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/ava
 import { isBrandColor, logoUrl } from "@/lib/brand";
 import { dayMonthYear } from "@/lib/checks";
 import { toEnquiryStats } from "@/lib/enquiries";
+import { quotesToChase, toInsights } from "@/lib/insights";
 import { platformPath } from "@/lib/paths";
 import { stripeConfig, toProStatus } from "@/lib/pro";
 import { stillOpen } from "@/lib/review-form";
@@ -208,7 +211,7 @@ export default async function ProviderArea({
   }
 
   // Each listing's enquiry counts, Pro and look (the trader's own listings only: the database checks).
-  const [stats, pros, looks] = await Promise.all([
+  const [stats, pros, looks, insights] = await Promise.all([
     Promise.all(
       listings.map(async ({ provider: p }) => {
         const { data: s, error: e } = await supabase.rpc("my_enquiry_stats", { p_provider: p.id });
@@ -232,6 +235,13 @@ export default async function ProviderArea({
           logo: logoUrl(typeof b.logo_path === "string" ? b.logo_path : null),
           color: isBrandColor(b.brand_color) ? b.brand_color : null,
         };
+      }),
+    ),
+    Promise.all(
+      listings.map(async ({ provider: p }) => {
+        const { data: s, error: e } = await supabase.rpc("my_insights", { p_provider: p.id });
+        if (e) throw new Error(`my_insights failed: ${e.message}`);
+        return toInsights(s);
       }),
     ),
   ]);
@@ -259,6 +269,8 @@ export default async function ProviderArea({
   );
   // Without all four Stripe settings the offer says "Pro opens soon" and nothing can be bought.
   const stripeReady = stripeConfig() !== null;
+  // Quote follow-up emails go out from the daily job, which only runs with CRON_SECRET set.
+  const followupsOn = !!process.env.CRON_SECRET?.trim();
 
   return (
     <main className="auth">
@@ -302,6 +314,11 @@ export default async function ProviderArea({
             ) : (
               <p className="hint">With Pro, your page also gets a cover in your own colour, behind your logo.</p>
             )}
+          </section>
+
+          <section className="auth-card" aria-labelledby={`looking-${p.id}`}>
+            <h2 id={`looking-${p.id}`}>Who&apos;s looking</h2>
+            <Insights data={insights[i]} id={p.id} />
           </section>
 
           <section className="auth-card" aria-labelledby={`stats-${p.id}`}>
@@ -350,6 +367,7 @@ export default async function ProviderArea({
                   New invoice
                 </Button>
               </div>
+              <ChaseList chases={quotesToChase(jobs[i].docs)} business={p.business_name} emailsOn={followupsOn} />
               <DocList docs={jobs[i].docs} />
               <div className="doc-bank">
                 <h3>Your bank details for invoices</h3>

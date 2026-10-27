@@ -218,7 +218,7 @@ export const FAQ: Faq[] = [
     q: "Where does my information go?",
     a: [
       [
-        "If you're just looking: no account, and no cookies. When you tap Call or WhatsApp we count the tap against that trader with a scrambled signature of your device (a one-way hash), not your IP address or phone number.",
+        "If you're just looking: no account, and no cookies. When you tap Call or WhatsApp we count the tap against that trader with a scrambled signature of your device (a one-way hash), not your IP address or phone number. Opening a trader's or a trade's page is counted the same way, once a day; the signature is deleted after two days and only the daily totals are kept.",
       ],
       [
         "If you sign in to leave a review, we keep your email address (and your Google account ID if you use Google), the name you show (like Sarah K.) and your reviews. The privacy notice has the detail.",

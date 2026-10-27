@@ -17,6 +17,7 @@ import { platformPath } from "@/lib/paths";
 import { listProviderReviews } from "@/lib/reviews";
 import { profileShare } from "@/lib/share";
 import { JsonLd } from "@/components/JsonLd";
+import { ViewBeacon } from "@/components/ViewBeacon";
 import { breadcrumbJsonLd, type Crumb, providerJsonLd, providerMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
@@ -115,6 +116,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
         contactFirstName={firstName(p.contactName)}
         hasWhatsapp={p.hasWhatsapp}
       />
+      <ViewBeacon kind="profile" slug={p.slug} />
     </main>
   );
 }
