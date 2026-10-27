@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { matchCategory, popularCategories } from "@/lib/category-search";
+import { homeShortcuts, matchCategory } from "@/lib/category-search";
 
 const cat = (slug: string, name: string, liveCount = 0) => ({ slug, name, liveCount });
 
@@ -59,31 +59,38 @@ describe("matchCategory", () => {
   });
 });
 
-describe("popularCategories", () => {
+describe("homeShortcuts", () => {
   const groups = [
     { categories: [cat("plumber", "Plumber", 3), cat("tiler", "Tiler", 0), cat("joiner", "Joiner", 1)] },
     { categories: [cat("cakes", "Cakes", 3), cat("dj", "DJ", 1), cat("decor", "Decor", 0)] },
-    { categories: [cat("mot", "MOT", 2), cat("caterer", "Caterer", 1)] },
+    { categories: [cat("mot", "MOT", 2), cat("electrician", "Electrician", 0), cat("roofer", "Roofer", 0)] },
   ];
 
-  it("keeps categories with live providers, by count desc then name", () => {
-    expect(popularCategories(groups).map((c) => c.slug)).toEqual([
+  it("puts trades with live providers first, by count desc then name, then tops up with staples", () => {
+    expect(homeShortcuts(groups).map((c) => c.slug)).toEqual([
       "cakes",
       "plumber",
       "mot",
-      "caterer",
       "dj",
       "joiner",
+      "electrician",
+      "roofer",
     ]);
   });
 
-  it("limits the result (default 8)", () => {
-    expect(popularCategories(groups, 2).map((c) => c.slug)).toEqual(["cakes", "plumber"]);
-    const many = [{ categories: Array.from({ length: 12 }, (_, i) => cat(`c${i}`, `C${i}`, 1)) }];
-    expect(popularCategories(many)).toHaveLength(8);
+  it("never repeats a staple that already has providers", () => {
+    expect(homeShortcuts(groups, 3).map((c) => c.slug)).toEqual(["cakes", "plumber", "mot"]);
+    const one = [{ categories: [cat("plumber", "Plumber", 2), cat("electrician", "Electrician", 0)] }];
+    expect(homeShortcuts(one).map((c) => c.slug)).toEqual(["plumber", "electrician"]);
   });
 
-  it("is empty when nobody is live", () => {
-    expect(popularCategories([{ categories: [cat("tiler", "Tiler", 0)] }])).toEqual([]);
+  it("limits the result (default 7)", () => {
+    const many = [{ categories: Array.from({ length: 12 }, (_, i) => cat(`c${i}`, `C${i}`, 1)) }];
+    expect(homeShortcuts(many)).toHaveLength(7);
+  });
+
+  it("shows the staples when nobody is live, skipping any that don't exist", () => {
+    const empty = [{ categories: [cat("tiler", "Tiler", 0), cat("roofer", "Roofer", 0), cat("plumber", "Plumber", 0)] }];
+    expect(homeShortcuts(empty).map((c) => c.slug)).toEqual(["plumber", "roofer"]);
   });
 });

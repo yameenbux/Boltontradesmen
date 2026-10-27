@@ -107,6 +107,6 @@ describe("revalidatePublicPages", () => {
 
   it("skips the provider page without a slug", () => {
     revalidatePublicPages();
-    expect(revalidatePath).toHaveBeenCalledTimes(5);
+    expect(revalidatePath).toHaveBeenCalledTimes(6);
   });
 });

@@ -161,6 +161,17 @@ export const getProvider = cache(async (slug: string): Promise<PublicProvider | 
   return data ? toProvider(data) : null;
 });
 
+/** The newest live providers (by when they were listed), for the home page's "New on Bolton Vouched" row. */
+export async function listNewestProviders(limit = 8): Promise<PublicProvider[]> {
+  const { data, error } = await createPublicClient()
+    .from("provider_public")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`listNewestProviders: ${error.message}`);
+  return (data ?? []).map(toProvider);
+}
+
 export type LiveProviderSummary = {
   slug: string;
   categorySlugs: string[];

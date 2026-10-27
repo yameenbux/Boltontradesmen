@@ -87,8 +87,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
           <p>
             <b>Nobody&apos;s listed for {name} yet.</b>
           </p>
-          <p>Know a good one? Message the group admin to get them added.</p>
-          <Link href={platformPath()} className="link">
+          <p>Know a good one? Send them to the <Link href="/for-traders">for traders</Link> page: listing is free.</p>
+          <Link href={platformPath("trades")} className="link">
             Browse other trades
           </Link>
         </div>

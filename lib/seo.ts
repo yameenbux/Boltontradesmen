@@ -99,6 +99,7 @@ export function buildSitemap(
     withDate({ url: url(platformPath()), changeFrequency: "daily", priority: 1 }, allUpdated),
     { url: url("/get-listed"), changeFrequency: "yearly", priority: 0.5 },
     { url: url("/for-traders"), changeFrequency: "monthly", priority: 0.5 },
+    withDate({ url: url(platformPath("trades")), changeFrequency: "weekly", priority: 0.6 }, allUpdated),
   ];
 
   const live = categories.filter((c) => c.liveCount > 0);
