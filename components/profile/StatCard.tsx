@@ -5,6 +5,8 @@ import type { PublicProvider } from "@/lib/directory";
 type Stats = Pick<PublicProvider, "reviewCount" | "score" | "useAgainPct" | "onTimePct" | "onPricePct" | "tidyPct">;
 
 const reviews = (n: number) => `${n} review${n === 1 ? "" : "s"}`;
+/** Reviews before a score shows (provider_stats). */
+const MIN_FOR_SCORE = 3;
 
 const Star = ({ dim }: { dim?: boolean }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" opacity={dim ? 0.35 : undefined} aria-hidden="true">
@@ -29,14 +31,29 @@ function BarRow({ label, pct }: { label: string; pct: number }) {
 
 /**
  * "What people say": the big "would use again" percentage, sub-score bars and quality stars once there are
- * enough reviews for a score; until then, a calm "3 reviews needed for a score" card.
+ * enough reviews for a score; until then, how far along they are (0, 1 or 2 of the 3), said as a start, not a lack.
  */
 export function StatCard({ stats }: { stats: Stats }) {
   if (stats.score === null || stats.useAgainPct === null) {
+    const n = Math.min(stats.reviewCount, MIN_FOR_SCORE);
     return (
       <section className="stat stat-pending" aria-label="What people say">
-        <p className="display">3 reviews needed for a score</p>
-        <p>{stats.reviewCount === 0 ? "No reviews yet" : `${reviews(stats.reviewCount)} so far`}</p>
+        <div className="pending-head">
+          <p className="display">{n === 0 ? "New on Bolton Vouched" : `${reviews(n)} so far`}</p>
+          <span className="pending-count">
+            {n} of {MIN_FOR_SCORE} for a score
+          </span>
+        </div>
+        <div className="pending-steps" aria-hidden="true">
+          {Array.from({ length: MIN_FOR_SCORE }, (_, i) => (
+            <span key={i} className={i < n ? "on" : undefined} />
+          ))}
+        </div>
+        <p>
+          {n === 0
+            ? "No reviews yet. Their score shows once 3 customers have reviewed them."
+            : `${MIN_FOR_SCORE - n} more review${MIN_FOR_SCORE - n === 1 ? "" : "s"} and their score shows here.`}
+        </p>
       </section>
     );
   }

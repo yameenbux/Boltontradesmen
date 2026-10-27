@@ -5,6 +5,7 @@ import { AlertIcon, TickIcon } from "@/components/auth/icons";
 import { Button } from "@/components/ui/Button";
 import { submitTraderSetup } from "@/app/(platform)/provider/setup-actions";
 import { ConsentParagraph } from "@/components/consent/ConsentParagraph";
+import { LogoPick } from "@/components/provider/LogoPick";
 import type { ConsentCard } from "@/lib/consent-shared";
 import { BL_DISTRICTS } from "@/lib/districts";
 import { LISTING_LIMITS } from "@/lib/listing-request";
@@ -28,7 +29,7 @@ function Err({ k, msg }: { k: Key; msg: string | undefined }) {
 }
 
 /**
- * The trader's one form, in one step: name (only when the account has none), business, the trades and postcode
+ * The trader's one form, in one step: name (only when the account has none), business and logo, the trades and postcode
  * areas they tick, mobile and WhatsApp, Free or Pro, then Confirm. Above Confirm, the listing statement (the consent
  * page's, word for word: its hash is the evidence); pressing Confirm is their agreement. It goes live at once.
  * Uncontrolled throughout: React resets the form after each send, back to these defaults (what was sent), so a
@@ -84,6 +85,12 @@ export function TraderSetupForm({
           required defaultValue={v("business_name")} {...invalid("business_name")} />
         <Err k="business_name" msg={err.business_name} />
       </label>
+
+      <LogoPick
+        id="ts-logo"
+        error={err.logo}
+        hint="Optional. It goes at the top of your page. A square image works best: JPEG, PNG or WebP."
+      />
 
       <TradePicker key={[...trades].join(",")} groups={groups} picked={trades} error={err.trades} />
 

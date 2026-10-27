@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ShopIcon } from "@/components/auth/icons";
 import { AvailabilityForm } from "@/components/provider/AvailabilityForm";
+import { BrandColorForm, LogoForm } from "@/components/provider/BrandingForms";
 import { EditListingForm } from "@/components/provider/EditListingForm";
 import { AlertSettingsForm, type AlertSettings } from "@/components/provider/AlertSettingsForm";
 import { textsAvailable } from "@/lib/sms-hook";
@@ -26,6 +27,7 @@ import type { Billing, TradeDoc } from "@/lib/trade-docs";
 import { nationalNumber } from "@/lib/alert-text";
 import { requireAccount } from "@/lib/auth";
 import { availabilityNow, bookedRange, type StoredAvailability } from "@/lib/availability";
+import { isBrandColor, logoUrl } from "@/lib/brand";
 import { dayMonthYear } from "@/lib/checks";
 import { toEnquiryStats } from "@/lib/enquiries";
 import { platformPath } from "@/lib/paths";
@@ -205,8 +207,8 @@ export default async function ProviderArea({
     );
   }
 
-  // Each listing's enquiry counts and Pro (the trader's own listings only: the database checks).
-  const [stats, pros] = await Promise.all([
+  // Each listing's enquiry counts, Pro and look (the trader's own listings only: the database checks).
+  const [stats, pros, looks] = await Promise.all([
     Promise.all(
       listings.map(async ({ provider: p }) => {
         const { data: s, error: e } = await supabase.rpc("my_enquiry_stats", { p_provider: p.id });
@@ -219,6 +221,17 @@ export default async function ProviderArea({
         const { data: s, error: e } = await supabase.rpc("my_pro_status", { p_provider: p.id });
         if (e) throw new Error(`my_pro_status failed: ${e.message}`);
         return toProStatus(s);
+      }),
+    ),
+    Promise.all(
+      listings.map(async ({ provider: p }) => {
+        const { data: s, error: e } = await supabase.rpc("my_branding", { p_provider: p.id });
+        if (e) throw new Error(`my_branding failed: ${e.message}`);
+        const b = (s ?? {}) as { logo_path?: unknown; brand_color?: unknown };
+        return {
+          logo: logoUrl(typeof b.logo_path === "string" ? b.logo_path : null),
+          color: isBrandColor(b.brand_color) ? b.brand_color : null,
+        };
       }),
     ),
   ]);
@@ -279,6 +292,16 @@ export default async function ProviderArea({
             <Button href={platformPath("p", p.slug)} variant="secondary">
               See your public page
             </Button>
+          </section>
+
+          <section className="auth-card" aria-labelledby={`look-${p.id}`}>
+            <h2 id={`look-${p.id}`}>Your page&apos;s look</h2>
+            <LogoForm providerId={p.id} slug={p.slug} current={looks[i].logo} />
+            {pros[i].isPro ? (
+              <BrandColorForm providerId={p.id} slug={p.slug} current={looks[i].color} />
+            ) : (
+              <p className="hint">With Pro, your page also gets a cover in your own colour, behind your logo.</p>
+            )}
           </section>
 
           <section className="auth-card" aria-labelledby={`stats-${p.id}`}>

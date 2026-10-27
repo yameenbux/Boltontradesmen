@@ -30,6 +30,8 @@ const provider = (over: Partial<PublicProvider> = {}): PublicProvider => ({
   idChecked: false,
   photos: [],
   takesRequests: false,
+  logoPath: null,
+  brandColor: null,
   ...over,
 });
 

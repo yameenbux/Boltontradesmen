@@ -15,8 +15,8 @@ import { JWT_SECRET } from "./jwt.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = process.env.STORAGE_DIR ?? path.join(HERE, "run", "storage");
-// The migrations make 'work-photos' public on a real stack; here it's configuration.
-const PUBLIC_BUCKETS = new Set((process.env.STORAGE_PUBLIC_BUCKETS ?? "work-photos").split(",").filter(Boolean));
+// The migrations make 'work-photos' and 'trader-logos' public on a real stack; here it's configuration.
+const PUBLIC_BUCKETS = new Set((process.env.STORAGE_PUBLIC_BUCKETS ?? "work-photos,trader-logos").split(",").filter(Boolean));
 
 const SAFE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 

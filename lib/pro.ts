@@ -262,4 +262,5 @@ export const PRO_ERRORS: Record<string, string> = {
   too_many_photos: `You've ${MAX_WORK_PHOTOS} photos already. Remove one to add another.`,
   photo_not_found: "That photo has already gone.",
   bad_order: "The photos changed while you were moving them. Please try again.",
+  bad_color: "Choose one of the colours.",
 };

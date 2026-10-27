@@ -90,7 +90,11 @@ test("profile shows the header, stat card, checks list and about card", async ({
   expect(res?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Ace Plumbing");
   await expect(page.getByText("Alan Ace · Plumber")).toBeVisible();
-  await expect(page.getByText("Covers BL1, BL3, BL4")).toBeVisible();
+  const facts = page.locator(".prof-facts");
+  await expect(facts).toContainText("CoversBL1, BL3, BL4");
+  await expect(facts).toContainText("ContactCall or WhatsApp");
+  // No logo uploaded: their initials stand in.
+  await expect(page.locator(".prof-logo")).toHaveText("AP");
   await expect(page.locator(".prof-head").getByText("Verified")).toBeVisible();
   const crumbs = page.getByRole("navigation", { name: "Breadcrumb" });
   await expect(crumbs.getByRole("link", { name: "Trades", exact: true })).toHaveAttribute("href", "/");
@@ -219,19 +223,19 @@ test("profile without WhatsApp or reviews: one call button, and what's needed fo
     "/api/contact/e2e-fresh-pipes?via=call",
   );
   const stat = page.getByRole("region", { name: "What people say" });
-  await expect(stat.getByText("3 reviews needed for a score")).toBeVisible();
-  await expect(stat.getByText("No reviews yet")).toBeVisible();
-  // Stacked and centred: the heading above "No reviews yet", never side by side.
-  await expect(stat).toHaveCSS("display", "grid");
-  await expect(stat).toHaveCSS("text-align", "center");
+  // No score yet: said as a start ("New on Bolton Vouched", 0 of 3), not as something missing.
+  await expect(stat.getByText("New on Bolton Vouched")).toBeVisible();
+  await expect(stat.getByText("0 of 3 for a score")).toBeVisible();
+  await expect(stat.getByText(/No reviews yet\. Their score shows once 3 customers have reviewed them\./)).toBeVisible();
   await expect(page.getByRole("region", { name: "What we've checked" }).getByRole("listitem")).toHaveText([
     /Trade accreditations\s*None provided/,
   ]);
   await expect(page.getByRole("region", { name: "About" })).toHaveCount(0);
 
   await page.goto("/p/e2e-half-way");
-  await expect(page.getByText("3 reviews needed for a score")).toBeVisible();
   await expect(page.getByText("2 reviews so far")).toBeVisible();
+  await expect(page.getByText("2 of 3 for a score")).toBeVisible();
+  await expect(page.getByText("1 more review and their score shows here.")).toBeVisible();
   // No contact name: the button just says Call.
   await expect(page.getByRole("link", { name: "Call", exact: true })).toHaveAttribute(
     "href",

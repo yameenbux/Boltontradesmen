@@ -39,7 +39,7 @@ export type CheckKind = (typeof CHECK_TRADES)[number]["kind"];
 export type TraderSetupState = {
   errors?: Partial<
     Record<
-      "first_name" | "surname" | "business_name" | "trades" | "areas" | "phone" | "whatsapp" | "plan" | CheckKind,
+      "first_name" | "surname" | "business_name" | "trades" | "areas" | "phone" | "whatsapp" | "plan" | "logo" | CheckKind,
       string
     >
   >;
@@ -69,4 +69,5 @@ export const TRADER_SETUP_ERRORS = {
   already: "We've already got your details and they're being reviewed.",
   check_ref: "Enter the number as it's shown on your card or badge.",
   check_expires: "Enter the expiry date on your card or badge. It must not have passed.",
+  logo_again: "Choose your logo again before you press Confirm.",
 } as const;
