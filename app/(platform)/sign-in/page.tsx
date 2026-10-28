@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ViewBeacon } from "@/components/ViewBeacon";
 import { AlertIcon, ChatIcon, LockIcon } from "@/components/auth/icons";
 import { EmailCodeForm } from "@/components/auth/EmailCodeForm";
 import { GoogleButton } from "@/components/auth/GoogleButton";
@@ -101,6 +102,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           )}
         </li>
       </ul>
+      {trader && <ViewBeacon kind="funnel" slug="trader-sign-in" />}
     </main>
   );
 }

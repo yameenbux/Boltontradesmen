@@ -145,6 +145,9 @@ One site: free for residents, free for traders, with an optional paid tier for t
   PayPal, Stripe, Monzo, Revolut or Starling payment link; their unpaid invoices show "Pay by
   card" pointing at it. Only those providers' https links are accepted (`lib/pay-link.ts`, checked
   again in the database), and the trader marks the invoice paid as for a bank transfer.
+- **Trader sign-up funnel** (admin home): people reaching each step of the way to a listing (For traders,
+  Get listed, the trader sign-in, the listing form) over 7 and 30 days, then listings that went live. One per
+  connection a day, the admin's own visits left out (`record_page_view` kind `funnel`).
 - **Page views and demand**: every trader's dashboard shows views of their page ("Who's
   looking"; one per connection a day, their own and the admin's left out; `/api/view`, counts
   only). With Pro it adds the last 30 days' visits to each of their trades' pages and the Ask
@@ -390,9 +393,9 @@ release, each refusing to run before the one it follows: `plan-2b` (000018 to 00
 `quotes-invoices` (000036), `trader-sign-up` (000037), `launch-hardening` (000038),
 `new-categories` (000039), `more-categories` (000040), `auto-live` (000041), `one-step`
 (000042), `check-numbers` (000043), `plaster-recovery` (000044), `builders` (000045), `air-conditioning` (000046 to 000051) and
-`trader-logos` (000052), `pro-insights` (000053) and `card-payments` (000054) and `pay-links` (000055 on), each as `docs/launch/<name>-production.sql`. After adding or changing
-a migration from 000055 on, regenerate with
-`node scripts/build-production-sql.mjs --preset pay-links --from 20261012000055 --to <newest> --out docs/launch/pay-links-production.sql`
+`trader-logos` (000052), `pro-insights` (000053) and `card-payments` (000054), `pay-links` (000055) and `signup-funnel` (000056 on), each as `docs/launch/<name>-production.sql`. After adding or changing
+a migration from 000056 on, regenerate with
+`node scripts/build-production-sql.mjs --preset signup-funnel --from 20261012000056 --to <newest> --out docs/launch/signup-funnel-production.sql`
 (`tests/unit/production-sql.test.ts` fails until you do). A new release gets its own preset in
 that script (and the previous one's `--to` fixed), a check in `scripts/check-production-sql.sh`,
 and an entry in the test.

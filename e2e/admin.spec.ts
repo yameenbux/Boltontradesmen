@@ -100,3 +100,25 @@ test("a removed provider can only come back through Re-invite", async ({ page })
   await expect(page.getByRole("textbox", { name: "Consent link" })).toHaveValue(/\/consent\/[0-9a-f-]{36}$/);
   await expect(page.getByText(/^Link expires on \d{1,2} [A-Z][a-z]+ \d{4}$/).first()).toBeVisible();
 });
+
+test("the admin home shows the trader sign-up funnel, fed by the For traders page", async ({ page, browser }, testInfo) => {
+  // A visitor (ordinary browser, not headless) reaches For traders; the page sends its funnel beacon.
+  const ctx = await browser.newContext({ baseURL: testInfo.project.use.baseURL, userAgent: "Mozilla/5.0 E2E funnel" });
+  const visitor = await ctx.newPage();
+  const beacon = visitor.waitForRequest((r) => r.url().endsWith("/api/view") && r.method() === "POST");
+  await visitor.goto("/for-traders");
+  await beacon;
+  await ctx.close();
+
+  await signIn(page);
+  await page.goto("/admin");
+  const funnel = page.getByTestId("signup-funnel");
+  await expect(funnel.getByRole("heading", { name: "Trader sign-ups" })).toBeVisible();
+  await expect(funnel.getByRole("row", { name: /Saw the For traders page/ })).toBeVisible();
+  await expect(funnel.getByRole("row", { name: /Went live/ })).toBeVisible();
+  // The visit above counts (once a day per connection, so at least 1 even if another spec visited first).
+  await expect(async () => {
+    await page.reload();
+    await expect(funnel.getByRole("row", { name: /Saw the For traders page/ }).getByRole("cell").first()).not.toHaveText("0", { timeout: 1000 });
+  }).toPass({ timeout: 10_000 });
+});

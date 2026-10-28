@@ -147,6 +147,11 @@ h1,h2,h3{text-wrap:balance}
   .a-title{font-family:var(--display); font-weight:400; font-size:clamp(30px,8vw,38px); line-height:1.08; margin:0; overflow-wrap:anywhere}
   .a-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); padding:18px; box-shadow:var(--shadow); display:grid; gap:14px}
   .a-card > h2{font-family:var(--display); font-weight:400; font-size:23px; line-height:1.15; margin:0}
+  .funnel{width:100%; border-collapse:collapse; font-size:15px}
+  .funnel th,.funnel td{padding:8px 6px; border-bottom:1px solid var(--line); text-align:right}
+  .funnel th[scope="row"],.funnel thead th:first-child{text-align:left; font-weight:600}
+  .funnel thead th{font-size:13px; color:var(--ink-3); font-weight:700}
+  .funnel-end th,.funnel-end td{font-weight:800; border-bottom:0}
   .a-form{display:grid; gap:18px}
   .a-field{display:grid; gap:6px; font-size:16px; font-weight:700; color:var(--ink)}
   .a-hint{font-size:14px; font-weight:500; color:var(--ink-2)}

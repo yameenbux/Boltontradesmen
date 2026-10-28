@@ -50,8 +50,10 @@
 //     --out docs/launch/pro-insights-production.sql
 //   node scripts/build-production-sql.mjs --preset card-payments --from 20261012000054 --to 20261012000054 \
 //     --out docs/launch/card-payments-production.sql
-//   node scripts/build-production-sql.mjs --preset pay-links --from 20261012000055 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset pay-links --from 20261012000055 --to 20261012000055 \
 //     --out docs/launch/pay-links-production.sql
+//   node scripts/build-production-sql.mjs --preset signup-funnel --from 20261012000056 --to <newest> \
+//     --out docs/launch/signup-funnel-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -806,6 +808,21 @@ end
 $verify$;
 `;
 
+const VERIFY_SIGNUP_FUNNEL = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                 where n.nspname = 'public' and proname = 'admin_signup_funnel') then
+    raise exception 'Sign-up funnel check failed: admin_signup_funnel is missing';
+  end if;
+  if pg_get_constraintdef((select oid from pg_constraint where conname = 'page_view_days_kind_check')) not like '%funnel%' then
+    raise exception 'Sign-up funnel check failed: page views can''t take funnel steps';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -969,6 +986,12 @@ const PRESETS = {
     done: "Pay links applied",
     requires: { version: "20261012000054", what: "the card payments script (docs/launch/card-payments-production.sql)" },
     verify: VERIFY_PAY_LINKS,
+  },
+  "signup-funnel": {
+    title: "The trader sign-up funnel on the admin home",
+    done: "Sign-up funnel applied",
+    requires: { version: "20261012000055", what: "the pay links script (docs/launch/pay-links-production.sql)" },
+    verify: VERIFY_SIGNUP_FUNNEL,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

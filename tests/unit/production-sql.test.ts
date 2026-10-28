@@ -219,9 +219,17 @@ const SCRIPTS = [
     file: "docs/launch/pay-links-production.sql",
     preset: "pay-links",
     from: "20261012000055",
-    to: NEWEST,
+    to: "20261012000055",
     functions: ["my_pay_link", "set_my_pay_link"],
     requires: "20261012000054",
+  },
+  {
+    file: "docs/launch/signup-funnel-production.sql",
+    preset: "signup-funnel",
+    from: "20261012000056",
+    to: NEWEST,
+    functions: ["admin_signup_funnel"],
+    requires: "20261012000055",
   },
 ];
 

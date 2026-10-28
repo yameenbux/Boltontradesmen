@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ViewBeacon } from "@/components/ViewBeacon";
 import { DistrictMap } from "@/components/art/DistrictMap";
 import { LeadFlow } from "@/components/art/LeadFlow";
 import { Scene } from "@/components/art/Scene";
@@ -116,6 +117,7 @@ export default function ForTradersPage() {
       <p className="fair reveal">
         Pro never moves you up the list. Places, scores and badges come from residents&apos; reviews alone.
       </p>
+      <ViewBeacon kind="funnel" slug="for-traders" />
     </main>
   );
 }

@@ -68,6 +68,8 @@ SCRIPT25=docs/launch/card-payments-production.sql
 UNTIL25=20261012000053
 SCRIPT26=docs/launch/pay-links-production.sql
 UNTIL26=20261012000054
+SCRIPT27=docs/launch/signup-funnel-production.sql
+UNTIL27=20261012000055
 PSQL=(psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1)
 
 echo "[check-prod] database at $UNTIL"
@@ -476,10 +478,25 @@ if "${PSQL[@]}" -f "$SCRIPT26" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT2
 echo "[check-prod] applying $SCRIPT26"
 out="$("${PSQL[@]}" -A -t -f "$SCRIPT26")"
 echo "$out" | tail -1
-expected26="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL26" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+expected26="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; v="${b%%_*}"; if [[ "$v" > "$UNTIL26" && ! "$v" > "$UNTIL27" ]]; then echo "$b"; fi; done | wc -l | tr -d ' ')"
 echo "$out" | grep -q "^Pay links applied|$expected26\$" || { echo "[check-prod] the closing check did not report $expected26 migrations"; exit 1; }
 echo "[check-prod] applying it a second time (a re-run must not fail)"
 "${PSQL[@]}" -A -t -f "$SCRIPT26" | tail -1
+
+echo "[check-prod] the sign-up funnel script refuses to run before the pay links one is recorded"
+"${PSQL[@]}" -c "delete from supabase_migrations.schema_migrations where version = '$UNTIL27'"
+if "${PSQL[@]}" -f "$SCRIPT27" >/dev/null 2>&1; then echo "[check-prod] $SCRIPT27 ran before $SCRIPT26"; exit 1; fi
+"${PSQL[@]}" -A -t -c "select count(*) = 0 from supabase_migrations.schema_migrations where version > '$UNTIL27'" | grep -qx t \
+  || { echo "[check-prod] the refused sign-up funnel script left something behind"; exit 1; }
+"${PSQL[@]}" -A -t -f "$SCRIPT26" | tail -1
+
+echo "[check-prod] applying $SCRIPT27"
+out="$("${PSQL[@]}" -A -t -f "$SCRIPT27")"
+echo "$out" | tail -1
+expected27="$(for f in supabase/migrations/*.sql; do b="$(basename "$f")"; [[ "${b%%_*}" > "$UNTIL27" ]] && echo "$b"; done | wc -l | tr -d ' ')"
+echo "$out" | grep -q "^Sign-up funnel applied|$expected27\$" || { echo "[check-prod] the closing check did not report $expected27 migrations"; exit 1; }
+echo "[check-prod] applying it a second time (a re-run must not fail)"
+"${PSQL[@]}" -A -t -f "$SCRIPT27" | tail -1
 
 # The pgTAP tests expect only their own fixtures.
 "${PSQL[@]}" -c "delete from public.providers where slug in ('prod-check-travel', 'prod-check-paused', 'prod-check-live', 'prod-check-dupe');

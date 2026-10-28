@@ -2,6 +2,7 @@ import { TickIcon } from "@/components/auth/icons";
 import { type TradeGroup, TraderSetupForm } from "@/components/provider/TraderSetupForm";
 import { SUPPORT_WHATSAPP_DISPLAY, whatsappTicket } from "@/components/site/content";
 import { Button } from "@/components/ui/Button";
+import { ViewBeacon } from "@/components/ViewBeacon";
 import { consentStatement } from "@/lib/consent-text";
 import { stripeConfig } from "@/lib/pro";
 import { platformPath } from "@/lib/paths";
@@ -110,6 +111,7 @@ export function TraderStart({
       <p className="lede">
         Not a trader? <a href={platformPath()}>Find a trader instead</a>.
       </p>
+      <ViewBeacon kind="funnel" slug="trader-form" />
     </main>
   );
 }
