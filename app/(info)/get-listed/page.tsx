@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ViewBeacon } from "@/components/ViewBeacon";
 import { ChatIcon, LockIcon } from "@/components/auth/icons";
 import { GetListedForm } from "@/components/listing/GetListedForm";
 import { TRADER_SIGN_IN } from "@/lib/account-intent";
@@ -60,6 +61,7 @@ export default async function GetListedPage() {
           </span>
         </li>
       </ul>
+      <ViewBeacon kind="funnel" slug="get-listed" />
     </main>
   );
 }

@@ -1,0 +1,86 @@
+-- The trader sign-up funnel, requested by the owner to see where traders drop off: unique visitors (one per
+-- connection a day, as page views in 000053) to each step, and how many listings went live.
+--
+-- Steps (page_view_days kind 'funnel', ref):
+--   'for-traders'     the For traders page
+--   'get-listed'      the Get listed request form
+--   'trader-sign-in'  the sign-in page on its way to the trader start
+--   'trader-form'     the one form to get listed (signed in, no listing yet)
+-- The admin's own visits don't count.
+-- * admin_signup_funnel(p_days): {days, steps: {<ref>: visitors}, listed} for the last p_days days. Admin only.
+-- Re-runnable.
+
+alter table public.page_view_days drop constraint if exists page_view_days_kind_check;
+alter table public.page_view_days add constraint page_view_days_kind_check check (kind in ('profile', 'category', 'funnel'));
+
+-- Counts a view (as 000053), plus the sign-up funnel's steps.
+create or replace function public.record_page_view(p_kind text, p_ref text, p_viewer text, p_actor uuid)
+returns boolean
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_ref text;
+  v_owner uuid;
+  v_day date := private.london_today();
+begin
+  if p_viewer is null or char_length(p_viewer) not between 16 and 128 then
+    return false;
+  end if;
+  if p_actor is not null and exists (select 1 from public.profiles a where a.user_id = p_actor and a.role = 'admin') then
+    return false;
+  end if;
+  if p_kind = 'profile' then
+    select p.id::text, p.user_id into v_ref, v_owner from public.providers p where p.slug = p_ref and p.status = 'live';
+    if v_ref is null or (p_actor is not null and p_actor = v_owner) then
+      return false;
+    end if;
+  elsif p_kind = 'category' then
+    select c.slug into v_ref from public.categories c where c.slug = p_ref and c.active;
+    if v_ref is null or (p_actor is not null and exists (select 1 from public.providers p where p.user_id = p_actor)) then
+      return false;
+    end if;
+  elsif p_kind = 'funnel' then
+    if p_ref is null or p_ref not in ('for-traders', 'get-listed', 'trader-sign-in', 'trader-form') then
+      return false;
+    end if;
+    v_ref := p_ref;
+  else
+    return false;
+  end if;
+  delete from public.page_view_seen where day < v_day - 1;
+  insert into public.page_view_seen (kind, ref, day, viewer) values (p_kind, v_ref, v_day, p_viewer)
+  on conflict do nothing;
+  if not found then
+    return false;
+  end if;
+  insert into public.page_view_days (kind, ref, day, views) values (p_kind, v_ref, v_day, 1)
+  on conflict (kind, ref, day) do update set views = public.page_view_days.views + 1;
+  return true;
+end;
+$$;
+revoke execute on function public.record_page_view(text, text, text, uuid) from public, anon, authenticated;
+grant execute on function public.record_page_view(text, text, text, uuid) to service_role;
+
+-- The funnel for the last p_days days (1 to 365), today included. Admin only.
+create or replace function public.admin_signup_funnel(p_days int) returns jsonb
+language plpgsql stable security definer set search_path = ''
+as $$
+declare
+  v_days int := least(greatest(coalesce(p_days, 30), 1), 365);
+  v_from date := private.london_today() - (v_days - 1);
+begin
+  if not public.is_admin() then
+    raise exception 'not admin' using errcode = '42501';
+  end if;
+  return jsonb_build_object(
+    'days', v_days,
+    'steps', (
+      select jsonb_object_agg(s.ref, coalesce((select sum(d.views) from public.page_view_days d
+                                               where d.kind = 'funnel' and d.ref = s.ref and d.day >= v_from), 0))
+      from unnest(array['for-traders', 'get-listed', 'trader-sign-in', 'trader-form']) s(ref)),
+    'listed', (select count(*) from public.providers p
+               where (p.created_at at time zone 'Europe/London')::date >= v_from and p.user_id is not null));
+end;
+$$;
+revoke execute on function public.admin_signup_funnel(int) from public, anon;
+grant execute on function public.admin_signup_funnel(int) to authenticated;

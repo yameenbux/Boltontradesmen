@@ -3,7 +3,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { TidySignInRecordsForm } from "@/components/admin/ModerationForms";
+import { SignupFunnel } from "@/components/admin/SignupFunnel";
 import { requireAdmin } from "@/lib/admin";
+import { toFunnel } from "@/lib/funnel";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -42,6 +44,10 @@ export default async function AdminHome() {
     questions?: number;
   };
   const unchecked = rows.filter(toCheck).length;
+  const [week, month] = await Promise.all([7, 30].map(async (d) => {
+    const { data: f } = await supabase.rpc("admin_signup_funnel", { p_days: d });
+    return toFunnel(f);
+  }));
   const waiting = [
     {
       href: "/admin",
@@ -91,6 +97,7 @@ export default async function AdminHome() {
           </li>
         ))}
       </ul>
+      <SignupFunnel week={week} month={month} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="a-title">Providers</h1>
         <Button href="/admin/providers/new">Add provider</Button>
