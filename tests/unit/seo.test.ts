@@ -159,7 +159,7 @@ describe("page metadata", () => {
       businessName: "Ace Plumbing",
       areas: ["BL1", "BL3"],
       bio: "Boilers and leaks. Call 07700 900301 or +447700900301.",
-      trade: "Plumber",
+      trades: ["Plumber"],
     });
     expect(m.title).toEqual({ absolute: "Ace Plumbing — Plumber in Bolton | Bolton Vouched" });
     expect(m.description).toContain("BL1 and BL3");
@@ -168,8 +168,22 @@ describe("page metadata", () => {
     expect(m.alternates?.canonical).toBe("/p/ace");
   });
 
+  it("provider: leads with the trades its name is about, and says 'all of Bolton' rather than every district", () => {
+    const m = providerMetadata({
+      slug: "a-a",
+      businessName: "A A HEATING ENGINEER",
+      areas: ["BL1", "BL2", "BL3", "BL4", "BL5", "BL6", "BL7", "M26", "WN2"],
+      bio: null,
+      trades: ["Appliance repair", "Heating repair"],
+    });
+    expect(m.title).toEqual({ absolute: "A A HEATING ENGINEER — Heating repair and appliance repair in Bolton | Bolton Vouched" });
+    expect(m.description).toBe(
+      "A A HEATING ENGINEER: heating repair and appliance repair in Bolton covering all of Bolton, M26 and WN2. Recommended on Bolton Vouched.",
+    );
+  });
+
   it("provider: no generic social image, so the profile's own opengraph-image is used", () => {
-    const m = providerMetadata({ slug: "ace", businessName: "Ace Plumbing", areas: [], bio: null, trade: null });
+    const m = providerMetadata({ slug: "ace", businessName: "Ace Plumbing", areas: [], bio: null, trades: [] });
     expect(JSON.stringify(m.openGraph)).not.toContain("/social.png");
     expect(JSON.stringify(m.twitter)).not.toContain("/social.png");
     expect(m.openGraph).not.toHaveProperty("images");
@@ -194,7 +208,7 @@ describe("JSON-LD", () => {
   });
 
   it("provider is a LocalBusiness with areas but no phone, address or rating", () => {
-    const ld = providerJsonLd({ slug: "ace", businessName: "Ace </script>", areas: ["BL1", "BL3"], trade: "Plumber" }, BASE);
+    const ld = providerJsonLd({ slug: "ace", businessName: "Ace </script>", areas: ["BL1", "BL3"], trades: ["Plumber"] }, BASE);
     expect(ld).toMatchObject({ "@type": "LocalBusiness", name: "Ace </script>", url: `${BASE}/p/ace` });
     expect(ld.areaServed).toEqual([
       { "@type": "Place", name: "BL1, Bolton" },
@@ -307,5 +321,29 @@ describe("price guides in the sitemap and metadata", () => {
   it("keeps an empty index out of search results", () => {
     expect(priceIndexMetadata(0).robots).toEqual({ index: false, follow: true });
     expect(priceIndexMetadata(2).robots).toBeUndefined();
+  });
+});
+
+describe("coverage and leadTrades", () => {
+  it("summarises districts", async () => {
+    const { coverage } = await import("@/lib/seo");
+    expect(coverage(["BL1", "BL2", "BL3", "BL4", "BL5", "BL6", "BL7"])).toBe("all of Bolton");
+    expect(coverage(["BL1", "BL3"])).toBe("BL1 and BL3");
+  });
+
+  it("puts trades named in the business name first, at most two", async () => {
+    const { leadTrades } = await import("@/lib/seo");
+    expect(leadTrades(["Appliance repair", "Heating repair"], "A A HEATING ENGINEER")).toEqual(["Heating repair", "Appliance repair"]);
+    expect(leadTrades(["Joiner", "Plumber", "Tiler"], "Bob's Building")).toEqual(["Joiner", "Plumber"]);
+  });
+
+  it("names non-Bolton districts on their own in structured data", async () => {
+    const { providerJsonLd } = await import("@/lib/seo");
+    const ld = providerJsonLd({ slug: "a", businessName: "A", areas: ["BL1", "M26"], trades: ["Heating repair", "Appliance repair"] }, "https://x.test");
+    expect(ld.areaServed).toEqual([
+      { "@type": "Place", name: "BL1, Bolton" },
+      { "@type": "Place", name: "M26" },
+    ]);
+    expect(ld.knowsAbout).toEqual(["Heating repair", "Appliance repair"]);
   });
 });
