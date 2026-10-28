@@ -6,7 +6,7 @@ import { BRAND_MARK } from "@/lib/brand-mark";
 import { getProvider, listCategoryGroups } from "@/lib/directory";
 import { imageFonts } from "@/lib/og-fonts";
 import { displayLink } from "@/lib/review-link";
-import { listAreas, SITE_NAME, siteUrl, stripPhoneNumbers } from "@/lib/seo";
+import { coverage, leadTrades, SITE_NAME, siteUrl, stripPhoneNumbers } from "@/lib/seo";
 
 // The profile's social preview (WhatsApp, Facebook, X): brand, business name, trade and areas, plus the rating badge
 // and "would use again" figure once earned. Never a phone number. Cached like the page itself and refreshed on the
@@ -35,11 +35,12 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const names = new Map(
     (await listCategoryGroups()).flatMap(({ categories }) => categories.map((c) => [c.slug, c.name] as const)),
   );
-  const trade = p.categorySlugs.map((s) => names.get(s)).find(Boolean) ?? "Local pro";
+  const all = p.categorySlugs.flatMap((s) => names.get(s) ?? []);
+  const trade = all.length ? leadTrades(all, p.businessName).join(" · ") : "Local pro";
   const badge = ratingBadge(p);
   const useAgain = p.reviewCount >= 3 && p.useAgainPct !== null ? p.useAgainPct : null;
   const name = badgeName(p.businessName);
-  const where = p.areas.length ? `Covers ${listAreas(p.areas)}` : "Bolton";
+  const where = p.areas.length ? `Covers ${coverage(p.areas)}` : "Bolton";
 
   return new ImageResponse(
     (

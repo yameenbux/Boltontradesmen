@@ -180,6 +180,32 @@ export function listAreas(areas: string[]): string {
   return `${areas.slice(0, -1).join(", ")} and ${areas[areas.length - 1]}`;
 }
 
+const BOLTON_DISTRICTS = ["BL1", "BL2", "BL3", "BL4", "BL5", "BL6", "BL7"];
+
+/** Where a trader works, short: "all of Bolton", "all of Bolton, M26 and WN2", or "BL1 and BL3". */
+export function coverage(areas: string[]): string {
+  if (BOLTON_DISTRICTS.every((a) => areas.includes(a))) {
+    const rest = areas.filter((a) => !BOLTON_DISTRICTS.includes(a));
+    return rest.length ? `all of Bolton, ${listAreas(rest)}` : "all of Bolton";
+  }
+  return listAreas(areas);
+}
+
+/**
+ * The trades to lead with in search results (at most `max`): those sharing a word with the business name first
+ * ("A A Heating Engineer" leads with Heating repair), then in the listing's order.
+ */
+export function leadTrades(trades: string[], businessName: string, max = 2): string[] {
+  const words = new Set(businessName.toLowerCase().split(/[^a-z]+/).filter((w) => w.length >= 4));
+  const shares = (t: string) => t.toLowerCase().split(/[^a-z]+/).some((w) => w.length >= 4 && words.has(w));
+  return [...trades.filter(shares), ...trades.filter((t) => !shares(t))].slice(0, max);
+}
+
+/** "Heating repair and appliance repair" (the first as written, the rest in lower case). */
+export function tradesPhrase(trades: string[]): string {
+  return trades.map((t, i) => (i === 0 ? t : t.toLowerCase())).join(" and ");
+}
+
 export const SOCIAL_IMAGE = {
   url: "/social.png",
   width: 1200,
@@ -242,12 +268,14 @@ export function providerMetadata(p: {
   businessName: string;
   areas: string[];
   bio: string | null;
-  trade: string | null;
+  /** The listing's trades, in its order; the title leads with up to two (leadTrades). */
+  trades: string[];
 }): Metadata {
-  const what = p.trade ? `${p.trade} in Bolton` : "Local pro in Bolton";
+  const lead2 = leadTrades(p.trades, p.businessName);
+  const what = lead2.length ? `${tradesPhrase(lead2)} in Bolton` : "Local pro in Bolton";
   const title = `${p.businessName} — ${what} | ${SITE_NAME}`;
-  const areas = p.areas.length ? ` covering ${listAreas(p.areas)}` : "";
-  const lead = `${p.businessName}: ${p.trade ? p.trade.toLowerCase() : "local pro"} in Bolton${areas}.`;
+  const areas = p.areas.length ? ` covering ${coverage(p.areas)}` : "";
+  const lead = `${p.businessName}: ${lead2.length ? tradesPhrase(lead2).toLowerCase() : "local pro"} in Bolton${areas}.`;
   const bio = p.bio ? stripPhoneNumbers(p.bio) : "";
   const description = truncate(bio ? `${lead} ${bio}` : `${lead} Recommended on ${SITE_NAME}.`, 160);
   // The image comes from app/p/[slug]/opengraph-image.tsx.
@@ -334,7 +362,7 @@ export function homeJsonLd(base: string = siteUrl()) {
  * leave the server, and Google treats review markup a site publishes about the businesses it lists as self-serving.
  */
 export function providerJsonLd(
-  p: { slug: string; businessName: string; areas: string[]; trade: string | null },
+  p: { slug: string; businessName: string; areas: string[]; trades: string[] },
   base: string = siteUrl(),
 ) {
   const url = absoluteUrl(platformPath("p", p.slug), base);
@@ -344,9 +372,10 @@ export function providerJsonLd(
     "@id": `${url}#business`,
     name: p.businessName,
     url,
-    ...(p.trade ? { knowsAbout: p.trade } : {}),
+    ...(p.trades.length ? { knowsAbout: p.trades.length === 1 ? p.trades[0] : p.trades } : {}),
+    // Only BL districts are Bolton's (M26 is Radcliffe, WN2 Wigan).
     areaServed: p.areas.length
-      ? p.areas.map((a) => ({ "@type": "Place", name: `${a}, Bolton` }))
+      ? p.areas.map((a) => ({ "@type": "Place", name: BOLTON_DISTRICTS.includes(a) ? `${a}, Bolton` : a }))
       : [{ "@type": "City", name: "Bolton" }],
   };
 }

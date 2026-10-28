@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const p = await getProvider((await params).slug);
   if (!p) return {};
   const trades = await tradesOf(p.categorySlugs);
-  return providerMetadata({ ...p, trade: trades[0]?.name ?? null });
+  return providerMetadata({ ...p, trades: trades.map((t) => t.name) });
 }
 
 /** Trades › first trade › business (the trade is left out when the provider has no live category). */
@@ -67,7 +67,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ slug:
 
   return (
     <main className="profile">
-      <JsonLd data={providerJsonLd({ ...p, trade: trades[0]?.name ?? null })} />
+      <JsonLd data={providerJsonLd({ ...p, trades: trades.map((t) => t.name) })} />
       <JsonLd data={breadcrumbJsonLd(trail)} />
       <Breadcrumbs trail={trail} />
       <ProfileHeader
