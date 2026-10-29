@@ -1,4 +1,4 @@
-// The trader sign-up funnel for the admin (admin_signup_funnel, migrations 000056 and 000057). Client-safe.
+// The trader sign-up funnel for the admin (admin_signup_funnel, migrations 000056 to 000058). Client-safe.
 import { ARRIVAL_SOURCES, type ArrivalSource, FUNNEL_STEPS, type FunnelStep } from "@/lib/page-views";
 import { HEARD_FROM, type HeardFrom } from "@/lib/heard-from";
 
@@ -44,4 +44,5 @@ export const ARRIVAL_LABEL: Record<ArrivalSource, string> = {
   fb: "Came from Facebook",
   ig: "Came from Instagram",
   wa: "Came from a WhatsApp link",
+  poster: "Scanned a poster",
 };

@@ -227,9 +227,17 @@ const SCRIPTS = [
     file: "docs/launch/signup-funnel-production.sql",
     preset: "signup-funnel",
     from: "20261012000056",
-    to: NEWEST,
+    to: "20261012000057",
     functions: ["admin_signup_funnel", "set_my_heard_from"],
     requires: "20261012000055",
+  },
+  {
+    file: "docs/launch/poster-arrivals-production.sql",
+    preset: "poster-arrivals",
+    from: "20261012000058",
+    to: NEWEST,
+    functions: ["record_page_view", "admin_signup_funnel"],
+    requires: "20261012000057",
   },
 ];
 

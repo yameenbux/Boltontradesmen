@@ -13,9 +13,10 @@ describe("viewBody", () => {
     expect(viewBody('{"kind":"funnel","slug":"checkout"}')).toBeNull();
   });
 
-  it("accepts arrivals from Facebook, Instagram and WhatsApp only", () => {
+  it("accepts arrivals from Facebook, Instagram, WhatsApp and posters only", () => {
     expect(viewBody('{"kind":"arrival","slug":"fb"}')).toEqual({ kind: "arrival", slug: "fb" });
     expect(viewBody('{"kind":"arrival","slug":"wa"}')).toEqual({ kind: "arrival", slug: "wa" });
+    expect(viewBody('{"kind":"arrival","slug":"poster"}')).toEqual({ kind: "arrival", slug: "poster" });
     expect(viewBody('{"kind":"arrival","slug":"tiktok"}')).toBeNull();
   });
 
@@ -30,6 +31,7 @@ describe("arrivalSource", () => {
   it("reads our tagged links first", () => {
     expect(arrivalSource("?ref=fb", "")).toBe("fb");
     expect(arrivalSource("?ref=WhatsApp", "")).toBe("wa");
+    expect(arrivalSource("?ref=poster", "")).toBe("poster");
     expect(arrivalSource("?utm_source=instagram&utm_medium=social", "https://www.facebook.com/")).toBe("ig");
   });
 

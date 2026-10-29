@@ -52,7 +52,7 @@ environment variable needs a deploy too: Render → bolton-vouched → Manual De
    Session pooler connection string). Pasting the script into Supabase → SQL Editor still works too. Either way it's
    one transaction that checks its own prerequisite and rolls back if anything is missing.
 
-Latest migration applied live: **20261012000057** (traffic sources).
+Latest migration applied live: **20261012000057** (traffic sources). Waiting to be applied: 20261012000058 (poster arrivals, docs/launch/poster-arrivals-production.sql).
 
 ## Scheduled work
 
