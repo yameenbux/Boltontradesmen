@@ -50,4 +50,5 @@ export const FREE_FEATURES: string[] = [
   "Reviews from Bolton residents, and your own review link and QR card",
   "Your enquiry count and page views on your dashboard",
   "A “Taking on work” switch, and your “Vouched in Bolton” website badge",
+  "A spotlight post on our Facebook page once we've checked your listing",
 ];
