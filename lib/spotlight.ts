@@ -4,7 +4,7 @@
 // Pure functions, so they can be unit tested.
 import { checkRows, type Check } from "@/lib/checks";
 import { displayLink, reviewLink } from "@/lib/review-link";
-import { coverage, leadTrades, stripPhoneNumbers, tradesPhrase } from "@/lib/seo";
+import { coverage, leadTrades, stripPhoneNumbers } from "@/lib/seo";
 
 export type SpotlightInput = {
   slug: string;
@@ -38,6 +38,39 @@ export function calmCaps(name: string): string {
   return name.replace(/[A-Z]+/g, (w) => (w.length <= 3 ? w : w[0] + w.slice(1).toLowerCase()));
 }
 
+// The best-known place in each district, for the words people search on Facebook ("electrician Farnworth").
+const PLACES: Record<string, string> = {
+  BL1: "Bolton",
+  BL2: "Breightmet",
+  BL3: "Little Lever",
+  BL4: "Farnworth",
+  BL5: "Westhoughton",
+  BL6: "Horwich",
+  BL7: "Bromley Cross",
+  M26: "Radcliffe",
+  M28: "Walkden",
+  M46: "Atherton",
+  WN2: "Hindley",
+};
+
+/** "Bolton, Farnworth, Horwich and Westhoughton": Bolton first, then up to five more places the listing covers. */
+export function placesPhrase(areas: string[]): string {
+  const places = ["Bolton", ...areas.map((a) => PLACES[a]).filter((p): p is string => !!p && p !== "Bolton")].slice(0, 6);
+  return places.length === 1 ? places[0] : `${places.slice(0, -1).join(", ")} and ${places.at(-1)}`;
+}
+
+/** "#Bolton #BoltonElectrician #BoltonVouched #SupportLocal": the town, up to two trades, the brand. */
+export function spotlightHashtags(trades: string[], businessName: string): string {
+  const camel = (t: string) =>
+    t
+      .split(/[^A-Za-z0-9]+/)
+      .filter(Boolean)
+      .map((w) => w[0].toUpperCase() + w.slice(1).toLowerCase())
+      .join("");
+  const tags = ["#Bolton", ...leadTrades(trades, businessName).map((t) => `#Bolton${camel(t)}`), "#BoltonVouched", "#SupportLocal"];
+  return [...new Set(tags)].join(" ");
+}
+
 /** The facts the image shows and the post repeats. */
 export function spotlightFacts(p: SpotlightInput): SpotlightFacts {
   const name = calmCaps(stripPhoneNumbers(p.businessName.replace(/\s+/g, " ").trim()));
@@ -57,11 +90,12 @@ export function spotlightText(p: SpotlightInput, base: string): string {
   const f = spotlightFacts(p);
   const site = displayLink(base);
   const lead = leadTrades(p.trades, p.businessName);
-  const what = lead.length ? `${tradesPhrase(lead)} in Bolton` : "A local trader in Bolton";
+  // The searched words first: "Heating repair or appliance repair in Bolton, Breightmet ...?"
+  const what = lead.length ? lead.map((t, i) => (i === 0 ? t : t.toLowerCase())).join(" or ") : "A local trader";
   return [
     `🛠️ Trader spotlight: ${f.name}`,
     "",
-    `${what}, listed on Bolton Vouched.`,
+    `${what} in ${placesPhrase(p.areas)}? Meet ${f.name}, listed on Bolton Vouched.`,
     "",
     ...f.lines.map((l) => `✅ ${l}`),
     "",
@@ -71,5 +105,7 @@ export function spotlightText(p: SpotlightInput, base: string): string {
     displayLink(reviewLink(p.slug, base)),
     "",
     `Bolton trader? Get listed free: ${site}/for-traders`,
+    "",
+    spotlightHashtags(p.trades, p.businessName),
   ].join("\n");
 }
