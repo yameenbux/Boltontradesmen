@@ -119,6 +119,7 @@ export default function PrivacyPage() {
           "A request for a quote: legitimate interests in passing your request to the trader you chose, as you asked. Pro traders' alerts: contract, providing the service.",
           "A request to be listed: legitimate interests in answering it, and taking the steps you asked for before you agree to be listed. The connection signature: legitimate interests in stopping spam.",
           "The security check on forms (Cloudflare Turnstile), counting page views and the home page search words: legitimate interests in keeping the site secure, knowing which pages are used and which trades are missing.",
+          "A spotlight post about a new listing on our Facebook page (the business name and logo, trades, areas, the checks we've made, and links to the listing; never a phone number): legitimate interests in telling Bolton about the traders listed here. Ask us and we'll take the post down and won't feature you again.",
         ]}
       />
 
@@ -127,7 +128,7 @@ export default function PrivacyPage() {
         Data is stored in the UK, in a Supabase database hosted in London. Supabase also runs our sign-in. Resend sends our
         sign-in emails and Pro traders&apos; alert emails. Twilio sends Pro traders&apos; alert texts. Cloudflare runs the security check (Turnstile) on the sign-in page, the admin login, the Get
         listed form and the Request a quote form, which may look at signals from your device and browser, and, if it&apos;s switched on, counts page
-        views without cookies or a profile of you (Cloudflare Web Analytics). Stripe takes Pro payments. Supabase, Resend, Twilio, Cloudflare and Stripe act for
+        views without cookies or a profile of you (Cloudflare Web Analytics). Stripe takes Pro payments. Metricool schedules our Facebook posts, and once a post is up, Meta (Facebook) holds it as an independent controller under its own terms. Supabase, Resend, Twilio, Cloudflare, Stripe and Metricool act for
         us as processors (Stripe also has its own legal duties for payments, such as preventing fraud, under its own
         privacy policy). Railway hosts the website; the home page search words are kept only in its server logs, which are deleted automatically. If you choose Continue with Google, Google is an
         independent controller for your Google account, under its own terms, and only tells us who you are.
