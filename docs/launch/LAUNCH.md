@@ -1,3 +1,7 @@
+> **Historical.** This was the launch-morning checklist, when the site ran on Railway at boltonvouched.ysbdesigns.uk.
+> The site now runs on **Render** at **https://www.boltonvouched.co.uk**. For how things run today, read
+> [docs/OPERATIONS.md](../OPERATIONS.md).
+
 # Bolton Vouched — launch morning
 
 Everything runs on brand-new, separate accounts/projects:

@@ -4,6 +4,7 @@ import { AvailabilityForm } from "@/components/provider/AvailabilityForm";
 import { BrandColorForm, LogoForm } from "@/components/provider/BrandingForms";
 import { EditListingForm } from "@/components/provider/EditListingForm";
 import { AlertSettingsForm, type AlertSettings } from "@/components/provider/AlertSettingsForm";
+import { dailyJobConfigured } from "@/lib/cron";
 import { textsAvailable } from "@/lib/sms-hook";
 import { EnquiryStats } from "@/components/provider/EnquiryStats";
 import { Insights } from "@/components/provider/Insights";
@@ -287,7 +288,7 @@ export default async function ProviderArea({
   // Without all four Stripe settings the offer says "Pro opens soon" and nothing can be bought.
   const stripeReady = stripeConfig() !== null;
   // Quote follow-up emails go out from the daily job, which only runs with CRON_SECRET set.
-  const followupsOn = !!process.env.CRON_SECRET?.trim();
+  const followupsOn = dailyJobConfigured();
   // Card payments need Stripe Connect switched on for our account, shown by its webhook's secret being set.
   const cardReady = stripeReady && !!process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim();
 

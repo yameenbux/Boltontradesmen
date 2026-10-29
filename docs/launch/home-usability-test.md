@@ -54,14 +54,18 @@ Write down their words exactly.
 
 **Search no-match rate.** Run:
 
+Save the server logs from Render (dashboard → bolton-vouched → Logs, search "search-log") to a file, then:
+
 ```
-railway logs | node scripts/search-report.mjs
+node scripts/search-report.mjs < render-logs.txt
 ```
+
+Render keeps logs for a limited time only, so run this within a few days of the period you want to measure.
 
 The target is under 10%. The report also lists the searches that found nothing, which are the trades people want and we're missing.
 
 **Contact taps.** The admin provider page shows enquiries (Call and WhatsApp taps) per trader.
 
-**Visits to trader pages.** These come from Cloudflare Web Analytics. It is **not switched on yet**: set `CF_WEB_ANALYTICS_TOKEN` in Railway first.
+**Visits to trader pages.** These come from Cloudflare Web Analytics (switched on with `CF_WEB_ANALYTICS_TOKEN` on Render), and from the page views on the admin's sign-up card and each trader's dashboard.
 
 **Comparing before and after:** compare the two weeks before a change with the two weeks after. Traffic is too low for a reliable A/B test.

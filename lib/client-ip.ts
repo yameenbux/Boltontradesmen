@@ -1,9 +1,9 @@
 // The visitor's IP, for rate limits, device hashes and consent records.
 //
-// Railway's edge proxy appends the address it received the connection from to X-Forwarded-For, so the
-// RIGHTMOST entry is the one we can trust. Everything to its left was sent by the visitor and can be
+// By default (TRUSTED_PROXY_HOPS=1) we assume one edge proxy that appends the address it received the connection
+// from to X-Forwarded-For, as Railway's does, so the RIGHTMOST entry is the one we can trust. Everything to its left was sent by the visitor and can be
 // anything (a fresh fake per request would dodge every per-IP limit). With more trusted proxies in front
-// of the app (a CDN in front of Railway, say), set TRUSTED_PROXY_HOPS to how many of them append an entry:
+// of the app (a CDN in front of the host, say), set TRUSTED_PROXY_HOPS to how many of them append an entry:
 // the client is then that many entries from the right. TRUSTED_PROXY_HOPS=0 trusts no forwarding header.
 //
 // Some hosts instead set one header of their own that overwrites whatever the visitor sent (True-Client-IP

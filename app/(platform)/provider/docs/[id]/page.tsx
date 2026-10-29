@@ -4,6 +4,7 @@ import { DocActions } from "@/components/docs/DocActions";
 import { DocSheet } from "@/components/docs/DocSheet";
 import { nationalNumber } from "@/lib/alert-text";
 import { dayMonthYear } from "@/lib/checks";
+import { dailyJobConfigured } from "@/lib/cron";
 import { myDoc } from "@/lib/my-docs";
 import { platformPath } from "@/lib/paths";
 import { absoluteUrl } from "@/lib/seo";
@@ -17,7 +18,7 @@ const NEXT_STEP: Record<string, string> = {
   sent: "Sent. We'll let you know when your customer accepts or declines it.",
   accepted: "Accepted. When the job's done, turn it into an invoice in one tap.",
   declined: "Your customer declined this quote.",
-  unpaid: "Waiting for payment. We remind your customer 3 and 10 days after the due date.",
+  unpaid: "Waiting for payment.",
   paid: "Paid.",
   void: "Cancelled.",
 };
@@ -42,6 +43,8 @@ export default async function DocPage({ params }: { params: Promise<{ id: string
           <h1 id="doc-page-title">{label}</h1>
           <p className="lede" data-testid="doc-next">
             {NEXT_STEP[doc.status]}
+            {/* Payment reminders are Pro, and only go out while the daily job runs. */}
+            {doc.status === "unpaid" && isPro && dailyJobConfigured() && " We remind your customer 3 and 10 days after the due date."}
             {doc.status === "paid" && doc.ask_review && " We've asked your customer for an honest review."}
           </p>
           <p className="doc-contact">

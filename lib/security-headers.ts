@@ -1,5 +1,5 @@
 // Response headers for next.config.ts: HSTS, CSP and the usual hardening headers.
-// http → https itself happens at Railway's edge (docs.railway.com: "Railway redirects HTTP to HTTPS"). An app-level
+// http → https itself happens at the host's edge (Render redirects HTTP to HTTPS for its custom domains). An app-level
 // X-Forwarded-Proto redirect also caught Next's own internal fetch after a server action redirect, so there isn't one.
 // Pure (no "@/" imports, no server-only) so next.config.ts can import it and it can be unit tested.
 type Env = Record<string, string | undefined>;
