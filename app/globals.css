@@ -152,6 +152,9 @@ h1,h2,h3{text-wrap:balance}
   .funnel th[scope="row"],.funnel thead th:first-child{text-align:left; font-weight:600}
   .funnel thead th{font-size:13px; color:var(--ink-3); font-weight:700}
   .funnel-end th,.funnel-end td{font-weight:800; border-bottom:0}
+  .funnel-start th,.funnel-start td{border-top:2px solid var(--line)}
+  .funnel-from th,.funnel-from td{font-size:13px; color:var(--ink-3); border-bottom:0; padding-top:2px}
+  .funnel-from th[scope="row"]{font-weight:500; padding-left:14px}
   .a-form{display:grid; gap:18px}
   .a-field{display:grid; gap:6px; font-size:16px; font-weight:700; color:var(--ink)}
   .a-hint{font-size:14px; font-weight:500; color:var(--ink-2)}

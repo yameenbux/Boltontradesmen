@@ -8,6 +8,7 @@ import { ConsentParagraph } from "@/components/consent/ConsentParagraph";
 import { LogoPick } from "@/components/provider/LogoPick";
 import type { ConsentCard } from "@/lib/consent-shared";
 import { BL_DISTRICTS } from "@/lib/districts";
+import { HEARD_FROM } from "@/lib/heard-from";
 import { LISTING_LIMITS } from "@/lib/listing-request";
 import { PLANS } from "@/lib/pro";
 import { FREE_FEATURES, PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";
@@ -149,6 +150,7 @@ export function TraderSetupForm({
           defaultValue={v("whatsapp")} {...invalid("whatsapp")} />
         <Err k="whatsapp" msg={err.whatsapp} />
       </label>
+      <HeardFromField value={v("heard_from")} />
 
       <fieldset className="plan-choice" aria-describedby={err.plan ? "ts-plan-err" : undefined}>
         <legend className="avail-legend">Choose your listing</legend>
@@ -245,6 +247,26 @@ export function TraderSetupForm({
         {pending ? "Putting you live…" : "Confirm"}
       </Button>
     </form>
+  );
+}
+
+/**
+ * "How did you hear about Bolton Vouched?" (optional). Radios, not a select: React's reset after a send restores
+ * radios to defaultChecked (what was sent), but puts a select back to its first option.
+ */
+function HeardFromField({ value }: { value: string }) {
+  return (
+    <fieldset className="tick-group">
+      <legend className="avail-legend">How did you hear about Bolton Vouched? (optional)</legend>
+      <div className="tick-grid">
+        {HEARD_FROM.map((h) => (
+          <label key={h.value} className="tick">
+            <input type="radio" name="heard_from" value={h.value} defaultChecked={value === h.value} />
+            <span>{h.label}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
   );
 }
 

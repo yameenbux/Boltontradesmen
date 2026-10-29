@@ -9,6 +9,7 @@ import { clientIpFrom } from "@/lib/client-ip";
 import { CONSENT_TEXT_VERSION, consentStatement } from "@/lib/consent-text";
 import { formatDisplayName, InvalidNameError } from "@/lib/display-name";
 import { BL_DISTRICTS } from "@/lib/districts";
+import { isHeardFrom } from "@/lib/heard-from";
 import { firstName } from "@/lib/initials";
 import { ipHash } from "@/lib/ip-hash";
 import { LISTING_ERRORS, LISTING_LIMITS } from "@/lib/listing-request";
@@ -32,7 +33,7 @@ function field(fd: FormData, name: string): string {
 const list = (fd: FormData, name: string) =>
   [...new Set(fd.getAll(name).filter((v): v is string => typeof v === "string" && v.trim() !== ""))];
 
-const FIELDS = ["first_name", "surname", "business_name", "phone", "whatsapp", "plan", "pro_billing"] as const;
+const FIELDS = ["first_name", "surname", "business_name", "phone", "whatsapp", "plan", "pro_billing", "heard_from"] as const;
 
 /**
  * The trader's one form, in one step: their name (when the account has none yet), business, the trades and postcode
@@ -195,6 +196,12 @@ export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): 
     return { message: LISTING_ERRORS.failed, values };
   }
   if (logo && result.id) await storeLogo(supabase, result.id, logo);
+  // Where they heard about us (optional): only for the admin's sign-up card, so a failure is logged and ignored.
+  const heard = values.heard_from as string;
+  if (result.id && isHeardFrom(heard)) {
+    const { error } = await supabase.rpc("set_my_heard_from", { p_provider: result.id, p_source: heard });
+    if (error) console.error("trader setup: set_my_heard_from failed:", error.message);
+  }
   // On the category and home pages now, not when their cache next runs out.
   revalidatePublicPages();
   if (email) {

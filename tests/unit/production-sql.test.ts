@@ -228,7 +228,7 @@ const SCRIPTS = [
     preset: "signup-funnel",
     from: "20261012000056",
     to: NEWEST,
-    functions: ["admin_signup_funnel"],
+    functions: ["admin_signup_funnel", "set_my_heard_from"],
     requires: "20261012000055",
   },
 ];

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree, Gloock } from "next/font/google";
 import "./globals.css";
+import { ArrivalBeacon } from "@/components/ViewBeacon";
 import { siteUrl } from "@/lib/seo";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
@@ -56,7 +57,10 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       {/* Bare on purpose: each section (directory, admin, policies) brings its own chrome. */}
-      <body className="min-h-dvh">{children}</body>
+      <body className="min-h-dvh">
+        {children}
+        <ArrivalBeacon />
+      </body>
     </html>
   );
 }
