@@ -201,7 +201,7 @@ test("no horizontal scroll at 360px on /cookies", async ({ page }) => {
 test("the privacy notice covers Cloudflare, local storage and listing requests", async ({ page }) => {
   await page.goto("/privacy");
   const main = page.getByRole("main");
-  await expect(main).toContainText("Supabase, Resend, Twilio, Cloudflare, Stripe and Metricool act for us as processors");
+  await expect(main).toContainText("Supabase, Resend, Twilio, Cloudflare, Stripe, Metricool and Sentry act for us as processors");
   // The Facebook spotlight for a new listing, and how to stop it.
   await expect(main).toContainText("A spotlight post about a new listing on our Facebook page");
   await expect(main).toContainText("we'll take the post down and won't feature you again");

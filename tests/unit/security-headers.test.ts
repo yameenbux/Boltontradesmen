@@ -13,6 +13,16 @@ describe("supabaseOrigin", () => {
 });
 
 describe("contentSecurityPolicy", () => {
+  it("lets the browser send error reports to Sentry only when NEXT_PUBLIC_SENTRY_DSN is a Sentry address", () => {
+    const dsn = "https://abc123@o1.ingest.de.sentry.io/42";
+    expect(directive(contentSecurityPolicy({ ...PROD, NEXT_PUBLIC_SENTRY_DSN: dsn }), "connect-src")).toBe(
+      "connect-src 'self' https://cloudflareinsights.com https://abc.supabase.co https://o1.ingest.de.sentry.io",
+    );
+    expect(directive(contentSecurityPolicy({ ...PROD, NEXT_PUBLIC_SENTRY_DSN: "https://x@evil.example/1" }), "connect-src")).toBe(
+      "connect-src 'self' https://cloudflareinsights.com https://abc.supabase.co",
+    );
+  });
+
   it("allows Supabase for images, fetches and forms, plus Turnstile and Cloudflare analytics", () => {
     const csp = contentSecurityPolicy(PROD);
     expect(directive(csp, "default-src")).toBe("default-src 'self'");

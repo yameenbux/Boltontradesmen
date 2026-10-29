@@ -1,0 +1,53 @@
+name: Apply production SQL
+# Applies one of the production scripts in docs/launch/ to the LIVE database, instead of pasting it into the
+# Supabase SQL Editor. Run it by hand from the Actions tab (Run workflow), on main only, typing the file name and
+# "apply". Each script is one transaction: it checks the migration before it was applied, and rolls back if anything
+# is missing (docs/OPERATIONS.md).
+#
+# Needs the repository secret SUPABASE_PROD_DB_URL: Supabase → Connect → "Session pooler" connection string, with
+# the database password filled in (GitHub's runners can't reach the direct connection, which is IPv6 only).
+# Put the secret on the "production" environment and add yourself as a required reviewer, so every run waits for
+# your approval.
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: "Script to apply, e.g. docs/launch/signup-funnel-production.sql"
+        required: true
+        type: string
+      confirm:
+        description: 'Type "apply" to run it against the live database'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-sql
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Check the inputs
+        env:
+          SCRIPT: ${{ inputs.script }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$CONFIRM" != "apply" ]; then echo "Type apply to confirm."; exit 1; fi
+          if ! printf '%s' "$SCRIPT" | grep -Eq '^docs/launch/[a-z0-9-]+-production\.sql$'; then
+            echo "Only docs/launch/<name>-production.sql scripts can be applied."; exit 1
+          fi
+          if [ ! -f "$SCRIPT" ]; then echo "$SCRIPT doesn't exist on main."; exit 1; fi
+      - name: Apply
+        env:
+          SCRIPT: ${{ inputs.script }}
+          DB_URL: ${{ secrets.SUPABASE_PROD_DB_URL }}
+        run: |
+          if [ -z "$DB_URL" ]; then echo "The SUPABASE_PROD_DB_URL secret isn't set."; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$SCRIPT"

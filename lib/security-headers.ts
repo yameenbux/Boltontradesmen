@@ -26,6 +26,16 @@ function servedOverHttps(env: Env): boolean {
   }
 }
 
+/** Sentry's ingest origin from NEXT_PUBLIC_SENTRY_DSN, for the browser's error reports; null when it's off. */
+function sentryOrigin(env: Env): string | null {
+  try {
+    const u = new URL(env.NEXT_PUBLIC_SENTRY_DSN?.trim() ?? "");
+    return u.protocol === "https:" && /(^|\.)sentry\.io$/.test(u.hostname) ? u.origin : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Content-Security-Policy without nonces: a nonce makes every page render per request, and the public pages must
  * stay static. 'unsafe-inline' scripts cover the theme and reveal scripts plus Next's inline bootstrap.
@@ -50,7 +60,7 @@ export function contentSecurityPolicy(env: Env = process.env): string {
     ["style-src", ["'self'", "'unsafe-inline'"]],
     ["img-src", withSupabase("'self'", "data:", "blob:")],
     ["font-src", ["'self'"]],
-    ["connect-src", withSupabase("'self'", "https://cloudflareinsights.com")],
+    ["connect-src", [...withSupabase("'self'", "https://cloudflareinsights.com"), ...[sentryOrigin(env)].filter((o): o is string => !!o)]],
     ["frame-src", ["https://challenges.cloudflare.com"]],
     ["frame-ancestors", ["'none'"]],
     ["base-uri", ["'self'"]],

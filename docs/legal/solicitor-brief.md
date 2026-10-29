@@ -44,7 +44,7 @@ Also:
 5. **Lawful bases.** Consent for publishing a listing. Legitimate interests for enquiry counting, page views, the security check, the review request after an invoice is paid, and the Facebook spotlights. Are these the right bases? Is a legitimate interests assessment needed on file for each?
 6. **Messages to traders' customers.** We email a trader's customer about their own quote or invoice: a copy, up to two payment reminders, and one review request after payment (the trader can switch it off). Is the review request a "marketing" message under PECR? Does it need a soft opt-in or consent?
 7. **International transfers.** The database is in London, the web server in Frankfurt. Resend, Stripe, Twilio (when switched on), Cloudflare and Metricool may process data in the EU or the US. Is the privacy notice's wording on transfers sufficient, and which mechanism should each service be named under?
-8. **Processors.** Do we need signed data processing terms with each processor (Supabase, Render, Resend, Stripe, Cloudflare, Metricool, Twilio)? Most have standard DPAs to accept online. Which are missing?
+8. **Processors.** Do we need signed data processing terms with each processor (Supabase, Render, Resend, Stripe, Cloudflare, Metricool, Sentry, Twilio)? Most have standard DPAs to accept online. Which are missing?
 9. **Liability.** Are the limits in "Work done by providers" and "Our liability" enforceable for a free directory and for the paid Pro service?
 10. **ICO registration.** Does YSB Ventures Ltd need to pay the data protection fee?
 

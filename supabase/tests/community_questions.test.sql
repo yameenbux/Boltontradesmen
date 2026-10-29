@@ -3,7 +3,7 @@
 -- account, closed after 14 days), the public views, reports, the admin's queue and removals, account deletion, and
 -- that ranking never reads any of it. Accounts are made through the auth.users guard paths, as GoTrue would.
 begin;
-select plan(74);
+select plan(75);
 
 update public.settings set value = '["cq-admin@example.com"]'::jsonb where key = 'admin_emails';
 
@@ -88,6 +88,12 @@ select is((select array_agg(column_name::text order by ordinal_position) from in
 select ok(not exists (select 1 from information_schema.columns where table_schema = 'public'
                       and table_name = 'question_answer_public' and column_name in ('author_id', 'phone_e164', 'whatsapp_e164')),
   'question_answer_public has no account id or phone number');
+-- The view bypasses row-level security (as every *_public view does), so a column added here is public at once.
+select is((select array_agg(column_name::text order by ordinal_position) from information_schema.columns
+           where table_schema = 'public' and table_name = 'question_answer_public'),
+  array['id', 'question_id', 'kind', 'provider_id', 'provider_slug', 'business_name', 'has_whatsapp', 'author_name', 'note',
+        'created_at'],
+  'question_answer_public exposes exactly these columns');
 
 -- ---------------------------------------------------------------- asking
 insert into k select 'q1', (pg_temp.ask('00000000-0000-0000-0000-0000000c0001', 'electrician', '  Anyone know a good
