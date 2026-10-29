@@ -52,8 +52,10 @@
 //     --out docs/launch/card-payments-production.sql
 //   node scripts/build-production-sql.mjs --preset pay-links --from 20261012000055 --to 20261012000055 \
 //     --out docs/launch/pay-links-production.sql
-//   node scripts/build-production-sql.mjs --preset signup-funnel --from 20261012000056 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset signup-funnel --from 20261012000056 --to 20261012000057 \
 //     --out docs/launch/signup-funnel-production.sql
+//   node scripts/build-production-sql.mjs --preset poster-arrivals --from 20261012000058 --to <newest> \
+//     --out docs/launch/poster-arrivals-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -830,6 +832,24 @@ end
 $verify$;
 `;
 
+const VERIFY_POSTER_ARRIVALS = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                 where n.nspname = 'public' and proname = 'record_page_view'
+                   and pg_get_functiondef(p.oid) like '%''poster''%') then
+    raise exception 'Poster arrivals check failed: page views don''t count posters';
+  end if;
+  if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                 where n.nspname = 'public' and proname = 'admin_signup_funnel'
+                   and pg_get_functiondef(p.oid) like '%''poster''%') then
+    raise exception 'Poster arrivals check failed: the funnel doesn''t show posters';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -999,6 +1019,12 @@ const PRESETS = {
     done: "Sign-up funnel applied",
     requires: { version: "20261012000055", what: "the pay links script (docs/launch/pay-links-production.sql)" },
     verify: VERIFY_SIGNUP_FUNNEL,
+  },
+  "poster-arrivals": {
+    title: "Visitors who scanned a printed poster, on the admin home",
+    done: "Poster arrivals applied",
+    requires: { version: "20261012000057", what: "the sign-up funnel script (docs/launch/signup-funnel-production.sql)" },
+    verify: VERIFY_POSTER_ARRIVALS,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];

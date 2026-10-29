@@ -2,7 +2,7 @@
 -- own visits, nothing else accepted; arrivals from Facebook, Instagram and WhatsApp; a new trader's "how did you hear
 -- about us" set once by them; the summary for the admin only.
 begin;
-select plan(19);
+select plan(20);
 
 update public.settings set value = '["sf-admin@example.com"]'::jsonb where key = 'admin_emails';
 create function public.sf_as(p_uid uuid) returns void language sql as $$
@@ -30,6 +30,7 @@ select ok(not public.record_page_view('funnel', 'checkout', repeat('d', 64), nul
 select ok(public.record_page_view('arrival', 'fb', repeat('a', 64), null), 'an arrival from Facebook counts');
 select ok(not public.record_page_view('arrival', 'fb', repeat('a', 64), null), 'once a day per viewer');
 select ok(public.record_page_view('arrival', 'wa', repeat('e', 64), null), 'and from WhatsApp');
+select ok(public.record_page_view('arrival', 'poster', repeat('e', 64), null), 'and from a poster');
 select ok(not public.record_page_view('arrival', 'tiktok', repeat('e', 64), null), 'nowhere else');
 select ok(not public.record_page_view('arrival', 'fb', repeat('f', 64), '00000000-0000-0000-0000-00000000e1a0'),
   'not the admin''s own');
@@ -59,7 +60,7 @@ set local role authenticated;
 select is(public.admin_signup_funnel(7) -> 'steps',
   '{"for-traders": 1, "get-listed": 0, "trader-sign-in": 1, "trader-form": 1}'::jsonb, 'the admin sees each step');
 select is(public.admin_signup_funnel(7) ->> 'days', '7', 'for the days asked');
-select is(public.admin_signup_funnel(7) -> 'arrivals', '{"fb": 1, "ig": 0, "wa": 1}'::jsonb, 'arrivals by source');
+select is(public.admin_signup_funnel(7) -> 'arrivals', '{"fb": 1, "ig": 0, "wa": 1, "poster": 1}'::jsonb, 'arrivals by source');
 select is(public.admin_signup_funnel(7) -> 'listed_from' ->> 'facebook', '1', 'new listings by where they heard');
 reset role;
 

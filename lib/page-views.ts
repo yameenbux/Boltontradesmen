@@ -5,12 +5,12 @@ export type ViewKind = "profile" | "category" | "funnel" | "arrival";
 /** The trader sign-up funnel's steps (migration 000056), in order. */
 export const FUNNEL_STEPS = ["for-traders", "get-listed", "trader-sign-in", "trader-form"] as const;
 export type FunnelStep = (typeof FUNNEL_STEPS)[number];
-/** Where an arrival came from (migration 000057): Facebook, Instagram, WhatsApp. */
-export const ARRIVAL_SOURCES = ["fb", "ig", "wa"] as const;
+/** Where an arrival came from (migrations 000057, 000058): Facebook, Instagram, WhatsApp, our printed posters. */
+export const ARRIVAL_SOURCES = ["fb", "ig", "wa", "poster"] as const;
 export type ArrivalSource = (typeof ARRIVAL_SOURCES)[number];
 
 const REF_ALIASES: Record<string, ArrivalSource> = {
-  fb: "fb", facebook: "fb", ig: "ig", instagram: "ig", wa: "wa", whatsapp: "wa",
+  fb: "fb", facebook: "fb", ig: "ig", instagram: "ig", wa: "wa", whatsapp: "wa", poster: "poster",
 };
 
 /**

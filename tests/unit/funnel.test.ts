@@ -12,7 +12,7 @@ describe("toFunnel", () => {
     })).toEqual({
       days: 7,
       steps: { "for-traders": 12, "get-listed": 0, "trader-sign-in": 5, "trader-form": 0 },
-      arrivals: { fb: 9, ig: 0, wa: 2 },
+      arrivals: { fb: 9, ig: 0, wa: 2, poster: 0 },
       listed: 2,
       listedFrom: { facebook: 1, whatsapp: 0, word_of_mouth: 0, instagram: 0, google: 0, other: 0, unknown: 1 },
     });
