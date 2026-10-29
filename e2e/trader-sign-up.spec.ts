@@ -56,6 +56,7 @@ test("a new trader: tick trades and areas, mobile and WhatsApp, Confirm, live; t
   await expect(form.getByRole("checkbox", { name: "Customers can WhatsApp me on this number" })).toBeChecked();
   await expect(form).toContainText("Quotes and invoices from your phone");
   await form.getByRole("radio", { name: /^Pro/ }).check();
+  await form.getByRole("group", { name: /How did you hear about Bolton Vouched/ }).getByRole("radio", { name: "Facebook" }).check();
   // The consent page's statement, word for word; no ticks to agree: pressing Confirm is the agreement.
   await expect(form).toContainText("People who've used you can review you");
   await expect(form.getByTestId("confirm-line")).toContainText("By pressing Confirm");
@@ -64,6 +65,7 @@ test("a new trader: tick trades and areas, mobile and WhatsApp, Confirm, live; t
   await expect(form).toContainText("Tick the postcode areas you cover");
   await expect(form.getByRole("radio", { name: /^Pro/ })).toBeChecked();
   await expect(form.getByLabel("Business name")).toHaveValue(business);
+  await expect(form.getByRole("group", { name: /How did you hear about Bolton Vouched/ }).getByRole("radio", { name: "Facebook" })).toBeChecked();
   // A file box can't be refilled after a refused send, so it asks for the logo again.
   await expect(form).toContainText("Choose your logo again before you press Confirm.");
   await form.getByLabel("Your logo").setInputFiles("e2e/fixtures/proof-with-gps.jpg");
@@ -77,6 +79,8 @@ test("a new trader: tick trades and areas, mobile and WhatsApp, Confirm, live; t
   await expect(live).toContainText(`${business} is now live on Bolton Vouched`);
   // The logo went on with the listing, in its own folder.
   expect(sql(`select logo_path ~ ('^' || id || '/[0-9a-f-]{36}\\.webp$') from public.providers where business_name = '${business}'`)).toBe("t");
+  // Where they heard about us, for the admin's sign-up card.
+  expect(sql(`select heard_from from public.providers where business_name = '${business}'`)).toBe("facebook");
   await expect(page.getByRole("link", { name: "Start Pro: pay by card" })).toBeVisible();
   // Step 1: taking on work, saved from here.
   const avail = page.getByTestId("step-availability");

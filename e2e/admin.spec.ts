@@ -101,13 +101,18 @@ test("a removed provider can only come back through Re-invite", async ({ page })
   await expect(page.getByText(/^Link expires on \d{1,2} [A-Z][a-z]+ \d{4}$/).first()).toBeVisible();
 });
 
-test("the admin home shows the trader sign-up funnel, fed by the For traders page", async ({ page, browser }, testInfo) => {
+test("the admin home shows the trader sign-up funnel, fed by the For traders page and arrivals from Facebook", async ({ page, browser }, testInfo) => {
   // A visitor (ordinary browser, not headless) reaches For traders; the page sends its funnel beacon.
   const ctx = await browser.newContext({ baseURL: testInfo.project.use.baseURL, userAgent: "Mozilla/5.0 E2E funnel" });
   const visitor = await ctx.newPage();
-  const beacon = visitor.waitForRequest((r) => r.url().endsWith("/api/view") && r.method() === "POST");
-  await visitor.goto("/for-traders");
-  await beacon;
+  // Arriving from a Facebook post: Facebook adds ?fbclid to the link, so the arrival beacon fires as well as the
+  // page's funnel beacon (beacon bodies can't be read here, so count the two requests).
+  let views = 0;
+  visitor.on("request", (r) => {
+    if (r.url().endsWith("/api/view") && r.method() === "POST") views += 1;
+  });
+  await visitor.goto("/for-traders?fbclid=E2Etest");
+  await expect.poll(() => views).toBeGreaterThanOrEqual(2);
   await ctx.close();
 
   await signIn(page);
@@ -120,5 +125,6 @@ test("the admin home shows the trader sign-up funnel, fed by the For traders pag
   await expect(async () => {
     await page.reload();
     await expect(funnel.getByRole("row", { name: /Saw the For traders page/ }).getByRole("cell").first()).not.toHaveText("0", { timeout: 1000 });
+    await expect(funnel.getByTestId("arrival-fb").getByRole("cell").first()).not.toHaveText("0", { timeout: 1000 });
   }).toPass({ timeout: 10_000 });
 });
