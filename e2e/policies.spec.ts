@@ -165,7 +165,8 @@ test("the privacy notice is accurate about surnames, Google and the sign-in fing
 test("the terms cover who we are, suspension, liability, changes and the courts", async ({ page }) => {
   await page.goto("/terms");
   const main = page.getByRole("main");
-  await expect(main).toContainText("Last updated: 25 October 2026.");
+  await expect(main).toContainText("Last updated: 29 October 2026.");
+  await expect(main).toContainText("we may feature it in a spotlight post on our Facebook page");
   for (const heading of ["Who we are", "Accounts and suspension", "Our liability", "Changes to these terms", "Law and courts"]) {
     await expect(main.getByRole("heading", { name: heading })).toBeVisible();
   }

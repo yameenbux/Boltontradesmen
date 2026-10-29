@@ -34,6 +34,8 @@ export default function PrivacyPage() {
           "Your phone and WhatsApp numbers. These are held privately, are not shown on the page, and are only used behind the Call and WhatsApp buttons.",
           "Consent evidence: when you agreed to be listed (timestamp), the IP address you agreed from, and the version and hash of the consent text you saw.",
           "Checks recorded by the site admin about your business (for example, that a check was made and when).",
+          "Your logo, if you add one. It's published on your profile and in its Facebook spotlight.",
+          "If you answer it when you join, how you heard about Bolton Vouched (for example Facebook or someone told you). Only the site admin sees it, as a count of where new traders come from.",
         ]}
       />
       <p>Traders who choose Pro, the optional paid extra:</p>
@@ -42,6 +44,7 @@ export default function PrivacyPage() {
           "Payment: Stripe, our payment processor, takes your payment and holds your card details; we never see them. We keep the references Stripe gives us for you and your subscription, which plan you're on, its status and when it renews or ends.",
           "Your ID check: a photo of your passport or driving licence, and, if you choose, your insurance certificate or trade accreditations. We use them only to check who you are and what you're covered for. They are stored privately, we remove photos' hidden details (such as location) first, and only the site admin sees them. We delete each file 30 days after we've decided on it and keep only the decision: whether it was accepted, when, and why not if it wasn't. While Pro is on, your page shows \"ID checked\".",
           "Card payments, if you turn them on: you open a Stripe account of your own, and Stripe collects the details it needs from you directly. We keep only its account reference and whether it can take payments. Your customers pay you through Stripe; we see which quote or invoice was paid and how much, never their card details.",
+          "Your own card payment link (SumUp, Square, PayPal and the like), if you add one: it's shown on your unpaid invoices. Payments made through it go to that provider; we don't see them.",
           "Work photos you add are published on your page while Pro is on. We remove their hidden details (such as location) before publishing them. You can delete them at any time from your dashboard, Pro or not.",
         ]}
       />
@@ -50,6 +53,7 @@ export default function PrivacyPage() {
         items={[
           "When you tap Call or WhatsApp on a profile, we record which provider you tapped and a device signature. The signature is a one-way hash (HMAC) of your IP address and browser user agent, so we do not store your IP address or phone number for this. If you are signed in, we also record your account, so a trader's own taps (and the admin's) are not counted as enquiries. We use these records to count enquiries.",
           "What you type into the home page search, with nothing that links it to you: we don't record your IP address, a device signature or an account with it. Digits are masked and it's cut to 40 characters. We use it to see which trades people look for and how often search finds nothing.",
+          "Page views: when you open a trader's page, a trade's page or a step of the trader sign-up, we count it, once per connection per day. To skip repeats we keep the same one-way device signature for two days, then delete it; the counts themselves hold nothing about you. If you arrived from a Facebook, Instagram or WhatsApp link, that's counted too (worked out from the link itself; nothing is stored in your browser). The trader's own visits and the admin's aren't counted.",
           "If you only browse, we set no cookies and you need no account.",
           "If you choose the light or dark look, that choice is saved in your browser's own storage (local storage), not sent to us.",
         ]}
@@ -131,7 +135,10 @@ export default function PrivacyPage() {
         views without cookies or a profile of you (Cloudflare Web Analytics). Stripe takes Pro payments. Metricool schedules our Facebook posts, and once a post is up, Meta (Facebook) holds it as an independent controller under its own terms. Supabase, Resend, Twilio, Cloudflare, Stripe and Metricool act for
         us as processors (Stripe also has its own legal duties for payments, such as preventing fraud, under its own
         privacy policy). Render hosts the website; the home page search words are kept only in its server logs, which are deleted automatically. If you choose Continue with Google, Google is an
-        independent controller for your Google account, under its own terms, and only tells us who you are.
+        independent controller for your Google account, under its own terms, and only tells us who you are. The
+        website server is in the EU (Frankfurt). Some of the services above may also handle data outside the UK, for
+        example in the EU or the US; where they do, they rely on the UK&apos;s adequacy regulations or the contract
+        protections the law requires for transfers.
       </p>
 
       <H2>How long we keep it</H2>
