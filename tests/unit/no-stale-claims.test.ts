@@ -57,7 +57,7 @@ const PHONE_EXEMPT = new Set([
   "app/(platform)/provider/jobs-actions.ts",
 ]);
 // Twilio sends Pro traders' alert texts, and the privacy notice says so; that's the only mention allowed.
-const ALERT_TEXTS = ["twilio sends pro traders' alert texts", "resend, twilio, cloudflare, stripe and metricool"];
+const ALERT_TEXTS = ["twilio sends pro traders' alert texts", "resend, twilio, cloudflare, stripe, metricool and sentry"];
 const PHONE_SIGN_IN = ["uk mobile", "sign in with your mobile", "signing in with your number", "with the number on your listing", "twilio"];
 
 describe("no claims that sign-in needs a mobile number", () => {

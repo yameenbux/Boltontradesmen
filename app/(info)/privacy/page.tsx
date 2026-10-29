@@ -132,7 +132,7 @@ export default function PrivacyPage() {
         Data is stored in the UK, in a Supabase database hosted in London. Supabase also runs our sign-in. Resend sends our
         sign-in emails and Pro traders&apos; alert emails. Twilio sends Pro traders&apos; alert texts. Cloudflare runs the security check (Turnstile) on the sign-in page, the admin login, the Get
         listed form and the Request a quote form, which may look at signals from your device and browser, and, if it&apos;s switched on, counts page
-        views without cookies or a profile of you (Cloudflare Web Analytics). Stripe takes Pro payments. Metricool schedules our Facebook posts, and once a post is up, Meta (Facebook) holds it as an independent controller under its own terms. Supabase, Resend, Twilio, Cloudflare, Stripe and Metricool act for
+        views without cookies or a profile of you (Cloudflare Web Analytics). Stripe takes Pro payments. Metricool schedules our Facebook posts, and once a post is up, Meta (Facebook) holds it as an independent controller under its own terms. Sentry (in the EU) records errors the site runs into, such as which page failed and why, never your name, IP address, cookies or what you typed. Supabase, Resend, Twilio, Cloudflare, Stripe, Metricool and Sentry act for
         us as processors (Stripe also has its own legal duties for payments, such as preventing fraud, under its own
         privacy policy). Render hosts the website; the home page search words are kept only in its server logs, which are deleted automatically. If you choose Continue with Google, Google is an
         independent controller for your Google account, under its own terms, and only tells us who you are. The
