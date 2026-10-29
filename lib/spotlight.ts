@@ -28,9 +28,19 @@ export type SpotlightFacts = {
   lines: string[];
 };
 
+/**
+ * A name typed all in capitals ("A A HEATING ENGINEER") in title case for the spotlight, where capitals in the display
+ * face read as shouting and crowd together. Short all-caps words stay as typed ("URM", "JB"), as do names with any
+ * lower case.
+ */
+export function calmCaps(name: string): string {
+  if (/[a-z]/.test(name) || !/[A-Z]{4}/.test(name)) return name;
+  return name.replace(/[A-Z]+/g, (w) => (w.length <= 3 ? w : w[0] + w.slice(1).toLowerCase()));
+}
+
 /** The facts the image shows and the post repeats. */
 export function spotlightFacts(p: SpotlightInput): SpotlightFacts {
-  const name = stripPhoneNumbers(p.businessName.replace(/\s+/g, " ").trim());
+  const name = calmCaps(stripPhoneNumbers(p.businessName.replace(/\s+/g, " ").trim()));
   const lead = leadTrades(p.trades, p.businessName);
   const lines: string[] = [];
   // Only checks the admin recorded (never the "None provided" dash row), at most two so the rest still fit.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { spotlightFacts, spotlightText, type SpotlightInput } from "@/lib/spotlight";
+import { calmCaps, spotlightFacts, spotlightText, type SpotlightInput } from "@/lib/spotlight";
 
 const BOLTON = ["BL1", "BL2", "BL3", "BL4", "BL5", "BL6", "BL7"];
 const base: SpotlightInput = {
@@ -17,7 +17,7 @@ const base: SpotlightInput = {
 describe("spotlightFacts", () => {
   it("leads with the trade in the name, and lists only what the listing says", () => {
     expect(spotlightFacts(base)).toEqual({
-      name: "A A HEATING ENGINEER",
+      name: "A A Heating Engineer",
       tradeLine: "Heating repair · Appliance repair",
       lines: ["Covers all of Bolton, M26", "Taking on work now", "Call or WhatsApp them direct"],
     });
@@ -57,7 +57,7 @@ describe("spotlightFacts", () => {
 describe("spotlightText", () => {
   it("is the post: who, the facts, their page, the review link, the free listing", () => {
     const t = spotlightText(base, "https://www.boltonvouched.co.uk");
-    expect(t.split("\n")[0]).toBe("🛠️ Trader spotlight: A A HEATING ENGINEER");
+    expect(t.split("\n")[0]).toBe("🛠️ Trader spotlight: A A Heating Engineer");
     expect(t).toContain("Heating repair and appliance repair in Bolton, listed on Bolton Vouched.");
     expect(t).toContain("✅ Taking on work now");
     expect(t).toContain("👉 boltonvouched.co.uk/p/a-a-heating-engineer");
@@ -66,5 +66,18 @@ describe("spotlightText", () => {
     // Neutral review wording (DMCC Act): never asks for a good review.
     expect(t).toMatch(/honest review/);
     expect(t).not.toMatch(/5.star|good review|great review/i);
+  });
+});
+
+describe("calmCaps", () => {
+  it("title-cases an all-capitals name, keeping short words like initials", () => {
+    expect(calmCaps("A A HEATING ENGINEER")).toBe("A A Heating Engineer");
+    expect(calmCaps("URM ELECTRICAL")).toBe("URM Electrical");
+  });
+
+  it("leaves names with any lower case, or no long capital words, as typed", () => {
+    expect(calmCaps("CuppingBySajj")).toBe("CuppingBySajj");
+    expect(calmCaps("URM Electrical")).toBe("URM Electrical");
+    expect(calmCaps("JB & CO")).toBe("JB & CO");
   });
 });
