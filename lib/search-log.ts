@@ -1,7 +1,7 @@
 // Home-search logging: what residents type, so we can see which trades are missing and how often search fails.
 // Nothing identifies the person: no IP, cookie or device id is stored, and the text is cleaned first so a stray
 // phone number, email or postcode-with-house-number doesn't end up in the logs. Lines go to the server log
-// (Railway), read with scripts/search-report.mjs.
+// (Render), read with scripts/search-report.mjs.
 
 export const SEARCH_LOG_MAX = 40;
 

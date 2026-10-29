@@ -130,7 +130,7 @@ export default function PrivacyPage() {
         listed form and the Request a quote form, which may look at signals from your device and browser, and, if it&apos;s switched on, counts page
         views without cookies or a profile of you (Cloudflare Web Analytics). Stripe takes Pro payments. Metricool schedules our Facebook posts, and once a post is up, Meta (Facebook) holds it as an independent controller under its own terms. Supabase, Resend, Twilio, Cloudflare, Stripe and Metricool act for
         us as processors (Stripe also has its own legal duties for payments, such as preventing fraud, under its own
-        privacy policy). Railway hosts the website; the home page search words are kept only in its server logs, which are deleted automatically. If you choose Continue with Google, Google is an
+        privacy policy). Render hosts the website; the home page search words are kept only in its server logs, which are deleted automatically. If you choose Continue with Google, Google is an
         independent controller for your Google account, under its own terms, and only tells us who you are.
       </p>
 
