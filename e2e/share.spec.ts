@@ -172,3 +172,24 @@ test("a linked trader copies their badge's embed code and shares their page; the
   expect(decodeURIComponent(whatsapp!.split("?text=")[1])).toBe(`Shaw & Daughters Removals on Bolton Vouched: ${url}`);
   await expect(share.getByText("Print a review card")).toHaveCount(0);
 });
+
+test("a trader's Facebook spotlight: a 1080x1350 image and the post's text, for live listings only", async ({ request }) => {
+  const img = await request.get("/p/e2e-pine-joinery/spotlight.png");
+  expect(img.status()).toBe(200);
+  expect(img.headers()["content-type"]).toBe("image/png");
+  const png = await img.body();
+  expect(png.subarray(1, 4).toString()).toBe("PNG");
+  // Width and height from the PNG header.
+  expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1080, 1350]);
+
+  const txt = await request.get("/p/e2e-pine-joinery/spotlight.txt");
+  expect(txt.status()).toBe(200);
+  const text = await txt.text();
+  expect(text).toMatch(/^🛠️ Trader spotlight: Pine Joinery\n/);
+  expect(text).toContain("/p/e2e-pine-joinery");
+  expect(text).toContain("/r/e2e-pine-joinery");
+  expect(text).not.toMatch(/\b07\d{3}\s?\d{6}\b/);
+
+  expect((await request.get("/p/no-such-trader/spotlight.png")).status()).toBe(404);
+  expect((await request.get("/p/no-such-trader/spotlight.txt")).status()).toBe(404);
+});
