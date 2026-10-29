@@ -18,6 +18,7 @@
     "db:check-prod": "bash scripts/check-production-sql.sh"
   },
   "dependencies": {
+    "@sentry/nextjs": "11.7.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.3",
     "libphonenumber-js": "^1.13.15",
