@@ -1,5 +1,6 @@
-// Home search report from the server log. Paste or pipe Railway logs in:
-//   railway logs --since 14d | node scripts/search-report.mjs
+// Home search report from the server log. Save the logs from Render (dashboard → bolton-vouched → Logs, search
+// "search-log") to a file and pipe it in:
+//   node scripts/search-report.mjs < render-logs.txt
 // Prints the no-match rate and the most common searches that found nothing (lines come from app/api/search-log).
 import { readFileSync } from "node:fs";
 

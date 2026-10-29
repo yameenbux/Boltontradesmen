@@ -1,5 +1,5 @@
 // The pre-launch lock. While SITE_LOCK_PASSWORD is set, every page asks for that password first (once per browser,
-// for 30 days), search engines are told to keep out, and nothing is indexed. Clearing the variable in Railway opens
+// for 30 days), search engines are told to keep out, and nothing is indexed. Clearing the variable on Render opens
 // the site. Machine traffic still gets through: Stripe's webhook, the cron job and Supabase's SMS hook (/api/*), and
 // the Google sign-in return. Links a trader hands to a customer (a review link, a quote or invoice, a consent link, a
 // trader sign-in link) let that person in too, so a closed beta works end to end, but only once the link is checked

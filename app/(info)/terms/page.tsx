@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { H2, List, PolicyPage } from "@/components/PolicyPage";
 import { OPERATOR, pageMetadata } from "@/lib/seo";
 import { COMPANY_LINE, TRADING_NAME } from "@/lib/company";
+import { dailyJobConfigured } from "@/lib/cron";
 import { policyIdentity } from "@/lib/policy-config";
+import { textsAvailable } from "@/lib/sms-hook";
 
 export const metadata: Metadata = pageMetadata({
   title: "Terms | Bolton Vouched",
@@ -12,10 +14,13 @@ export const metadata: Metadata = pageMetadata({
 });
 
 // Shown on the page; change it whenever the terms change.
-const TERMS_UPDATED = "25 October 2026";
+const TERMS_UPDATED = "29 October 2026";
 
 export default function TermsPage() {
   const { contact } = policyIdentity();
+  // Pro promises only what runs today: texts need the text service set up, payment reminders need the daily job.
+  const texts = textsAvailable();
+  const reminders = dailyJobConfigured();
   return (
     <PolicyPage title="Terms of use">
       <p>Last updated: {TERMS_UPDATED}.</p>
@@ -89,6 +94,11 @@ export default function TermsPage() {
         your areas, without asking first. If we change the phone number customers reach you on, we&apos;ll email you.
         We can pause or remove a listing that isn&apos;t a real local business or breaks these terms.
       </p>
+      <p>
+        Once we&apos;ve checked your listing, we may feature it in a spotlight post on our Facebook page, using what your
+        listing already shows (never your phone number). If you&apos;d rather not be featured, tell us and we&apos;ll take
+        the post down.
+      </p>
 
       <H2>Payment and ranking</H2>
       <p>Payment never affects ranking. No provider can pay to be placed higher or to have a review changed or removed.</p>
@@ -100,10 +110,16 @@ export default function TermsPage() {
       </p>
       <List
         items={[
-          "“Request a quote” on your page, with a text and an email to you for each request. Requests are for you only: we never pass them to anyone else.",
-          "Texts and emails when someone in your areas asks Bolton for your trade (up to 10 texts a day; you can turn them off).",
+          texts
+            ? "“Request a quote” on your page, with a text and an email to you for each request. Requests are for you only: we never pass them to anyone else."
+            : "“Request a quote” on your page, with an email to you for each request. Requests are for you only: we never pass them to anyone else.",
+          texts
+            ? "Texts and emails when someone in your areas asks Bolton for your trade (up to 10 texts a day; you can turn them off)."
+            : "Emails when someone in your areas asks Bolton for your trade (you can turn them off).",
           "Quotes and invoices you make on the site and send to your customers. You're responsible for what they say, including prices, and for your own records: we delete them after 2 years. Payment goes from your customer to your bank account; it never passes through us.",
-          "When you mark an invoice paid, one message from us to your customer asking for an honest review (you can switch this off for any invoice), and up to two payment reminders for an unpaid invoice.",
+          reminders
+            ? "When you mark an invoice paid, one message from us to your customer asking for an honest review (you can switch this off for any invoice), and up to two payment reminders for an unpaid invoice."
+            : "When you mark an invoice paid, one message from us to your customer asking for an honest review (you can switch this off for any invoice).",
           "An ID check: we look at a photo of your passport or driving licence, and when we've checked it your page shows “ID checked”.",
           "Up to 6 photos of your own work on your page. They must be your work, and must not show anyone's personal details (including phone numbers) or anyone who hasn't agreed to be in them.",
           "A monthly report of your enquiries on your dashboard.",

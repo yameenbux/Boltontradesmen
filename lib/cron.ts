@@ -12,6 +12,15 @@ export function cronAuthorised(header: string | null, secret: string | undefined
   return got.length === want.length && timingSafeEqual(got, want);
 }
 
+/**
+ * Whether the daily job can run: without CRON_SECRET (16+ characters) /api/cron/daily refuses every call, so nothing
+ * automatic goes out and no page may say it will. Its being set doesn't prove a scheduler calls it: set it only once
+ * one does.
+ */
+export function dailyJobConfigured(env: Record<string, string | undefined> = process.env): boolean {
+  return (env.CRON_SECRET?.trim().length ?? 0) >= 16;
+}
+
 type Due = { id: string; kind: CustomerMessage }[];
 
 /** Sends what a list function says is due (the alert log stops repeats). Returns {due, sent}, or throws. */
