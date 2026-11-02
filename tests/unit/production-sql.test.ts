@@ -235,9 +235,17 @@ const SCRIPTS = [
     file: "docs/launch/poster-arrivals-production.sql",
     preset: "poster-arrivals",
     from: "20261012000058",
-    to: NEWEST,
+    to: "20261012000058",
     functions: ["record_page_view", "admin_signup_funnel"],
     requires: "20261012000057",
+  },
+  {
+    file: "docs/launch/founding-places-production.sql",
+    preset: "founding-places",
+    from: "20261012000059",
+    to: NEWEST,
+    functions: ["founding_places_taken"],
+    requires: "20261012000058",
   },
 ];
 

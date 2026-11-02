@@ -118,6 +118,10 @@ describe("the trader's Pro status", () => {
   it("says what's happening in plain words", () => {
     const sub = { plan: "monthly" as const, status: "active", currentPeriodEnd: "2026-11-16T10:00:00Z", cancelAtPeriodEnd: false, graceUntil: null };
     expect(subscriptionLine(sub, true)).toEqual({ tone: "ok", text: "Pro is on (£10 a month). It renews on 16 November 2026." });
+    expect(subscriptionLine({ ...sub, status: "trialing" }, true)).toEqual({
+      tone: "ok",
+      text: "Pro is on, free for now. Your first payment (£10 a month) is on 16 November 2026, unless you cancel in Manage billing before then.",
+    });
     expect(subscriptionLine({ ...sub, cancelAtPeriodEnd: true }, true).text).toMatch(/^Cancelled\. Pro stays on until 16 November 2026/);
     expect(subscriptionLine({ ...sub, status: "past_due", graceUntil: "2026-11-30T10:00:00Z" }, true).text).toContain("by 30 November 2026");
     expect(subscriptionLine({ ...sub, status: "canceled" }, false).tone).toBe("off");

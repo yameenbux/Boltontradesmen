@@ -10,6 +10,7 @@ import type { ConsentCard } from "@/lib/consent-shared";
 import { BL_DISTRICTS } from "@/lib/districts";
 import { HEARD_FROM } from "@/lib/heard-from";
 import { LISTING_LIMITS } from "@/lib/listing-request";
+import { FOUNDING_TERMS } from "@/lib/founding";
 import { PLANS } from "@/lib/pro";
 import { FREE_FEATURES, PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";
 import { matchesTrade } from "@/lib/trade-words";
@@ -41,12 +42,15 @@ export function TraderSetupForm({
   groups,
   cards,
   proReady = false,
+  founding = false,
 }: {
   needsName: boolean;
   groups: TradeGroup[];
   cards: ConsentCard[];
   /** Stripe is set up: choosing Pro goes straight to payment after Confirm. */
   proReady?: boolean;
+  /** The founding offer is open with places left: Pro starts as a free trial (lib/founding.ts). */
+  founding?: boolean;
 }) {
   const [state, action, pending] = useActionState(submitTraderSetup, {} as TraderSetupState);
   const sent = state.values !== undefined;
@@ -191,10 +195,17 @@ export function TraderSetupForm({
                 </li>
               ))}
             </ul>
+            {proReady && founding && (
+              <span className="plan-founding" data-testid="founding-terms">
+                Founding offer: {FOUNDING_TERMS}
+              </span>
+            )}
             <span className="plan-note">
-              {proReady
-                ? "After Confirm you go straight to secure card payment, and Pro switches on as soon as you've paid. If you stop, you're live on Free. Cancel any time."
-                : "Pro opens soon. Your listing goes live free now, and you can add Pro from your listing page."}
+              {!proReady
+                ? "Pro opens soon. Your listing goes live free now, and you can add Pro from your listing page."
+                : founding
+                  ? "After Confirm you go straight to Stripe's secure page to add your card. Nothing is taken today, and Pro switches on straight away. If you stop, you're live on Free."
+                  : "After Confirm you go straight to secure card payment, and Pro switches on as soon as you've paid. If you stop, you're live on Free. Cancel any time."}
             </span>
           </span>
         </label>

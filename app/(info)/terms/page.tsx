@@ -5,6 +5,7 @@ import { COMPANY_LINE, TRADING_NAME } from "@/lib/company";
 import { dailyJobConfigured } from "@/lib/cron";
 import { policyIdentity } from "@/lib/policy-config";
 import { textsAvailable } from "@/lib/sms-hook";
+import { FOUNDING_FIRST_CHARGE, FOUNDING_PLACES, FOUNDING_UNTIL } from "@/lib/founding";
 
 export const metadata: Metadata = pageMetadata({
   title: "Terms | Bolton Vouched",
@@ -14,7 +15,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 // Shown on the page; change it whenever the terms change.
-const TERMS_UPDATED = "29 October 2026";
+const TERMS_UPDATED = "2 November 2026";
 
 export default function TermsPage() {
   const { contact } = policyIdentity();
@@ -126,8 +127,16 @@ export default function TermsPage() {
         ]}
       />
       <p>
-        We may also switch Pro on free for a set time (for example for our first traders). It ends on the date we give
-        you, and nothing is charged unless you choose to pay for Pro yourself.
+        Founding offer: our first {FOUNDING_PLACES} Pro traders can start Pro free until {FOUNDING_UNTIL.label}, while
+        places are left. You add a card when you start, and nothing is taken until then. On{" "}
+        {FOUNDING_FIRST_CHARGE.label} the plan you chose starts automatically and your card is charged (£10 a month or
+        £100 a year), and it renews until you cancel. It&apos;s up to you to cancel if you don&apos;t want to carry on:
+        cancel from Manage billing on your dashboard before {FOUNDING_FIRST_CHARGE.label} and you won&apos;t be charged.
+        The free period is once per listing.
+      </p>
+      <p>
+        We may also switch Pro on free for a set time without taking a card. That ends on the date we give you, and
+        nothing is charged unless you choose to pay for Pro yourself.
       </p>
       <p>
         Pro never changes where you are listed, your scores or your badges, and there is no way to filter lists by it.

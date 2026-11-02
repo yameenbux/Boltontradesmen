@@ -28,6 +28,7 @@ import { DOCUMENT_LABEL, type DocumentKind } from "@/lib/pro";
 import { reviewShare } from "@/lib/review-link";
 import { badgeShare } from "@/lib/share";
 import { phoneSignInEnabled } from "@/lib/sign-in-methods";
+import { FOUNDING_UNTIL } from "@/lib/founding";
 
 const STATUS_TONE = { invited: "gold", consented: "outline", live: "sage", paused: "muted", removed: "muted" } as const;
 
@@ -66,7 +67,10 @@ type Detail = {
 const LINKABLE = ["consented", "live", "paused"];
 
 // Today plus six months, as yyyy-mm-dd: the usual founding offer.
-function sixMonthsOn(): string {
+/** The founding offer's end date (lib/founding.ts) while it's ahead, else six months on. */
+function suggestedGrantEnd(): string {
+  const today = new Date().toISOString().slice(0, 10);
+  if (FOUNDING_UNTIL.iso > today) return FOUNDING_UNTIL.iso;
   const d = new Date();
   d.setMonth(d.getMonth() + 6);
   return d.toISOString().slice(0, 10);
@@ -187,7 +191,7 @@ export default async function ProviderAdminPage({ params }: { params: Promise<{ 
               ? `Free Pro until ${dayMonthYear(grant.until)}${grant.active ? "" : " (ended)"}${grant.note ? ` · ${grant.note}` : ""}`
               : "No founding Pro. Switch it on to give this trader Pro free, without Stripe."}
           </p>
-          <FoundingProForm providerId={p.id} grant={grant} suggestedUntil={sixMonthsOn()} />
+          <FoundingProForm providerId={p.id} grant={grant} suggestedUntil={suggestedGrantEnd()} />
           <h3>Paid Pro</h3>
           {pro.subscriptions.length === 0 ? (
             <p className="text-ink-2">Never had a Stripe subscription.</p>

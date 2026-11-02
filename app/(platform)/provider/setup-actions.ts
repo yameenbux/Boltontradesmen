@@ -19,6 +19,7 @@ import { revalidatePublicPages } from "@/lib/revalidate-public";
 import { createServerAuthClient } from "@/lib/supabase/server";
 import { deliverLive } from "@/lib/notify";
 import { isPlan as isProBilling, stripeConfig } from "@/lib/pro";
+import { foundingTrialEnd } from "@/lib/founding-data";
 import { proCheckoutUrl } from "@/lib/pro-checkout";
 import { logoFile, logoPath, prepareLogo, type PreparedLogo } from "@/lib/trader-logo";
 import { PhotoError } from "@/lib/work-photos";
@@ -221,6 +222,7 @@ export async function submitTraderSetup(_prev: TraderSetupState, fd: FormData): 
         plan: isProBilling(values.pro_billing) ? values.pro_billing : "monthly",
         successPath: `${live}?pro=success`,
         cancelPath: `${live}?pro=stopped`,
+        trialEnd: await foundingTrialEnd(result.id),
       });
     } catch (err) {
       console.error("trader setup: Stripe checkout failed:", err instanceof Error ? err.message : err);

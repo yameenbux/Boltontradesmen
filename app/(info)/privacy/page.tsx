@@ -90,6 +90,14 @@ export default function PrivacyPage() {
           "We use these only to contact you about a listing.",
         ]}
       />
+      <p>Traders who ask for a free website check (from YSB Designs, the team behind Bolton Vouched):</p>
+      <List
+        items={[
+          "Your name, business name, trade and phone number, and your email address and the link to your website or profile if you add them.",
+          "They're emailed to us and not stored on the site. We use them only to do your check and talk to you about it, and delete the email 12 months after we last speak, unless you become a customer.",
+          "A scrambled signature of your connection (a keyed hash, not your IP address), kept for a day to limit how many requests one connection can send.",
+        ]}
+      />
       <p>People who sign in (to leave a review, to ask or answer a question, or to reply as a provider):</p>
       <List
         items={[
@@ -122,6 +130,7 @@ export default function PrivacyPage() {
           "Quotes, invoices and the messages about them: legitimate interests, for the trader and their customer to agree and settle a job. The review request after payment: legitimate interests in honest local reviews, and the trader can switch it off.",
           "A request for a quote: legitimate interests in passing your request to the trader you chose, as you asked. Pro traders' alerts: contract, providing the service.",
           "A request to be listed: legitimate interests in answering it, and taking the steps you asked for before you agree to be listed. The connection signature: legitimate interests in stopping spam.",
+          "A request for a free website check: taking the steps you asked for (the check, and talking to you about it) before any contract.",
           "The security check on forms (Cloudflare Turnstile), counting page views and the home page search words: legitimate interests in keeping the site secure, knowing which pages are used and which trades are missing.",
           "A spotlight post about a new listing on our Facebook page (the business name and logo, trades, areas, the checks we've made, and links to the listing; never a phone number): legitimate interests in telling Bolton about the traders listed here. Ask us and we'll take the post down and won't feature you again.",
         ]}
@@ -131,7 +140,7 @@ export default function PrivacyPage() {
       <p>
         Data is stored in the UK, in a Supabase database hosted in London. Supabase also runs our sign-in. Resend sends our
         sign-in emails and Pro traders&apos; alert emails. Twilio sends Pro traders&apos; alert texts. Cloudflare runs the security check (Turnstile) on the sign-in page, the admin login, the Get
-        listed form and the Request a quote form, which may look at signals from your device and browser, and, if it&apos;s switched on, counts page
+        listed form, the free website check form and the Request a quote form, which may look at signals from your device and browser, and, if it&apos;s switched on, counts page
         views without cookies or a profile of you (Cloudflare Web Analytics). Stripe takes Pro payments. Metricool schedules our Facebook posts, and once a post is up, Meta (Facebook) holds it as an independent controller under its own terms. Sentry (in the EU) records errors the site runs into, such as which page failed and why, never your name, IP address, cookies or what you typed. Supabase, Resend, Twilio, Cloudflare, Stripe, Metricool and Sentry act for
         us as processors (Stripe also has its own legal duties for payments, such as preventing fraud, under its own
         privacy policy). Render hosts the website; the home page search words are kept only in its server logs, which are deleted automatically. If you choose Continue with Google, Google is an

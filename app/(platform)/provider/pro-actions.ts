@@ -10,6 +10,7 @@ import { ProofError, prepareProof, uploadProof } from "@/lib/proofs";
 import { ID_PATTERN } from "@/lib/review-form";
 import { revalidatePublicPages } from "@/lib/revalidate-public";
 import { onboardingUrl } from "@/lib/card-payments";
+import { foundingTrialEnd } from "@/lib/founding-data";
 import { proCheckoutUrl } from "@/lib/pro-checkout";
 import { absoluteUrl } from "@/lib/seo";
 import { stripeClient } from "@/lib/stripe";
@@ -66,6 +67,7 @@ export async function startProCheckout(_prev: FormState, fd: FormData): Promise<
       plan,
       successPath: `${platformPath("provider")}?pro=success`,
       cancelPath: platformPath("provider"),
+      trialEnd: await foundingTrialEnd(r.id),
     });
   } catch (err) {
     console.error("provider: Stripe checkout failed:", err instanceof Error ? err.message : err);

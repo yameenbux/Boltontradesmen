@@ -203,6 +203,12 @@ export function subscriptionLine(s: ProSubscription, isPro: boolean): { tone: "o
   if (isPro && s.cancelAtPeriodEnd) {
     return { tone: "warn", text: `Cancelled. Pro stays on until ${end ?? "the end of the paid period"}, then stops. You won't be charged again.` };
   }
+  if (isPro && s.status === "trialing") {
+    return {
+      tone: "ok",
+      text: `Pro is on, free for now.${end ? ` Your first payment (${plan}) is on ${end}` : " Your first payment comes at the end of the free period"}, unless you cancel in Manage billing before then.`,
+    };
+  }
   if (isPro) return { tone: "ok", text: `Pro is on (${plan}).${end ? ` It renews on ${end}.` : ""}` };
   if (s.status === "incomplete") return { tone: "warn", text: "Your payment hasn't finished yet. If it doesn't go through, nothing is charged." };
   return { tone: "off", text: "Pro has ended. Your listing and reviews stay as they were; your photos and the ID checked mark are hidden." };

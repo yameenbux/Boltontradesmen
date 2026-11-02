@@ -52,7 +52,7 @@ environment variable needs a deploy too: Render → bolton-vouched → Manual De
    Session pooler connection string). Pasting the script into Supabase → SQL Editor still works too. Either way it's
    one transaction that checks its own prerequisite and rolls back if anything is missing.
 
-Latest migration applied live: **20261012000057** (traffic sources). Waiting to be applied: 20261012000058 (poster arrivals, docs/launch/poster-arrivals-production.sql).
+Latest migration applied live: **20261012000058** (poster arrivals). Waiting to be applied: 20261012000059 (founding places, docs/launch/founding-places-production.sql).
 
 ## Scheduled work
 
@@ -69,6 +69,18 @@ Latest migration applied live: **20261012000057** (traffic sources). Waiting to 
   Supabase → project → Database → Backups → pick the day → Restore. That replaces the whole database with that
   day's copy, so anything since is lost: export what you need first. Point-in-time recovery is a paid add-on, not
   needed at this size.
+
+## The founding offer and the free website check
+
+- **Founding offer** (For traders page): the first 20 traders get Pro free until 31 January 2027 (`lib/founding.ts`).
+  It's a founding grant: admin → the listing → Founding Pro, which defaults to that date. The page shows the real
+  places left (`founding_places_taken`, migration 000059: listings holding a grant the admin hasn't ended), and hides
+  the offer once all 20 are taken or if the count can't be read. Nothing is charged when a grant ends.
+- **Free website check** (`/website-check`, from YSB Designs): the request is emailed to `CONTACT_EMAIL`
+  (components/site/content.ts) through Resend and not stored. Turnstile, a honeypot and 3 requests per connection a
+  day keep it clean. The page promises a reply within 2 working days.
+- **Heating landing page** (`/boiler-repair-bolton`): heating repair, gas and boilers, and plumbing traders in one
+  list, ordered by reviews alone. For winter searches and ads.
 
 ## Promises to traders
 
