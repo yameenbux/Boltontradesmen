@@ -181,7 +181,13 @@ export default async function ForTradersPage() {
           <ol className="plan-steps" aria-label="How to get Pro">
             <li>Join and choose Pro</li>
             <li>We check your details by hand</li>
-            <li>{buyable ? "Pay by card and Pro switches on" : "Pay from your listing once Pro opens"}</li>
+            <li>
+              {founding
+                ? `Add your card and Pro switches on: nothing is taken until ${FOUNDING_FIRST_CHARGE.label}`
+                : buyable
+                  ? "Pay by card and Pro switches on"
+                  : "Pay from your listing once Pro opens"}
+            </li>
           </ol>
           <div className="plan-ctas">
             <Button href={TRADER_SIGN_IN}>Join as a trader with Pro</Button>

@@ -52,7 +52,7 @@ environment variable needs a deploy too: Render → bolton-vouched → Manual De
    Session pooler connection string). Pasting the script into Supabase → SQL Editor still works too. Either way it's
    one transaction that checks its own prerequisite and rolls back if anything is missing.
 
-Latest migration applied live: **20261012000058** (poster arrivals). Waiting to be applied: 20261012000059 (founding places, docs/launch/founding-places-production.sql).
+Latest migration applied live: **20261012000059** (founding places).
 
 ## Scheduled work
 
@@ -72,10 +72,12 @@ Latest migration applied live: **20261012000058** (poster arrivals). Waiting to 
 
 ## The founding offer and the free website check
 
-- **Founding offer** (For traders page): the first 20 traders get Pro free until 31 January 2027 (`lib/founding.ts`).
-  It's a founding grant: admin → the listing → Founding Pro, which defaults to that date. The page shows the real
-  places left (`founding_places_taken`, migration 000059: listings holding a grant the admin hasn't ended), and hides
-  the offer once all 20 are taken or if the count can't be read. Nothing is charged when a grant ends.
+- **Founding offer** (For traders page, `lib/founding.ts`): the first 20 traders get Pro free until 31 January 2027
+  as a Stripe trial. They add a card at checkout, nothing is taken until 1 February 2027, then Pro renews until they
+  cancel. One trial per listing (none if it has ever had Pro). Shown only while Stripe is set up, before the end
+  date and while places are left. Places (`founding_places_taken`, migration 000059) count listings on a trial and
+  listings with an admin founding grant (admin → the listing → Founding Pro, no card, nothing charged when it ends).
+  Stripe's 7-day trial reminder email should be on: Stripe → Settings → Billing → Subscriptions and emails.
 - **Free website check** (`/website-check`, from YSB Designs): the request is emailed to `CONTACT_EMAIL`
   (components/site/content.ts) through Resend and not stored. Turnstile, a honeypot and 3 requests per connection a
   day keep it clean. The page promises a reply within 2 working days.
