@@ -623,6 +623,7 @@ h1,h2,h3{text-wrap:balance}
   .form-alert{display:flex; gap:10px; align-items:flex-start; margin:0; padding:12px 14px; border-radius:14px; font-size:16px; font-weight:600; line-height:1.4;
     background:var(--brick-tint); color:color-mix(in srgb,var(--brick) 70%,var(--ink)); border:1px solid color-mix(in srgb,var(--brick) 30%,var(--line))}
   .form-alert svg{flex:none; width:20px; height:20px; margin-top:1px}
+  .form-done{margin:0; padding:16px; border-radius:14px; background:var(--sage-tint); color:var(--ink); font-weight:600; line-height:1.45}
   .form-note{display:flex; gap:10px; align-items:flex-start; margin:0; padding:12px 14px; border-radius:14px; font-size:16px; font-weight:600; line-height:1.4; background:var(--surface-2); color:var(--ink); border:1px solid var(--line)}
   .form-note svg{flex:none; width:20px; height:20px; margin-top:1px; color:var(--ink-2)}
   .form-ok{display:flex; gap:10px; align-items:flex-start; margin:0; padding:12px 14px; border-radius:14px; font-size:16px; font-weight:600; background:var(--sage-tint); color:var(--sage)}
@@ -844,8 +845,52 @@ h1,h2,h3{text-wrap:balance}
   .sell .plan .btn{width:100%}
   .sell .plan-note{font-size:14.5px; text-align:center}
   .fair{margin:0; font-family:var(--display); font-size:22px; line-height:1.3; color:var(--ink); text-wrap:balance; text-align:center; max-width:30ch; justify-self:center}
+  .sell-login{margin:0; font-size:15px; color:var(--ink-2)}
+  .sell-login a{color:var(--ink); font-weight:700}
+  /* The founding offer: a brick card with the real places left. */
+  .founding{display:grid; gap:12px; padding:22px; border-radius:26px; background:var(--brick); color:var(--on-brick); box-shadow:var(--shadow)}
+  .founding h2{font-family:var(--display); font-weight:400; font-size:30px; line-height:1.1; margin:0; color:var(--on-brick)}
+  .founding p{margin:0; line-height:1.45}
+  .founding-kick{font-size:13px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; opacity:.85}
+  .founding-count{display:grid; gap:8px}
+  .founding-count b{font-size:18px}
+  .founding-bar{display:block; height:10px; border-radius:999px; background:color-mix(in srgb,var(--on-brick) 25%,transparent); overflow:hidden}
+  .founding-bar span{display:block; height:100%; border-radius:999px; background:var(--on-brick)}
+  .founding .btn-primary{background:var(--on-brick); color:var(--brick)}
+  .founding-note{font-size:14px; opacity:.9}
+  .plan-founding{margin:0; padding:8px 12px; border-radius:12px; background:var(--brick-tint); color:var(--brick); font-weight:700; font-size:15px}
+  /* Pay-per-lead sites against Bolton Vouched. */
+  .vs{display:grid; gap:14px}
+  .vs-col{border-radius:22px; padding:18px; border:1px solid var(--line); background:var(--surface); display:grid; gap:12px}
+  .vs-col h3{margin:0; font-size:18px}
+  .vs-col ul{list-style:none; margin:0; padding:0; display:grid; gap:10px}
+  .vs-col li{display:grid; grid-template-columns:22px 1fr; gap:10px; align-items:start; line-height:1.4}
+  .vs-col svg{width:20px; height:20px; margin-top:2px}
+  .vs-them{opacity:.85}
+  .vs-them svg{color:var(--ink-2)}
+  .vs-us{border:2px solid var(--brick)}
+  .vs-us svg{color:var(--sage)}
+  /* The free website check (YSB Designs). */
+  .webcheck{display:grid; gap:12px; padding:22px; border-radius:26px; background:var(--surface); border:1px dashed var(--line)}
+  .webcheck h2{font-family:var(--display); font-weight:400; font-size:26px; line-height:1.15; margin:0}
+  .webcheck p{margin:0; color:var(--ink-2); line-height:1.45}
+  /* The heating landing page (/boiler-repair-bolton). */
+  .heat-count{margin:4px 0 0; color:var(--ink-2)}
+  .heat-tips, .heat-recruit{margin-top:24px; display:grid; gap:10px; padding:20px; border-radius:var(--r-lg); background:var(--surface); border:1px solid var(--line)}
+  .heat-tips h2, .heat-recruit h2{font-family:var(--display); font-weight:400; font-size:26px; line-height:1.15; margin:0}
+  .heat-tips ol{margin:0; padding-left:20px; display:grid; gap:8px; line-height:1.45}
+  .heat-tips p, .heat-recruit p{margin:0; color:var(--ink-2); line-height:1.45}
+  .heat-recruit{border:1.5px dashed var(--brick)}
+  .heat-recruit .btn{justify-self:start}
   @media (min-width:900px){
     .app:has(main.sell){max-width:1000px}
+    .founding{grid-template-columns:1fr auto; align-items:center; padding:32px}
+    .founding > *{grid-column:1}
+    .founding .btn{grid-column:2; grid-row:2 / span 3}
+    .founding h2{font-size:40px}
+    .vs{grid-template-columns:1fr 1fr}
+    .webcheck{grid-template-columns:1fr auto; align-items:center}
+    .webcheck > .btn{grid-column:2; grid-row:1 / span 2}
     .sell{gap:56px}
     .sell-hero h1{font-size:62px}
     .sell-ctas{grid-template-columns:auto auto; justify-content:start}

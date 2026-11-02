@@ -241,7 +241,10 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
 test("For traders: the free listing and Pro, side by side, linked from the site", async ({ page }) => {
   const res = await page.goto("/for-traders");
   expect(res?.headers()["set-cookie"]).toBeUndefined();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("More work from Bolton, without paying per lead");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Bolton jobs, straight to your phone. No lead fees. Ever.");
+  // The founding offer shows the real places left (founding_places_taken), never a made-up number.
+  await expect(page.getByTestId("founding-offer")).toContainText(/\b\d{1,2} of 20 places left/);
+  await expect(page.getByRole("link", { name: "Get a free website check" })).toHaveAttribute("href", "/website-check");
   const free = page.getByRole("region", { name: "Free listing" });
   await expect(free).toContainText("no lead fees");
   const pro = page.getByRole("region", { name: "Pro" });
@@ -256,4 +259,24 @@ test("For traders: the free listing and Pro, side by side, linked from the site"
   await expect(page.getByRole("link", { name: "See Pro" })).toHaveAttribute("href", "/for-traders");
   await page.goto("/terms");
   await expect(page.getByRole("main")).toContainText("Any listed trader can choose Pro");
+});
+
+test("Boiler repair landing page and the free website check: public, cookie-free", async ({ page }) => {
+  let res = await page.goto("/boiler-repair-bolton");
+  expect(res?.headers()["set-cookie"]).toBeUndefined();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Boiler broken in Bolton?");
+  await expect(page.getByRole("main")).toContainText("Gas Safe registered engineer");
+  await expect(page.getByRole("main")).toContainText("0800 111 999");
+  await expect(page.getByRole("link", { name: "Get listed free" })).toHaveAttribute("href", "/for-traders");
+
+  res = await page.goto("/website-check");
+  expect(res?.headers()["set-cookie"]).toBeUndefined();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Free website check");
+  await page.getByLabel("Your name").fill("Sam");
+  await page.getByLabel("Business name").fill("Sam's Heating");
+  await page.getByLabel("Your trade").fill("Gas engineer");
+  await page.getByLabel("Mobile number").fill("07700 900123");
+  await page.waitForTimeout(3200);
+  await page.getByRole("button", { name: "Get my free check" }).click();
+  await expect(page.getByTestId("website-check-done")).toContainText("within 2 working days");
 });

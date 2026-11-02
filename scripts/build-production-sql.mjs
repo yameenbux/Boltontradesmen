@@ -54,8 +54,10 @@
 //     --out docs/launch/pay-links-production.sql
 //   node scripts/build-production-sql.mjs --preset signup-funnel --from 20261012000056 --to 20261012000057 \
 //     --out docs/launch/signup-funnel-production.sql
-//   node scripts/build-production-sql.mjs --preset poster-arrivals --from 20261012000058 --to <newest> \
+//   node scripts/build-production-sql.mjs --preset poster-arrivals --from 20261012000058 --to 20261012000058 \
 //     --out docs/launch/poster-arrivals-production.sql
+//   node scripts/build-production-sql.mjs --preset founding-places --from 20261012000059 --to <newest> \
+//     --out docs/launch/founding-places-production.sql
 //
 // --preset (default plan-2b) picks the header wording, the migration that must already be recorded (checked first,
 // so pasting the scripts in the wrong order changes nothing) and the verification block.
@@ -850,6 +852,21 @@ end
 $verify$;
 `;
 
+const VERIFY_FOUNDING_PLACES = `-- ==================================================================== verification
+-- Fails (and so rolls back everything above) if any piece is missing.
+do $verify$
+begin
+  if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                 where n.nspname = 'public' and proname = 'founding_places_taken') then
+    raise exception 'Founding places check failed: founding_places_taken is missing';
+  end if;
+  if has_function_privilege('anon', 'public.founding_places_taken()', 'execute') then
+    raise exception 'Founding places check failed: visitors can call founding_places_taken';
+  end if;
+end
+$verify$;
+`;
+
 const PRESETS = {
   "plan-2b": {
     title: "Plan 2b database changes (free sign-in: Google and email codes)",
@@ -1025,6 +1042,12 @@ const PRESETS = {
     done: "Poster arrivals applied",
     requires: { version: "20261012000057", what: "the sign-up funnel script (docs/launch/signup-funnel-production.sql)" },
     verify: VERIFY_POSTER_ARRIVALS,
+  },
+  "founding-places": {
+    title: "The founding offer's places left, on the For traders page",
+    done: "Founding places applied",
+    requires: { version: "20261012000058", what: "the poster arrivals script (docs/launch/poster-arrivals-production.sql)" },
+    verify: VERIFY_FOUNDING_PLACES,
   },
 };
 const preset = PRESETS[arg("preset", "plan-2b")];
