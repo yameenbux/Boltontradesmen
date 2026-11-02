@@ -1,7 +1,7 @@
--- The founding offer's places (migration 000059): a count of listings holding a founding grant the admin hasn't
--- ended, for the server only, and nothing but a number.
+-- The founding offer's places (migration 000059): a count of listings on a Stripe trial or holding a founding grant the
+-- admin hasn't ended, for the server only, and nothing but a number.
 begin;
-select plan(7);
+select plan(10);
 
 update public.settings set value = '["fp-admin@example.com"]'::jsonb where key = 'admin_emails';
 
@@ -51,6 +51,17 @@ select is(public.founding_places_taken(), (select n from fp_base) + 2, 'a grant 
 
 update public.providers set status = 'removed' where id = '00000000-0000-0000-0000-00000000f9b3';
 select is(public.founding_places_taken(), (select n from fp_base) + 1, 'a removed listing frees its place');
+
+-- Founding trials through Stripe.
+insert into public.providers (id, slug, business_name, phone_e164, areas, status, consent_at, consent_evidence) values
+  ('00000000-0000-0000-0000-00000000f9b4', 'fp-trial', 'FP Trial', '+447700900984', array['BL1'], 'live', now(), '{}'::jsonb);
+insert into public.subscriptions (provider_id, stripe_customer_id, stripe_subscription_id, plan, status, current_period_end, stripe_as_of)
+values ('00000000-0000-0000-0000-00000000f9b4', 'cus_fptrial', 'sub_fptrial', 'monthly', 'trialing', '2027-02-01', now());
+select is(public.founding_places_taken(), (select n from fp_base) + 2, 'a listing on a founding trial takes a place');
+update public.subscriptions set status = 'active' where stripe_subscription_id = 'sub_fptrial';
+select is(public.founding_places_taken(), (select n from fp_base) + 1, 'once the trial turns into paid Pro, the offer is over for it');
+update public.subscriptions set status = 'canceled' where stripe_subscription_id = 'sub_fptrial';
+select is(public.founding_places_taken(), (select n from fp_base) + 1, 'a trial cancelled early frees its place');
 
 select * from finish();
 rollback;

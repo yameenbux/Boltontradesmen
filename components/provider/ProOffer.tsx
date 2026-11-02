@@ -1,4 +1,5 @@
 import { ProUpgradeForm } from "@/components/provider/ProForms";
+import { FOUNDING_TERMS } from "@/lib/founding";
 import { PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";
 
 // The Pro offer on the trader's dashboard (and the public "For traders" page says the same). Shown in place, never
@@ -22,11 +23,14 @@ export function ProUpgradeCard({
   providerId,
   ended = false,
   enquiries = 0,
+  founding = false,
 }: {
   providerId: string;
   ended?: boolean;
   /** This month's enquiries: once there are some, the offer starts from them. */
   enquiries?: number;
+  /** The founding offer is open for this listing: Pro starts as a free trial (lib/founding.ts). */
+  founding?: boolean;
 }) {
   return (
     <div className="pro-card pro-offer" id="pro" data-testid="pro-upgrade">
@@ -46,11 +50,16 @@ export function ProUpgradeCard({
           : `Pro is optional, ${PRO_PRICE.monthly} or ${PRO_PRICE.annual}, and you can cancel any time:`}
       </p>
       {!ended && <Includes />}
+      {founding && (
+        <p className="plan-founding" data-testid="founding-terms">
+          Founding offer: {FOUNDING_TERMS}
+        </p>
+      )}
       <p>
         It never changes where you&apos;re listed or your badges: those come from reviews alone. Your listing stays free
         either way.
       </p>
-      <ProUpgradeForm providerId={providerId} />
+      <ProUpgradeForm providerId={providerId} founding={founding} />
     </div>
   );
 }

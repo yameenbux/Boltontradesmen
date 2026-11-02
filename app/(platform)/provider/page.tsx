@@ -19,6 +19,7 @@ import { ProPanel } from "@/components/provider/ProPanel";
 import { CardPaymentsForm } from "@/components/provider/ProForms";
 import { ReplyForm } from "@/components/provider/ReplyForm";
 import { TraderStart } from "@/components/provider/TraderStart";
+import { foundingOffered } from "@/lib/founding-data";
 import { ShareReviewLink } from "@/components/review-card/ShareReviewLink";
 import { GoogleProfileLink } from "@/components/share/GoogleProfileLink";
 import { WebsiteBadge } from "@/components/share/WebsiteBadge";
@@ -183,9 +184,10 @@ export default async function ProviderArea({
 
   if (listings.length === 0) {
     if (withdrawn !== "1") {
-      const [{ data: req, error: reqError }, groups] = await Promise.all([
+      const [{ data: req, error: reqError }, groups, founding] = await Promise.all([
         supabase.rpc("my_listing_request"),
         tradeGroups(),
+        foundingOffered(),
       ]);
       if (reqError) throw new Error(`my_listing_request failed: ${reqError.message}`);
       return (
@@ -193,6 +195,7 @@ export default async function ProviderArea({
           needsName={!account?.displayName}
           groups={groups}
           request={(req as MyListingRequest | null) ?? null}
+          founding={founding}
         />
       );
     }
@@ -287,6 +290,8 @@ export default async function ProviderArea({
   );
   // Without all four Stripe settings the offer says "Pro opens soon" and nothing can be bought.
   const stripeReady = stripeConfig() !== null;
+  // The founding offer (a free trial into Pro) for listings that have never had Pro.
+  const founding = stripeReady && (await foundingOffered());
   // Quote follow-up emails go out from the daily job, which only runs with CRON_SECRET set.
   const followupsOn = dailyJobConfigured();
   // Card payments need Stripe Connect switched on for our account, shown by its webhook's secret being set.
@@ -353,6 +358,7 @@ export default async function ProviderArea({
                     providerId={p.id}
                     ended={!!pros[i].subscription && pros[i].subscription?.status !== "incomplete"}
                     enquiries={stats[i].thisMonth.enquiries}
+                    founding={founding && !pros[i].subscription}
                   />
                 ) : (
                   <ProSoonCard />

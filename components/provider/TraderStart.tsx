@@ -83,10 +83,13 @@ export function TraderStart({
   needsName,
   groups,
   request,
+  founding = false,
 }: {
   needsName: boolean;
   groups: TradeGroup[];
   request: MyListingRequest | null;
+  /** The founding offer is open with places left. */
+  founding?: boolean;
 }) {
   if (request) return <SentForReview request={request} />;
   return (
@@ -102,6 +105,7 @@ export function TraderStart({
           groups={groups}
           cards={consentStatement()?.cards ?? []}
           proReady={stripeConfig() !== null}
+          founding={founding}
         />
       </section>
       <p className="lede">

@@ -55,7 +55,7 @@ const UploadIcon = () => (
 );
 
 /** Monthly or yearly, then Continue to payment (Stripe's page). */
-export function ProUpgradeForm({ providerId }: { providerId: string }) {
+export function ProUpgradeForm({ providerId, founding = false }: { providerId: string; founding?: boolean }) {
   const [state, action, pending] = useActionState(startProCheckout, {} as FormState);
   const planErr = state.errors?.plan;
   return (
@@ -80,10 +80,12 @@ export function ProUpgradeForm({ providerId }: { providerId: string }) {
       </fieldset>
       <Result state={state} />
       <Button type="submit" disabled={pending} aria-busy={pending}>
-        {pending ? "Opening payment…" : "Continue to payment"}
+        {pending ? "Opening payment…" : founding ? "Add card: nothing to pay today" : "Continue to payment"}
       </Button>
       <p className="pro-small">
-        You pay on Stripe&apos;s secure page; we never see your card. No VAT. Cancel any time from Manage billing.
+        {founding
+          ? "You add your card on Stripe's secure page; we never see it. No VAT. Cancel from Manage billing before the first payment and you pay nothing."
+          : "You pay on Stripe's secure page; we never see your card. No VAT. Cancel any time from Manage billing."}
       </p>
     </form>
   );

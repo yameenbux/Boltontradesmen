@@ -6,16 +6,17 @@ import { LeadFlow } from "@/components/art/LeadFlow";
 import { Scene } from "@/components/art/Scene";
 import { Button } from "@/components/ui/Button";
 import { TRADER_SIGN_IN } from "@/lib/account-intent";
-import { FOUNDING_PLACES, FOUNDING_UNTIL, foundingPlacesLeft, placesLeftText } from "@/lib/founding";
+import { FOUNDING_FIRST_CHARGE, FOUNDING_PLACES, FOUNDING_UNTIL, foundingOpen, foundingPlacesLeft, placesLeftText } from "@/lib/founding";
 import { foundingPlacesTaken } from "@/lib/founding-data";
 import { platformPath } from "@/lib/paths";
 import { FREE_FEATURES, PRO_FEATURES, PRO_PRICE } from "@/lib/pro-features";
 import { stripeConfig } from "@/lib/pro";
 import { pageMetadata } from "@/lib/seo";
 
-// Public sales page for traders: the promise, the founding offer (while places are left, from the real count), how
-// a job reaches them, why it beats paying per lead, where, then the free listing and Pro side by side, and the free
-// website check. Rendered per request for the places left and whether Pro can be bought yet; no cookies.
+// Public sales page for traders: the promise, the founding offer (a Stripe trial, so only while Pro can be bought, the
+// offer is open and places are left, from the real count), how a job reaches them, why it beats paying per lead,
+// where, then the free listing and Pro side by side, and the free website check. Rendered per request for the places
+// left and whether Pro can be bought yet; no cookies.
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = pageMetadata({
@@ -40,7 +41,7 @@ const Cross = () => (
 export default async function ForTradersPage() {
   const buyable = stripeConfig() !== null;
   const left = foundingPlacesLeft(await foundingPlacesTaken());
-  const founding = left !== null && left > 0;
+  const founding = buyable && foundingOpen() && left !== null && left > 0;
   return (
     <main className="sell">
       <Scene labelledBy="ft-title" className="sell-hero">
@@ -64,8 +65,9 @@ export default async function ForTradersPage() {
           <p className="founding-kick">Founding offer</p>
           <h2 id="founding-title">Pro free until {FOUNDING_UNTIL.label}</h2>
           <p>
-            For the first {FOUNDING_PLACES} traders. No card, nothing to cancel: when it ends, carry on free or keep Pro
-            for {PRO_PRICE.monthly}.
+            For the first {FOUNDING_PLACES} traders. Then {PRO_PRICE.monthly} from {FOUNDING_FIRST_CHARGE.label} until you
+            cancel. You add a card to claim your place; cancel from your dashboard before {FOUNDING_FIRST_CHARGE.label} and
+            you pay nothing.
           </p>
           <div className="founding-count">
             <b>{placesLeftText(left)}</b>
@@ -74,7 +76,7 @@ export default async function ForTradersPage() {
             </span>
           </div>
           <Button href={TRADER_SIGN_IN}>Claim a founding place</Button>
-          <p className="founding-note">We switch Pro on when we check your listing.</p>
+          <p className="founding-note">Pro starts as soon as you&apos;ve added your card. Your listing stays free either way.</p>
         </section>
       )}
 
@@ -159,7 +161,11 @@ export default async function ForTradersPage() {
               <b>£10</b> a month, or {PRO_PRICE.annual}
             </p>
           </div>
-          {founding && <p className="plan-founding">Free until {FOUNDING_UNTIL.label} for founding traders</p>}
+          {founding && (
+            <p className="plan-founding">
+              Founding traders: free until {FOUNDING_UNTIL.label}, then {PRO_PRICE.monthly} until you cancel
+            </p>
+          )}
           <ul className="plan-list">
             <li>
               <Tick />

@@ -84,3 +84,17 @@ describe("website check", () => {
     expect(e.html).not.toContain("<Sam");
   });
 });
+
+describe("founding trial", () => {
+  it("first charges on 1 February 2027 and says so in one sentence", async () => {
+    const { FOUNDING_FIRST_CHARGE, FOUNDING_TERMS, foundingOpen } = await import("@/lib/founding");
+    expect(FOUNDING_FIRST_CHARGE.at.toISOString()).toBe("2027-02-01T00:00:00.000Z");
+    expect(FOUNDING_TERMS).toBe(
+      "Free until 31 January 2027, then £10 a month (or £100 a year) from 1 February 2027 until you cancel. You add a card to start; cancel before 1 February 2027 and you pay nothing.",
+    );
+    expect(foundingOpen(new Date("2026-11-02T12:00:00Z"))).toBe(true);
+    // Stripe needs the trial end at least 2 days ahead, and nobody joins a free trial that ends tomorrow.
+    expect(foundingOpen(new Date("2027-01-30T12:00:00Z"))).toBe(false);
+    expect(foundingOpen(new Date("2027-03-01T00:00:00Z"))).toBe(false);
+  });
+});

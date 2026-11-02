@@ -242,8 +242,8 @@ test("For traders: the free listing and Pro, side by side, linked from the site"
   const res = await page.goto("/for-traders");
   expect(res?.headers()["set-cookie"]).toBeUndefined();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Bolton jobs, straight to your phone. No lead fees. Ever.");
-  // The founding offer shows the real places left (founding_places_taken), never a made-up number.
-  await expect(page.getByTestId("founding-offer")).toContainText(/\b\d{1,2} of 20 places left/);
+  // The founding offer is a Stripe trial: with Stripe not set up (as here), it isn't offered at all.
+  await expect(page.getByTestId("founding-offer")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Get a free website check" })).toHaveAttribute("href", "/website-check");
   const free = page.getByRole("region", { name: "Free listing" });
   await expect(free).toContainText("no lead fees");
