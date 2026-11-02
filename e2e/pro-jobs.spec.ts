@@ -52,7 +52,7 @@ test("founding Pro: a resident requests a quote, the trader is alerted, sees it 
   await expect(trader.getByRole("heading", { name: /^Job requests/ })).toHaveCount(0);
 
   await page.goto(`/admin/providers/${BROOK}`);
-  const pro = page.getByRole("region", { name: "Pro" });
+  const pro = page.getByRole("region", { name: "Pro", exact: true });
   await expect(pro.getByTestId("grant-state")).toContainText("No founding Pro");
   await pro.getByRole("button", { name: "Switch on founding Pro" }).click();
   await expect(pro.getByRole("status")).toHaveText("Founding Pro is on");
@@ -247,7 +247,7 @@ test("For traders: the free listing and Pro, side by side, linked from the site"
   await expect(page.getByRole("link", { name: "Get a free website check" })).toHaveAttribute("href", "/website-check");
   const free = page.getByRole("region", { name: "Free listing" });
   await expect(free).toContainText("no lead fees");
-  const pro = page.getByRole("region", { name: "Pro" });
+  const pro = page.getByRole("region", { name: "Pro", exact: true });
   await expect(pro).toContainText("£10 a month, or £100 a year");
   await expect(pro).toContainText("Quotes and invoices from your phone");
   await expect(pro.getByRole("link", { name: "Join as a trader with Pro" })).toHaveAttribute("href", "/sign-in?next=%2Fprovider");
