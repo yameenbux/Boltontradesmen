@@ -6,6 +6,7 @@ import { ipHash, rateLimitKey } from "@/lib/ip-hash";
 import { rateAllow } from "@/lib/rate-limit";
 import { isLinkPreviewBot } from "@/lib/bots";
 import { tapActor } from "@/lib/tap-actor";
+import { isPersonTap } from "@/lib/contact-tap";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,8 @@ export async function HEAD() {
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const via = new URL(request.url).searchParams.get("via");
+  const url = new URL(request.url);
+  const via = url.searchParams.get("via");
   if (via !== "call" && via !== "whatsapp") {
     return new NextResponse("Bad request", { status: 400, headers: { "Cache-Control": "no-store" } });
   }
@@ -40,20 +42,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   }
 
   const supabase = createServiceClient();
-  let numbers: Numbers | null = null;
-  try {
-    const { data, error } = await supabase.rpc("log_contact", {
-      p_slug: slug,
-      p_type: via === "call" ? "call_tap" : "whatsapp_tap",
-      // A signed-in tapper's id, so the trader's own taps and the admin's don't count as enquiries.
-      p_actor: await tapActor(request.headers.get("cookie")),
-      // One enquirer per connection, not per browser: a changed user agent doesn't count again.
-      p_device_hash: deviceHash(rateLimitKey(ip), ""),
-    });
-    if (error) throw error;
-    numbers = (data as Numbers[] | null)?.[0] ?? null;
-  } catch (err) {
-    console.error("log_contact failed; falling back to direct lookup", err);
+  // The number without logging a tap: for taps that aren't enquiries, and when logging fails.
+  const lookUp = async (): Promise<Numbers | null> => {
     try {
       const { data } = await supabase
         .from("providers")
@@ -61,9 +51,33 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
         .eq("slug", slug)
         .eq("status", "live")
         .maybeSingle();
-      numbers = (data as Numbers | null) ?? null;
-    } catch (err2) {
-      console.error("fallback phone lookup failed", err2);
+      return (data as Numbers | null) ?? null;
+    } catch (err) {
+      console.error("fallback phone lookup failed", err);
+      return null;
+    }
+  };
+
+  let numbers: Numbers | null = null;
+  // Only a person pressing the button is an enquiry (lib/contact-tap.ts); a crawler following the link is sent on to
+  // the number like anyone else, but isn't counted.
+  if (!isPersonTap(url, request.headers)) {
+    numbers = await lookUp();
+  } else {
+    try {
+      const { data, error } = await supabase.rpc("log_contact", {
+        p_slug: slug,
+        p_type: via === "call" ? "call_tap" : "whatsapp_tap",
+        // A signed-in tapper's id, so the trader's own taps and the admin's don't count as enquiries.
+        p_actor: await tapActor(request.headers.get("cookie")),
+        // One enquirer per connection, not per browser: a changed user agent doesn't count again.
+        p_device_hash: deviceHash(rateLimitKey(ip), ""),
+      });
+      if (error) throw error;
+      numbers = (data as Numbers[] | null)?.[0] ?? null;
+    } catch (err) {
+      console.error("log_contact failed; falling back to direct lookup", err);
+      numbers = await lookUp();
     }
   }
 
