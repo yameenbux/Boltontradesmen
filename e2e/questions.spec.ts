@@ -138,7 +138,7 @@ test("a resident asks, neighbours recommend, the trader says they can help, and 
   await expect(call).toHaveAttribute("rel", "nofollow");
   const href = (await call.getAttribute("href"))!;
   expect(href).toBe("/api/contact/e2e-hilltop-vans?via=call");
-  const tap = await visitor.request.get(href, { maxRedirects: 0 });
+  const tap = await visitor.request.get(`${href}&tap=1`, { maxRedirects: 0 });
   expect(tap.status()).toBe(302);
   expect(tap.headers().location).toBe("tel:+447700900321");
   expect(Number(sql(`select count(*) from public.contact_events where provider_id = '${HILLTOP}'`))).toBe(before + 1);

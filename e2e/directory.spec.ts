@@ -215,6 +215,17 @@ test("profile action bar calls by first name, sits at the viewport bottom and hi
   expect(html).not.toMatch(/\+44|\b07\d{9}\b|44770090|7700900/);
 });
 
+test("pressing Call or WhatsApp marks the tap as a person's, so crawlers following the bare link aren't counted", async ({ page }) => {
+  await page.goto("/p/e2e-ace-plumbing");
+  let pressed = "";
+  await page.route("**/api/contact/**", (route) => {
+    pressed = route.request().url();
+    return route.fulfill({ status: 204 });
+  });
+  await page.getByRole("region", { name: "Contact Ace Plumbing" }).getByRole("link", { name: "WhatsApp" }).click();
+  await expect.poll(() => pressed).toContain("/api/contact/e2e-ace-plumbing?via=whatsapp&tap=1");
+});
+
 test("profile without WhatsApp or reviews: one call button, and what's needed for a score", async ({ page }) => {
   await page.goto("/p/e2e-fresh-pipes");
   await expect(page.getByRole("link", { name: "WhatsApp" })).toHaveCount(0);

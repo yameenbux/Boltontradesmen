@@ -35,10 +35,11 @@ vi.mock("@/lib/supabase/service", () => ({
 import { GET, HEAD } from "@/app/api/contact/[slug]/route";
 import { deviceHash } from "@/lib/device-hash";
 
-const call = (slug: string, via?: string, ua = "UA", cookie?: string) =>
+// A person pressing the button (the button adds tap=1); `extra` adds or replaces query and headers.
+const call = (slug: string, via?: string, ua = "UA", cookie?: string, extra: { query?: string; headers?: Record<string, string> } = {}) =>
   GET(
-    new Request(`http://localhost/api/contact/${slug}${via ? `?via=${via}` : ""}`, {
-      headers: { "x-forwarded-for": "9.9.9.9, 10.0.0.1", "user-agent": ua, ...(cookie ? { cookie } : {}) },
+    new Request(`http://localhost/api/contact/${slug}${via ? `?via=${via}${extra.query ?? "&tap=1"}` : ""}`, {
+      headers: { "x-forwarded-for": "9.9.9.9, 10.0.0.1", "user-agent": ua, ...(cookie ? { cookie } : {}), ...extra.headers },
     }),
     { params: Promise.resolve({ slug }) },
   );
@@ -54,6 +55,20 @@ beforeEach(() => {
 });
 
 describe("GET /api/contact/[slug]", () => {
+  it("a link followed without a press (a crawler) still goes to the number but isn't an enquiry", async () => {
+    state.select = async () => ({ data: { phone_e164: "+447700900123", whatsapp_e164: "+447700900123" }, error: null });
+    const res = await call("acme", "call", "Mozilla/5.0", undefined, { query: "" });
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe("tel:+447700900123");
+    expect(state.rpcArgs).toEqual([]);
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  it("counts a press the browser marks as the person's own (Sec-Fetch-User), even before the page's script loads", async () => {
+    await call("acme", "whatsapp", "Mozilla/5.0", undefined, { query: "", headers: { "sec-fetch-user": "?1" } });
+    expect((state.rpcArgs[0] as [string, Record<string, unknown>])[1]).toMatchObject({ p_type: "whatsapp_tap" });
+  });
+
   it("via=call redirects 302 to tel: with no-store", async () => {
     const res = await call("acme", "call");
     expect(res.status).toBe(302);
@@ -151,5 +166,15 @@ describe("HEAD /api/contact/[slug]", () => {
     expect(res.status).toBe(204);
     expect(res.headers.get("cache-control")).toBe("no-store");
     expect(state.rpcArgs).toHaveLength(0);
+  });
+});
+
+describe("withTapMark", () => {
+  it("marks contact links once, and leaves every other link alone", async () => {
+    const { withTapMark } = await import("@/lib/contact-tap");
+    expect(withTapMark("/api/contact/acme?via=call")).toBe("/api/contact/acme?via=call&tap=1");
+    expect(withTapMark("/api/contact/acme?via=call&tap=1")).toBe("/api/contact/acme?via=call&tap=1");
+    expect(withTapMark("/p/acme")).toBe("/p/acme");
+    expect(withTapMark("https://wa.me/447700900123")).toBe("https://wa.me/447700900123");
   });
 });

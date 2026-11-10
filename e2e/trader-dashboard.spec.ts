@@ -73,11 +73,14 @@ test("a trader sees their enquiries, edits their listing, pauses and unpauses it
   await expect(soon.getByRole("button")).toHaveCount(0);
   await expect(stats.getByTestId("pro-upgrade")).toHaveCount(0);
 
-  // The trader's own tap on their Call button doesn't count; someone else's does.
-  const own = await trader.request.get("/api/contact/e2e-dash-vans?via=call", { maxRedirects: 0 });
+  // The trader's own tap on their Call button doesn't count; someone else's does. (tap=1 is what the button adds when
+  // a person presses it: lib/contact-tap.ts.)
+  const own = await trader.request.get("/api/contact/e2e-dash-vans?via=call&tap=1", { maxRedirects: 0 });
   expect(own.status()).toBe(302);
   const stranger = await browser.newContext({ baseURL: testInfo.project.use.baseURL, userAgent: "E2E stranger" });
-  expect((await stranger.request.get("/api/contact/e2e-dash-vans?via=whatsapp", { maxRedirects: 0 })).status()).toBe(302);
+  expect((await stranger.request.get("/api/contact/e2e-dash-vans?via=whatsapp&tap=1", { maxRedirects: 0 })).status()).toBe(302);
+  // A crawler following the same link (no press) is sent on but not counted.
+  expect((await stranger.request.get("/api/contact/e2e-dash-vans?via=call", { maxRedirects: 0 })).status()).toBe(302);
   await stranger.close();
   expect(sql(`select count(*) from public.contact_events where provider_id = '00000000-0000-0000-0000-00000000e217'
               and actor_id is not null`)).toBe("1");

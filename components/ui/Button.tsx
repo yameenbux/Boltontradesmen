@@ -1,5 +1,6 @@
 "use client";
 
+import { withTapMark } from "@/lib/contact-tap";
 import { useRef, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type PointerEvent } from "react";
 
 type Variant = "primary" | "secondary";
@@ -45,11 +46,16 @@ export function Button(props: ButtonProps) {
 
   if (props.href !== undefined) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { variant: _v, className: _c, children: _ch, onPointerDown, ...rest } = props;
+    const { variant: _v, className: _c, children: _ch, onPointerDown, onClick, ...rest } = props;
     return (
       <a
         {...rest}
         className={cls}
+        onClick={(e) => {
+          // A Call or WhatsApp link pressed by a person counts as an enquiry (lib/contact-tap.ts).
+          e.currentTarget.setAttribute("href", withTapMark(e.currentTarget.getAttribute("href") ?? ""));
+          onClick?.(e);
+        }}
         onPointerDown={(e) => {
           addRipple(e);
           onPointerDown?.(e);
